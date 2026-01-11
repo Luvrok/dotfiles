@@ -5,19 +5,9 @@
   backend = "egl";
   vSync = true;
 
-  activeOpacity = 1.0;
-  inactiveOpacity = 0.95;
-
   opacityRules = [
-    "100:name *= 'Picture-in-Picture'"
-    "100:class_g = 'dmenu'"
-    "100:fullscreen"
-    "100:name ~= 'rofi'"
-    "100:class_g = 'firefox'"
-    "100:class_g = 'obsidian'"
-    "100:class_g = 'TelegramDesktop'"
-    "100:class_g = 'Element'"
-    "100:class_g = 'qBittorrent'"
+    "100:class_g = 'kitty' && focused"
+    "90:class_g = 'kitty' && !focused"
   ];
 
   settings = {
@@ -46,9 +36,7 @@
 
     # looks better maybe
     blur-background-exclude = [
-      "focused"
-      "name ~= 'dmenu'"
-      "name ~= 'rofi'"
+      "class_g != 'kitty'"
     ];
 
     fade-exclude = [
