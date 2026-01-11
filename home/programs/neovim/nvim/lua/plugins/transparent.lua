@@ -3,13 +3,10 @@ return {
   config = function()
     require("transparent").setup({
       enable = true,
-        groups = {
+      groups = {
         "Normal",
         "NormalNC",
         "NormalFloat",
-        "EndOfBuffer",
-        "LineNr",
-        "FoldColumn",
       },
        exclude_groups = {
         "CursorLine",
@@ -24,6 +21,9 @@ return {
         "StatusLineNC",
         "WinSeparator",
         "SignColumn",
+        "LineNr",
+        "EndOfBuffer",
+        "FoldColumn",
       },
     })
     local opts = { noremap = true, silent = true }

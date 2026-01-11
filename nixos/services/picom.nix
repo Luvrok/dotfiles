@@ -15,6 +15,9 @@
     "100:name ~= 'rofi'"
     "100:class_g = 'firefox'"
     "100:class_g = 'obsidian'"
+    "100:class_g = 'TelegramDesktop'"
+    "100:class_g = 'Element'"
+    "100:class_g = 'qBittorrent'"
   ];
 
   settings = {

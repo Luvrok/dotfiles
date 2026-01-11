@@ -1,8 +1,8 @@
 #!/bin/sh
 
-pushd ~/HOME/dotfiles
+pushd ~/HOME/infra/dotfiles
 # sudo rm -rf $HOME/.mozilla/firefox/*/user.js &&
-sudo nixos-rebuild --flake $HOME/HOME/dotfiles#$whoami switch
+sudo nixos-rebuild --flake $HOME/HOME/infra/dotfiles#$whoami switch
 
 if [ $? -eq 0 ]; then
     notify-send "nixos-rebuild switch completed successfully"
