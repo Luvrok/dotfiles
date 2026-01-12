@@ -66,6 +66,21 @@
             run = "shell unzip %f";
             desc = "Unzip file";
           }
+          {
+            on = ["l"];
+            run = "link --relative";
+            desc = "link file";
+          }
+          {
+            on = [ "<Esc>" ];
+            run = "unyank; unmark_all";
+            desc = "Cancel yank and clear selection";
+          }
+          {
+            on = ["<Enter>"];
+            run = "open";
+            desc = "Enter directory";
+          }
         ];
       };
     };
@@ -85,11 +100,25 @@
         cache_dir = "${config.xdg.cacheHome}/yazi/preview-cache";
         tab_size = 2;
         max_width = 1920;
-        image_filter = "triangle"; # way faster than lanczos3, with no visible loss in image quality (if image_quality have high value).
+        image_filter = "lanczos3";
         image_delay = 30;
         image_quality = 90;
         wrap = "yes";
       };
+      # open.rules = [
+      #   {
+      #     mime = "inode/directory";
+      #     use = ["reveal"];
+      #   }
+      # ];
+      # opener = {
+      #   open = [
+      #     {
+      #       run = ''${pkgs.xdg-utils}/bin/xdg-open "$0"'';
+      #       orphan = true;
+      #     }
+      #   ];
+      # };
       tasks = {
         macro_workers = 2;
         image_alloc = 268435456; # 256MB
