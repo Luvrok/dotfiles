@@ -1,5 +1,5 @@
 memo-history.log
 **/API_KEY*
 .vscode/
-.git-crypt/
+# .git-crypt/
 # dwm

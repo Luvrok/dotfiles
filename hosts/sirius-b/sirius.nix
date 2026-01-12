@@ -96,6 +96,7 @@
     xray
     vnstat
     dig
+    git-crypt
   ];
 
   services.vnstat.enable = true;
