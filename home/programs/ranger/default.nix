@@ -2,7 +2,7 @@
 
 {
   programs.ranger = {
-    enable = true;
+    enable = false;
     package = pkgs.ranger;
 
     settings = {

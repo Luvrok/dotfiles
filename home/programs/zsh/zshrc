@@ -80,6 +80,7 @@ function _ps_aux_grep() { command ps aux | grep --color=auto "$1" }
 alias ll='ls -lah --color'
 alias la='ls -A --color'
 alias psg='_ps_aux_grep'
+alias ranger='yazi' # huh why not?
 
 # Shell integrations
 eval "$(fzf --zsh)"

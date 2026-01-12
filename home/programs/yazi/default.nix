@@ -1,15 +1,9 @@
 { pkgs, config, ... }:
-let
-  yaziGruvbox = pkgs.fetchFromGitHub {
-    owner = "Luvrok";
-    repo = "gruvbox-dark.yazi";
-    rev = "b8ddd79564687493cf9014b2144dbcf0ebc495c5";
-    hash = "sha256-UvClNUDhDr7pdpnzyO4rXa1Ffr37uj1PuiyNW0G7Q+Y=";
-  };
-in
+
 {
   programs.yazi = {
     enable = true;
+    package = pkgs.yazi;
 
     plugins = {
       inherit (pkgs.yaziPlugins) full-border;
@@ -26,6 +20,53 @@ in
         files = [];
         exts  = [];
         conds = [];
+      };
+    };
+
+    keymap = {
+      mgr = {
+        prepend_keymap = [
+          {
+            on = ["d" "d"];
+            run = "remove --permanently";
+            desc = "Delete permanently";
+          }
+          {
+            on = ["m" "k"];
+            run = "create --dir";
+            desc = "Create directory";
+          }
+          {
+            on = ["r"];
+            run = "rename";
+            desc = "Rename";
+          }
+          {
+            on = ["c" "p"];
+            run = "yank";
+            desc = "Copy (toggle)";
+          }
+          {
+            on = ["d" "c"];
+            run = "yank --cut";
+            desc = "Cut (toggle)";
+          }
+          {
+            on = ["."];
+            run = "toggle hidden";
+            desc = "Toggle hidden files";
+          }
+          {
+            on = ["p" "p"];
+            run = "paste";
+            desc = "Paste";
+          }
+          {
+            on = ["u" "u"];
+            run = "shell unzip %f";
+            desc = "Unzip file";
+          }
+        ];
       };
     };
 
@@ -57,7 +98,7 @@ in
       };
     };
     flavors = {
-      gruvbox-dark = yaziGruvbox;
+      gruvbox-dark = ./gruvbox-dark.yazi;
     };
     theme = {
       flavor = {
