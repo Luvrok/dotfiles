@@ -40,7 +40,6 @@ in
       font = {
         family = "JetBrainsMonoNL NFP";
         size = "14px";
-        accent = "#ebdbb2";
       };
 
       tabs = {
@@ -68,7 +67,7 @@ in
         }
 
         #urlbar > .urlbar-background {
-          border: 0;
+          border: 0 !important;
         }
 
         #customizableui-special-spring1 {
