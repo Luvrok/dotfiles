@@ -25,9 +25,7 @@
     # utils
     haskellPackages.greenclip
 
-    ueberzugpp
-    ffmpegthumbnailer
     poppler-utils
-    jq
+    dragon-drop
   ];
 }

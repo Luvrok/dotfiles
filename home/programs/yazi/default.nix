@@ -67,7 +67,7 @@
             desc = "Unzip file";
           }
           {
-            on = ["l"];
+            on = ["d" "l"];
             run = "link --relative";
             desc = "link file";
           }
@@ -80,6 +80,10 @@
             on = ["<Enter>"];
             run = "open";
             desc = "Enter directory";
+          }
+          {
+            on = ["<C-n>"];
+            run = "shell -- dragon-drop -x -i -T %s1";
           }
         ];
       };
