@@ -37,6 +37,20 @@
     "dom.security.https_only_mode" = true;
     "dom.security.https_only_mode_ever_enabled" = true;
 
+    # === Disable all AI shit (are you serious firefox?) ===
+    # https://www.askvg.com/how-to-disable-and-remove-all-ai-features-in-mozilla-firefox/
+    "browser.ml.chat.enabled" = false;
+    "browser.ml.enable" = false;
+    "browser.ml.linkPreview.enabled" = false;
+    "browser.ml.pageAssist.enabled" = false;
+    "browser.ml.smartAssist.enabled" = false;
+    "extensions.ml.enabled" = false;
+    "browser.tabs.groups.smart.enabled" = false;
+    "browser.search.visualSearch.featureGate" = false;
+    "browser.urlbar.quicksuggest.mlEnabled" = false;
+    "pdfjs.enableAltText" = false;
+    "places.semanticHistory.featureGate" = false;
+
     # === Privacy ===
     "privacy.query_stripping.enable" = true;
     "privacy.donottrackheader.enabled" = true;
@@ -45,7 +59,6 @@
     "privacy.trackingprotection.socialtracking.enabled" = true;
     "privacy.partition.network_state.ocsp_cache" = true;
     "identity.fxaccounts.enabled" = false;
-    "browser.ml.chat.enabled" = false; 
     "extensions.formautofill.addresses.enabled" = false; 
     "extensions.formautofill.creditCards.enabled" = false;
     "beacon.enabled" = false;
