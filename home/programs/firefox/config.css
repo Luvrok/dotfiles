@@ -5,23 +5,3 @@
 toolbarpaletteitem[place="toolbar"][id^="wrapper-customizableui-special-spring"], toolbarspring {
   max-width: 142.5px !important;
 }
-
-:root {
-  --tf-font-family: JetBrainsMonoNL NFP;
-  --tf-font-size: 15px;
-  --tf-accent: #ebdbb2;
-  --tf-bg: #282828;
-  --tf-border: #282828;
-  --tf-border-transition: 1.0s ease;
-  --tf-border-width: 1px;
-  --tf-rounding: 0px;
-  --tf-margin: 1rem;
-  --tf-text-transform: none;
-  --tf-display-horizontal-tabs: none;
-  --tf-display-window-controls: none;
-  --tf-display-nav-buttons: flex;
-  --tf-display-urlbar-icons: flex;
-  --tf-display-sidebar-tools: flex;
-  --tf-display-titles: none;
-  --tf-newtab-logo: "   __            __  ____\A   / /____  _  __/ /_/ __/___  _  __\A  / __/ _ \\| |/ / __/ /_/ __ \\| |/ /\A/ /_/  __/>  </ /_/ __/ /_/ />  <\A\\__/\\___/_/|_|\\__/_/  \\____/_/|_|\A";
-}

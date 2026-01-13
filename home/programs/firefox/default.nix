@@ -16,11 +16,81 @@ in
 {
   imports = [ inputs.textfox.homeManagerModules.default ];
 
-  home.file."${config.programs.firefox.configPath}/life/chrome/config.css".source = ./config.css;
-
   textfox = {
     enable = true;
-    profile = "life";
+    profiles = ["life" "work"];
+
+    config = {
+      background = {
+        color = "#282828";
+      };
+
+      border = {
+        width = "1px";
+        transition = "0.3s ease";
+        radius = "0px";
+      };
+
+      displayWindowControls = true;
+      displayNavButtons = true;
+      displayUrlbarIcons = true;
+      displaySidebarTools = false;
+      displayTitles = false;
+
+      font = {
+        family = "JetBrainsMonoNL NFP";
+        size = "14px";
+        accent = "#ebdbb2";
+      };
+
+      tabs = {
+        horizontal.enable = false;
+        vertical.enable = true;
+      };
+
+      icons = {
+        toolbar.extensions.enable = false;
+        context.extensions.enable = false;
+        context.firefox.enable = false;
+      };
+
+      extraConfig = "
+        #sidebar-button {
+          padding-left: 0px !important;
+        }
+
+        toolbarpaletteitem[place=\"toolbar\"][id^=\"wrapper-customizableui-special-spring\"], toolbarspring {
+          max-width: 142.5px !important;
+        }
+
+        #tabbrowser-tabbox {
+          padding: 0 !important;
+        }
+
+        #urlbar > .urlbar-background {
+          border: 0;
+        }
+
+        #customizableui-special-spring1 {
+          flex: 38 80 !important;
+        }
+
+        :root {
+          --tf-accent: #d65d0e !important;
+          --tf-border: #3c3836 !important;
+        }
+
+        #tabbrowser-tabbox {
+          &:hover {
+            border-color: var(--tf-border) !important;
+          }
+        }
+
+        #tabbrowser-tabbox {
+          margin: 8px 8px 8px 0px !important;
+        }
+      ";
+    };
   };
 
   programs.firefox = {
