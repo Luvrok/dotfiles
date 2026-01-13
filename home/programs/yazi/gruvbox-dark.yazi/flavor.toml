@@ -35,6 +35,15 @@ border_style = { fg = "gray" }
 # : }}}
 
 
+# : Indicator {{{
+
+# https://github.com/sxyazi/yazi/pull/3419
+[indicator]
+padding = { open = "█", close = "█" }
+
+# : }}}
+
+
 # : pick {{{
 
 border = "none"
