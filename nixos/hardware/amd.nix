@@ -1,4 +1,4 @@
-{ config, pkgs, lib, pkgs-pinned, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   hardware.graphics = {

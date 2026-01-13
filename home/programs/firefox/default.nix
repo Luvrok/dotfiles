@@ -1,4 +1,4 @@
-{ pkgs, system, pkgs-pinned, config, inputs, ... }:
+{ pkgs, system, config, inputs, ... }:
 
 let
   baseDir = "${config.home.homeDirectory}/.mozilla/firefox";

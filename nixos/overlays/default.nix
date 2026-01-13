@@ -4,8 +4,8 @@ let
   dwm = pkgs.fetchFromGitHub {
     owner = "Luvrok";
     repo = "dwm";
-    rev = "854bac39a479bc6f2833c30aa420608aa2e2de5c";
-    hash = "sha256-9JzXVQ1kcCg1VdYolvs03L7gTqRx4+0bzCiMJ7e31Fo=";
+    rev = "1793874922a633b347a8342c33e77905369b0b31";
+    hash = "sha256-lUgi/wXBBDo2MB7JwYqxNL3yGIeKgmon2DfUFJQsOAk=";
   };
   st = pkgs.fetchFromGitHub {
     owner = "Luvrok";
@@ -30,7 +30,7 @@ in
     (final: prev: {
       dwm = prev.dwm.overrideAttrs (old: {
         pname = "dwm";
-        version = "854bac39a479bc6f2833c30aa420608aa2e2de5c";
+        version = "1793874922a633b347a8342c33e77905369b0b31";
         src = dwm;
       });
     })

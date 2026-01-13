@@ -1,8 +1,8 @@
-{ pkgs, pkgs-stable, ... }:
+{ pkgs, pkgs-pinned, ... }:
 
 
 {
-  environment.systemPackages = with pkgs; [
+  environment.systemPackages = (with pkgs; [
     # --- dependebs ---
     glibc
     glib
@@ -90,7 +90,6 @@
 
     # --- apps ---
     qbittorrent
-    telegram-desktop
     obsidian
     wasabiwallet
     syncthing
@@ -104,6 +103,7 @@
     # --- talking ---
     discord
     element-desktop
+    element-call
     irssi
 
     # --- games ---
@@ -139,5 +139,7 @@
 
     # --- temporary ---
     pavucontrol
-  ];
+  ]) ++ (with pkgs-pinned; [
+    telegram-desktop
+  ]);
 }

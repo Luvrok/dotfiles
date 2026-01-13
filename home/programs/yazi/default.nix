@@ -1,5 +1,7 @@
-{ pkgs, config, ... }:
-
+{ pkgs, config, lib, ... }:
+let
+  inherit (lib) getExe;
+in
 {
   programs.yazi = {
     enable = true;
@@ -83,7 +85,7 @@
           }
           {
             on = ["<C-n>"];
-            run = "shell -- dragon-drop -x -i -T %s1";
+            run = ''shell -- ${getExe pkgs.dragon-drop} -x -T -i -s 128 "$0"'';
           }
         ];
       };
