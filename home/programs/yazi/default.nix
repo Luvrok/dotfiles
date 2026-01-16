@@ -64,8 +64,8 @@ in
             desc = "Paste";
           }
           {
-            on = ["u" "u"];
-            run = "shell unzip %f";
+            on = [ "u" "u" ];
+            run = ''shell --confirm 'unzip "$1"' '';
             desc = "Unzip file";
           }
           {

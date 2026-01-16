@@ -17,9 +17,6 @@
   windowManager.dwm = {
     enable = true;
     package = pkgs.dwm;
-    # package = pkgs.dwm.overrideAttrs (oldAttrs: rec {
-    #     src = ./dwm;
-    # });
   };
 
   displayManager = {

@@ -19,12 +19,18 @@
     zapret-discord-youtube.url = "github:kartavkun/zapret-discord-youtube";
     textfox.url = "github:adriankarlen/textfox";
 
+    # my stuff
+    dwm.url = "github:Luvrok/dwm";
+    dwm.flake = false;
+    st.url = "github:Luvrok/st";
+    st.flake = false;
+
     # zsh plugin manager
     zinit.url = "github:zdharma-continuum/zinit";
     zinit.flake = false;
   };
 
-  outputs = { self, nixpkgs, nixpkgs-pinned, home-manager, deploy-rs, disko, nur, zapret-discord-youtube, ... }@inputs: let
+  outputs = { self, nixpkgs, nixpkgs-pinned, home-manager, deploy-rs, disko, nur, zapret-discord-youtube, dwm, st, ... }@inputs: let
     system = "x86_64-linux";
     pkgs = import nixpkgs {
       inherit system;

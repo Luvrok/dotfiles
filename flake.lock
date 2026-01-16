@@ -42,6 +42,22 @@
         "type": "github"
       }
     },
+    "dwm": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1768563713,
+        "narHash": "sha256-1Q95gOVEB4XHMDBo8rpASzdFuhJBgvKaWD22n12krAw=",
+        "owner": "Luvrok",
+        "repo": "dwm",
+        "rev": "00fe5c3925d21f9d3e551e8acb3ef3cc0bec1e8a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Luvrok",
+        "repo": "dwm",
+        "type": "github"
+      }
+    },
     "firefox-addons": {
       "inputs": {
         "nixpkgs": [
@@ -229,13 +245,31 @@
       "inputs": {
         "deploy-rs": "deploy-rs",
         "disko": "disko",
+        "dwm": "dwm",
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs",
         "nixpkgs-pinned": "nixpkgs-pinned",
         "nur": "nur",
+        "st": "st",
         "textfox": "textfox",
         "zapret-discord-youtube": "zapret-discord-youtube",
         "zinit": "zinit"
+      }
+    },
+    "st": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1767625137,
+        "narHash": "sha256-a8xrU/JDREtLi+e2OSL4Z0+0MqjQ9WnPmnQO4YUvcFQ=",
+        "owner": "Luvrok",
+        "repo": "st",
+        "rev": "137e80e557b15b475f3a0014637df47bcdcbf71d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Luvrok",
+        "repo": "st",
+        "type": "github"
       }
     },
     "systems": {
