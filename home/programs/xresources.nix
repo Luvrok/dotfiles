@@ -19,5 +19,8 @@
     dwm.selbordercolor: #d65d0e
     dwm.selbgcolor: #d65d0e
     dwm.selfgcolor: #fbf1c7
+
+    Xcursor.theme: Vanilla-DMZ
+    Xcursor.size: 32
   '';
 }

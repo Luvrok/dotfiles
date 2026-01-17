@@ -7,6 +7,8 @@
 
   environment.sessionVariables = {
     XFT_DPI = "112";
+    XCURSOR_THEME = "Vanilla-DMZ";
+    XCURSOR_SIZE = "32";
   };
 
   environment.extraInit = ''

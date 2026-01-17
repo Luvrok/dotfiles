@@ -7,9 +7,12 @@
 
   nixpkgs.overlays = [
     (final: prev: {
-      dwm = prev.dwm.overrideAttrs (_: {
+      dwm = prev.dwm.overrideAttrs (old: {
         version = "dwm-6.7";
         src = inputs.dwm.outPath;
+        buildInputs = (old.buildInputs or []) ++ (with pkgs.xorg; [
+          libXcursor
+        ]);
       });
     })
     (final: prev: {

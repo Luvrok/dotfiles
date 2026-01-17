@@ -30,6 +30,12 @@
     };
   };
 
+  home.pointerCursor = {
+    name = "Vanilla-DMZ";
+    package = pkgs.vanilla-dmz;
+    size = 32;
+  };
+
   qt = {
     enable = true;
     platformTheme.name = "gtk";

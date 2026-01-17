@@ -79,7 +79,7 @@
         zapret-discord-youtube.nixosModules.default
         {
           services.zapret-discord-youtube = {
-            enable = true;
+            enable = false;
             config = "general(ALT)";
           };
         }
@@ -156,6 +156,7 @@
       buildInputs = with pkgs; [
         stdenv.cc
         gnumake
+        xorg.libXcursor
         xorg.libX11
         xorg.libXinerama
         xorg.libXft
