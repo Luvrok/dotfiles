@@ -4,6 +4,7 @@
   programs.home-manager.enable = true;
 
   imports = [
+    ./picom.nix
     ./packages.nix
     ./services
     ./programs
@@ -17,7 +18,33 @@
     enable = true;
     defaultApplications = {
       "application/pdf" = "koreader.desktop";
+      "inode/directory" = [ "thunar.desktop" ];
     };
+  };
+
+  home.file.".Xresources" = {
+    executable = true;
+    text = ''
+      ! normal
+      st.normbgcolor:      #000000
+      st.normbordercolor:  #3c3836
+      st.normfgcolor:      #ebdbb2
+
+      ! selected
+      st.selfgcolor:       #fbf1c7
+      st.selbordercolor:   #d65d0e
+      st.selbgcolor:       #000000
+
+      dwm.normbordercolor: #3c3836
+      dwm.normbgcolor: #282828
+      dwm.normfgcolor: #ebdbb2
+      dwm.selbordercolor: #d65d0e
+      dwm.selbgcolor: #d65d0e
+      dwm.selfgcolor: #fbf1c7
+
+      Xcursor.theme: Vanilla-DMZ
+      Xcursor.size: 32
+    '';
   };
 
   gtk = {
@@ -41,19 +68,17 @@
     platformTheme.name = "gtk";
   };
 
-  home.file.".local/bin".source = pkgs.runCommand "merge-folders" {} ''
-    mkdir -p $out/sh-rofi
-    mkdir -p $out/sh-others
-    mkdir -p $out/sh-nixos
-    cp -r ${./local/sh/sh-rofi}/* $out/sh-rofi
-    cp -r ${./local/sh/sh-others}/* $out/sh-others
-    cp -r ${./local/sh/sh-nixos}/* $out/sh-nixos
-  '';
+  home.file.".local/bin" = {
+    source = ./local/sh;
+    recursive = true;
+    executable = true;
+  };
 
-  home.file.".local/media".source = pkgs.runCommand "merge-folders" {} ''
-    mkdir -p $out/media
-    cp -r ${./local/media}/* $out
-  '';
+  home.file.".local/media" = {
+    source = ./local/media;
+    recursive = true;
+    executable = true;
+  };
 
   home.file.".Xmodmap".text = ''
     keycode  37 = Control_L NoSymbol Control_L

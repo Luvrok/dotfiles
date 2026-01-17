@@ -24,13 +24,15 @@
     dwm.flake = false;
     st.url = "github:Luvrok/st";
     st.flake = false;
+    dwmblocks.url = "github:Luvrok/dwmblocks-async";
+    dwmblocks.flake = false;
 
     # zsh plugin manager
     zinit.url = "github:zdharma-continuum/zinit";
     zinit.flake = false;
   };
 
-  outputs = { self, nixpkgs, nixpkgs-pinned, home-manager, deploy-rs, disko, nur, zapret-discord-youtube, dwm, st, ... }@inputs: let
+  outputs = { self, nixpkgs, nixpkgs-pinned, home-manager, deploy-rs, disko, nur, zapret-discord-youtube, dwm, st, dwmblocks, ... }@inputs: let
     system = "x86_64-linux";
     pkgs = import nixpkgs {
       inherit system;
@@ -150,8 +152,6 @@
       ];
     };
 
-    packages.${system}.dwmblocks = pkgs.callPackage ./home/services/dwmblocks/dwmblocks-async {};
-
     devShells.${system}.default = pkgs.mkShell {
       buildInputs = with pkgs; [
         stdenv.cc
@@ -160,6 +160,8 @@
         xorg.libX11
         xorg.libXinerama
         xorg.libXft
+        xorg.libxcb
+        xorg.xcbutil
         freetype
         fontconfig
         pkg-config

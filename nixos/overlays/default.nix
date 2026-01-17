@@ -21,6 +21,18 @@
         src = inputs.st.outPath;
       });
     })
+    (final: prev: {
+      dwmblocks = prev.dwmblocks.overrideAttrs {
+        src = inputs.dwmblocks.outPath;
+        buildInputs = with pkgs; [
+          xorg.libX11
+          xorg.libxcb
+          xorg.xcbutil
+          pkg-config
+        ];
+        makeFlags = ["PREFIX=$(out)"];
+      };
+    })
     (import ./mpv-config.nix)
     inputs.nur.overlays.default
   ];

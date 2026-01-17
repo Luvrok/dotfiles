@@ -11,6 +11,7 @@
     QT_AUTO_SCREEN_SCALE_FACTOR = "1";
     QT_SCALE_FACTOR = "1";
     QT_SCREEN_SCALE_FACTORS = "2;2";
+    _JAVA_AWT_WM_NONREPARENTING = "1";
   };
 
   environment.etc."X11/xorg.conf.d/00-keyboard.conf".text = ''

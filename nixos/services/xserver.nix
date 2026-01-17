@@ -22,12 +22,11 @@
   displayManager = {
     startx.enable = true;
     sessionCommands = ''
-      WALLPAPER=/home/${username}/HOME/wizzard/wallpaper/elden-ring--1.jpg
-      feh --geometry 2560x1440+0+0 --auto-zoom --bg-fill "$WALLPAPER"
+      WALLPAPER=~/HOME/wizzard/wallpaper/elden-ring--1.jpg
+      ${pkgs.xwallpaper}/bin/xwallpaper --zoom $WALLPAPER
 
-      export PATH=/home/${username}/.local/bin/sh-others:/home/${username}/.local/bin/sh-rofi:/home/${username}/.local/bin/sh-nixos:$PATH
-      xset -dpms &
-      greenclip daemon &
+      export PATH=/home/${username}/.local/bin:$PATH
+      (sleep 5 && ${pkgs.dwmblocks}) &
     '';
   };
 

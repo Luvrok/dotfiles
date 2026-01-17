@@ -1,8 +1,7 @@
-{ lib, config, ... }:
+{ lib, pkgs, config, ... }:
 
 {
   imports = [
-    ./dwmblocks
     ./dunst.nix
     ./flameshot.nix
     ./redshift.nix

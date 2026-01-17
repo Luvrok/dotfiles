@@ -13,13 +13,6 @@
     ROFI_PASS_BACKEND = "xdotool";
   };
 
-  # xdg.mimeApps.enable = true;
-  xdg.mime = {
-    defaultApplications = {
-      "inode/directory" = [ "thunar.desktop" ];
-    };
-  };
-
   environment.etc."X11/xorg.conf.d/00-keyboard.conf".text = ''
     Section "InputClass"
       Identifier "system-keyboard"

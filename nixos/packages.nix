@@ -17,6 +17,7 @@
     xdotool
     xorg.xsetroot
     xorg.xcursorthemes
+    xorg.xset
     xsettingsd
     xclip
     xcolor
@@ -26,6 +27,7 @@
     dmenu
     j4-dmenu-desktop
     st
+    dwmblocks
 
     # --- basic utilities ---
     bash
@@ -64,6 +66,8 @@
     grub2
     pacman
     ripgrep
+    gnugrep
+    gawk
     fd
     ethtool
     dnsmasq

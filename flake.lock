@@ -58,6 +58,22 @@
         "type": "github"
       }
     },
+    "dwmblocks": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1768661063,
+        "narHash": "sha256-7Wo50UEN8BPXs42lHbIXtCfnfycM828qFjrRZcZDvsA=",
+        "owner": "Luvrok",
+        "repo": "dwmblocks-async",
+        "rev": "c5ed0a3e32021a4b328bab8b3ebde662342f5c7c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Luvrok",
+        "repo": "dwmblocks-async",
+        "type": "github"
+      }
+    },
     "firefox-addons": {
       "inputs": {
         "nixpkgs": [
@@ -246,6 +262,7 @@
         "deploy-rs": "deploy-rs",
         "disko": "disko",
         "dwm": "dwm",
+        "dwmblocks": "dwmblocks",
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs",
         "nixpkgs-pinned": "nixpkgs-pinned",

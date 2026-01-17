@@ -9,6 +9,7 @@
     XFT_DPI = "112";
     XCURSOR_THEME = "Vanilla-DMZ";
     XCURSOR_SIZE = "32";
+    _JAVA_AWT_WM_NONREPARENTING = "1";
   };
 
   environment.extraInit = ''

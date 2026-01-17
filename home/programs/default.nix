@@ -8,7 +8,6 @@
     ./rofi
     ./yazi
     ./git.nix
-    ./xresources.nix
     ./gpg.nix
     ./mpv.nix
     ./neofetch.nix
