@@ -26,7 +26,7 @@
       ${pkgs.xwallpaper}/bin/xwallpaper --zoom $WALLPAPER
 
       export PATH=/home/${username}/.local/bin:$PATH
-      (sleep 5 && ${pkgs.dwmblocks}) &
+      dwmblocks &
     '';
   };
 

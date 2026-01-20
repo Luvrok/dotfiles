@@ -23,7 +23,6 @@
     xcolor
     xwinwrap
     xorg.xinit
-    xdg-desktop-portal
     dmenu
     j4-dmenu-desktop
     st
