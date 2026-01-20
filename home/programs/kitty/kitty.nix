@@ -17,6 +17,10 @@
     confirm_os_window_close = 0;
 
     background = "#171717";
+
+    enable_audio_bell = "no";
+    visual_bell_duration = "0";
+    bell_on_tab = "no";
   };
 
   keybindings = {

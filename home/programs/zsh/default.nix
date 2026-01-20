@@ -7,12 +7,11 @@
         source "${inputs.zinit}/zinit.zsh"
       ''
       + builtins.readFile ./zshrc;
-    # Prevents keyboard input before the zsh prompt is fully initialized (for aesthetic)
-    # remove it, maybe its not so good, i will test without it and decide
-    # envExtra = ''
-    #   [[ -o interactive && -t 0 ]] || return
-    #   stty -echo -icanon time 0 min 0 2>/dev/null
-    # '';
+    # Prevents keyboard input before the zsh prompt is fully initialized (feels right)
+    envExtra = ''
+      [[ -o interactive && -t 0 ]] || return
+      stty -echo -icanon time 0 min 0 2>/dev/null
+    '';
   };
 
   home.file.p10k = {

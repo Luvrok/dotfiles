@@ -9,6 +9,13 @@ in
 
     plugins = {
       inherit (pkgs.yaziPlugins) full-border;
+      inherit (pkgs.yaziPlugins) smart-enter;
+      xclip-system-clipboard = pkgs.fetchFromGitHub {
+        owner = "seqizz";
+        repo = "xclip-system-clipboard.yazi";
+        rev = "67f63710c892e9443c81df8dd396b93ff658a9ba";
+        hash = "sha256-+jzVFosUjNHKAdOrRz4HXNweFggUoWoGMtYv2L3GYyA=";
+      };
     };
 
     initLua = ''
@@ -26,6 +33,16 @@ in
     };
 
     keymap = {
+      input = {
+        prepend_keymap = [
+          # https://yazi-rs.github.io/docs/tips#close-input-by-esc
+          {
+            on = ["<Esc>"];
+            run = "close";
+            desc = "Cancel input";
+          }
+        ];
+      };
       mgr = {
         prepend_keymap = [
           {
@@ -73,15 +90,15 @@ in
             run = "link --relative";
             desc = "link file";
           }
-          {
-            on = [ "<Esc>" ];
-            run = "unyank; unmark_all";
-            desc = "Cancel yank and clear selection";
-          }
+          # https://yazi-rs.github.io/docs/tips#smart-enter
           {
             on = ["<Enter>"];
-            run = "open";
+            run = "plugin --sync smart-enter";
             desc = "Enter directory";
+          }
+          {
+            on = ["y"];
+            run = "plugin xclip-system-clipboard";
           }
           {
             on = ["<C-n>"];
@@ -95,12 +112,20 @@ in
       mgr = {
         ratio = [
           1
-          2
-          5
+          3
+          4
         ];
         sort_by = "natural";
         linemod = "none";
         show_hidden = false;
+      };
+      opener = {
+        edit = [
+          {
+            run = ''nvim "$@"'';
+            block = true;
+          }
+        ];
       };
       preview = {
         cache_dir = "${config.xdg.cacheHome}/yazi/preview-cache";
@@ -111,20 +136,6 @@ in
         image_quality = 90;
         wrap = "yes";
       };
-      # open.rules = [
-      #   {
-      #     mime = "inode/directory";
-      #     use = ["reveal"];
-      #   }
-      # ];
-      # opener = {
-      #   open = [
-      #     {
-      #       run = ''${pkgs.xdg-utils}/bin/xdg-open "$0"'';
-      #       orphan = true;
-      #     }
-      #   ];
-      # };
       tasks = {
         macro_workers = 2;
         image_alloc = 268435456; # 256MB

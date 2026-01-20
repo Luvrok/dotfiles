@@ -3,6 +3,8 @@
 # https://github.com/BreadOnPenguins/dots/blob/master/.config/zsh/.zshrc
 # https://github.com/manning390/nix-config/blob/59cfc956c77c1612a610c83f549e6bfa3e7f95b7/home/core/zsh/default.nix (starship setup on NixOS, plus other cool ideas, not my thing but interesting)
 
+stty -ixon
+
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
@@ -55,18 +57,17 @@ setopt appendhistory
 setopt sharehistory
 
 # bindkeys
-bindkey -M viins '^[[1;5D' backward-word
-bindkey -M viins '^[[1;5C' forward-word
-bindkey -M viins '^[[D' backward-char
-bindkey -M viins '^[[C' forward-char
-bindkey '^?' backward-delete-char
-bindkey '^H' backward-delete-char
+bindkey '^[[1;5D' backward-word
+bindkey '^[[1;5C' forward-word
+bindkey '^[[D' backward-char
+bindkey '^[[C' forward-char
 bindkey '^f' autosuggest-accept
 bindkey '^H' backward-kill-word
 bindkey "^[[A" up-line-or-beginning-search # Up
 bindkey "^[[B" down-line-or-beginning-search # Down
 bindkey '^[OA' up-line-or-beginning-search
 bindkey '^[OB' down-line-or-beginning-search
+bindkey -e
 
 # Completion styling
 # zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
