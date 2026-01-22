@@ -7,6 +7,7 @@
     settings = {
       user.email = "morturion.life@gmail.com";
       user.name = "Luvrok";
+      init.defaultBranch = "master";
     };
   };
 
