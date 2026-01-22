@@ -38,7 +38,7 @@ in
       displayTitles = false;
 
       font = {
-        family = "JetBrainsMonoNL NFP";
+        family = "JetBrainsMonoNL Nerd Font";
         size = "14px";
       };
 

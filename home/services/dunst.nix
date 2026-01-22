@@ -22,7 +22,7 @@
         frame_width = "1";
         sort = "no";
         idle_threshold = "120";
-        font = "JetBrainsMonoNL NFP 14";
+        font = "JetBrainsMonoNL Nerd Font 14";
         line_height = "4";
         markup = "full";
         format = "%s\n%b";
