@@ -1,3 +1,6 @@
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
   local lazyrepo = "https://github.com/folke/lazy.nvim.git"
@@ -15,5 +18,9 @@ end
 
 vim.opt.rtp:prepend(lazypath)
 
+-- todo
+-- https://github.com/L3MON4D3/LuaSnip
+
 require('vim-options')
 require('lazy').setup("plugins")
+require('keymaps')

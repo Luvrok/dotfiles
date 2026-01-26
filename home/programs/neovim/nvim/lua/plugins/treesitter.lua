@@ -1,17 +1,18 @@
 return {
   "nvim-treesitter/nvim-treesitter",
-  branch = "master", 
-  lazy = false, 
+  event = { "BufReadPost", "BufNewFile" },
   build = ":TSUpdate",
   config = function()
     local config = require("nvim-treesitter.configs")
     config.setup({
-      ensure_installed = { "c", "bash", "lua", "vim", "vimdoc", "query", "markdown", "markdown_inline", "nix", "go" },
+      ensure_installed = {
+        "c", "bash", "lua", "vim", "vimdoc", "query",
+        "markdown", "markdown_inline", "nix", "go"
+      },
       sync_install = false,
       auto_install = true,
       highlight = {
           enable = true,
-          -- disable = { "c", "rust" },
           disable = function(lang, buf)
               local max_filesize = 100 * 1024 -- 100 KB
               local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(buf))

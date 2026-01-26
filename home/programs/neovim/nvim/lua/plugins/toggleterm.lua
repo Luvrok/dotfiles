@@ -1,17 +1,25 @@
 return {
-  'akinsho/toggleterm.nvim',
-  version = '*',
+  "akinsho/toggleterm.nvim",
   keys = {
-    { '<C-S-/>', '<Cmd>ToggleTerm direction=horizontal<CR>', mode = { 'n', 't', 'i' }, desc = 'Toggle terminal' },
+    { [[<C-\>]] },
+    { "<leader>0", "<Cmd>2ToggleTerm<Cr>", desc = "Terminal #2" },
   },
-  config = function()
-    require('toggleterm').setup({})
-
-    function _G.set_terminal_keymaps()
-      local opts = { buffer = 0, noremap = true, silent = true }
-      vim.keymap.set("t", "<C-BS>", [[<C-w>]], opts)
-    end
-
-    vim.cmd("autocmd! TermOpen term://* lua set_terminal_keymaps()")
-  end,
+  cmd = { "ToggleTerm", "TermExec" },
+  opts = {
+    size = 20,
+    hide_numbers = true,
+    open_mapping = [[<C-\>]],
+    shade_filetypes = {},
+    shade_terminals = false,
+    shading_factor = 0.3,
+    start_in_insert = true,
+    persist_size = true,
+    direction = "float",
+    winbar = {
+      enabled = false,
+      name_formatter = function(term)
+        return term.name
+      end,
+    },
+  },
 }

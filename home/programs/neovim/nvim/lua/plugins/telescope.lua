@@ -5,10 +5,10 @@ return {
     "nvim-lua/plenary.nvim",
     { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make' },
     { "nvim-telescope/telescope-frecency.nvim" },
+    { "ahmedkhalf/project.nvim" },
     { "kkharji/sqlite.lua" },
   },
   keys = {
-    -- { "<C-p>", function() require("telescope.builtin").find_files() end, desc = "Find files" },
     { "<leader>p", function() require("telescope.builtin").live_grep() end, desc = "Live grep" },
     { "<C-f>",
       function()
@@ -21,15 +21,26 @@ return {
     },
     {
       "<C-p>",
-      function() 
+      function()
         require("telescope.builtin").find_files({ })
       end,
       desc = "Find files (exact match)",
     },
+    { "<leader>o", "<cmd>Telescope projects<cr>", desc = "Projects" },
   },
   config = function()
+    local actions = require("telescope.actions")
+
     require("telescope").setup({
       defaults = {
+        mappings = {
+          i = {
+            ["<C-q>"] = actions.close,
+          },
+          n = {
+            ["<C-q>"] = actions.close,
+          },
+        },
         vimgrep_arguments = {
           "rg",
           "--color=never",
@@ -70,5 +81,6 @@ return {
 
     require("telescope").load_extension("fzf")
     require("telescope").load_extension("frecency")
+    require("telescope").load_extension("projects")
   end,
 }

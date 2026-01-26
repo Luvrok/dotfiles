@@ -1,6 +1,5 @@
 return {
   "ahmedkhalf/project.nvim",
-  event = "VeryLazy",
   config = function()
     require("project_nvim").setup({
       manual_mode = false,
@@ -10,7 +9,5 @@ return {
       silent_chdir = true,
       on_config_done = nil,
     })
-
-    pcall(require("telescope").load_extension, "projects")
   end,
 }

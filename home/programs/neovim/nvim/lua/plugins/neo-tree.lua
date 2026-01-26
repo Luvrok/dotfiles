@@ -1,9 +1,11 @@
 return {
   "nvim-neo-tree/neo-tree.nvim",
   branch = "v3.x",
+  lazy = false,
   dependencies = {
     "nvim-lua/plenary.nvim",
     "MunifTanjim/nui.nvim",
+    "nvim-tree/nvim-web-devicons",
   },
   keys = {
     { '<C-n>', ':Neotree toggle left<CR>' },
@@ -27,22 +29,16 @@ return {
         },
       },
       follow_current_file = { enabled = true },
-      -- https://github.com/nvim-neo-tree/neo-tree.nvim/issues/998
-      -- components = {
-      --   icon = function(config, node, state)
-      --     if node.type == 'file' or node.type == 'directory' then return {} end
-      --     return require('neo-tree.sources.common.components').icon(config, node, state)
-      --   end,
-      -- },
     },
     default_component_configs = {
-      -- icon = {
-      --   folder_closed = "",
-      --   folder_open = "",
-      --   folder_empty = "",
-      --   default = "",
-      --   highlight = "Normal",
-      -- },
+      diagnostics = {
+        symbols = {
+          hint  = "",
+          info  = "",
+          warn  = "",
+          error = "",
+        },
+      },
       git_status = {
         symbols = {
           added = "󰬈",
@@ -54,7 +50,6 @@ return {
           unstaged = "󰬜",
           staged = "󰬚",
           conflict = "󰬊",
-          added = "󰬈",
         },
       },
     },
