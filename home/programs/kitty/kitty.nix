@@ -11,7 +11,7 @@
 
     background_opacity = "0.95";
 
-    window_padding_width = 5.5;
+    window_padding_width = 2.5;
     window_padding_height = 2.5;
 
     confirm_os_window_close = 0;
