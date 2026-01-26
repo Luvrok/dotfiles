@@ -3,13 +3,17 @@
 
 {
   environment.systemPackages = (with pkgs; [
-    # --- dependebs ---
+    # --- dependencies ---
     glibc
     glib
     gcc
     cmake
     buildPackages.gnumake
     gamescope
+    tor
+    cargo
+    python312
+    nodejs_25
 
     # --- xorg ---
     libxcvt
@@ -75,9 +79,6 @@
     procps
     file
 
-    # --- development tools ---
-    python315
-
     # --- networking ---
     openssl
     iptables
@@ -103,9 +104,10 @@
     veracrypt
     monero-gui
     koreader
+    telegram-desktop
 
     # --- talking ---
-    discord
+    # discord
     element-desktop
     element-call
     irssi
@@ -144,6 +146,5 @@
     # --- temporary ---
     pavucontrol
   ]) ++ (with pkgs-pinned; [
-    telegram-desktop
   ]);
 }
