@@ -43,8 +43,6 @@
       };
     };
 
-    dwmblocks = self.packages.${system}.dwmblocks;
-
     make_hm = username: { ... }: {
       home-manager = {
         useGlobalPkgs = true;

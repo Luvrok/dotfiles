@@ -11,9 +11,11 @@
     buildPackages.gnumake
     gamescope
     tor
-    cargo
+    cargo # need for nixd lsp build
     python312
     nodejs_25
+    chromium # need for via qmk
+    monero-cli # need for monero-gui for some reason cant sync without monero-cli
 
     # --- xorg ---
     libxcvt
