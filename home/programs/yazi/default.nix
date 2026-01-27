@@ -17,6 +17,7 @@ in
     plugins = {
       inherit (pkgs.yaziPlugins) full-border;
       inherit (pkgs.yaziPlugins) smart-enter;
+      # inherit (pkgs.yaziPlugins) yatline;
       # inherit (pkgs.yaziPlugins) yatline-githead; # wait when this pr will be merge https://github.com/imsi32/yatline-githead.yazi/pull/7
       # inherit (pkgs.yaziPlugins) git; # dont work, maybe bcs nixos i think (todo: figure it out)
       xclip-system-clipboard = pkgs.fetchFromGitHub {
@@ -28,8 +29,8 @@ in
       yatline = pkgs.fetchFromGitHub {
         owner = "imsi32";
         repo = "yatline.yazi";
-        rev = "3227a30b21f69b68df513754b5a00d6e75cece57";
-        hash = "sha256-yhptHABQ0alVab2i367D5grJyG7SrfHH8H4JuGeYFyk=";
+        rev = "c5d4b487d6277dd68ea9d3c6537641bf4ae9cf8e";
+        hash = "sha256-HjTRAfUHs6vlEWKruQWeA2wT/Mcd+WEHM90egFTYcWQ=";
       };
       yatline-gruvbox = pkgs.fetchFromGitHub {
         owner = "imsi32";
