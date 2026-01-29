@@ -34,7 +34,6 @@ return {
         "jsonls",
         "lua_ls",
         "vimls",
-        "nil",
       },
       handlers = {
         -- Default handler for LSP servers
@@ -46,6 +45,24 @@ return {
       },
     })
 
+    -- nil (nix lsp)
+    local lsp_path = vim.env.NIL_PATH or "nil"
+
+    vim.lsp.config("nil_ls", {
+      autostart = true,
+      capabilities = caps,
+      cmd = { lsp_path },
+      settings = {
+        ["nil"] = {
+          testSetting = 42,
+          nix = { flake = { autoArchive = true } },
+        },
+      },
+    })
+
+    vim.lsp.enable("nil_ls")
+
+    -- cmp setup
     cmp.setup({
       snippet = {
         expand = function(args)
@@ -93,7 +110,7 @@ return {
         { name = "nvim_lsp" },
         { name = "path" },
         { name = "luasnip" },
-      },{
+      }, {
         { name = "buffer" },
       }),
       preselect = cmp.PreselectMode.None,
@@ -133,17 +150,20 @@ return {
       sources = cmp.config.sources({ { name = "path" } }, { { name = "cmdline" } }),
     })
 
-    local signs = { Error = '', Warn = '', Hint = '', Info = '' }
-    for type, icon in pairs(signs) do
-      local hl = 'DiagnosticSign' .. type
-      vim.fn.sign_define(hl, { text = icon, texthl = hl })
-    end
-
     vim.diagnostic.config({
       virtual_text = false,
       underline = true,
       update_in_insert = false,
       severity_sort = true,
+
+      signs = {
+        text = {
+          [vim.diagnostic.severity.ERROR] = "e",
+          [vim.diagnostic.severity.WARN] = "",
+          [vim.diagnostic.severity.HINT] = "h",
+          [vim.diagnostic.severity.INFO] = "i",
+        }
+      },
 
       float = {
         focusable = true,

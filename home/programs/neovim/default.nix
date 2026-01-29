@@ -12,4 +12,13 @@
     source = ./nvim;
     recursive = true;
   };
+
+  home.packages = with pkgs; [
+    # Nix lsp and formatter
+    nil
+    nixpkgs-fmt
+
+    # Lua
+    stylua
+  ];
 }
