@@ -80,6 +80,7 @@
     tcpdump
     procps
     file
+    alsa-utils
 
     # --- networking ---
     openssl
