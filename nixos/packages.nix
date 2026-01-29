@@ -107,6 +107,7 @@
     monero-gui
     koreader
     telegram-desktop
+    discord
 
     # --- talking ---
     # discord
