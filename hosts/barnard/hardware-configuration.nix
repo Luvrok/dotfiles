@@ -25,14 +25,11 @@
     {
       device = "/dev/disk/by-uuid/1e14c794-e271-4f4f-836c-3fc6636c834a";
       fsType = "ext4";
-      options = [ "noatime" ];
-    };
-
-  fileSystems."/media/outer-2" =
-    {
-      device = "/dev/disk/by-uuid/1f869faa-315b-4158-80fe-4580f6e63d1f";
-      fsType = "ext4";
-      options = [ "noatime" ];
+      options = [
+        "noatime"
+        "nofail"
+        "x-systemd.device-timeout=1s"
+      ];
     };
 
   swapDevices = [ ];
