@@ -32,6 +32,7 @@ zinit snippet OMZP::command-not-found
 # load completions
 autoload -Uz compinit && compinit
 autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
+autoload -Uz zsh/terminfo
 
 zinit cdreplay -q
 
@@ -68,6 +69,8 @@ bindkey "^[[A" up-line-or-beginning-search # Up
 bindkey "^[[B" down-line-or-beginning-search # Down
 bindkey '^[OA' up-line-or-beginning-search
 bindkey '^[OB' down-line-or-beginning-search
+bindkey -M emacs "${terminfo[khome]}" beginning-of-line
+bindkey -M emacs "${terminfo[kend]}"  end-of-line
 
 # Completion styling
 # zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
