@@ -36,11 +36,32 @@
       st.selbgcolor:       #000000
 
       dwm.normbordercolor: #3c3836
-      dwm.normbgcolor: #282828
+      dwm.normbgcolor: #171717
       dwm.normfgcolor: #ebdbb2
       dwm.selbordercolor: #d65d0e
       dwm.selbgcolor: #d65d0e
       dwm.selfgcolor: #fbf1c7
+
+      font: JetBrainsMonoNL Nerd Font:size=12
+
+      ! normal
+      normfgcolor:        #ebdbb2
+      normbgcolor:        #171717
+
+      ! selected
+      selfgcolor:         #fbf1c7
+      selbgcolor:         #d65d0e
+
+      ! highlight
+      hlfgcolor:          #fabd2f
+      hlbgcolor:          #3c3836
+
+      ! out
+      outfgcolor:         #171717
+      outbgcolor:         #458588
+
+      ! border
+      selbordercolor:     #d65d0e
 
       Xcursor.theme: Vanilla-DMZ
       Xcursor.size: 32
