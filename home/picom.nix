@@ -37,7 +37,7 @@
 
       # looks better maybe
       blur-background-exclude = [
-        "class_g != 'kitty'"
+        "class_g != 'kitty' && class_g != 'dmenu'"
       ];
 
       fade-exclude = [
