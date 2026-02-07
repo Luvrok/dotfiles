@@ -45,11 +45,11 @@
     "dmenu": {
       "flake": false,
       "locked": {
-        "lastModified": 1770431613,
-        "narHash": "sha256-Jf/kbi142YqQQuZtAHQjlY3zGDVz4znZF1m+YiQb4hE=",
+        "lastModified": 1770490076,
+        "narHash": "sha256-m0oG/VMJ8ODDIXXGT52zYS0vPiYlkuoa0GR42f1oEMw=",
         "owner": "Luvrok",
         "repo": "dmenu",
-        "rev": "bd8467cd7708e414c5deb0016753ce97e23720c5",
+        "rev": "8c0563577392c32c535dc51301006d903ce4536d",
         "type": "github"
       },
       "original": {
