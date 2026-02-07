@@ -26,13 +26,15 @@
     st.flake = false;
     dwmblocks.url = "github:Luvrok/dwmblocks-async";
     dwmblocks.flake = false;
+    dmenu.url = "github:Luvrok/dmenu";
+    dmenu.flake = false;
 
     # zsh plugin manager
     zinit.url = "github:zdharma-continuum/zinit";
     zinit.flake = false;
   };
 
-  outputs = { self, nixpkgs, nixpkgs-pinned, home-manager, deploy-rs, disko, nur, zapret-discord-youtube, dwm, st, dwmblocks, ... }@inputs: let
+  outputs = { self, nixpkgs, nixpkgs-pinned, home-manager, deploy-rs, disko, nur, zapret-discord-youtube, dwm, st, dwmblocks, dmenu, ... }@inputs: let
     system = "x86_64-linux";
     pkgs = import nixpkgs {
       inherit system;
@@ -163,7 +165,7 @@
         freetype
         fontconfig
         pkg-config
-     ];
+      ];
     };
   };
 }

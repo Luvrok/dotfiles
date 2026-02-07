@@ -42,6 +42,22 @@
         "type": "github"
       }
     },
+    "dmenu": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1770431613,
+        "narHash": "sha256-Jf/kbi142YqQQuZtAHQjlY3zGDVz4znZF1m+YiQb4hE=",
+        "owner": "Luvrok",
+        "repo": "dmenu",
+        "rev": "bd8467cd7708e414c5deb0016753ce97e23720c5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Luvrok",
+        "repo": "dmenu",
+        "type": "github"
+      }
+    },
     "dwm": {
       "flake": false,
       "locked": {
@@ -261,6 +277,7 @@
       "inputs": {
         "deploy-rs": "deploy-rs",
         "disko": "disko",
+        "dmenu": "dmenu",
         "dwm": "dwm",
         "dwmblocks": "dwmblocks",
         "home-manager": "home-manager",

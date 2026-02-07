@@ -37,6 +37,18 @@ in
         makeFlags = ["PREFIX=$(out)"];
       };
     })
+    (final: prev: {
+      dmenu = prev.dmenu.overrideAttrs {
+        src = inputs.dmenu.outPath;
+        buildInputs = with pkgs; [
+          xorg.libX11
+          xorg.libXinerama
+          xorg.libXft
+          pkg-config
+        ];
+        makeFlags = ["PREFIX=$(out)"];
+      };
+    })
     (self: super: {
       mpv-config = super.stdenvNoCC.mkDerivation {
         pname = "mpv-config";
