@@ -40,6 +40,7 @@
   hardware.enableAllFirmware = true;
   hardware.bluetooth.enable = true;
   hardware.bluetooth.powerOnBoot = true;
+  hardware.i2c.enable = true;
 
   time.hardwareClockInLocalTime = false;
 }

@@ -4,6 +4,9 @@
   programs.rofi = {
     enable = true;
     package = pkgs.rofi;
+    plugins = with pkgs; [
+      rofi-calc
+    ];
     pass = {
       enable = true;
       package = pkgs.rofi-pass;

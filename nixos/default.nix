@@ -54,6 +54,7 @@
     shell = pkgs.zsh;
     isNormalUser = true;
     extraGroups = [
+      "i2c" # monitor brightness
       "networkmanager"
       "network"
       "wheel"

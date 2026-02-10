@@ -9,7 +9,6 @@
     neofetch
     p7zip
     tree-sitter
-    dunst
     rnnoise-plugin
     helvum
     ly

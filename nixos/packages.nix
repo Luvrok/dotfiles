@@ -52,7 +52,6 @@
     dig
     nmap
     inetutils # telnet, ftp, hostname, etc
-    brightnessctl
     usbutils
     bc
     powertop
@@ -81,6 +80,7 @@
     procps
     file
     alsa-utils
+    ddcutil
 
     # --- networking ---
     openssl

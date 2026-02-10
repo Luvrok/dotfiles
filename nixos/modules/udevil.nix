@@ -44,6 +44,9 @@
 
     # PS5 DualSense Edge controller over bluetooth hidraw
     KERNEL=="hidraw*", KERNELS=="*054C:0DF2*", MODE="0660", TAG+="uaccess"
+
+    # i2c support
+    KERNEL=="i2c-[0-9]*", GROUP="i2c", MODE="0660"
   '';
   users.extraGroups.input.members = [ "monk" ];
 }

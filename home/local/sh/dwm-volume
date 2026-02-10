@@ -13,7 +13,7 @@ is_mute() {
 
 send_notification() {
   vol=$(get_volume)
-  notify-send "Volume: $vol%" \
+  notify-send -r 9991 "Volume: $vol%" \
     -h string:x-dunst-stack-tag:volume \
     -h int:value:"$vol" \
     --hint=int:value:"$vol" \
@@ -39,7 +39,7 @@ case "$1" in
   mute)
     wpctl set-mute "$SINK" toggle
     if is_mute; then
-      notify-send "Volume: Mute" -h string:x-dunst-stack-tag:volume --urgency=low
+      notify-send -r 9991 "Volume: Mute" -h string:x-dunst-stack-tag:volume --urgency=low
     else
       send_notification
     fi

@@ -11,9 +11,9 @@ nix_clean() {(
 nix_clean &&
 
 if [ $? -eq 0 ]; then
-    notify-send "nix cleaned successfully"
+    notify-send -r 9991 "nix cleaned successfully"
     pw-play "$HOME/.local/media/soundeffect/minecraft-sheep2.mp3" &
 else
-    notify-send "nix cleaned failed"
+    notify-send -r 9991 "nix cleaned failed"
     pw-play "$HOME/.local/media/soundeffect/minecraft-cave.mp3" &
 fi

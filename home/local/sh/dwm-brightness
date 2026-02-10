@@ -1,20 +1,20 @@
 #!/bin/sh
 
 notify_brightness() {
-  brightness=$(awk -v g=$(brightnessctl g) -v m=$(brightnessctl m) 'BEGIN { printf "%.0f", g / m * 100 }')
-  notify-send "Brightness: $brightness%" \
+  brightness=$(ddcutil getvcp 10 2>/dev/null | awk -F'current value =' '{print $2}' | awk -F',' '{print $1}' | tr -d ' ')
+  notify-send -r 9991 "Brightness: $brightness%" \
     -h string:x-dunst-stack-tag:brightness \
     -h int:value:"$brightness" \
     --urgency=low
 }
 
-case $1 in
+case "$1" in
   up)
-    brightnessctl -q set 20+
+    ddcutil setvcp 10 + 5 >/dev/null 2>&1
     notify_brightness
     ;;
   down)
-    brightnessctl --min-val=2 -q set 20-
+    ddcutil setvcp 10 - 5 >/dev/null 2>&1
     notify_brightness
     ;;
 esac
