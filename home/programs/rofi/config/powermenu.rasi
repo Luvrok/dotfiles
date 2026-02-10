@@ -11,9 +11,11 @@ configuration {
 }
 
 window {
-    location: center;
-    anchor: center;
-    width:                       24ch;
+    location:                    east;
+    anchor:                      east;
+    width:                       85px;
+    x-offset:                    -40px;
+    y-offset:                    0px;
 
     margin:                      0px;
     padding:                     0px;
@@ -28,6 +30,7 @@ mainbox {
 listview {
     enabled:                     true;
     columns:                     1;
+    lines:                       5;
     cycle:                       true;
     dynamic:                     true;
     scrollbar:                   false;
@@ -41,12 +44,10 @@ listview {
 element {
     enabled:                     true;
 }
-
 element-text selected {
     background-color:            @SELBG;
     text-color:                  @SEL;
 }
-
 element-text {
     padding:                     20px 0px;
     vertical-align:              0.5;

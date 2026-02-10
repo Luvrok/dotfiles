@@ -1,12 +1,9 @@
 * {
-    BG:    #292929; /* background */
-    BGA:   #282828; /* background alternate */
-    FG:    #fbf1c7; /* foreground (main text) */
-    FGA:   #fb4934; /* foreground accent (error/warning) */
+    BG:    rgb(23, 23, 23, 0.9); /* background */
+    BGA:   rgb(40, 40, 40, 0.9); /* background alternate */
+    FG:    #ebdbb2; /* foreground (main text) */
+    FGA:   #ebdbb2; /* foreground accent (error/warning) */
     BDR:   #d65d0e; /* border */
     SEL:   #fbf1c7; /* selection */
-    UGT:   #cc241d; /* underline/indicator */
-    IMG:   #504945; /* image background / secondary background */
-    OFF:   #fabd2f; /* off state indicator */
-    ON:    #d79921; /* on state indicator */
+    SELBG: rgb(214, 93, 14); /* selection background */
 }

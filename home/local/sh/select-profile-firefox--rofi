@@ -1,16 +1,17 @@
 #!/bin/sh
-
 INI="$HOME/.mozilla/firefox/profiles.ini"
 THEME="$HOME/.config/rofi/firefox-profiles-menu.rasi"
 
 profiles="$(awk -F= '
-/^\[Profile/ { ok=1; next }
-ok && $1=="Name" { print $2; ok=0 }
+  /^\[Profile/ { ok=1; next }
+  ok && $1=="Name" { print $2; ok=0 }
 ' "$INI")"
-
 [ -z "$profiles" ] && exit 1
 
-chosen="$(printf '%s\n' "$profiles" | rofi -dmenu -i -p "Firefox profile" -theme "$THEME")"
+lines="$(printf '%s\n' "$profiles" | wc -l | tr -d ' ')"
+[ "$lines" -lt 1 ] && lines=1
+
+chosen="$(printf '%s\n' "$profiles" | rofi -dmenu -i -p "Firefox profile" -theme "$THEME" -theme-str "listview { lines: $lines; }")"
 [ -z "$chosen" ] && exit 0
 
 exec firefox --no-remote -P "$chosen" >/dev/null 2>&1

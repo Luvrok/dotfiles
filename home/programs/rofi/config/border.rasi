@@ -1,0 +1,24 @@
+* {
+    BW:    1px;
+
+    B-NONE: 0px;
+    B-ALL:  1px;
+
+    B-T: 1px 0   0   0;
+    B-R: 0   1px 0   0;
+    B-B: 0   0   1px 0;
+    B-L: 0   0   0   1px;
+
+    B-X: 0   1px 0   1px;
+    B-Y: 1px 0   1px 0;
+
+    B-TR: 1px 1px 0   0;
+    B-RB: 0   1px 1px 0;
+    B-BL: 0   0   1px 1px;
+    B-LT: 1px 0   0   1px;
+
+    B-ALL-BUT-T: 0   1px 1px 1px;
+    B-ALL-BUT-R: 1px 0   1px 1px;
+    B-ALL-BUT-B: 1px 1px 0   1px;
+    B-ALL-BUT-L: 1px 1px 1px 0;
+}

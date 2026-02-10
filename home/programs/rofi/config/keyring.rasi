@@ -1,74 +1,34 @@
 @import "colors.rasi"
-@import "settings.rasi"
+@import "border.rasi"
 @import "font.rasi"
-
-* {
-    /* Gruvbox dark colors */
-    gruvbox-dark-bg0-hard:     #292929;
-    gruvbox-dark-bg0:          #282828;
-    gruvbox-dark-bg2:          #504945;
-    gruvbox-text:              #fbf1c7;
-    gruvbox-dark-fg1:          #fbf1c7;
-    gruvbox-dark-red-dark:     #cc241d;
-    gruvbox-dark-red-light:    #fb4934;
-    gruvbox-dark-yellow-dark:  #d79921;
-    gruvbox-dark-yellow-light: #fabd2f;
-    gruvbox-border:            #d65d0e;
-
-    /* Theme colors */
-    background:                  @gruvbox-dark-bg0-hard;
-    background-color:            @gruvbox-dark-bg0-hard;
-    foreground:                  @gruvbox-dark-fg1;
-    border-color:                @gruvbox-border;
-    separatorcolor:              @gruvbox-border;
-    scrollbar-handle:            @gruvbox-border;
-
-    normal-background:           @gruvbox-dark-bg0-hard;
-    normal-foreground:           @gruvbox-dark-fg1;
-    alternate-normal-background: @gruvbox-dark-bg0;
-    alternate-normal-foreground: @gruvbox-dark-fg1;
-    selected-normal-background:  @gruvbox-dark-bg2;
-    selected-normal-foreground:  @gruvbox-text;
-
-    active-background:           @gruvbox-dark-yellow-dark;
-    active-foreground:           @gruvbox-dark-bg0-hard;
-    alternate-active-background: @active-background;
-    alternate-active-foreground: @active-foreground;
-    selected-active-background:  @gruvbox-dark-yellow-light;
-    selected-active-foreground:  @active-foreground;
-
-    urgent-background:           @gruvbox-dark-red-dark;
-    urgent-foreground:           @gruvbox-dark-bg0-hard;
-    alternate-urgent-background: @urgent-background;
-    alternate-urgent-foreground: @urgent-foreground;
-    selected-urgent-background:  @gruvbox-dark-red-light;
-    selected-urgent-foreground:  @urgent-foreground;
-
-    text-color: 		         @gruvbox-text;
-}
+@import "theme.rasi"
 
 window {
-    scrollbar: false;
+  padding: 0;
+  width: 520px;
+}
+
+mainbox {
     border: @BW;
-    padding: 0;
-    anchor: center;
-    location: center;
+    spacing: 0px;
+    border: @BW;
+    border-color: @BDR;
+    background-color: @BG;
     children: [ inputbar ];
 }
 
 inputbar {
     border: @B-NONE;
-    padding: 0;
-    spacing: 0;
-    text-color: @normal-foreground;
     children: [ prompt, entry ];
 }
 
 prompt {
-    padding: 5px;
-    border: @B_T;
+    padding: 4px 8px;
+    text-color: @FG;
+    border: @B-R;
 }
 
 entry {
-    padding: 5px;
+    padding: 4px 8px;
+    text-color: @FG;
 }

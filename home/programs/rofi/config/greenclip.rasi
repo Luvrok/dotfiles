@@ -3,9 +3,17 @@
 @import "font.rasi"
 @import "theme.rasi"
 
+configuration {
+    display-clipboard: "search";
+}
+
 window {
-    padding: 0;
-    width: 520px;
+    padding:          0;
+    width:            520px;
+    anchor:           north east;
+    location:         north east;
+    y-offset:         38px; // 10px gap + dwm top bar about 28px (12px font + 192dpi, but it depends from font)
+    x-offset:         -10px;
 }
 
 mainbox {
@@ -51,7 +59,7 @@ element-text selected {
 }
 
 scrollbar {
-    background-color: @BG;
+    background-color:            @BG;
     border: @B-NONE;
     handle-color: @FG;
     padding:      0;

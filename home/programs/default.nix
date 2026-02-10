@@ -7,6 +7,7 @@
     ./zsh
     ./rofi
     ./yazi
+    ./greenclip
     ./git.nix
     ./gpg.nix
     ./mpv.nix

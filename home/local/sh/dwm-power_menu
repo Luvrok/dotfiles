@@ -1,5 +1,5 @@
 #!/bin/sh
-rofi_command="rofi -theme $HOME/.config/rofi/power-menu.rasi"
+rofi_command="rofi -theme $HOME/.config/rofi/powermenu.rasi"
 
 uptime=$(uptime | sed -e 's/up.*//g')
 
@@ -11,7 +11,7 @@ if [[ "$DIR" == "powermenus" ]]; then
   logout=""
   ddir="$HOME/.config/rofi"
 else
-  layout=$(cat $HOME/.config/rofi/power-menu.rasi | grep BUTTON | cut -d'=' -f2 | tr -d '[:blank:],*/')
+  layout=$(cat $HOME/.config/rofi/powermenu.rasi | grep BUTTON | cut -d'=' -f2 | tr -d '[:blank:],*/')
   if [[ "$layout" == "TRUE" ]]; then
     shutdown="⏻"
     reboot=""

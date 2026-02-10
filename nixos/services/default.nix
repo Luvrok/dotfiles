@@ -26,6 +26,5 @@
     pipewire = (import ./pipewire.nix { });
     syncthing = (import ./syncthing.nix { inherit username; });
     xserver = (import ./xserver.nix { inherit config pkgs username; });
-    greenclip.enable = true;
   };
 }

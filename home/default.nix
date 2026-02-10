@@ -52,13 +52,9 @@
       selfgcolor:         #fbf1c7
       selbgcolor:         #d65d0e
 
-      ! highlight
-      hlfgcolor:          #fabd2f
-      hlbgcolor:          #3c3836
-
       ! out
-      outfgcolor:         #171717
-      outbgcolor:         #458588
+      outfgcolor:         #ebdbb2
+      outbgcolor:         #171717
 
       ! border
       selbordercolor:     #d65d0e
@@ -99,6 +95,11 @@
     source = ./local/media;
     recursive = true;
     executable = true;
+  };
+
+  home.file.".config/rofi" = {
+    source = ./programs/rofi/config;
+    recursive = true;
   };
 
   home.file.".Xmodmap".text = ''

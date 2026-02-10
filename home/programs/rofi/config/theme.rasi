@@ -1,0 +1,13 @@
+@import "colors.rasi"
+@import "border.rasi"
+
+* {
+    /* Theme colors */
+    background:                  transparent;
+    background-color:            transparent;
+    foreground:                  @FG;
+    border-color:                @BDR;
+    separatorcolor:              @BDR;
+    scrollbar-handle:            @BDR;
+    border-radius:               0px;
+}

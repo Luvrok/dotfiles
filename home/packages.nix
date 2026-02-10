@@ -22,9 +22,6 @@
     pass-secret-service
     libsecret
 
-    # utils
-    haskellPackages.greenclip
-
     poppler-utils
     dragon-drop
   ];

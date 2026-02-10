@@ -37,13 +37,12 @@
 
       # looks better maybe
       blur-background-exclude = [
-        "class_g != 'kitty' && class_g != 'dmenu'"
+        "class_g != 'kitty' && class_g != 'dmenu' && class_g != 'Rofi'"
       ];
 
       fade-exclude = [
         "_NET_WM_STATE@:32a *= '_NET_WM_STATE_FULLSCREEN'"
         "name ~= 'dmenu'"
-        "name ~= 'rofi'"
       ];
 
       unredir-if-possible-exclude = [ "class_g = 'mpv'" "class_g = 'Firefox'" ];

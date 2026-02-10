@@ -31,6 +31,7 @@ vim.opt.swapfile = false
 vim.opt.fillchars:append({ eob = " " })
 vim.opt.fillchars:append({ vert = " " }) -- заменяет линию на пробел
 vim.opt.laststatus = 3 -- чтобы статусбар был общий (красивее)
+vim.opt.wrap = false
 
 -- tabs
 vim.opt.expandtab = true

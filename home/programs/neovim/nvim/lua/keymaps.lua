@@ -52,3 +52,7 @@ end, opts)
 -- Keep visual selection after indenting
 map("v", ">", ">gv")
 map("v", "<", "<gv")
+
+-- shift scroll
+map({ "n", "i", "v" }, "<S-ScrollWheelUp>", "zh", { noremap = true, silent = true })
+map({ "n", "i", "v" }, "<S-ScrollWheelDown>", "zl", { noremap = true, silent = true })
