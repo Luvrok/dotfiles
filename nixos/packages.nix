@@ -21,14 +21,14 @@
     libxcvt
     xkb-switch
     xdotool
-    xorg.xsetroot
-    xorg.xcursorthemes
-    xorg.xset
+    xsetroot
+    xcursorthemes
+    xset
     xsettingsd
     xclip
     xcolor
     xwinwrap
-    xorg.xinit
+    xinit
     xdg-desktop-portal
     dmenu
     j4-dmenu-desktop
@@ -81,6 +81,7 @@
     file
     alsa-utils
     ddcutil
+    home-manager
 
     # --- networking ---
     openssl
@@ -137,7 +138,7 @@
     stress-ng
     lksctp-tools
     evtest
-    xorg.xev
+    xev
 
     # --- go ---
     go

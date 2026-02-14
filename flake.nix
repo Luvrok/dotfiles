@@ -82,14 +82,14 @@
         {
           services.zapret-discord-youtube = {
             enable = false;
-            config = "general(ALT)";
+            configName = "general(ALT)";
           };
         }
 
         home-manager.nixosModules.home-manager
         (make_hm "barnard")
         ({ config, pkgs, ... }: {
-          boot.kernelPackages = pkgs.linuxPackages_latest;
+          boot.kernelPackages = pkgs.linuxPackages_6_12;
         })
       ];
     };
@@ -116,7 +116,7 @@
         {
           services.zapret-discord-youtube = {
             enable = true;
-            config = "general(ALT2)";
+            configName = "general(ALT2)";
           };
         }
 
@@ -156,12 +156,12 @@
       buildInputs = with pkgs; [
         stdenv.cc
         gnumake
-        xorg.libXcursor
-        xorg.libX11
-        xorg.libXinerama
-        xorg.libXft
-        xorg.libxcb
-        xorg.xcbutil
+        libXcursor
+        libX11
+        libXinerama
+        libXft
+        libxcb
+        xcbutil
         freetype
         fontconfig
         pkg-config

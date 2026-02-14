@@ -14,7 +14,7 @@ in
       dwm = prev.dwm.overrideAttrs (old: {
         version = "dwm-6.7";
         src = inputs.dwm.outPath;
-        buildInputs = (old.buildInputs or []) ++ (with pkgs.xorg; [
+        buildInputs = (old.buildInputs or []) ++ (with pkgs; [
           libXcursor
         ]);
       });
@@ -29,9 +29,9 @@ in
       dwmblocks = prev.dwmblocks.overrideAttrs {
         src = inputs.dwmblocks.outPath;
         buildInputs = with pkgs; [
-          xorg.libX11
-          xorg.libxcb
-          xorg.xcbutil
+          libX11
+          libxcb
+          xcbutil
           pkg-config
         ];
         makeFlags = ["PREFIX=$(out)"];
@@ -41,9 +41,9 @@ in
       dmenu = prev.dmenu.overrideAttrs {
         src = inputs.dmenu.outPath;
         buildInputs = with pkgs; [
-          xorg.libX11
-          xorg.libXinerama
-          xorg.libXft
+          libX11
+          libXinerama
+          libXft
           pkg-config
         ];
         makeFlags = ["PREFIX=$(out)"];

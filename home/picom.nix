@@ -1,9 +1,9 @@
-{ ... }:
+{ config, ... }:
 
 {
   services.picom = {
     enable = true;
-    backend = "egl";
+    backend = "glx";
     vSync = true;
 
     opacityRules = [
@@ -17,17 +17,17 @@
       fading = true;
       fade-in-step = 0.03;
       fade-out-step = 0.03;
-      fade-delta = 8;
+      fade-delta = 6;
 
       blur = {
         method = "dual_kawase";
-        size = 10;
         strength = 3;
+        size = 10;
       };
 
       blur-background = true;
       blur-background-frame = false;
-      blur-background-fixed = true;
+      blur-background-fixed = false;
 
       use-damage = true;
 
@@ -41,14 +41,13 @@
       ];
 
       fade-exclude = [
-        "_NET_WM_STATE@:32a *= '_NET_WM_STATE_FULLSCREEN'"
-        "name ~= 'dmenu'"
+        "_NET_WM_STATE *= '_NET_WM_STATE_FULLSCREEN'"
       ];
 
       unredir-if-possible-exclude = [ "class_g = 'mpv'" "class_g = 'Firefox'" ];
 
       log-level = "warn";
-      log-file = "~/.cache/picom-log.log";
+      log-file = "${config.home.homeDirectory}/.cache/picom-log.log";
       show-all-xerrors = true;
     };
   };

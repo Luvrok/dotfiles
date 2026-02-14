@@ -97,7 +97,6 @@ in
     package = pkgs.firefox;
 
     nativeMessagingHosts = with pkgs; [
-      vdhcoapp
       ff2mpv-rust
     ];
 

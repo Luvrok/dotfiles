@@ -28,7 +28,7 @@ return {
             ["."] = "set_root",
         },
       },
-      -- follow_current_file = { enabled = true },
+      follow_current_file = { enabled = true },
     },
     default_component_configs = {
       diagnostics = {
