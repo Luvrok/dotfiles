@@ -17,7 +17,7 @@
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
-      "application/pdf" = "koreader.desktop";
+      "application/pdf" = "zathura.desktop";
       "inode/directory" = [ "thunar.desktop" ];
     };
   };

@@ -11,6 +11,7 @@
     ./git.nix
     ./gpg.nix
     ./mpv.nix
+    ./zathura.nix
     ./neofetch.nix
   ];
 

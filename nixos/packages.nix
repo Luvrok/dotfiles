@@ -107,9 +107,9 @@
     librewolf
     veracrypt
     monero-gui
-    koreader
     telegram-desktop
     discord
+    heroic
 
     # --- talking ---
     # discord

@@ -12,7 +12,6 @@
     rnnoise-plugin
     helvum
     ly
-    zathura
 
     # pass
     pass
