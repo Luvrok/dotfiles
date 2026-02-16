@@ -1,0 +1,34 @@
+@import "colors.rasi"
+@import "border.rasi"
+@import "font.rasi"
+@import "theme.rasi"
+
+window {
+  padding: 0;
+  width: 520px;
+}
+
+mainbox {
+    border: @BW;
+    spacing: 0px;
+    border: @BW;
+    border-color: @BDR;
+    background-color: @BG;
+    children: [ inputbar ];
+}
+
+inputbar {
+    border: @B-NONE;
+    children: [ prompt, entry ];
+}
+
+prompt {
+    padding: 2px 8px;
+    text-color: @FG;
+    border: @B-R;
+}
+
+entry {
+    padding: 2px 8px;
+    text-color: @FG;
+}
