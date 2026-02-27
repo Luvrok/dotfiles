@@ -109,7 +109,6 @@
     monero-gui
     telegram-desktop
     discord
-    heroic
 
     # --- talking ---
     # discord

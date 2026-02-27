@@ -11,8 +11,8 @@
       transition="1";
     };
     temperature = {
-      day = 5500;
-      night = 4500;
+      day = 5000;
+      night = 4000;
     };
     latitude = "59.9343";
     longitude = "30.3351";
