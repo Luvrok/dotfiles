@@ -16,7 +16,7 @@ return {
         neoscroll.ctrl_d({ duration = 100 })
       end,
     }
-    local modes = { "n", "v", "x" }
+    local modes = { "n", "x" }
     for key, func in pairs(keymap) do
       vim.keymap.set(modes, key, func)
     end

@@ -1,46 +1,50 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-wpctl() {
-  # safely read optional second positional arg
-  arg="${2-}"
-  # keep only subcommand (get-volume / set-volume / set-mute)
-  set -- "$1"
-  # add --limit for set-volume
-  if [ "$1" = set-volume ]; then set -- "$@" --limit=1.0; fi
-  # always insert default sink
-  set -- "$@" @DEFAULT_AUDIO_SINK@
-  # append arg if non-empty
-  if [ -n "$arg" ]; then set -- "$@" "$arg"; fi
-  # delegate to real wpctl
-  command wpctl "$@"
+getvol() {
+    wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{print int($2*100)}'
 }
 
-case "${BLOCK_BUTTON:-}" in
-    1) xdotool key super+a ;;
-    2) wpctl set-mute toggle ;;
-    4) wpctl set-volume 3%+ ;;
-    5) wpctl set-volume 3%- ;;
-    6) kitty -e "$EDITOR" "$0" ;;
+ismuted() {
+    wpctl get-volume @DEFAULT_AUDIO_SINK@ | grep -q MUTED
+}
+
+case "$BLOCK_BUTTON" in
+4)
+    if ! ismuted; then
+        v=$(getvol)
+        nv=$((v + 2))
+        [ "$nv" -gt 100 ] && nv=100
+        wpctl set-volume @DEFAULT_AUDIO_SINK@ "$nv%"
+    fi
+    ;;
+5)
+    if ! ismuted; then
+        v=$(getvol)
+        nv=$((v - 2))
+        [ "$nv" -lt 0 ] && nv=0
+        wpctl set-volume @DEFAULT_AUDIO_SINK@ "$nv%"
+    fi
+    ;;
+2)
+    wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+    ;;
 esac
 
-if wpctl get-volume | grep -q "[MUTED]"; then
+vol="$(wpctl get-volume @DEFAULT_AUDIO_SINK@)"
+
+echo "$vol" | grep -q MUTED && {
     echo ""
     exit
-fi
+}
 
-volume_frac="$(wpctl get-volume | cut -d' ' -f2)"
-volume="$(echo "$volume_frac * 100 / 1" | bc)"
+v=$(echo "$vol" | awk '{print int($2*100)}')
 
-if [ -z "$volume" ]; then
-    exit 1
-fi
-
-if [ "$volume" -gt 40 ]; then
-    icon=" "
-elif [ "$volume" -gt 15 ]; then
-    icon=" "
+if [ "$v" -gt 40 ]; then
+    icon=""
+elif [ "$v" -gt 15 ]; then
+    icon=""
 else
-    icon=" "
+    icon=""
 fi
 
-echo "$icon$volume%"
+echo "$icon $v%"

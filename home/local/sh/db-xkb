@@ -5,9 +5,9 @@ update_status() {
     led_indicator=$(echo $status | awk '{ print substr($10, 5, 1) }')
 
     if [ "$led_indicator" -eq "1" ]; then
-        echo "[RU]"
+        echo " [RU]"
     else
-        echo "[EN]"
+        echo " [EN]"
     fi
 }
 

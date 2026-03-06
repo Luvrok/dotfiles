@@ -1,21 +1,3 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-notify() {
-    notify-send --icon=office-calendar-symbolic \
-        --hint=string:x-canonical-private-synchronous:"$1" "$@"
-}
-
-case "${BLOCK_BUTTON:-}" in
-    1)
-        notify "This Month" "$(cal --color=always |
-            sed "s|..7m|<span color='$(xrdb -get color1)'>|;s|..0m|</span>|")"
-        appointments="$(calcurse -d1 \
-            --format-apt "• <i>%S - %E</i>\n  <span foreground='$(xrdb -get color6)'>%m</span>\n" \
-            --format-event "• <span foreground='$(xrdb -get color6)'>%m</span>\n")"
-        [ -n "$appointments" ] && notify "Appointments" "$appointments"
-        ;;
-    2) setsid --fork kitty -e calcurse ;;
-    6) kitty -e "$EDITOR" "$0" ;;
-esac
-
-echo "$(date '+%H:%M')"
+echo "$(date '+%H:%M') "

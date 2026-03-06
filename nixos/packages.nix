@@ -14,6 +14,7 @@
     cargo # need for nixd lsp build
     python312
     nodejs_25
+    yajl
     chromium # need for via qmk
     monero-cli # need for monero-gui for some reason cant sync without monero-cli
 
@@ -65,7 +66,6 @@
     e2fsprogs
     acpi
     util-linux
-    calcurse # calendar in terminal
     parted
     efibootmgr
     grub2
@@ -82,6 +82,8 @@
     alsa-utils
     ddcutil
     home-manager
+    # iwmenu
+    # bzmenu
 
     # --- networking ---
     openssl
@@ -109,6 +111,7 @@
     monero-gui
     telegram-desktop
     discord
+    aseprite
 
     # --- talking ---
     # discord
