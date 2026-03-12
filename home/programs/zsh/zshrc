@@ -34,6 +34,14 @@ autoload -Uz compinit && compinit
 autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
 autoload -Uz zsh/terminfo
 
+bindkey -M emacs "${terminfo[khome]}" beginning-of-line
+bindkey -M emacs "${terminfo[kend]}" end-of-line
+
+bindkey "^[[H" beginning-of-line
+bindkey "^[[F" end-of-line
+bindkey "^[OH" beginning-of-line
+bindkey "^[OF" end-of-line
+
 zinit cdreplay -q
 
 # p10k

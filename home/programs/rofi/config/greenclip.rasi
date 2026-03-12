@@ -12,8 +12,8 @@ window {
     width:            520px;
     anchor:           north east;
     location:         north east;
-    y-offset:         38px; // 10px gap + dwm top bar about 28px (12px font + 192dpi, but it depends from font)
-    x-offset:         -10px;
+    y-offset:         33px; // 10px gap + dwm top bar about 28px (12px font + 192dpi, but it depends from font)
+    x-offset:         -5px;
 }
 
 mainbox {
