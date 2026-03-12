@@ -29,6 +29,7 @@
     xclip
     xcolor
     xwinwrap
+    xwininfo
     xinit
     xdg-desktop-portal
     dmenu
@@ -106,7 +107,6 @@
     syncthing
     spotify
     libreoffice
-    librewolf
     veracrypt
     monero-gui
     telegram-desktop

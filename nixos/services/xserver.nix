@@ -22,8 +22,8 @@
   displayManager = {
     startx.enable = true;
     sessionCommands = ''
-      WALLPAPER=~/HOME/wizzard/wallpaper/elden-ring--1.jpg
-      ${pkgs.xwallpaper}/bin/xwallpaper --zoom $WALLPAPER
+      WALLPAPER="$HOME/HOME/wizzard/wallpaper/art/antiquity/Parthenon_(1871)_Frederic_Edwin_Church.jpg"
+      ${pkgs.xwallpaper}/bin/xwallpaper --zoom "$WALLPAPER"
 
       export PATH=/home/${username}/.local/bin:$PATH
       dwmblocks &

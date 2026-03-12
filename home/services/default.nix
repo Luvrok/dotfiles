@@ -5,6 +5,7 @@
     ./dunst.nix
     ./flameshot.nix
     ./redshift.nix
+    ./activitywatch.nix
     ./pass-secret-service.nix
   ];
 }

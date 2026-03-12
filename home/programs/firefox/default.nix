@@ -58,6 +58,10 @@ in
           padding-left: 0px !important;
         }
 
+        #sidebar-box {
+          margin: 8px 0px 8px 8px !important;
+        }
+
         toolbarpaletteitem[place=\"toolbar\"][id^=\"wrapper-customizableui-special-spring\"], toolbarspring {
           max-width: 142.5px !important;
         }
@@ -83,10 +87,6 @@ in
           &:hover {
             border-color: var(--tf-border) !important;
           }
-        }
-
-        #tabbrowser-tabbox {
-          margin: 8px 8px 8px 0px !important;
         }
       ";
     };

@@ -12,6 +12,8 @@
     rnnoise-plugin
     helvum
     ly
+    nsxiv
+    figlet
 
     # pass
     pass
