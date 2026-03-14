@@ -61,15 +61,16 @@
     "dwm": {
       "flake": false,
       "locked": {
-        "lastModified": 1773345030,
-        "narHash": "sha256-fi0lkOgW8MlHIQIUbNInmx09SszOErTOeU2PfIoAPTM=",
+        "lastModified": 1773345063,
+        "narHash": "sha256-jbzLJX0qrD0obbOrKY5rkCXSOPo+dgK7Yex5s+y3oxU=",
         "owner": "Luvrok",
         "repo": "dwm",
-        "rev": "d27cecb630531b6fd8c4e954e4aa4c67d3f38167",
+        "rev": "bca7bfbda51428eac79285910c8b4c3fb98f6a04",
         "type": "github"
       },
       "original": {
         "owner": "Luvrok",
+        "ref": "dwm-with-ipc",
         "repo": "dwm",
         "type": "github"
       }

@@ -20,7 +20,7 @@
     textfox.url = "github:adriankarlen/textfox";
 
     # my stuff
-    dwm.url = "github:Luvrok/dwm";
+    dwm.url = "github:Luvrok/dwm?ref=dwm-with-ipc";
     dwm.flake = false;
     st.url = "github:Luvrok/st";
     st.flake = false;

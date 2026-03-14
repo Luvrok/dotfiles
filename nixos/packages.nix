@@ -112,6 +112,7 @@
     telegram-desktop
     discord
     aseprite
+    songrec
 
     # --- talking ---
     # discord
