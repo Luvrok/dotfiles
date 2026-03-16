@@ -4,7 +4,7 @@ return {
     require("neoscroll").setup({
       mappings = {
         "<C-u>",
-        "<C-d>",
+        -- "<C-d>",
       },
     })
     neoscroll = require("neoscroll")
