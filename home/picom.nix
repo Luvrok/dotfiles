@@ -58,12 +58,12 @@
         # Window spawn (open/show)
         triggers = ["open", "show"];
         preset = "appear";
-        curve = "cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+        curve = "cubic-bezier(0.25, 0.5, 0.94)";
       }, {
         # Window close/hide
         triggers = ["close", "hide"];
         preset = "disappear";
-        curve = "cubic-bezier(0.55, 0.06, 0.68, 0.19)";
+        curve = "cubic-bezier(0.55, 0.06, 0.7)";
       });
 
       # Preset refinements for macOS fidelity

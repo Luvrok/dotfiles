@@ -17,7 +17,6 @@
     nur.inputs.nixpkgs.follows = "nixpkgs";
 
     zapret-discord-youtube.url = "github:kartavkun/zapret-discord-youtube";
-    textfox.url = "github:adriankarlen/textfox";
 
     # my stuff
     dwm.url = "github:Luvrok/dwm?ref=dwm-with-ipc";
@@ -28,6 +27,7 @@
     dwmblocks.flake = false;
     dmenu.url = "github:Luvrok/dmenu";
     dmenu.flake = false;
+    textfoxy.url = "github:Luvrok/textfoxy";
 
     # zsh plugin manager
     zinit.url = "github:zdharma-continuum/zinit";

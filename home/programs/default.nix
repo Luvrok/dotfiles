@@ -3,7 +3,6 @@
 {
   imports = [
     ./firefox
-    ./librewolf
     ./neovim
     ./zsh
     ./rofi

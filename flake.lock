@@ -61,11 +61,11 @@
     "dwm": {
       "flake": false,
       "locked": {
-        "lastModified": 1773532821,
-        "narHash": "sha256-cqcxLJuWsOyRBJL2HBZrYfdmRBRrWWMoqH80WotwUpg=",
+        "lastModified": 1773691046,
+        "narHash": "sha256-G6uuRMV/DirT2u61dPFADG7ihMNSoO7RtVDNNtZGGeA=",
         "owner": "Luvrok",
         "repo": "dwm",
-        "rev": "2a0f9e2856e73d07931216a15a780442c90c8f83",
+        "rev": "9bda2c750ef10a7653e4a259f448e6b8b8003a87",
         "type": "github"
       },
       "original": {
@@ -94,7 +94,7 @@
     "firefox-addons": {
       "inputs": {
         "nixpkgs": [
-          "textfox",
+          "textfoxy",
           "nixpkgs"
         ]
       },
@@ -286,7 +286,7 @@
         "nixpkgs-pinned": "nixpkgs-pinned",
         "nur": "nur",
         "st": "st",
-        "textfox": "textfox",
+        "textfoxy": "textfoxy",
         "zapret-discord-youtube": "zapret-discord-youtube",
         "zinit": "zinit"
       }
@@ -337,22 +337,22 @@
         "type": "github"
       }
     },
-    "textfox": {
+    "textfoxy": {
       "inputs": {
         "firefox-addons": "firefox-addons",
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1770796658,
-        "narHash": "sha256-1XnY3gHpL+4Wd+Tq/EX1Npsq7HyFXO4uY/MmrFJp2m0=",
-        "owner": "adriankarlen",
-        "repo": "textfox",
-        "rev": "785b787b22b4fb3a4d8df0fa98098f4d18984868",
+        "lastModified": 1773755895,
+        "narHash": "sha256-oV/ZmHOmXH6HIcUKV9MqTTsLxDGU3BQCqAbEYJ79mnU=",
+        "owner": "Luvrok",
+        "repo": "textfoxy",
+        "rev": "77c1e4b3dafd87abda16aa2c835fb7ad66d22db5",
         "type": "github"
       },
       "original": {
-        "owner": "adriankarlen",
-        "repo": "textfox",
+        "owner": "Luvrok",
+        "repo": "textfoxy",
         "type": "github"
       }
     },
