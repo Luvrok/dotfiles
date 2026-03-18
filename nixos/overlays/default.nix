@@ -16,6 +16,7 @@ in
         src = inputs.dwm.outPath;
         buildInputs = (old.buildInputs or []) ++ (with pkgs; [
           libXcursor
+          libXres
           yajl
         ]);
       });
@@ -78,5 +79,6 @@ in
       };
     })
     inputs.nur.overlays.default
+    inputs.better-swallow.overlay
   ];
 }

@@ -1,4 +1,4 @@
-{ pkgs, pkgs-pinned, ... }:
+{ pkgs, pkgs-pinned, inputs, ... }:
 
 
 {
@@ -36,6 +36,7 @@
     j4-dmenu-desktop
     st
     dwmblocks
+    better-swallow
 
     # --- basic utilities ---
     bash

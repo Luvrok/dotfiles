@@ -18,8 +18,10 @@
 
     zapret-discord-youtube.url = "github:kartavkun/zapret-discord-youtube";
 
+    better-swallow.url = "github:afishhh/better-swallow";
+
     # my stuff
-    dwm.url = "github:Luvrok/dwm?ref=dwm-with-ipc";
+    dwm.url = "github:Luvrok/dwm";
     dwm.flake = false;
     st.url = "github:Luvrok/st";
     st.flake = false;
@@ -166,6 +168,7 @@
         fontconfig
         pkg-config
         yajl
+        libXres
       ];
     };
   };

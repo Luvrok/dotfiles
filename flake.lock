@@ -1,5 +1,24 @@
 {
   "nodes": {
+    "better-swallow": {
+      "inputs": {
+        "flake-utils": "flake-utils",
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1766408807,
+        "narHash": "sha256-iowos1QckBccDY4N1X0t5LmCHC32nD19pgHqIF2mJL8=",
+        "owner": "afishhh",
+        "repo": "better-swallow",
+        "rev": "91019bcacc6d3d5edbd760c0d6db39677df6b956",
+        "type": "github"
+      },
+      "original": {
+        "owner": "afishhh",
+        "repo": "better-swallow",
+        "type": "github"
+      }
+    },
     "deploy-rs": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -61,16 +80,15 @@
     "dwm": {
       "flake": false,
       "locked": {
-        "lastModified": 1773691046,
-        "narHash": "sha256-G6uuRMV/DirT2u61dPFADG7ihMNSoO7RtVDNNtZGGeA=",
+        "lastModified": 1773859851,
+        "narHash": "sha256-kpIlOLxA27MK6YV2vb5fFS8KENBMYLJ1Rgqmnow/FiQ=",
         "owner": "Luvrok",
         "repo": "dwm",
-        "rev": "9bda2c750ef10a7653e4a259f448e6b8b8003a87",
+        "rev": "91d7933e0e55e8947a9ea101d233af555fca8188",
         "type": "github"
       },
       "original": {
         "owner": "Luvrok",
-        "ref": "dwm-with-ipc",
         "repo": "dwm",
         "type": "github"
       }
@@ -152,6 +170,21 @@
       }
     },
     "flake-utils": {
+      "locked": {
+        "lastModified": 1676283394,
+        "narHash": "sha256-XX2f9c3iySLCw54rJ/CZs+ZK6IQy7GXNY4nSOyu2QG4=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "3db36a8b464d0c4532ba1c7dda728f4576d6d073",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "flake-utils_2": {
       "inputs": {
         "systems": "systems_2"
       },
@@ -191,16 +224,15 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1771008912,
-        "narHash": "sha256-gf2AmWVTs8lEq7z/3ZAsgnZDhWIckkb+ZnAo5RzSxJg=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "a82ccc39b39b621151d6732718e3e250109076fa",
-        "type": "github"
+        "lastModified": 1695145219,
+        "narHash": "sha256-Eoe9IHbvmo5wEDeJXKFOpKUwxYJIOxKUesounVccNYk=",
+        "path": "/nix/store/cz973qsjldbw4x7fx0rwcvhr9k645vz2-source",
+        "rev": "5ba549eafcf3e33405e5f66decd1a72356632b96",
+        "type": "path"
       },
       "original": {
-        "owner": "nixos",
-        "ref": "nixos-unstable",
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -223,6 +255,22 @@
     },
     "nixpkgs_2": {
       "locked": {
+        "lastModified": 1771008912,
+        "narHash": "sha256-gf2AmWVTs8lEq7z/3ZAsgnZDhWIckkb+ZnAo5RzSxJg=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "a82ccc39b39b621151d6732718e3e250109076fa",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_3": {
+      "locked": {
         "lastModified": 1728492678,
         "narHash": "sha256-9UTxR8eukdg+XZeHgxW5hQA9fIKHsKCdOIUycTryeVw=",
         "owner": "nixos",
@@ -237,7 +285,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_3": {
+    "nixpkgs_4": {
       "locked": {
         "lastModified": 1771008912,
         "narHash": "sha256-gf2AmWVTs8lEq7z/3ZAsgnZDhWIckkb+ZnAo5RzSxJg=",
@@ -276,13 +324,14 @@
     },
     "root": {
       "inputs": {
+        "better-swallow": "better-swallow",
         "deploy-rs": "deploy-rs",
         "disko": "disko",
         "dmenu": "dmenu",
         "dwm": "dwm",
         "dwmblocks": "dwmblocks",
         "home-manager": "home-manager",
-        "nixpkgs": "nixpkgs",
+        "nixpkgs": "nixpkgs_2",
         "nixpkgs-pinned": "nixpkgs-pinned",
         "nur": "nur",
         "st": "st",
@@ -340,7 +389,7 @@
     "textfoxy": {
       "inputs": {
         "firefox-addons": "firefox-addons",
-        "nixpkgs": "nixpkgs_2"
+        "nixpkgs": "nixpkgs_3"
       },
       "locked": {
         "lastModified": 1773755895,
@@ -376,8 +425,8 @@
     },
     "zapret-discord-youtube": {
       "inputs": {
-        "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs_3",
+        "flake-utils": "flake-utils_2",
+        "nixpkgs": "nixpkgs_4",
         "zapret-flowseal": "zapret-flowseal"
       },
       "locked": {
