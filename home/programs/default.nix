@@ -2,7 +2,7 @@
 
 {
   imports = [
-    ./browsers
+    ./librewolf
     ./neovim
     ./zsh
     ./rofi

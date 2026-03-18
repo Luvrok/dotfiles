@@ -37,8 +37,7 @@
     "dom.security.https_only_mode" = true;
     "dom.security.https_only_mode_ever_enabled" = true;
 
-    # === Disable all AI shit (are you serious firefox?) ===
-    # https://www.askvg.com/how-to-disable-and-remove-all-ai-features-in-mozilla-firefox/
+    # === Disable all AI shit ===
     "browser.ml.chat.enabled" = false;
     "browser.ml.enable" = false;
     "browser.ml.linkPreview.enabled" = false;

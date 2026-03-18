@@ -3,7 +3,7 @@
 {
   environment.variables = {
     TERMINAL = "kitty";
-    BROWSER = "firefox";
+    BROWSER = "librewolf";
     UDEVIL_CONF_PATH= "/etc/udevil/udevil.conf";
     PASSWORD_STORE_DIR="$HOME/.password-store";
     TERM="xterm-256color";

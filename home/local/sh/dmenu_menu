@@ -11,7 +11,7 @@ not_used="$(printf '%s\n' "$all" | grep -Fxvf <(printf '%s\n' "$used"))"
 cmd="$(
   printf '%s\n%s\n' "$used" "$not_used" |
     sed '/^$/d' |
-    rofi -dmenu -i -p "firefox,obsidian" -lines 10 -theme "$HOME"/.config/rofi/rofi-pass.rasi
+    rofi -dmenu -i -p "librewolf,obsidian" -lines 10 -theme "$HOME"/.config/rofi/rofi-pass.rasi
 )"
 
 [ -n "$cmd" ] || exit 1

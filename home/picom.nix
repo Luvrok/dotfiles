@@ -46,7 +46,7 @@
         "_NET_WM_STATE *= '_NET_WM_STATE_FULLSCREEN'"
       ];
 
-      unredir-if-possible-exclude = [ "class_g = 'mpv'" "class_g = 'Firefox'" ];
+      unredir-if-possible-exclude = [ "class_g = 'mpv'" "class_g = 'librewolf'" ];
 
       log-level = "warn";
       log-file = "${config.home.homeDirectory}/.cache/picom-log.log";
@@ -55,13 +55,13 @@
 
     extraConfig = ''
       animations = ({
-        # Window spawn (open/show)
-        triggers = ["open", "show"];
+        # Window spawn (open)
+        triggers = ["open"];
         preset = "appear";
         curve = "cubic-bezier(0.25, 0.5, 0.94)";
       }, {
-        # Window close/hide
-        triggers = ["close", "hide"];
+        # Window close
+        triggers = ["close"];
         preset = "disappear";
         curve = "cubic-bezier(0.55, 0.06, 0.7)";
       });

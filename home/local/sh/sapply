@@ -1,7 +1,6 @@
 #!/bin/sh
 
 pushd ~/HOME/infra/dotfiles
-# sudo rm -rf $HOME/.mozilla/firefox/*/user.js &&
 sudo nixos-rebuild --flake $HOME/HOME/infra/dotfiles#$whoami switch
 
 if [ $? -eq 0 ]; then
