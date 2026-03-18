@@ -1,8 +1,8 @@
-{ lib, config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   imports = [
-    ./firefox
+    ./browsers
     ./neovim
     ./zsh
     ./rofi

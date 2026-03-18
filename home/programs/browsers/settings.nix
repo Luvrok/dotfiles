@@ -64,12 +64,14 @@
     "beacon.enabled" = false;
     "device.sensors.enabled" = false;
     "geo.enabled" = false;
-    "network.security.esni.enabled" = true;
     "network.predictor.enabled" = false;
+    "privacy.sanitize.sanitizeOnShutdown" = false;
+    "privacy.clearOnShutdown.cookies" = false;
+    "privacy.clearOnShutdown.history" = false;
+    "network.cookie.lifetimePolicy" = 0;
     "browser.urlbar.speculativeConnect.enabled" = false;
     "browser.urlbar.usepreloadedtopurls.enabled" = false;
     "network.ftp.enable" = false;
-    "privacy.resistFingerprinting" = false;
 
     # === Telemetry OFF ===
     "browser.newtabpage.activity-stream.feeds.telemetry" = false;
@@ -96,7 +98,11 @@
     "experiments.supported" = false;
     "network.allow-experiments" = false;
     "app.normandy.enabled" = false;
-    "app.shield.optoutstudies.enabled" = true;
+    "messaging-system.rsexperimentloader.enabled" = false;
+    "browser.newtabpage.activity-stream.feeds.section.topstories" = false;
+    "browser.newtabpage.activity-stream.showSponsoredTopSites" = false;
+    "browser.newtabpage.activity-stream.showSponsored" = false;
+    "browser.discovery.enabled" = false;
 
     # === Pocket OFF ===
     "browser.newtabpage.activity-stream.section.highlights.includePocket" = false;
@@ -110,9 +116,9 @@
     "browser.fullscreen.autohide" = false;
     "browser.newtabpage.activity-stream.topSitesRows" = 0;
     "browser.urlbar.quickactions.enabled" = true;
-    "browser.search.hiddenOneOffs" = "Google,Yahoo,Bing,Amazon.com,Twitter";
     "browser.newtabpage.activity-stream.improvesearch.topSiteSearchShortcuts" = false;
     "browser.urlbar.suggest.bookmark" = false;
+    "browser.toolbars.bookmarks.visibility" = "never";
     "browser.urlbar.suggest.quicksuggest.nonsponsored" = false;
     "browser.urlbar.suggest.quicksuggest.sponsored" = false;
     "browser.urlbar.suggest.searches" = false;
@@ -121,19 +127,17 @@
     "findbar.modalHighlight" = true;
     "browser.startup.page" = 3;
     "layout.css.prefers-color-scheme.content-override" = 0;
-    "intl.accept_languages" = "ru-RU, ru, en-US, en";
-    "intl.locale.requested" = "ru, en-US";
     "browser.contentblocking.report.lockwise.enabled" = false;
     "extensions.fxmonitor.firstAlertShown" = false;
     "browser.uitour.enabled" = false;
     "editor.resizing.enabled_by_default" = true;
     "dom.push.enabled" = false;
     "dom.push.connection.enabled" = false;
-    "dom.battery.enabled" = "false";
+    "dom.battery.enabled" = false;
     "dom.event.clipboardevents.enabled" = false;
     "dom.event.contextmenu.enabled" = true;
     "devtools.chrome.enabled" = true;
-    "devtools.debugger.remote-enabled" = true;
+    "devtools.debugger.remote-enabled" = false;
 
     # === Clipboard / welcome ===
     "dom.events.asyncClipboard.clipboardItem" = true;
@@ -141,6 +145,11 @@
 
     # === Fonts override ===
     "browser.display.use_document_fonts" = 1;
+    "font.default.x-western" = "sans-serif";
+    "font.name.sans-serif.x-western" = "JetBrainsMonoNL Nerd Font Propo";
+    "font.name.monospace.x-western" = "JetBrainsMonoNL Nerd Font Propo";
+    "font.size.variable.x-western" = 14;
+    "font.size.fixed.x-western" = 14;
 
     # === Downloads / Fullscreen / Misc ===
     "browser.download.start_downloads_in_tmp_dir" = true;
