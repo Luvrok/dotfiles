@@ -25,6 +25,11 @@ in
       st = prev.st.overrideAttrs (_: {
         version = "st-0.9.3";
         src = inputs.st.outPath;
+        buildInputs = with pkgs; [
+          libX11
+          libXft
+          imlib2
+        ];
       });
     })
     (final: prev: {

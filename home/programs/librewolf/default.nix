@@ -97,6 +97,11 @@ in
         enable = true;
         profiles = ["life" "work"];
       };
+
+      firefox = {
+        enable = true;
+        profiles = ["life" "work"];
+      };
     };
 
     config = {
@@ -179,6 +184,11 @@ in
   };
 
   programs.librewolf = {
+    enable = true;
+    inherit policies profiles nativeMessagingHosts;
+  };
+
+  programs.firefox = {
     enable = true;
     inherit policies profiles nativeMessagingHosts;
   };

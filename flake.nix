@@ -169,6 +169,7 @@
         pkg-config
         yajl
         libXres
+        imlib2
       ];
     };
   };

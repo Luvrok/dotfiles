@@ -11,6 +11,8 @@
     opacityRules = [
       "100:class_g = 'kitty' && focused"
       "90:class_g = 'kitty' && !focused"
+      "100:class_g = 'st' && focused"
+      "90:class_g = 'st' && !focused"
     ];
 
     settings = {
@@ -20,7 +22,6 @@
       fade-in-step = 0.03;
       fade-out-step = 0.03;
       fade-delta = 6;
-      no-fading-openclose = true;
 
       blur = {
         method = "dual_kawase";
@@ -46,62 +47,12 @@
         "_NET_WM_STATE *= '_NET_WM_STATE_FULLSCREEN'"
       ];
 
+      unredir-if-possible = true;
       unredir-if-possible-exclude = [ "class_g = 'mpv'" "class_g = 'librewolf'" ];
 
       log-level = "warn";
       log-file = "${config.home.homeDirectory}/.cache/picom-log.log";
       show-all-xerrors = true;
     };
-
-    extraConfig = ''
-      animations = ({
-        # Window spawn (open)
-        triggers = ["open"];
-        preset = "appear";
-        curve = "cubic-bezier(0.25, 0.5, 0.94)";
-      }, {
-        # Window close
-        triggers = ["close"];
-        preset = "disappear";
-        curve = "cubic-bezier(0.55, 0.06, 0.7)";
-      });
-
-      # Preset refinements for macOS fidelity
-      appear = {
-          *knobs = { scale = 0.9; duration = 0.24; };
-          scale-x = { curve = "cubic-bezier(0.25, 0.46, 0.45, 0.94)"; };
-          opacity = { duration = 0.16; start = 0.85; end = 1.0; };
-      };
-
-      disappear = {
-          *knobs = { scale = 0.9; duration = 0.18; };
-          scale-x = { curve = "cubic-bezier(0.55, 0.06, 0.68, 0.19)"; };
-          opacity = { duration = 0.12; start = 1.0; end = 0.8; };
-      };
-
-      fly-out = {
-          *knobs = { duration = 0.18; };
-          v-timing = { curve = "cubic-bezier(0.4, 0, 0.2, 1)"; };
-          opacity = { start = 1.0; end = 0.7; };
-      };
-
-      fly-in = {
-          *knobs = { duration = 0.2; };
-          v-timing = { curve = "cubic-bezier(0.42, 0, 0.58, 1)"; };
-          opacity = { start = 0.7; end = 1.0; };
-      };
-
-      slide-in = {
-          *knobs = { duration = 0.22; };
-          v-timing = { curve = "cubic-bezier(0.0, 0, 0.2, 1)"; };
-          opacity = { start = 0.9; end = 1.0; };
-      };
-
-      slide-out = {
-          *knobs = { duration = 0.22; };
-          v-timing = { curve = "cubic-bezier(0.4, 0, 0.2, 1)"; };
-          opacity = { start = 1.0; end = 0.9; };
-      };
-    '';
   };
 }

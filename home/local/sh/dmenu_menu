@@ -1,6 +1,7 @@
 #!/bin/sh
 
 cache_file="${HOME}/.local/share/dmenu_cache"
+
 mkdir -p "$(dirname "$cache_file")"
 touch "$cache_file"
 
@@ -8,30 +9,42 @@ all="$(dmenu_path | grep -E '[[:alnum:]]')"
 used="$(cut -f2- "$cache_file")"
 not_used="$(printf '%s\n' "$all" | grep -Fxvf <(printf '%s\n' "$used"))"
 
-cmd="$(
+menu="$(
   printf '%s\n%s\n' "$used" "$not_used" |
     sed '/^$/d' |
-    rofi -dmenu -i -p "librewolf,obsidian" -lines 10 -theme "$HOME"/.config/rofi/rofi-pass.rasi
+    awk '!seen[$0]++'
 )"
 
-[ -n "$cmd" ] || exit 1
+cmd="$(
+  printf '%s\n' "$menu" |
+    rofi -dmenu -i -p "run" -lines 10 -theme "$HOME/.config/rofi/rofi-pass.rasi"
+)"
 
-if ! grep -Fxq "$cmd" "$cache_file"; then
-  printf '1\t%s\n' "$cmd" >> "$cache_file"
+[ -n "$cmd" ] || exit 0
+
+printf '%s\n' "$menu" | grep -Fxq "$cmd" || exit 0
+
+tmp_cache="$(mktemp)"
+
+if awk -F '\t' -v c="$cmd" '$2 == c { found=1 } END { exit !found }' "$cache_file"; then
+  awk -F '\t' -v OFS='\t' -v c="$cmd" '
+    $2 == c { print $1 + 1, $2; next }
+    { print $1, $2 }
+  ' "$cache_file" | sort -t "$(printf '\t')" -k1,1nr > "$tmp_cache"
 else
-  tmp_cache="$(mktemp)"
-  awk -v c="$cmd" -F '\t' '
-    $2 == c { print ($1 + 1) "\t" $2; next }
-    { print }
-  ' "$cache_file" | sort -nr > "$tmp_cache"
-  mv "$tmp_cache" "$cache_file"
+  {
+    printf '1\t%s\n' "$cmd"
+    cat "$cache_file"
+  } | sort -t "$(printf '\t')" -k1,1nr > "$tmp_cache"
 fi
+
+mv "$tmp_cache" "$cache_file"
 
 case "$cmd" in
   *\;)
     "$TERMINAL" -e "$(printf '%s' "$cmd" | cut -d';' -f1)"
     ;;
   *)
-    "$cmd" & disown
+    "$cmd" >/dev/null 2>&1 & disown
     ;;
 esac
