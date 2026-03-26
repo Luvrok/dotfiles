@@ -19,6 +19,9 @@
     defaultApplications = {
       "application/pdf" = "zathura.desktop";
       "inode/directory" = [ "thunar.desktop" ];
+      "text/html" = "librewolf.desktop";
+      "x-scheme-handler/http" = "librewolf.desktop";
+      "x-scheme-handler/https" = "librewolf.desktop";
     };
   };
 

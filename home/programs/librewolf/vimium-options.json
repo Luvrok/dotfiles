@@ -1,0 +1,4 @@
+{
+  "settingsVersion": "2.4.0",
+  "userDefinedLinkHintCss": "div > .vimiumHintMarker {\n/* linkhint boxes */\nbackground: #282828;\nborder: 1px solid #d65d0e;\n}\n\ndiv > .vimiumHintMarker span {\n/* linkhint text */\ncolor: #ebdbb2;\nfont-size: 13px;\n}\n\ndiv > .vimiumHintMarker > .matchingCharacter {\n}\n\ndiv.internal-vimium-hint-marker {\npadding: 1px 3px;\nborder-radius: 0px;\n}\n\ndiv.internal-vimium-hint-marker span {\nfont-family: JetBrainsMonoNL NFP;\nfont-weight: normal;\n}"
+}

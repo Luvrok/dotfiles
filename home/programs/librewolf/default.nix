@@ -1,4 +1,4 @@
-{ pkgs, system, config, inputs, ... }:
+{ pkgs, system, config, lib, inputs, ... }:
 
 let
   settings = import ./settings.nix { inherit system pkgs; };
@@ -24,6 +24,18 @@ let
         force = true;
         engines = settings.engines // { };
       };
+    };
+  };
+
+  browsers = {
+    firefox = {
+      profileDir = ".mozilla/firefox";
+      profiles = profiles;
+    };
+
+    librewolf = {
+      profileDir = ".librewolf";
+      profiles = profiles;
     };
   };
 
@@ -57,6 +69,7 @@ let
     } //
     builtins.listToAttrs [
       (extension "sidebery" "{3c078156-979c-498b-8990-85f7987dd929}")
+      (extension "vimium-ff" "{d7742d87-e61d-4b78-b8a1-b469842139fa}")
       (extension "sponsorblock" "sponsorBlocker@ajay.app")
       (extension "ublock-origin" "uBlock0@raymondhill.net")
       (extension "privacy-badger17" "jid1-MnnxcxisBPnSXQ@jetpack")
@@ -67,6 +80,7 @@ let
       (extension "foxyproxy-standard" "foxyproxy@eric.h.jung")
       (extension "video-downloadhelper" "{b9db16a4-6edc-47ec-a1f4-b86292ed211d}")
       (extension "immersive-translate" "{5efceaa7-f3a2-4e59-a54b-85319448e305}")
+      (extension "port-authority" "{6c00218c-707a-4977-84cf-36df1cef310f}")
       (extension "mtab" "contact@maxhu.dev")
     ];
   };
@@ -83,7 +97,56 @@ let
       allowed_in_private_browsing = true;
     };
   };
-in
+
+  customKeys = {
+    key_close = {
+      modifiers = "shift";
+      key = "N";
+    };
+
+    key_cut = {};
+    key_switchTextDirection = {};
+    key_redo = {
+      modifiers = "accel";
+      key = "Y";
+    };
+    viewBookmarksSidebarKb = {};
+    viewGenaiChatSidebarKb = {};
+    key_toggleReaderMode = {};
+    key_showAllTabs = {};
+    key_sanitize = {};
+    manBookmarkKb = {};
+    addBookmarkAsKb = {};
+    bookmarkAllTabsKb = {};
+    key_viewInfo = {};
+    key_closeWindow = {};
+    key_savePage = {};
+    printKb = {};
+    key_quitApplication = {};
+    key_quickRestart = {};
+    key_findAgain = {};
+    key_jsdebugger = {};
+
+    goBackKb = {
+      modifiers = "shift";
+      key = "H";
+    };
+
+    goForwardKb = {
+      modifiers = "shift";
+      key = "L";
+    };
+
+    goHome = {
+      modifiers = "shift";
+      keycode = "VK_HOME";
+    };
+
+    key_reload2 = {};
+    key_reload_skip_cache2 = {};
+  };
+
+  in
 {
   imports = [
     inputs.textfoxy.homeManagerModules.default
@@ -182,6 +245,17 @@ in
       '';
     };
   };
+
+  home.file = lib.mkMerge (
+    lib.flatten (
+      lib.mapAttrsToList (_browserName: browser:
+        lib.mapAttrsToList (profileName: _: {
+          "${browser.profileDir}/${profileName}/customKeys.json".text =
+            builtins.toJSON customKeys;
+        }) browser.profiles
+      ) browsers
+    )
+  );
 
   programs.librewolf = {
     enable = true;
