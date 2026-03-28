@@ -1,0 +1,6 @@
+#!/usr/bin/env zsh
+
+sel=$(ps -eo pid,pgid,user,pcpu,pmem,cmd --sort=-pcpu --no-headers | rofi -dmenu -i -p "run" -lines 10 -theme "$HOME/.config/rofi/rofi-pass.rasi" -theme-str "window { width: 1280px; }") || exit
+pid=$(awk '{print $1}' <<< "$sel")
+pgid=$(awk '{print $2}' <<< "$sel")
+[ -n "$pgid" ] && kill -- -"$pgid"
