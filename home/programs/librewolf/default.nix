@@ -100,16 +100,18 @@ let
 
   customKeys = {
     key_close = {
-      modifiers = "shift";
+      modifiers = "alt";
       key = "N";
     };
 
     key_cut = {};
     key_switchTextDirection = {};
+
     key_redo = {
       modifiers = "accel";
       key = "Y";
     };
+
     viewBookmarksSidebarKb = {};
     viewGenaiChatSidebarKb = {};
     key_toggleReaderMode = {};
@@ -128,12 +130,12 @@ let
     key_jsdebugger = {};
 
     goBackKb = {
-      modifiers = "shift";
+      modifiers = "alt";
       key = "H";
     };
 
     goForwardKb = {
-      modifiers = "shift";
+      modifiers = "alt";
       key = "L";
     };
 

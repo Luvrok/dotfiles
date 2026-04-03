@@ -4,10 +4,18 @@ update_status() {
     status=$(xset -q | grep LED)
     led_indicator=$(echo $status | awk '{ print substr($10, 5, 1) }')
 
-    if [ "$led_indicator" -eq "1" ]; then
-        echo " [RU]"
+    PIDFILE="/tmp/recpid"
+
+    if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+        prefix=""
     else
-        echo " [EN]"
+        prefix=" "
+    fi
+
+    if [ "$led_indicator" -eq "1" ]; then
+        echo "${prefix}[RU]"
+    else
+        echo "${prefix}[EN]"
     fi
 }
 

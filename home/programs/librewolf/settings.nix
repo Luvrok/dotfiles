@@ -24,6 +24,7 @@
     "media.rdd-ffmpeg.enabled" = true;
     "media.rdd-vpx.enabled" = false;
     "media.gmp-widevinecdm.enabled" = true;
+    "webgl.disabled" = false;
 
     # === Updates / warnings ===
     "app.update.auto" = false;

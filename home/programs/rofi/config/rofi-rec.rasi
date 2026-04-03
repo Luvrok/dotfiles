@@ -9,11 +9,12 @@ configuration {
 }
 
 window {
-    location:                    east;
-    anchor:                      east;
-    width:                       85px;
-    x-offset:                    -40px;
+    location:                    center;
+    anchor:                      center;
+    width:                       0px;
+    x-offset:                    0px;
     y-offset:                    0px;
+    width:                       260px;
 
     margin:                      0px;
     padding:                     0px;
@@ -47,7 +48,7 @@ element-text selected {
     text-color:                  @SEL;
 }
 element-text {
-    padding:                     20px 0px;
+    padding:                     2px 4px;
     vertical-align:              0.5;
     horizontal-align:            0.5;
     cursor:                      pointer;

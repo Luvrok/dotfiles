@@ -80,11 +80,11 @@
     "dwm": {
       "flake": false,
       "locked": {
-        "lastModified": 1774278541,
-        "narHash": "sha256-nPJ6oX4EcGJHeQ+e5uVTDLOhJPcAT2sLuE57hObWytc=",
+        "lastModified": 1775225628,
+        "narHash": "sha256-bm1UfTjdMCYWjOXxMoZaJLZQYs8GZR5Is3fmyrOcVeg=",
         "owner": "Luvrok",
         "repo": "dwm",
-        "rev": "e0b5b0ef211e9aa0229f562597c63957b5d6dc2f",
+        "rev": "162e007aaa301436feb796675efef7aec50d254c",
         "type": "github"
       },
       "original": {
@@ -96,11 +96,11 @@
     "dwmblocks": {
       "flake": false,
       "locked": {
-        "lastModified": 1770764848,
-        "narHash": "sha256-9E0AuTChv2BYX5eZRBLpqt6eZF9HWugNeb8D9jmsxvs=",
+        "lastModified": 1775223792,
+        "narHash": "sha256-6jiAG3YvouZIEXtT7/zm+DuEd/UCkp4v1cknqGciQxU=",
         "owner": "Luvrok",
         "repo": "dwmblocks-async",
-        "rev": "72940bfe0c62ca361cd3489b841b7cdac7d7174b",
+        "rev": "fa447e60ca257c983336830b324e38c0dce83e88",
         "type": "github"
       },
       "original": {

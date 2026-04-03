@@ -7,7 +7,7 @@
   themeFile = "GruvboxMaterialDarkHard";
   settings = {
     font_family = "JetBrainsMonoNL Nerd Font";
-    font_size = "13.0";
+    font_size = "12.0";
 
     background_opacity = "0.95";
 

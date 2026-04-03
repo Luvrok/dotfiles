@@ -32,6 +32,7 @@
     xwininfo
     xinit
     xdg-desktop-portal
+    xdpyinfo
     dmenu
     j4-dmenu-desktop
     st
@@ -61,6 +62,8 @@
     lshw
     mesa-demos
     vnstat
+    sysstat
+    bat
     testdisk
     feh
     pciutils
@@ -84,8 +87,6 @@
     alsa-utils
     ddcutil
     home-manager
-    # iwmenu
-    # bzmenu
 
     # --- networking ---
     openssl
@@ -99,7 +100,9 @@
     jq
 
     # --- multimedia ---
-    ffmpeg
+    ffmpeg-full
+    v4l-utils
+    pulseaudioFull
 
     # --- apps ---
     qbittorrent

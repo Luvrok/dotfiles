@@ -1,5 +1,3 @@
-@import "colors.rasi"
-@import "border.rasi"
 @import "font.rasi"
 @import "theme.rasi"
 
