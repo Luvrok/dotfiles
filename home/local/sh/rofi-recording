@@ -78,7 +78,8 @@ stop_recording() {
   if is_recording; then
     kill -2 "$(cat "$PIDFILE")" 2>/dev/null || true
     cleanup_recording_state
-    # notify "Recording ended"
+    sleep 1
+    notify "Recording ended"
   else
     cleanup_recording_state
     notify "No active recording"
@@ -121,7 +122,8 @@ watch_recording() {
 
     if [[ -f "$PIDFILE" ]] && [[ "$(cat "$PIDFILE" 2>/dev/null)" = "$recpid" ]]; then
       cleanup_recording_state
-      # notify "Recording ended"
+      sleep 1
+      notify "Recording ended"
     fi
   ) >/dev/null 2>&1 &
 }
