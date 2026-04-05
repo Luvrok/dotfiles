@@ -22,7 +22,7 @@
       implementation = "broker";
     };
 
-    displayManager.ly = (import ./ly.nix { inherit pkgs; });
+    displayManager.ly = (import ./ly.nix {});
     pipewire = (import ./pipewire.nix { });
     syncthing = (import ./syncthing.nix { inherit username; });
     xserver = (import ./xserver.nix { inherit config pkgs username; });

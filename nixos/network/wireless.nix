@@ -1,4 +1,4 @@
-{ lib, config, ... }:
+{ ... }:
 
 {
   networking.wireless.iwd = {

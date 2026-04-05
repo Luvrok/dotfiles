@@ -1,4 +1,4 @@
-{ lib, config, pkgs, username, ... }:
+{ username, ... }:
 
 {
   networking = {

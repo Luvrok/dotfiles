@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ...}:
+{ config, pkgs, ...}:
 
 let
   pinentryRofiThemed = pkgs.symlinkJoin {

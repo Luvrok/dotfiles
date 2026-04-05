@@ -1,4 +1,4 @@
-{ modulesPath, lib, pkgs, ... }:
+{ modulesPath, pkgs, ... }:
 
 # nix run --no-write-lock-file github:nix-community/nixos-anywhere -- --flake .#sirius root@45.137.99.130
 # nixos-rebuild switch --flake .#sirius --target-host root@45.137.99.130 --sudo

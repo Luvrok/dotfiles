@@ -1,8 +1,7 @@
-{ config, lib, pkgs, inputs, ... }:
+{ pkgs, inputs, ... }:
 let
   mpv = ./mpv/mpv.conf;
   input = ./mpv/input.conf;
-  memo = ./mpv/memo.conf;
 in
 {
   imports = [
@@ -42,13 +41,6 @@ in
           pkg-config
         ];
         makeFlags = ["PREFIX=$(out)"];
-        # postPatch = (old.postPatch or "") + ''
-        #   # gcc15
-        #   if grep -q 'void termhandler()' src/main.c; then
-        #     substituteInPlace src/main.c \
-        #       --replace-fail 'void termhandler()' 'void termhandler(int signum)'
-        #   fi
-        # '';
         postPatch = ''
           if grep -q 'void termhandler()' src/main.c; then
             substituteInPlace src/main.c \

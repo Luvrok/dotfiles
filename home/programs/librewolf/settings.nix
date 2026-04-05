@@ -1,4 +1,4 @@
-{ pkgs, system, ... }: {
+{ pkgs, ... }: {
   settings = {
     # === shyfox ===
     "toolkit.legacyUserProfileCustomizations.stylesheets" = true;

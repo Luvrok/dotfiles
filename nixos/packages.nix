@@ -1,4 +1,4 @@
-{ pkgs, pkgs-pinned, inputs, ... }:
+{ pkgs, pkgs-pinned, ... }:
 
 
 {

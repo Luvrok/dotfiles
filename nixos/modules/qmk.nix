@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ pkgs, ... }:
 
 {
   hardware.keyboard.qmk.enable = true;
