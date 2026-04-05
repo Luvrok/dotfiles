@@ -113,7 +113,7 @@
     veracrypt
     monero-gui
     telegram-desktop
-    discord
+    # discord
     aseprite
     songrec
 

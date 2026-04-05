@@ -110,7 +110,7 @@
       };
       modules = [
         ./nixos
-        ./nixos/hardware/amd.nix
+        ./nixos/hardware/nvidia.nix
         ./hosts/sun/hardware-configuration.nix
         ./hosts/sun/env.nix
 
@@ -118,14 +118,14 @@
         {
           services.zapret-discord-youtube = {
             enable = true;
-            configName = "general(ALT2)";
+            configName = "general(ALT)";
           };
         }
 
         home-manager.nixosModules.home-manager
         (make_hm "dash")
         ({ config, pkgs, ... }: {
-          boot.kernelPackages = pkgs.linuxPackages_latest;
+          boot.kernelPackages = pkgs.linuxPackages_6_12;
         })
       ];
     };

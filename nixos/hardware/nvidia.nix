@@ -16,9 +16,9 @@
 
     intel-compute-runtime
     intel-media-driver
-    vaapiVdpau
+    libva-vdpau-driver
     libvdpau-va-gl
-    vaapiIntel
+    intel-vaapi-driver
     (btop.override { cudaSupport = true; })
   ];
 
@@ -31,24 +31,25 @@
         intel-media-driver
         libva-vdpau-driver
         libvdpau-va-gl
-        vaapiIntel
+        intel-vaapi-driver
         nvidia-vaapi-driver
       ];
     };
 
-    nvidia={
+    nvidia = {
       modesetting.enable = true;
       powerManagement = {
         enable = true;
         finegrained = false;
       };
 
-      open = false;
+      open = true;
       nvidiaSettings = true;
-      package = config.boot.kernelPackages.nvidiaPackages.production;
+      # package = config.boot.kernelPackages.nvidiaPackages.stable;
 
       prime = {
         offload.enable = true;
+        offload.enableOffloadCmd = true;
         intelBusId = "PCI:0:2:0";
         nvidiaBusId = "PCI:1:0:0";
       };
