@@ -1,0 +1,53 @@
+#!/bin/sh
+
+TITLE="android-webcam"
+DEVICE="/dev/video0"
+PIDFILE="/tmp/android-webcam-ffplay.pid"
+
+WIN_W=640
+WIN_H=480
+OFFSET=12
+
+VIDEO_SIZE="1440x1080"
+VF="crop=1440:1080:(iw-1440)/2:0:exact=1,scale=${WIN_W}:${WIN_H}"
+
+# toggle off
+if [ -f "$PIDFILE" ]; then
+    PID="$(cat "$PIDFILE" 2>/dev/null)"
+
+    if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
+        kill "$PID"
+        rm -f "$PIDFILE"
+        notify-send "webcam" "stopped"
+        exit 0
+    fi
+
+    rm -f "$PIDFILE"
+fi
+
+# device check
+if [ ! -e "$DEVICE" ]; then
+    notify-send "webcam" "device not found"
+    exit 1
+fi
+
+SCREEN="$(xdpyinfo | awk '/dimensions:/ {print $2; exit}')"
+SCREEN_W="${SCREEN%x*}"
+SCREEN_H="${SCREEN#*x}"
+
+LEFT=$((SCREEN_W - WIN_W - OFFSET))
+TOP=$((SCREEN_H - WIN_H - OFFSET))
+
+ffplay \
+    -window_title "$TITLE" \
+    -left "$LEFT" \
+    -top "$TOP" \
+    -f v4l2 \
+    -input_format mjpeg \
+    -video_size "$VIDEO_SIZE" \
+    -vf "$VF" \
+    "$DEVICE" >/dev/null 2>&1 &
+
+echo $! > "$PIDFILE"
+
+notify-send "webcam" "started"
