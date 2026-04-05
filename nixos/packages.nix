@@ -12,8 +12,6 @@
     gamescope
     tor
     cargo # need for nixd lsp build
-    python312
-    nodejs_25
     yajl
     chromium # need for via qmk
     monero-cli # need for monero-gui for some reason cant sync without monero-cli

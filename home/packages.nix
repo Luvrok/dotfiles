@@ -6,11 +6,10 @@
     direnv
     kitty
     fish
-    neofetch
+    fastfetch
     p7zip
     tree-sitter
     rnnoise-plugin
-    helvum
     ly
     nsxiv
     figlet

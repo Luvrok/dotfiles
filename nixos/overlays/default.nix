@@ -33,7 +33,7 @@ in
       });
     })
     (final: prev: {
-      dwmblocks = prev.dwmblocks.overrideAttrs {
+      dwmblocks = prev.dwmblocks.overrideAttrs (old: {
         src = inputs.dwmblocks.outPath;
         buildInputs = with pkgs; [
           libX11
@@ -42,7 +42,20 @@ in
           pkg-config
         ];
         makeFlags = ["PREFIX=$(out)"];
-      };
+        # postPatch = (old.postPatch or "") + ''
+        #   # gcc15
+        #   if grep -q 'void termhandler()' src/main.c; then
+        #     substituteInPlace src/main.c \
+        #       --replace-fail 'void termhandler()' 'void termhandler(int signum)'
+        #   fi
+        # '';
+        postPatch = ''
+          if grep -q 'void termhandler()' src/main.c; then
+            substituteInPlace src/main.c \
+              --replace-fail 'void termhandler()' 'void termhandler(int signum)'
+          fi
+        '';
+      });
     })
     (final: prev: {
       dmenu = prev.dmenu.overrideAttrs {

@@ -12,7 +12,6 @@
     ./gpg.nix
     ./mpv.nix
     ./zathura.nix
-    ./neofetch.nix
   ];
 
   programs = {
