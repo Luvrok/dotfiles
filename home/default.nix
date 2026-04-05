@@ -45,7 +45,7 @@
       dwm.selbgcolor: #d65d0e
       dwm.selfgcolor: #fbf1c7
 
-      font: JetBrainsMonoNL Nerd Font:size=12
+      font: JetBrainsMonoNL Nerd Font:size=11
 
       ! normal
       normfgcolor:        #ebdbb2

@@ -33,6 +33,7 @@
     xinit
     xdg-desktop-portal
     xdpyinfo
+    slop
     dmenu
     j4-dmenu-desktop
     st

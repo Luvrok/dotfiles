@@ -80,11 +80,11 @@
     "dwm": {
       "flake": false,
       "locked": {
-        "lastModified": 1775225628,
-        "narHash": "sha256-bm1UfTjdMCYWjOXxMoZaJLZQYs8GZR5Is3fmyrOcVeg=",
+        "lastModified": 1775348773,
+        "narHash": "sha256-h7TR/fXsyZ5NC6vXXoXl+PHejE2GwBho9B+7oXn/TL4=",
         "owner": "Luvrok",
         "repo": "dwm",
-        "rev": "162e007aaa301436feb796675efef7aec50d254c",
+        "rev": "a6b7b8b787fc62ba4aeb179d0cc1988589c8163d",
         "type": "github"
       },
       "original": {
@@ -287,11 +287,11 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1771008912,
-        "narHash": "sha256-gf2AmWVTs8lEq7z/3ZAsgnZDhWIckkb+ZnAo5RzSxJg=",
+        "lastModified": 1775036866,
+        "narHash": "sha256-ZojAnPuCdy657PbTq5V0Y+AHKhZAIwSIT2cb8UgAz/U=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "a82ccc39b39b621151d6732718e3e250109076fa",
+        "rev": "6201e203d09599479a3b3450ed24fa81537ebc4e",
         "type": "github"
       },
       "original": {
@@ -430,11 +430,11 @@
         "zapret-flowseal": "zapret-flowseal"
       },
       "locked": {
-        "lastModified": 1771001756,
-        "narHash": "sha256-Z643fn/QM+pa2LyBrZ8IVlArmnhtickzMof1IOHe9po=",
+        "lastModified": 1775231936,
+        "narHash": "sha256-jvyi6D2Ps0zicpIcn24tacIymQOyUVY6lr6B5RLQkx8=",
         "owner": "kartavkun",
         "repo": "zapret-discord-youtube",
-        "rev": "67a203bb1f9b7b0023ee8d24529bb4a276bd8cd5",
+        "rev": "b3e3f854f8d9cf35ddbcbfa7a03cb0a1334dd7eb",
         "type": "github"
       },
       "original": {
@@ -446,11 +446,11 @@
     "zapret-flowseal": {
       "flake": false,
       "locked": {
-        "lastModified": 1770999432,
-        "narHash": "sha256-w7q8rp1qBu1GmHnQLa0UgFD2exBDUIQ4pS4ZRkIt2Bk=",
+        "lastModified": 1775228068,
+        "narHash": "sha256-LAbCZRwoGxQcgO1nio33NlxBXIdsTQJxHQxu1RWctIA=",
         "owner": "Flowseal",
         "repo": "zapret-discord-youtube",
-        "rev": "7952e58ee8b068b731d55d2ef8f491fd621d6ff0",
+        "rev": "22a9ca3bc067441789c83bd80c00d38e54be51c4",
         "type": "github"
       },
       "original": {

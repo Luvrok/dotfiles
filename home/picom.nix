@@ -40,7 +40,7 @@
       focus-exclude = "x = 0 && y = 0 && override_redirect = true";
 
       blur-background-exclude = [
-        "class_g != 'kitty' && class_g != 'dmenu' && class_g != 'Rofi'"
+        "class_g != 'kitty' && class_g != 'dmenu' && class_g != 'Rofi' && class_g != 'st-256color'"
       ];
 
       fade-exclude = [

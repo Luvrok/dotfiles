@@ -13,37 +13,11 @@ PRESET="ultrafast"
 OUTPUT_VOLUME="0.35"
 MIC_VOLUME="3.0"
 
-MIC_SOURCE_WPCTL="$(wpctl status | grep -A5 'Settings' | grep -A 5 'Audio/Source' | awk '{print $3}')"
-MIC_SOURCE_PACTL="$(pactl get-default-source)"
-
-OUTPUT_SOURCE_WPCTL="$(wpctl status | grep 'Audio/Sink' | awk '{print $3}').monitor"
-OUTPUT_SOURCE_PACTL="$(pactl get-default-sink).monitor"
-
 ROFI_CMD=(
   rofi
   -dmenu
   -theme "$HOME/.config/rofi/rofi-rec.rasi"
 )
-
-get_mic_source() {
-  if command -v pactl >/dev/null 2>&1; then
-    printf '%s\n' "$MIC_SOURCE_PACTL"
-  elif command -v wpctl >/dev/null 2>&1; then
-    printf '%s\n' "$MIC_SOURCE_WPCTL"
-  else
-    printf '%s\n' "default"
-  fi
-}
-
-get_output_source() {
-  if command -v pactl >/dev/null 2>&1; then
-    printf '%s\n' "$OUTPUT_SOURCE_PACTL"
-  elif command -v wpctl >/dev/null 2>&1; then
-    printf '%s\n' "$OUTPUT_SOURCE_WPCTL"
-  else
-    printf '%s\n' "default.monitor"
-  fi
-}
 
 notify() {
   notify-send "Screen recorder" "$1"
@@ -67,6 +41,11 @@ update_dwmblocks() {
   fi
 }
 
+cleanup_recording_state() {
+  rm -f "$PIDFILE" "$MODEFILE"
+  update_dwmblocks
+}
+
 get_screen_size() {
   xdpyinfo | awk '/dimensions:/ {print $2}'
 }
@@ -75,23 +54,89 @@ is_recording() {
   [[ -f "$PIDFILE" ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null
 }
 
+get_mic_source() {
+  if command -v pactl >/dev/null 2>&1; then
+    pactl get-default-source
+  elif command -v wpctl >/dev/null 2>&1; then
+    wpctl status | grep -A5 'Settings' | grep -A5 'Audio/Source' | awk '{print $3}'
+  else
+    printf '%s\n' "default"
+  fi
+}
+
+get_output_source() {
+  if command -v pactl >/dev/null 2>&1; then
+    printf '%s.monitor\n' "$(pactl get-default-sink)"
+  elif command -v wpctl >/dev/null 2>&1; then
+    printf '%s.monitor\n' "$(wpctl status | grep 'Audio/Sink' | awk '{print $3}')"
+  else
+    printf '%s\n' "default.monitor"
+  fi
+}
+
 stop_recording() {
   if is_recording; then
     kill -2 "$(cat "$PIDFILE")" 2>/dev/null || true
-    rm -f "$PIDFILE" "$MODEFILE"
-    update_dwmblocks
-    notify "Recording ended"
+    cleanup_recording_state
+    # notify "Recording ended"
   else
-    rm -f "$PIDFILE" "$MODEFILE"
-    update_dwmblocks
+    cleanup_recording_state
     notify "No active recording"
   fi
 }
 
+pick_video_target() {
+  printf '%s\n' \
+    "fullscreen" \
+    "window" \
+    "area" \
+  | "${ROFI_CMD[@]}" -theme-str 'listview { lines: 3; }'
+}
+
+get_window_id() {
+  if ! command -v xwininfo >/dev/null 2>&1; then
+    notify "xwininfo is not installed"
+    return 1
+  fi
+
+  xwininfo 2>/dev/null | awk '/Window id:/ {print $4; exit}'
+}
+
+get_area_geometry() {
+  if ! command -v slop >/dev/null 2>&1; then
+    notify "slop is not installed"
+    return 1
+  fi
+
+  slop -f "%x %y %w %h"
+}
+
+watch_recording() {
+  local recpid="$1"
+
+  (
+    while kill -0 "$recpid" 2>/dev/null; do
+      sleep 1
+    done
+
+    if [[ -f "$PIDFILE" ]] && [[ "$(cat "$PIDFILE" 2>/dev/null)" = "$recpid" ]]; then
+      cleanup_recording_state
+      # notify "Recording ended"
+    fi
+  ) >/dev/null 2>&1 &
+}
+
 start_recording() {
   local mode="$1"
+  local target="$2"
   local screen_size
   local outfile
+  local recpid
+
+  local wid
+  local X Y W H
+  local video_args=()
+  local area_geometry
 
   mkdir -p "$DIR"
   screen_size="$(get_screen_size)"
@@ -102,40 +147,65 @@ start_recording() {
     exit 0
   fi
 
-  notify-send "mic source" "$(get_mic_source)"
-  notify-send "output audio source" "$(get_output_source)"
+  case "$target" in
+    "fullscreen")
+      video_args=(-f x11grab -video_size "$screen_size" -framerate "$FRAMERATE" -i :0.0)
+      ;;
+
+    "window")
+      wid="$(get_window_id || true)"
+      [[ -n "$wid" ]] || exit 0
+      video_args=(-f x11grab -framerate "$FRAMERATE" -window_id "$wid" -i :0.0)
+      ;;
+
+    "area")
+      area_geometry="$(get_area_geometry || true)"
+      [[ -n "$area_geometry" ]] || exit 0
+      read -r X Y W H <<< "$area_geometry"
+      [[ -n "${W:-}" && -n "${H:-}" ]] || exit 0
+      video_args=(-f x11grab -video_size "${W}x${H}" -framerate "$FRAMERATE" -i ":0.0+${X},${Y}")
+      ;;
+
+    *)
+      notify "Unknown target: $target"
+      exit 1
+      ;;
+  esac
 
   case "$mode" in
     "screen_only")
       ffmpeg \
-        -f x11grab -video_size "$screen_size" -framerate "$FRAMERATE" -i :0.0 \
+        "${video_args[@]}" \
         -c:v libx264 -preset "$PRESET" -crf "$CRF" \
         "$outfile" \
         >/dev/null 2>&1 &
+      recpid=$!
       ;;
     "screen_mic")
       ffmpeg \
-        -f x11grab -video_size "$screen_size" -framerate "$FRAMERATE" -i :0.0 \
+        "${video_args[@]}" \
         -f pulse -i "$(get_mic_source)" \
         -af "pan=stereo|c0=c0|c1=c0,volume=${MIC_VOLUME}" \
         -c:v libx264 -preset "$PRESET" -crf "$CRF" \
         -c:a aac -b:a 192k \
         "$outfile" \
         >/dev/null 2>&1 &
+      recpid=$!
       ;;
     "screen_output")
       ffmpeg \
-        -f x11grab -video_size "$screen_size" -framerate "$FRAMERATE" -i :0.0 \
+        "${video_args[@]}" \
         -f pulse -i "$(get_output_source)" \
         -af "volume=${OUTPUT_VOLUME}" \
         -c:v libx264 -preset "$PRESET" -crf "$CRF" \
         -c:a aac -b:a 192k \
         "$outfile" \
         >/dev/null 2>&1 &
+      recpid=$!
       ;;
     "screen_mic_output")
       ffmpeg \
-        -f x11grab -video_size "$screen_size" -framerate "$FRAMERATE" -i :0.0 \
+        "${video_args[@]}" \
         -f pulse -i "$(get_output_source)" \
         -f pulse -i "$(get_mic_source)" \
         -filter_complex "[1:a]volume=${OUTPUT_VOLUME}[sys];[2:a]pan=stereo|c0=c0|c1=c0,volume=${MIC_VOLUME}[mic];[sys][mic]amix=inputs=2:normalize=0[aout]" \
@@ -144,6 +214,7 @@ start_recording() {
         -c:a aac -b:a 192k \
         "$outfile" \
         >/dev/null 2>&1 &
+      recpid=$!
       ;;
     *)
       notify "Unknown mode: $mode"
@@ -151,9 +222,10 @@ start_recording() {
       ;;
   esac
 
-  echo $! > "$PIDFILE"
-  echo "$mode" > "$MODEFILE"
+  echo "$recpid" > "$PIDFILE"
+  echo "${mode}:${target}" > "$MODEFILE"
   update_dwmblocks
+  watch_recording "$recpid"
   notify "Recording started: $outfile"
 }
 
@@ -163,21 +235,29 @@ menu() {
     "Screen only" \
     "Screen + mic" \
     "Screen + output" \
-    "Stop recording" \
   | "${ROFI_CMD[@]}"
 }
 
 main() {
   local choice
+  local target
+
+  if [[ "${1:-}" = "stop" ]]; then
+    stop_recording
+    exit 0
+  fi
+
   choice="$(menu || true)"
+  [[ -n "$choice" ]] || exit 0
+
+  target="$(pick_video_target || true)"
+  [[ -n "$target" ]] || exit 0
 
   case "$choice" in
-    "Screen + mic + output") start_recording "screen_mic_output" ;;
-    "Screen only") start_recording "screen_only" ;;
-    "Screen + mic") start_recording "screen_mic" ;;
-    "Screen + output") start_recording "screen_output" ;;
-    "Stop recording") stop_recording ;;
-    "") exit 0 ;;
+    "Screen + mic + output") start_recording "screen_mic_output" "$target" ;;
+    "Screen only") start_recording "screen_only" "$target" ;;
+    "Screen + mic") start_recording "screen_mic" "$target" ;;
+    "Screen + output") start_recording "screen_output" "$target" ;;
   esac
 }
 
