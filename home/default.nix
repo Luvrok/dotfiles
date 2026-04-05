@@ -1,4 +1,4 @@
-{ pkgs, username, ... }:
+{ pkgs, username, fontSize, ... }:
 
 {
   programs.home-manager.enable = true;
@@ -104,6 +104,8 @@
     source = ./programs/rofi/config;
     recursive = true;
   };
+
+  home.file.".config/rofi/font.rasi".source = if fontSize < 14 then ./programs/rofi/font/font-dpi-low.rasi else ./programs/rofi/font/font-dpi-high.rasi;
 
   home.file.".Xmodmap".text = ''
     keycode  37 = Control_L NoSymbol Control_L

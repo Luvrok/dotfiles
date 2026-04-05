@@ -1,9 +1,10 @@
-{ pkgs, ... }:
+{ ... }:
 
 {
   imports = [
     ./librewolf
     ./neovim
+    ./kitty
     ./zsh
     ./rofi
     ./yazi
@@ -13,8 +14,4 @@
     ./mpv.nix
     ./zathura.nix
   ];
-
-  programs = {
-    kitty = (import ./kitty/kitty.nix { inherit pkgs; });
-  };
 }

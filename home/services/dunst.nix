@@ -1,4 +1,4 @@
-{ ... }:
+{ fontSize, ... }:
 
 {
   services.dunst = {
@@ -21,7 +21,7 @@
         frame_width = "1";
         sort = "no";
         idle_threshold = "120";
-        font = "JetBrainsMonoNL Nerd Font 11";
+        font = "JetBrainsMonoNL Nerd Font ${toString fontSize}";
         line_height = "4";
         markup = "full";
         format = "%s\n%b";

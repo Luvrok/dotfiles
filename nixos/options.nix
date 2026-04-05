@@ -7,4 +7,7 @@
   options.dpi = lib.mkOption {
     type = lib.types.int;
   };
+  options.fontSize = lib.mkOption {
+    type = lib.types.int;
+  };
 }

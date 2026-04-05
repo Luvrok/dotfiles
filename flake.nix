@@ -47,7 +47,7 @@
       };
     };
 
-    make_hm = username: { ... }: {
+    make_hm = username: { config, ... }: {
       home-manager = {
         useGlobalPkgs = true;
         useUserPackages = true;
@@ -57,6 +57,7 @@
         };
         extraSpecialArgs = {
           inherit username inputs system;
+          inherit (config) videoDrivers dpi fontSize;
           pkgs-pinned = import nixpkgs-pinned { inherit system; };
         };
       };
