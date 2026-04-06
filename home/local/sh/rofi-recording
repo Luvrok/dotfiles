@@ -6,9 +6,9 @@ DIR="${HOME}/HOME/screen_recordings"
 PIDFILE="/tmp/recpid"
 MODEFILE="/tmp/recmode"
 
-FRAMERATE=60
+FRAMERATE=30
 CRF=18
-PRESET="ultrafast"
+PRESET="veryfast"
 
 OUTPUT_VOLUME="0.35"
 MIC_VOLUME="3.0"
@@ -176,48 +176,62 @@ start_recording() {
 
   case "$mode" in
     "screen_only")
-      ffmpeg \
+      ffmpeg -vaapi_device /dev/dri/renderD128 \
         "${video_args[@]}" \
-        -c:v libx264 -preset "$PRESET" -crf "$CRF" \
+        -vf 'format=nv12,hwupload' \
+        -c:v h264_vaapi -qp 20 \
+        -maxrate 25M -bufsize 50M \
         "$outfile" \
         >/dev/null 2>&1 &
       recpid=$!
       ;;
+
     "screen_mic")
-      ffmpeg \
+      ffmpeg -vaapi_device /dev/dri/renderD128 \
         "${video_args[@]}" \
         -f pulse -i "$(get_mic_source)" \
+        -map 0:v:0 -map 1:a:0 \
         -af "pan=stereo|c0=c0|c1=c0,volume=${MIC_VOLUME}" \
-        -c:v libx264 -preset "$PRESET" -crf "$CRF" \
+        -vf 'format=nv12,hwupload' \
+        -c:v h264_vaapi -qp 20 \
+        -maxrate 25M -bufsize 50M \
         -c:a aac -b:a 192k \
         "$outfile" \
         >/dev/null 2>&1 &
       recpid=$!
       ;;
+
     "screen_output")
-      ffmpeg \
+      ffmpeg -vaapi_device /dev/dri/renderD128 \
         "${video_args[@]}" \
         -f pulse -i "$(get_output_source)" \
+        -map 0:v:0 -map 1:a:0 \
         -af "volume=${OUTPUT_VOLUME}" \
-        -c:v libx264 -preset "$PRESET" -crf "$CRF" \
+        -vf 'format=nv12,hwupload' \
+        -c:v h264_vaapi -qp 20 \
+        -maxrate 25M -bufsize 50M \
         -c:a aac -b:a 192k \
         "$outfile" \
         >/dev/null 2>&1 &
       recpid=$!
       ;;
+
     "screen_mic_output")
-      ffmpeg \
+      ffmpeg -vaapi_device /dev/dri/renderD128 \
         "${video_args[@]}" \
         -f pulse -i "$(get_output_source)" \
         -f pulse -i "$(get_mic_source)" \
         -filter_complex "[1:a]volume=${OUTPUT_VOLUME}[sys];[2:a]pan=stereo|c0=c0|c1=c0,volume=${MIC_VOLUME}[mic];[sys][mic]amix=inputs=2:normalize=0[aout]" \
-        -map 0:v -map "[aout]" \
-        -c:v libx264 -preset "$PRESET" -crf "$CRF" \
+        -map 0:v:0 -map "[aout]" \
+        -vf 'format=nv12,hwupload' \
+        -c:v h264_vaapi -qp 20 \
+        -maxrate 25M -bufsize 50M \
         -c:a aac -b:a 192k \
         "$outfile" \
         >/dev/null 2>&1 &
       recpid=$!
       ;;
+
     *)
       notify "Unknown mode: $mode"
       exit 1
