@@ -1,24 +1,38 @@
-{ inputs, ... }:
+{ pkgs, ... }:
 
 {
   programs.zsh = {
     enable = true;
-    initContent = ''
-        source "${inputs.zinit}/zinit.zsh"
-      ''
-      + builtins.readFile ./zshrc;
-    # Prevents keyboard input before the zsh prompt is fully initialized (feels right)
-    envExtra = ''
-      [[ -o interactive && -t 0 ]] || return
-      stty -echo -icanon time 0 min 0 2>/dev/null
-    '';
+
+    autosuggestion.enable = true;
+    syntaxHighlighting.enable = true;
+    enableCompletion = true;
+
+    plugins = [
+      {
+        name = "powerlevel10k";
+        src = pkgs.zsh-powerlevel10k;
+        file = "share/zsh-powerlevel10k/powerlevel10k.zsh-theme";
+      }
+      {
+        name = "fzf-tab";
+        src = pkgs.fetchFromGitHub {
+          owner = "Aloxaf";
+          repo = "fzf-tab";
+          rev = "master";
+          sha256 = "sha256-yvPQyuK4Dw+LkwxrkWTRcw4PIf/79fW61jWbEg8Pe9Y=";
+        };
+        file = "fzf-tab.plugin.zsh";
+      }
+    ];
+
+    initContent = builtins.readFile ./zshrc;
   };
 
-  home.file.p10k = {
+  home.file.".p10k.zsh".source = ./p10k.zsh;
+
+  programs.fzf = {
     enable = true;
-    target = "./.p10k.zsh";
-    source = ./.p10k.zsh;
+    enableZshIntegration = true;
   };
-
-  programs.fzf.enable = true;
 }
