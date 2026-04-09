@@ -22,14 +22,12 @@ vim.o.timeoutlen = 300
 vim.o.splitright = true
 vim.o.splitbelow = true
 vim.o.list = true
-vim.opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
+vim.opt.listchars = { tab = "  ", trail = "·", nbsp = "␣" }
 vim.o.inccommand = "split"
 vim.o.cursorline = true
 vim.o.scrolloff = 10
 vim.o.confirm = true
 vim.opt.swapfile = false
-vim.opt.fillchars:append({ eob = " " })
-vim.opt.fillchars:append({ vert = " " }) -- заменяет линию на пробел
 vim.opt.laststatus = 3 -- чтобы статусбар был общий (красивее)
 vim.opt.wrap = true
 

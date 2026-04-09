@@ -31,7 +31,10 @@
   };
 
   nix.settings = {
-    experimental-features = [ "nix-command" "flakes" ];
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
     warn-dirty = false;
   };
 
@@ -45,10 +48,10 @@
   programs.gamemode.enable = true;
   programs.zsh.enable = true;
 
-  users.groups.libvirt = {};
-  users.groups.vboxsf = {};
-  users.groups.plugdev = {};
-  users.groups.storage = {};
+  users.groups.libvirt = { };
+  users.groups.vboxsf = { };
+  users.groups.plugdev = { };
+  users.groups.storage = { };
 
   users.users.${username} = {
     shell = pkgs.zsh;

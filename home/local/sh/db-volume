@@ -9,25 +9,25 @@ ismuted() {
 }
 
 case "$BLOCK_BUTTON" in
-4)
-    if ! ismuted; then
-        v=$(getvol)
-        nv=$((v + 2))
-        [ "$nv" -gt 100 ] && nv=100
-        wpctl set-volume @DEFAULT_AUDIO_SINK@ "$nv%"
-    fi
-    ;;
-5)
-    if ! ismuted; then
-        v=$(getvol)
-        nv=$((v - 2))
-        [ "$nv" -lt 0 ] && nv=0
-        wpctl set-volume @DEFAULT_AUDIO_SINK@ "$nv%"
-    fi
-    ;;
-2)
-    wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
-    ;;
+    4)
+        if ! ismuted; then
+            v=$(getvol)
+            nv=$((v + 2))
+            [ "$nv" -gt 100 ] && nv=100
+            wpctl set-volume @DEFAULT_AUDIO_SINK@ "$nv%"
+        fi
+        ;;
+    5)
+        if ! ismuted; then
+            v=$(getvol)
+            nv=$((v - 2))
+            [ "$nv" -lt 0 ] && nv=0
+            wpctl set-volume @DEFAULT_AUDIO_SINK@ "$nv%"
+        fi
+        ;;
+    2)
+        wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+        ;;
 esac
 
 vol="$(wpctl get-volume @DEFAULT_AUDIO_SINK@)"

@@ -38,7 +38,12 @@
 
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [ 22 80 443 8448 ];
+    allowedTCPPorts = [
+      22
+      80
+      443
+      8448
+    ];
     allowPing = true;
   };
 
@@ -55,7 +60,7 @@
 
   users.users.dash = {
     isNormalUser = true;
-    extraGroups = ["wheel"];
+    extraGroups = [ "wheel" ];
     initialPassword = "nopassword";
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKfVMnRoTEwUBqxcm6tzRTiFGZVafQ6dHr95HDM//Wk+ barnard"

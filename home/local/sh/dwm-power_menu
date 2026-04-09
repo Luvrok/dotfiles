@@ -10,9 +10,9 @@ shutdown="⏻"
 chosen=$(printf '%s\n' "$lock" "$suspend" "$logout" "$reboot" "$shutdown" | "${rofi_command[@]}" -dmenu -selected-row 0)
 
 case "$chosen" in
-  "$lock") xset dpms force off ;;
-  "$suspend") pkill -x mpv; systemctl suspend ;;
-  "$logout") pkill dwm ;;
-  "$reboot") systemctl reboot ;;
-  "$shutdown") systemctl poweroff ;;
+    "$lock") xset dpms force off ;;
+    "$suspend") pkill -x mpv; systemctl suspend ;;
+    "$logout") pkill dwm ;;
+    "$reboot") systemctl reboot ;;
+    "$shutdown") systemctl poweroff ;;
 esac

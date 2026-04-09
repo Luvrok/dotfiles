@@ -1,161 +1,171 @@
 { pkgs, pkgs-pinned, ... }:
 
-
 {
-  environment.systemPackages = (with pkgs; [
-    # --- dependencies ---
-    glibc
-    glib
-    gcc
-    cmake
-    buildPackages.gnumake
-    gamescope
-    tor
-    cargo # need for nixd lsp build
-    yajl
-    chromium # need for via qmk
-    monero-cli # need for monero-gui for some reason cant sync without monero-cli
+  environment.systemPackages =
+    (with pkgs; [
+      # --- dependencies ---
+      glibc
+      glib
+      gcc
+      cmake
+      buildPackages.gnumake
+      gamescope
+      tor
+      nodejs
+      cargo # need for nixd lsp build
+      yajl
+      chromium # need for via qmk
+      monero-cli # need for monero-gui for some reason cant sync without monero-cli
 
-    # --- xorg ---
-    libxcvt
-    xkb-switch
-    xdotool
-    xsetroot
-    xcursorthemes
-    xset
-    xsettingsd
-    xclip
-    xcolor
-    xwinwrap
-    xwininfo
-    xinit
-    xdg-desktop-portal
-    xdpyinfo
-    slop
-    dmenu
-    j4-dmenu-desktop
-    st
-    dwmblocks
-    better-swallow
+      # --- xorg ---
+      libxcvt
+      xkb-switch
+      xdotool
+      xsetroot
+      xcursorthemes
+      xset
+      xsettingsd
+      xclip
+      xcolor
+      xwinwrap
+      xwininfo
+      xinit
+      xdg-desktop-portal
+      xdpyinfo
+      slop
+      dmenu
+      j4-dmenu-desktop
+      st
+      dwmblocks
+      better-swallow
 
-    # --- basic utilities ---
-    bash
-    lsof
-    coreutils
-    wget
-    curl
-    man
-    unzip
-    unrar
-    p7zip
-    zip
-    htop
-    iotop
-    killall
-    dig
-    nmap
-    inetutils # telnet, ftp, hostname, etc
-    usbutils
-    bc
-    powertop
-    lshw
-    mesa-demos
-    vnstat
-    sysstat
-    bat
-    testdisk
-    feh
-    pciutils
-    qpwgraph
-    e2fsprogs
-    acpi
-    util-linux
-    parted
-    efibootmgr
-    grub2
-    pacman
-    ripgrep
-    gnugrep
-    gawk
-    fd
-    ethtool
-    dnsmasq
-    tcpdump
-    procps
-    file
-    alsa-utils
-    ddcutil
-    home-manager
+      # --- basic utilities ---
+      bash
+      lsof
+      coreutils
+      wget
+      curl
+      man
+      unzip
+      unrar
+      p7zip
+      zip
+      htop
+      iotop
+      killall
+      dig
+      nmap
+      inetutils # telnet, ftp, hostname, etc
+      usbutils
+      bc
+      powertop
+      lshw
+      mesa-demos
+      vnstat
+      sysstat
+      bat
+      testdisk
+      feh
+      pciutils
+      qpwgraph
+      e2fsprogs
+      acpi
+      util-linux
+      parted
+      efibootmgr
+      grub2
+      pacman
+      ripgrep
+      gnugrep
+      gawk
+      fd
+      ethtool
+      dnsmasq
+      tcpdump
+      procps
+      file
+      alsa-utils
+      ddcutil
+      home-manager
 
-    # --- networking ---
-    openssl
-    iptables
-    networkmanager
-    # xray
-    shadowsocks-rust
+      # --- networking ---
+      openssl
+      iptables
+      networkmanager
+      v2rayn
+      shadowsocks-rust
 
-    # --- system tools ---
-    libnotify
-    jq
+      # --- system tools ---
+      libnotify
+      jq
 
-    # --- multimedia ---
-    ffmpeg-full
-    v4l-utils
-    pulseaudioFull
+      # --- multimedia ---
+      ffmpeg-full
+      v4l-utils
+      pulseaudioFull
 
-    # --- apps ---
-    qbittorrent
-    obsidian
-    wasabiwallet
-    syncthing
-    spotify
-    libreoffice
-    veracrypt
-    monero-gui
-    telegram-desktop
-    # discord
-    aseprite
-    songrec
+      # --- apps ---
+      qbittorrent
+      obsidian
+      wasabiwallet
+      syncthing
+      spotify
+      libreoffice
+      veracrypt
+      monero-gui
+      telegram-desktop
+      aseprite
+      songrec
 
-    # --- talking ---
-    # discord
-    element-desktop
-    element-call
-    irssi
+      # --- formatters ---
+      stylua # lua
+      nixfmt # nix
+      prettierd # js, ts, html, css, json, md, yaml
+      sql-formatter # sql_formatter
+      beautysh # sh, zsh
+      clang-tools # clang-format
+      gofumpt # go
 
-    # --- games ---
-    prismlauncher
+      # --- talking ---
+      discord
+      element-desktop
+      element-call
+      irssi
 
-    # --- hardware ---
-    dualsensectl # CLI interface for controlling Sony Dualsense controllers
-    # openrgb-with-all-plugins
+      # --- games ---
+      prismlauncher
 
-    # --- android ---
-    android-tools
-    adbfs-rootless
-    jmtpfs
+      # --- hardware ---
+      dualsensectl # CLI interface for controlling Sony Dualsense controllers
+      # openrgb-with-all-plugins
 
-    # --- live usb ---
-    woeusb
-    unetbootin
+      # --- android ---
+      android-tools
+      adbfs-rootless
+      jmtpfs
 
-    # --- testing system ---
-    vrrtest
-    stress-ng
-    lksctp-tools
-    evtest
-    xev
+      # --- live usb ---
+      woeusb
+      unetbootin
 
-    # --- go ---
-    go
-    gopls
-    delve
-    golangci-lint
-    goimports-reviser
-    gotools
+      # --- testing system ---
+      vrrtest
+      stress-ng
+      lksctp-tools
+      evtest
+      xev
 
-    # --- temporary ---
-    pavucontrol
-  ]) ++ (with pkgs-pinned; [
-  ]);
+      # --- go ---
+      go
+      gopls
+      delve
+      golangci-lint
+      goimports-reviser
+      gotools
+
+      # --- temporary ---
+      pavucontrol
+    ])
+    ++ (with pkgs-pinned; [
+    ]);
 }

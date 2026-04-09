@@ -1,5 +1,4 @@
-# https://github.com/StressOzz/Zapret-Manager
-#!/bin/sh
+#!/usr/bin/env bash
 GREEN="\033[1;32m"; RED="\033[1;31m"
 NC="\033[0m";
 echo -e "${GREEN}===== Доступность сайтов =====${NC}"
@@ -30,8 +29,8 @@ EOF
 )
 sites_clean=$(echo "$SITES" | grep -v '^#' | grep -v '^\s*$'); total=$(echo "$sites_clean" | wc -l); half=$(( (total + 1) / 2 ))
 sites_list=""; for site in $sites_clean; do sites_list="$sites_list $site"; done; for idx in $(seq 1 $half); do
-left=$(echo $sites_list | cut -d' ' -f$idx); right_idx=$((idx + half)); right=$(echo $sites_list | cut -d' ' -f$right_idx)
-left_pad=$(printf "%-25s" "$left"); right_pad=$(printf "%-25s" "$right"); if curl -Is --connect-timeout 3 --max-time 4 "https://$left" >/dev/null 2>&1; then
-left_color="[${GREEN}OK${NC}]  "; else left_color="[${RED}FAIL${NC}]"; fi; if [ -n "$right" ]; then if curl -Is --connect-timeout 3 --max-time 4 "https://$right" >/dev/null 2>&1; then
-right_color="[${GREEN}OK${NC}]  "; else right_color="[${RED}FAIL${NC}]"; fi; echo -e "$left_color $left_pad $right_color $right_pad"
+    left=$(echo $sites_list | cut -d' ' -f$idx); right_idx=$((idx + half)); right=$(echo $sites_list | cut -d' ' -f$right_idx)
+    left_pad=$(printf "%-25s" "$left"); right_pad=$(printf "%-25s" "$right"); if curl -Is --connect-timeout 3 --max-time 4 "https://$left" >/dev/null 2>&1; then
+        left_color="[${GREEN}OK${NC}]  "; else left_color="[${RED}FAIL${NC}]"; fi; if [ -n "$right" ]; then if curl -Is --connect-timeout 3 --max-time 4 "https://$right" >/dev/null 2>&1; then
+        right_color="[${GREEN}OK${NC}]  "; else right_color="[${RED}FAIL${NC}]"; fi; echo -e "$left_color $left_pad $right_color $right_pad"
 else echo -e "$left_color $left_pad"; fi; done

@@ -1,4 +1,8 @@
-{ lib, pkgs, config }:
+{
+  lib,
+  pkgs,
+  config,
+}:
 let
   remove-binding =
     binding: str:

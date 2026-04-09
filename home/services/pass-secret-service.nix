@@ -8,7 +8,10 @@
   systemd.user.services.pass-secret-service = {
     Service = {
       Type = "dbus";
-      Environment = [ "GPG_TTY=/dev/tty1" "DISPLAY=:0" ];
+      Environment = [
+        "GPG_TTY=/dev/tty1"
+        "DISPLAY=:0"
+      ];
       BusName = "org.freedesktop.secrets";
     };
     Unit = rec {

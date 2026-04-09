@@ -12,10 +12,10 @@ map("i", "<C-y>", "<C-o><C-r>", { noremap = true, silent = true })
 map("v", "<C-z>", "<Nop>", { noremap = true, silent = true })
 
 -- Window navigation
-map('n', '<C-h>', '<C-w><C-h>', opts)
-map('n', '<C-l>', '<C-w><C-l>', opts)
-map('n', '<C-j>', '<C-w><C-j>', opts)
-map('n', '<C-k>', '<C-w><C-k>', opts)
+map("n", "<C-h>", "<C-w><C-h>", opts)
+map("n", "<C-l>", "<C-w><C-l>", opts)
+map("n", "<C-j>", "<C-w><C-j>", opts)
+map("n", "<C-k>", "<C-w><C-k>", opts)
 
 -- Clipboard
 map("n", "<C-c>", '"+y', opts)
@@ -32,11 +32,11 @@ map("n", "<A-Right>", ":bnext<CR>", opts)
 map("n", "<A-Left>", ":bprevious<CR>", opts)
 
 -- Search and diagnostics
-map('n', '<Esc>', '<cmd>nohlsearch<CR>', opts)
+map("n", "<Esc>", "<cmd>nohlsearch<CR>", opts)
 
 -- Delete words with CTRL-Backspace/Alt-Backspace in insert mode
 map("i", "<C-BS>", "<C-w>", { silent = true })
-map("i", "<C-h>",  "<C-w>", { silent = true })
+map("i", "<C-h>", "<C-w>", { silent = true })
 map("i", "<M-BS>", "<C-w>", { silent = true })
 
 -- Disable annoying stuff with q
@@ -46,7 +46,7 @@ map({ "n", "v" }, "q", "<Nop>", { silent = true })
 map({ "i", "n", "v" }, "<C-q>", "<Nop>", { silent = true })
 
 map({ "n", "i", "v" }, "<C-s>", function()
-  vim.cmd("silent w")
+	vim.cmd("silent w")
 end, opts)
 
 -- Keep visual selection after indenting

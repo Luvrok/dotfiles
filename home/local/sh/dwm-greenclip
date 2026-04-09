@@ -1,5 +1,5 @@
 #!/bin/sh
 
 rofi -no-lazy-grab -modi 'clipboard:greenclip print' \
-  -show clipboard \
-  -theme "$HOME"/.config/rofi/greenclip.rasi
+    -show clipboard \
+    -theme "$HOME"/.config/rofi/greenclip.rasi

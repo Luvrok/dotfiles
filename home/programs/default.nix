@@ -13,5 +13,6 @@
     ./gpg.nix
     ./mpv.nix
     ./zathura.nix
+    ./clock-rs.nix
   ];
 }

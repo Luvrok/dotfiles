@@ -4,49 +4,49 @@ SINK='@DEFAULT_AUDIO_SINK@'
 STEP=0.02
 
 get_volume() {
-  wpctl get-volume "$SINK" | awk '/Volume:/{print int($2*100+0.5)}'
+    wpctl get-volume "$SINK" | awk '/Volume:/{print int($2*100+0.5)}'
 }
 
 is_mute() {
-  wpctl get-volume "$SINK" | grep -qiE 'Mute(d)?:\s*(yes|true|1)'
+    wpctl get-volume "$SINK" | grep -qiE 'Mute(d)?:\s*(yes|true|1)'
 }
 
 send_notification() {
-  vol=$(get_volume)
-  notify-send -r 9991 "Volume: $vol%" \
-    -h string:x-dunst-stack-tag:volume \
-    -h int:value:"$vol" \
-    --hint=int:value:"$vol" \
-    --urgency=low
+    vol=$(get_volume)
+    notify-send -r 9991 "Volume: $vol%" \
+        -h string:x-dunst-stack-tag:volume \
+        -h int:value:"$vol" \
+        --hint=int:value:"$vol" \
+        --urgency=low
 }
 
 case "$1" in
-  up)
-    vol=$(get_volume)
-    if [ "$vol" -lt 100 ]; then
-      wpctl set-mute "$SINK" 0
-      wpctl set-volume "$SINK" ${STEP}+
-      send_notification
-      pkill -RTMIN+4 dwmblocks
-    fi
-    ;;
-  down)
-    wpctl set-mute "$SINK" 0
-    wpctl set-volume "$SINK" ${STEP}-
-    send_notification
-    pkill -RTMIN+4 dwmblocks
-    ;;
-  mute)
-    wpctl set-mute "$SINK" toggle
-    if is_mute; then
-      notify-send -r 9991 "Volume: Mute" -h string:x-dunst-stack-tag:volume --urgency=low
-    else
-      send_notification
-    fi
-    pkill -RTMIN+4 dwmblocks
-    ;;
-  *)
-    echo "Usage: $0 {up|down|mute}" >&2
-    exit 1
-    ;;
+    up)
+        vol=$(get_volume)
+        if [ "$vol" -lt 100 ]; then
+            wpctl set-mute "$SINK" 0
+            wpctl set-volume "$SINK" ${STEP}+
+            send_notification
+            pkill -RTMIN+4 dwmblocks
+        fi
+        ;;
+    down)
+        wpctl set-mute "$SINK" 0
+        wpctl set-volume "$SINK" ${STEP}-
+        send_notification
+        pkill -RTMIN+4 dwmblocks
+        ;;
+    mute)
+        wpctl set-mute "$SINK" toggle
+        if is_mute; then
+            notify-send -r 9991 "Volume: Mute" -h string:x-dunst-stack-tag:volume --urgency=low
+        else
+            send_notification
+        fi
+        pkill -RTMIN+4 dwmblocks
+        ;;
+    *)
+        echo "Usage: $0 {up|down|mute}" >&2
+        exit 1
+        ;;
 esac

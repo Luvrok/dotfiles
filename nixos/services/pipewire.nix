@@ -19,7 +19,7 @@
         actions = {
           update-props = {
             "priority.session" = 900;
-            "priority.driver"  = 900;
+            "priority.driver" = 900;
             "node.autoconnect" = true;
             "node.pause-on-idle" = false;
           };
@@ -37,7 +37,7 @@
         actions = {
           update-props = {
             "priority.session" = 1200;
-            "priority.driver"  = 1200;
+            "priority.driver" = 1200;
             "node.autoconnect" = true;
             "node.pause-on-idle" = false;
           };

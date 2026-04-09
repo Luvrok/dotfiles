@@ -23,4 +23,3 @@
     tmp.cleanOnBoot = lib.mkDefault true;
   };
 }
-

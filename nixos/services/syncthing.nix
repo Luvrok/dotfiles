@@ -8,4 +8,3 @@
   dataDir = "/home/${username}/.config/syncthing";
   configDir = "/home/${username}/.config/syncthing";
 }
-

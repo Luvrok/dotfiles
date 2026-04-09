@@ -19,18 +19,18 @@ for battery in /sys/class/power_supply/BAT?*; do
 
     capacity="$(cat "$battery/capacity" 2>&1)"
     if [[ "$capacity" -gt 100 ]]; then
-		status=" "
-	elif [[ "$capacity" -gt 90 ]]; then
-		status=" "
-	elif [[ "$capacity" -gt 66 ]]; then
-		status=" "
-	elif [[ "$capacity" -gt 33 ]]; then
-		status=" "
-	elif [[ "$capacity" -gt 10 ]]; then
-		status=" "
-	else
-		status=" "
-	fi
+        status=" "
+    elif [[ "$capacity" -gt 90 ]]; then
+        status=" "
+    elif [[ "$capacity" -gt 66 ]]; then
+        status=" "
+    elif [[ "$capacity" -gt 33 ]]; then
+        status=" "
+    elif [[ "$capacity" -gt 10 ]]; then
+        status=" "
+    else
+        status=" "
+    fi
 
     echo "$status$capacity%"
 done

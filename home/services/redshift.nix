@@ -6,9 +6,9 @@
     settings.redshift = {
       brightness-day = "1";
       brightness-night = "1";
-      location-provider="manual";
-      adjustment-method="vidmode";
-      transition="1";
+      location-provider = "manual";
+      adjustment-method = "vidmode";
+      transition = "1";
     };
     temperature = {
       day = 5000;

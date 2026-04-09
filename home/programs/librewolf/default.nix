@@ -1,4 +1,10 @@
-{ pkgs, system, lib, inputs, ... }:
+{
+  pkgs,
+  system,
+  lib,
+  inputs,
+  ...
+}:
 
 let
   settings = import ./settings.nix { inherit system pkgs; };
@@ -66,8 +72,8 @@ let
 
     ExtensionSettings = {
 
-    } //
-    builtins.listToAttrs [
+    }
+    // builtins.listToAttrs [
       (extension "sidebery" "{3c078156-979c-498b-8990-85f7987dd929}")
       (extension "vimium-ff" "{d7742d87-e61d-4b78-b8a1-b469842139fa}")
       (extension "sponsorblock" "sponsorBlocker@ajay.app")
@@ -104,30 +110,30 @@ let
       key = "N";
     };
 
-    key_cut = {};
-    key_switchTextDirection = {};
+    key_cut = { };
+    key_switchTextDirection = { };
 
     key_redo = {
       modifiers = "accel";
       key = "Y";
     };
 
-    viewBookmarksSidebarKb = {};
-    viewGenaiChatSidebarKb = {};
-    key_toggleReaderMode = {};
-    key_showAllTabs = {};
-    key_sanitize = {};
-    manBookmarkKb = {};
-    addBookmarkAsKb = {};
-    bookmarkAllTabsKb = {};
-    key_viewInfo = {};
-    key_closeWindow = {};
-    key_savePage = {};
-    printKb = {};
-    key_quitApplication = {};
-    key_quickRestart = {};
-    key_findAgain = {};
-    key_jsdebugger = {};
+    viewBookmarksSidebarKb = { };
+    viewGenaiChatSidebarKb = { };
+    key_toggleReaderMode = { };
+    key_showAllTabs = { };
+    key_sanitize = { };
+    manBookmarkKb = { };
+    addBookmarkAsKb = { };
+    bookmarkAllTabsKb = { };
+    key_viewInfo = { };
+    key_closeWindow = { };
+    key_savePage = { };
+    printKb = { };
+    key_quitApplication = { };
+    key_quickRestart = { };
+    key_findAgain = { };
+    key_jsdebugger = { };
 
     goBackKb = {
       modifiers = "alt";
@@ -144,11 +150,11 @@ let
       keycode = "VK_HOME";
     };
 
-    key_reload2 = {};
-    key_reload_skip_cache2 = {};
+    key_reload2 = { };
+    key_reload_skip_cache2 = { };
   };
 
-  in
+in
 {
   imports = [
     inputs.textfoxy.homeManagerModules.default
@@ -160,12 +166,18 @@ let
     browsers = {
       librewolf = {
         enable = true;
-        profiles = ["life" "work"];
+        profiles = [
+          "life"
+          "work"
+        ];
       };
 
       firefox = {
         enable = true;
-        profiles = ["life" "work"];
+        profiles = [
+          "life"
+          "work"
+        ];
       };
     };
 
@@ -250,10 +262,10 @@ let
 
   home.file = lib.mkMerge (
     lib.flatten (
-      lib.mapAttrsToList (_browserName: browser:
+      lib.mapAttrsToList (
+        _browserName: browser:
         lib.mapAttrsToList (profileName: _: {
-          "${browser.profileDir}/${profileName}/customKeys.json".text =
-            builtins.toJSON customKeys;
+          "${browser.profileDir}/${profileName}/customKeys.json".text = builtins.toJSON customKeys;
         }) browser.profiles
       ) browsers
     )

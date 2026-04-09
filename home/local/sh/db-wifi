@@ -6,32 +6,32 @@ SSID=$(echo "$WIFI_INFO" | grep 'Connected network' | awk '{print $3}')
 RAW_RSSI=$(echo "$WIFI_INFO" | grep 'RSSI' | grep -v 'Average' | awk '{print $2}')
 
 if [[ "$RAW_RSSI" =~ ^-?[0-9]+$ ]]; then
-  RSSI=$RAW_RSSI
+    RSSI=$RAW_RSSI
 else
-  {
-    echo "------ $(date) -----"
-    echo "磌 No Signal"
-    echo "RSSI is not valid: $RAW_RSSI"
-  } >> ~/.wifi_debug.log
+    {
+        echo "------ $(date) -----"
+        echo "磌 No Signal"
+        echo "RSSI is not valid: $RAW_RSSI"
+    } >> ~/.wifi_debug.log
 
-  ICON="󰤫"
-  echo "$ICON"
-  exit 0
+    ICON="󰤫"
+    echo "$ICON"
+    exit 0
 
-  exit 0
+    exit 0
 fi
 
 # Determine icon based on RSSI
 if (( RSSI >= -50 )); then
-  ICON="󰤨"  # Full bars
+    ICON="󰤨"  # Full bars
 elif (( RSSI >= -60 )); then
-  ICON="󰤥"  # 3 bars
+    ICON="󰤥"  # 3 bars
 elif (( RSSI >= -70 )); then
-  ICON="󰤢"  # 2 bars
+    ICON="󰤢"  # 2 bars
 elif (( RSSI >= -80 )); then
-  ICON="󰤟"   # 1 bar
+    ICON="󰤟"   # 1 bar
 else
-  ICON="󰤫"  # No signal
+    ICON="󰤫"  # No signal
 fi
 
 echo "$ICON"

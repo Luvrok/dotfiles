@@ -13,11 +13,13 @@ in
       dwm = prev.dwm.overrideAttrs (old: {
         version = "dwm-6.7";
         src = inputs.dwm.outPath;
-        buildInputs = (old.buildInputs or []) ++ (with pkgs; [
-          libXcursor
-          libXres
-          yajl
-        ]);
+        buildInputs =
+          (old.buildInputs or [ ])
+          ++ (with pkgs; [
+            libXcursor
+            libXres
+            yajl
+          ]);
       });
     })
     (final: prev: {
@@ -40,7 +42,7 @@ in
           xcbutil
           pkg-config
         ];
-        makeFlags = ["PREFIX=$(out)"];
+        makeFlags = [ "PREFIX=$(out)" ];
         postPatch = ''
           if grep -q 'void termhandler()' src/main.c; then
             substituteInPlace src/main.c \
@@ -58,7 +60,7 @@ in
           libXft
           pkg-config
         ];
-        makeFlags = ["PREFIX=$(out)"];
+        makeFlags = [ "PREFIX=$(out)" ];
       };
     })
     (self: super: {
@@ -67,9 +69,9 @@ in
         version = "fork-pinned-11.09.2025";
         src = super.fetchFromGitHub {
           owner = "Luvrok";
-          repo  = "mpv-config";
-          rev   = "c2a8fed053b01b81df02b2679dbadcf75a7822d4";
-          hash  = "sha256-jmeOUKAs3gcEuiXqo6FclTGOMrWMcEQdGZlXFpdJjHs=";
+          repo = "mpv-config";
+          rev = "c2a8fed053b01b81df02b2679dbadcf75a7822d4";
+          hash = "sha256-jmeOUKAs3gcEuiXqo6FclTGOMrWMcEQdGZlXFpdJjHs=";
         };
         installPhase = ''
           set -euo pipefail

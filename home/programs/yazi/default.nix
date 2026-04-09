@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }:
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}:
 
 let
   inherit (lib) getExe;
@@ -57,7 +62,7 @@ in
         prepend_keymap = [
           # https://yazi-rs.github.io/docs/tips#close-input-by-esc
           {
-            on = ["<Esc>"];
+            on = [ "<Esc>" ];
             run = "close";
             desc = "Cancel input";
           }
@@ -66,82 +71,103 @@ in
       mgr = {
         prepend_keymap = [
           {
-            on = ["d" "d"];
+            on = [
+              "d"
+              "d"
+            ];
             run = "remove --permanently";
             desc = "Delete permanently";
           }
           {
-            on = ["m" "k"];
+            on = [
+              "m"
+              "k"
+            ];
             run = "create --dir";
             desc = "Create directory";
           }
           {
-            on = ["r"];
+            on = [ "r" ];
             run = "rename";
             desc = "Rename";
           }
           {
-            on = ["c" "p"];
+            on = [
+              "c"
+              "p"
+            ];
             run = "yank";
             desc = "Copy (toggle)";
           }
           {
-            on = ["d" "c"];
+            on = [
+              "d"
+              "c"
+            ];
             run = "yank --cut";
             desc = "Cut (toggle)";
           }
           {
-            on = ["."];
+            on = [ "." ];
             run = "toggle hidden";
             desc = "Toggle hidden files";
           }
           {
-            on = ["p" "p"];
+            on = [
+              "p"
+              "p"
+            ];
             run = "paste";
             desc = "Paste";
           }
           {
-            on = [ "u" "u" ];
+            on = [
+              "u"
+              "u"
+            ];
             run = ''shell --confirm 'unzip "$1"' '';
             desc = "Unzip file";
           }
           {
-            on = ["d" "l"];
+            on = [
+              "d"
+              "l"
+            ];
             run = "link --relative";
             desc = "link file";
           }
           {
-            on = ["<C-f>"];
+            on = [ "<C-f>" ];
             run = "find";
             desc = "Find";
           }
           # some plugins keymaps
           {
-            on = ["F"];
+            on = [ "F" ];
             run = "plugin smart-filter";
             desc = "Smart filter";
           }
           {
-            on = ["f"];
+            on = [ "f" ];
             run = "plugin jump-to-char";
             desc = "Jump to char";
           }
           {
-            on = ["<Enter>"];
+            on = [ "<Enter>" ];
             run = "plugin --sync smart-enter";
             desc = "Enter directory";
           }
           {
-            on = ["<Right>"];
+            on = [ "<Right>" ];
             run = "plugin --sync smart-enter";
             desc = "Enter directory";
           }
           {
-            on = ["y"];
+            on = [ "y" ];
             run = "plugin xclip-system-clipboard";
           }
           {
-            on = ["<C-n>"];
+            on = [ "<C-n>" ];
             run = ''shell -- ${getExe pkgs.dragon-drop} -x -T -i -s 128 "$0"'';
           }
         ];
@@ -159,7 +185,13 @@ in
         # linemode = "size"; # folder count works so bad, git plugin also dont work at all
         show_hidden = false;
         show_symlink = true;
-        mouse_events = ["click" "scroll" "touch" "move" "drag"];
+        mouse_events = [
+          "click"
+          "scroll"
+          "touch"
+          "move"
+          "drag"
+        ];
       };
       opener = {
         edit = [
@@ -181,7 +213,10 @@ in
       tasks = {
         macro_workers = 2;
         image_alloc = 268435456; # 256MB
-        image_bound = [0 0];
+        image_bound = [
+          0
+          0
+        ];
         suppress_preload = true;
       };
     };
@@ -189,13 +224,15 @@ in
       gruvbox-dark = ./gruvbox-dark.yazi;
     };
     theme = {
-      indicator.preview = { underline = false; };
+      indicator.preview = {
+        underline = false;
+      };
       icon = {
-        globs = [];
-        dirs  = [];
-        files = [];
-        exts  = [];
-        conds = [];
+        globs = [ ];
+        dirs = [ ];
+        files = [ ];
+        exts = [ ];
+        conds = [ ];
       };
       flavor = {
         use = "gruvbox-dark";

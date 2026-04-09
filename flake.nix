@@ -36,142 +36,168 @@
     zinit.flake = false;
   };
 
-  outputs = { self, nixpkgs, nixpkgs-pinned, home-manager, deploy-rs, disko, nur, zapret-discord-youtube, dwm, st, dwmblocks, dmenu, ... }@inputs: let
-    system = "x86_64-linux";
-    pkgs = import nixpkgs {
-      inherit system;
-      config = {
-        allowBroken = false;
-        allowUnfree = true;
-        allowInsecure = false;
+  outputs =
+    {
+      self,
+      nixpkgs,
+      nixpkgs-pinned,
+      home-manager,
+      deploy-rs,
+      disko,
+      nur,
+      zapret-discord-youtube,
+      dwm,
+      st,
+      dwmblocks,
+      dmenu,
+      ...
+    }@inputs:
+    let
+      system = "x86_64-linux";
+      pkgs = import nixpkgs {
+        inherit system;
+        config = {
+          allowBroken = false;
+          allowUnfree = true;
+          allowInsecure = false;
+        };
       };
-    };
 
-    make_hm = username: { config, ... }: {
-      home-manager = {
-        useGlobalPkgs = true;
-        useUserPackages = true;
-        backupFileExtension = "backup";
-        users.${username} = {
-          imports = [ "${self}/home" ];
-        };
-        extraSpecialArgs = {
-          inherit username inputs system;
-          inherit (config) videoDrivers dpi fontSize;
-          pkgs-pinned = import nixpkgs-pinned { inherit system; };
-        };
-      };
-    };
-  in {
-    nixosConfigurations.barnard = nixpkgs.lib.nixosSystem {
-      inherit pkgs;
-      specialArgs = {
-        username = "barnard";
-        pkgs-pinned = import nixpkgs-pinned {
-          inherit system;
-          config = {
-            allowUnfree = true;
-          };
-        };
-        inherit inputs system;
-      };
-      modules = [
-        ./nixos
-        ./nixos/hardware/amd.nix
-        ./hosts/barnard/hardware-configuration.nix
-        ./hosts/barnard/env.nix
-
-        zapret-discord-youtube.nixosModules.default
+      make_hm =
+        username:
+        { config, ... }:
         {
-          services.zapret-discord-youtube = {
-            enable = true;
-            configName = "general(ALT)";
-          };
-        }
-
-        home-manager.nixosModules.home-manager
-        (make_hm "barnard")
-        ({ config, pkgs, ... }: {
-          boot.kernelPackages = pkgs.linuxPackages_6_12;
-        })
-      ];
-    };
-
-    nixosConfigurations.dash = nixpkgs.lib.nixosSystem {
-      inherit pkgs;
-      specialArgs = {
-        username = "dash";
-        pkgs-pinned = import nixpkgs-pinned {
-          inherit system;
-          config = {
-            allowUnfree = true;
+          home-manager = {
+            useGlobalPkgs = true;
+            useUserPackages = true;
+            backupFileExtension = "backup";
+            users.${username} = {
+              imports = [ "${self}/home" ];
+            };
+            extraSpecialArgs = {
+              inherit username inputs system;
+              inherit (config) videoDrivers dpi fontSize;
+              pkgs-pinned = import nixpkgs-pinned { inherit system; };
+            };
           };
         };
-        inherit inputs system;
-      };
-      modules = [
-        ./nixos
-        ./nixos/hardware/nvidia.nix
-        ./hosts/sun/hardware-configuration.nix
-        ./hosts/sun/env.nix
-
-        zapret-discord-youtube.nixosModules.default
-        {
-          services.zapret-discord-youtube = {
-            enable = true;
-            configName = "general(ALT)";
+    in
+    {
+      nixosConfigurations.barnard = nixpkgs.lib.nixosSystem {
+        inherit pkgs;
+        specialArgs = {
+          username = "barnard";
+          pkgs-pinned = import nixpkgs-pinned {
+            inherit system;
+            config = {
+              allowUnfree = true;
+            };
           };
-        }
+          inherit inputs system;
+        };
+        modules = [
+          ./nixos
+          ./nixos/hardware/amd.nix
+          ./hosts/barnard/hardware-configuration.nix
+          ./hosts/barnard/env.nix
 
-        home-manager.nixosModules.home-manager
-        (make_hm "dash")
-        ({ config, pkgs, ... }: {
-          boot.kernelPackages = pkgs.linuxPackages_6_12;
-        })
-      ];
-    };
+          zapret-discord-youtube.nixosModules.default
+          {
+            services.zapret-discord-youtube = {
+              enable = true;
+              configName = "general(ALT)";
+            };
+          }
 
-    nixosConfigurations."sirius" = nixpkgs.lib.nixosSystem {
-      inherit pkgs;
-      specialArgs = {
-         username = "sirius";
+          home-manager.nixosModules.home-manager
+          (make_hm "barnard")
+          (
+            { config, pkgs, ... }:
+            {
+              boot.kernelPackages = pkgs.linuxPackages_6_12;
+            }
+          )
+        ];
       };
-      modules = [
-        disko.nixosModules.disko
-        ./hosts/sirius/sirius.nix
-        ./hosts/sirius/disk-config.nix
-      ];
-    };
 
-    nixosConfigurations."sirius-b" = nixpkgs.lib.nixosSystem {
-      inherit pkgs;
-      specialArgs = {
-         username = "sirius";
+      nixosConfigurations.dash = nixpkgs.lib.nixosSystem {
+        inherit pkgs;
+        specialArgs = {
+          username = "dash";
+          pkgs-pinned = import nixpkgs-pinned {
+            inherit system;
+            config = {
+              allowUnfree = true;
+            };
+          };
+          inherit inputs system;
+        };
+        modules = [
+          ./nixos
+          ./nixos/hardware/nvidia.nix
+          ./hosts/sun/hardware-configuration.nix
+          ./hosts/sun/env.nix
+
+          zapret-discord-youtube.nixosModules.default
+          {
+            services.zapret-discord-youtube = {
+              enable = true;
+              configName = "general(ALT)";
+            };
+          }
+
+          home-manager.nixosModules.home-manager
+          (make_hm "dash")
+          (
+            { config, pkgs, ... }:
+            {
+              boot.kernelPackages = pkgs.linuxPackages_6_12;
+            }
+          )
+        ];
       };
-      modules = [
-        disko.nixosModules.disko
-        ./hosts/sirius-b/sirius.nix
-        ./hosts/sirius/disk-config.nix
-      ];
-    };
 
-    devShells.${system}.default = pkgs.mkShell {
-      buildInputs = with pkgs; [
-        stdenv.cc
-        gnumake
-        libXcursor
-        libX11
-        libXinerama
-        libXft
-        libxcb
-        xcbutil
-        freetype
-        fontconfig
-        pkg-config
-        yajl
-        libXres
-        imlib2
-      ];
+      nixosConfigurations."sirius" = nixpkgs.lib.nixosSystem {
+        inherit pkgs;
+        specialArgs = {
+          username = "sirius";
+        };
+        modules = [
+          disko.nixosModules.disko
+          ./hosts/sirius/sirius.nix
+          ./hosts/sirius/disk-config.nix
+        ];
+      };
+
+      nixosConfigurations."sirius-b" = nixpkgs.lib.nixosSystem {
+        inherit pkgs;
+        specialArgs = {
+          username = "sirius";
+        };
+        modules = [
+          disko.nixosModules.disko
+          ./hosts/sirius-b/sirius.nix
+          ./hosts/sirius/disk-config.nix
+        ];
+      };
+
+      devShells.${system}.default = pkgs.mkShell {
+        buildInputs = with pkgs; [
+          stdenv.cc
+          gnumake
+          libXcursor
+          libX11
+          libXinerama
+          libXft
+          libxcb
+          xcbutil
+          freetype
+          fontconfig
+          pkg-config
+          yajl
+          libXres
+          imlib2
+        ];
+      };
     };
-  };
 }

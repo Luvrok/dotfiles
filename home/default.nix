@@ -1,4 +1,9 @@
-{ pkgs, username, fontSize, ... }:
+{
+  pkgs,
+  username,
+  fontSize,
+  ...
+}:
 
 {
   programs.home-manager.enable = true;
@@ -24,6 +29,9 @@
       "x-scheme-handler/https" = "librewolf.desktop";
     };
   };
+
+  home.file.".local/share/v2rayN/bin/xray/xray".source = "${pkgs.xray}/bin/xray";
+  home.file.".local/share/v2rayN/bin/sing_box/sing-box".source = "${pkgs.sing-box}/bin/sing-box";
 
   home.file.".Xresources" = {
     executable = true;
@@ -105,7 +113,11 @@
     recursive = true;
   };
 
-  home.file.".config/rofi/font.rasi".source = if fontSize < 14 then ./programs/rofi/font/font-dpi-low.rasi else ./programs/rofi/font/font-dpi-high.rasi;
+  home.file.".config/rofi/font.rasi".source =
+    if fontSize < 14 then
+      ./programs/rofi/font/font-dpi-low.rasi
+    else
+      ./programs/rofi/font/font-dpi-high.rasi;
 
   home.file.".Xmodmap".text = ''
     keycode  37 = Control_L NoSymbol Control_L

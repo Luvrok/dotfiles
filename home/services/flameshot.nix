@@ -1,4 +1,4 @@
-{ config, pkgs, ... }: 
+{ config, pkgs, ... }:
 
 {
   systemd.user.targets.tray = {
@@ -12,10 +12,20 @@
     Unit = {
       Description = "Flameshot screenshot tool";
       Requires = [ "tray.target" ];
-      After = [ "display-manager.service" "default.target" "graphical-session.target" "tray.target" ];
+      After = [
+        "display-manager.service"
+        "default.target"
+        "graphical-session.target"
+        "tray.target"
+      ];
     };
 
-    Install = { WantedBy = [ "default.target" "graphical-session.target" ]; };
+    Install = {
+      WantedBy = [
+        "default.target"
+        "graphical-session.target"
+      ];
+    };
 
     Service = {
       ExecStart = "${pkgs.flameshot}/bin/flameshot";
@@ -34,7 +44,7 @@
     settings = {
       General = {
         # Image Save Path
-        savePath= "${config.home.homeDirectory}/HOME/wizzard/media/screenshot";
+        savePath = "${config.home.homeDirectory}/HOME/wizzard/media/screenshot";
 
         # Default file extension for screenshots
         saveAsFileExtension = ".png";
@@ -79,7 +89,7 @@
         uiColor = "#d65d0e";
 
         # Contrast UI color
-        contrastUiColor= "#fbf1c7";
+        contrastUiColor = "#fbf1c7";
 
         # Last used color
         drawColor = "#d65d0e";

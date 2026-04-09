@@ -26,7 +26,7 @@
     graphics = {
       enable = true;
       enable32Bit = true;
-      extraPackages = with pkgs; [ 
+      extraPackages = with pkgs; [
         intel-compute-runtime
         intel-media-driver
         libva-vdpau-driver

@@ -48,7 +48,10 @@
       ];
 
       unredir-if-possible = true;
-      unredir-if-possible-exclude = [ "class_g = 'mpv'" "class_g = 'librewolf'" ];
+      unredir-if-possible-exclude = [
+        "class_g = 'mpv'"
+        "class_g = 'librewolf'"
+      ];
 
       log-level = "warn";
       log-file = "${config.home.homeDirectory}/.cache/picom-log.log";

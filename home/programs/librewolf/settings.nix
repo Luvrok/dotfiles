@@ -1,4 +1,5 @@
-{ pkgs, ... }: {
+{ pkgs, ... }:
+{
   settings = {
     # === shyfox ===
     "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
@@ -59,7 +60,7 @@
     "privacy.trackingprotection.socialtracking.enabled" = true;
     "privacy.partition.network_state.ocsp_cache" = true;
     "identity.fxaccounts.enabled" = false;
-    "extensions.formautofill.addresses.enabled" = false; 
+    "extensions.formautofill.addresses.enabled" = false;
     "extensions.formautofill.creditCards.enabled" = false;
     "beacon.enabled" = false;
     "device.sensors.enabled" = false;
