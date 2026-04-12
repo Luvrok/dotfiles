@@ -1,11 +1,11 @@
 return {
 	"nvim-lualine/lualine.nvim",
-	event = "VeryLazy",
+	lazy = false,
 	config = function()
 		require("lualine").setup({
 			options = {
 				icons_enabled = false,
-				theme = "gruvbox",
+				theme = "gruvbox_dark",
 				component_separators = { left = "", right = "" },
 				section_separators = { left = "", right = "" },
 			},

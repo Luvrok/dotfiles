@@ -1,4 +1,4 @@
-{ ... }:
+{ inputs, ... }:
 
 {
   environment.variables = {

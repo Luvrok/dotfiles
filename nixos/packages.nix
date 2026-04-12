@@ -13,6 +13,7 @@
       tor
       nodejs
       cargo # need for nixd lsp build
+      rustc
       yajl
       chromium # need for via qmk
       monero-cli # need for monero-gui for some reason cant sync without monero-cli
@@ -126,6 +127,18 @@
       clang-tools # clang-format
       gofumpt # go
 
+      # --- lsp ---
+      nixd
+      gopls
+      lua-language-server
+      marksman
+      taplo
+      sqls
+      vscode-langservers-extracted
+      typescript-language-server
+      yaml-language-server
+      bash-language-server
+
       # --- talking ---
       discord
       element-desktop
@@ -157,7 +170,6 @@
 
       # --- go ---
       go
-      gopls
       delve
       golangci-lint
       goimports-reviser

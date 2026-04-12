@@ -1,24 +1,24 @@
 return {
 	"karb94/neoscroll.nvim",
+	keys = {
+		"<C-u>",
+		"<C-d>",
+		"<PageUp>",
+		"<PageDown>",
+	},
+	opts = {
+		mappings = { "<C-u>", "<C-d>" },
+	},
 	config = function()
-		require("neoscroll").setup({
-			mappings = {
-				"<C-u>",
-				"<C-d>",
-			},
-		})
+		local neoscroll = require("neoscroll")
+		neoscroll.setup(opts)
 
-		local keymap = {
-			["<PageUp>"] = function()
-				require("neoscroll").ctrl_u({ duration = 100 })
-			end,
-			["<PageDown>"] = function()
-				require("neoscroll").ctrl_d({ duration = 100 })
-			end,
-		}
+		vim.keymap.set({ "n", "x" }, "<PageUp>", function()
+			neoscroll.ctrl_u({ duration = 100 })
+		end)
 
-		for key, func in pairs(keymap) do
-			vim.keymap.set({ "n", "x" }, key, func)
-		end
+		vim.keymap.set({ "n", "x" }, "<PageDown>", function()
+			neoscroll.ctrl_d({ duration = 100 })
+		end)
 	end,
 }

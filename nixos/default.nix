@@ -1,4 +1,9 @@
-{ pkgs, username, ... }:
+{
+  pkgs,
+  inputs,
+  username,
+  ...
+}:
 
 {
   imports = [
@@ -37,6 +42,8 @@
     ];
     warn-dirty = false;
   };
+
+  nix.nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
 
   security.sudo.extraConfig = ''
     Defaults lecture = never

@@ -23,6 +23,10 @@ return {
 			NeoTreeGitAdded = { fg = "#98971a" },
 			NeoTreeGitUntracked = { fg = "#a89984" },
 			NeoTreeGitDeleted = { fg = "#cc241d" },
+
+			Visual = {
+				bg = "#3c3836",
+			},
 		},
 	},
 	config = function(_, opts)
