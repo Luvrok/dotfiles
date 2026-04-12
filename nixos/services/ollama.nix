@@ -7,6 +7,7 @@
   port = 11434;
   environmentVariables = {
     OLLAMA_FLASH_ATTENTION = "1";
+    OLLAMA_CONTEXT_LENGTH = "4096";
   };
   loadModels = [
     "gpt-oss:latest"

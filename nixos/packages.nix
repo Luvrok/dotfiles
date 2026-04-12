@@ -1,4 +1,8 @@
-{ pkgs, pkgs-pinned, ... }:
+{
+  pkgs,
+  pkgs-pinned,
+  ...
+}:
 
 {
   environment.systemPackages =
@@ -12,11 +16,11 @@
       gamescope
       tor
       nodejs
-      cargo # need for nixd lsp build
+      cargo
       rustc
       yajl
       chromium # need for via qmk
-      monero-cli # need for monero-gui for some reason cant sync without monero-cli
+      monero-cli
 
       # --- xorg ---
       libxcvt
@@ -129,6 +133,7 @@
 
       # --- lsp ---
       nixd
+      nil
       gopls
       lua-language-server
       marksman
@@ -167,6 +172,8 @@
       lksctp-tools
       evtest
       xev
+      rocmPackages.rocminfo
+      rocmPackages.rocm-smi
 
       # --- go ---
       go

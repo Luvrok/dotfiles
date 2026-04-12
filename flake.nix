@@ -7,20 +7,11 @@
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
-    deploy-rs.url = "github:serokell/deploy-rs";
     disko.url = "github:nix-community/disko";
-
-    deploy-rs.inputs.nixpkgs.follows = "nixpkgs";
     disko.inputs.nixpkgs.follows = "nixpkgs";
-
-    nur.url = "github:nix-community/NUR";
-    nur.inputs.nixpkgs.follows = "nixpkgs";
-
     zapret-discord-youtube.url = "github:kartavkun/zapret-discord-youtube";
-
     better-swallow.url = "github:afishhh/better-swallow";
 
-    # my stuff
     dwm.url = "github:Luvrok/dwm";
     dwm.flake = false;
     st.url = "github:Luvrok/st";
@@ -30,10 +21,6 @@
     dmenu.url = "github:Luvrok/dmenu";
     dmenu.flake = false;
     textfoxy.url = "github:Luvrok/textfoxy";
-
-    # zsh plugin manager
-    zinit.url = "github:zdharma-continuum/zinit";
-    zinit.flake = false;
   };
 
   outputs =
@@ -42,14 +29,8 @@
       nixpkgs,
       nixpkgs-pinned,
       home-manager,
-      deploy-rs,
       disko,
-      nur,
       zapret-discord-youtube,
-      dwm,
-      st,
-      dwmblocks,
-      dmenu,
       ...
     }@inputs:
     let
@@ -112,7 +93,7 @@
           home-manager.nixosModules.home-manager
           (make_hm "barnard")
           (
-            { config, pkgs, ... }:
+            { pkgs, ... }:
             {
               boot.kernelPackages = pkgs.linuxPackages_6_12;
             }
@@ -149,7 +130,7 @@
           home-manager.nixosModules.home-manager
           (make_hm "dash")
           (
-            { config, pkgs, ... }:
+            { pkgs, ... }:
             {
               boot.kernelPackages = pkgs.linuxPackages_6_12;
             }

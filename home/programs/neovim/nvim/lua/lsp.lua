@@ -1,29 +1,42 @@
 vim.lsp.config("nixd", {
 	cmd = { "nixd" },
 	filetypes = { "nix" },
-	root_markers = { "flake.nix", ".git" },
+	root_markers = { "flake.nix", "default.nix", "shell.nix", ".git" },
 	settings = {
 		formatting = {
 			command = { "nixfmt" },
 		},
 		nixd = {
 			nixpkgs = {
-				expr = "import <nixpkgs> { }",
+				expr = 'import (builtins.getFlake "/home/barnard/HOME/infra/dotfiles").inputs.nixpkgs { }',
 			},
 			formatting = {
 				command = { "nixfmt" },
 			},
-			-- options = {
-			-- 	nixos = {
-			-- 		'(builtins.getFlake "${builtins.getEnv "HOME"}/HOME/infra/dotfiles").nixosConfigurations.${(import <nixpkgs> {}).lib.strings.trim (builtins.readFile "/etc/hostname")}.options',
-			-- 	},
-			-- 	home_manager = {
-			-- 		expr = '(builtins.getFlake "${builtins.getEnv "HOME"}/HOME/infra/dotfiles").homeConfigurations."${(import <nixpkgs> {}).lib.strings.trim (builtins.readFile "/etc/hostname")}-${builtins.getEnv "USER"}',
-			-- 	},
-			-- },
+			options = {
+				nixos = {
+					expr = '(builtins.getFlake "/home/barnard/HOME/infra/dotfiles").nixosConfigurations."barnard".options',
+				},
+				home_manager = {
+					expr = '(builtins.getFlake "/home/barnard/HOME/infra/dotfiles").nixosConfigurations."barnard".options.home-manager.users.type.getSubOptions []',
+				},
+			},
 		},
 	},
 })
+
+-- vim.lsp.config("nil_ls", {
+-- 	cmd = { "nil" },
+-- 	filetypes = { "nix" },
+-- 	root_markers = { "flake.nix", "default.nix", "shell.nix", ".git" },
+-- 	settings = {
+-- 		["nil"] = {
+-- 			formatting = {
+-- 				command = { "nixfmt" },
+-- 			},
+-- 		},
+-- 	},
+-- })
 
 vim.lsp.config("lua_ls", {
 	name = "lua_ls",

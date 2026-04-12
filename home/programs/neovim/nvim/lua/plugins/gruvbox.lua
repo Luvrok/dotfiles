@@ -5,7 +5,7 @@ return {
 	opts = {
 		contrast = "soft",
 		overrides = {
-			["@comment"] = { italic = false },
+			["@comment"] = { fg = "#928374", italic = false },
 			["@keyword"] = { italic = false },
 			["@parameter"] = { italic = false },
 			["@type"] = { italic = false },

@@ -90,7 +90,6 @@ in
         '';
       };
     })
-    inputs.nur.overlays.default
     inputs.better-swallow.overlay
   ];
 }
