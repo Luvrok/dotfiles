@@ -25,19 +25,6 @@ vim.lsp.config("nixd", {
 	},
 })
 
--- vim.lsp.config("nil_ls", {
--- 	cmd = { "nil" },
--- 	filetypes = { "nix" },
--- 	root_markers = { "flake.nix", "default.nix", "shell.nix", ".git" },
--- 	settings = {
--- 		["nil"] = {
--- 			formatting = {
--- 				command = { "nixfmt" },
--- 			},
--- 		},
--- 	},
--- })
-
 vim.lsp.config("lua_ls", {
 	name = "lua_ls",
 	cmd = { "lua-language-server" },
