@@ -4,7 +4,7 @@
   imports = [
     ./librewolf
     ./neovim
-    ./kitty
+    ./kitty.nix
     ./zsh
     ./rofi
     ./yazi

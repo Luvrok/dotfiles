@@ -10,9 +10,7 @@
 
     opacityRules = [
       "100:class_g = 'kitty' && focused"
-      "90:class_g = 'kitty' && !focused"
-      "100:class_g = 'st' && focused"
-      "90:class_g = 'st' && !focused"
+      "91:class_g = 'kitty' && !focused"
     ];
 
     settings = {
@@ -40,7 +38,7 @@
       focus-exclude = "x = 0 && y = 0 && override_redirect = true";
 
       blur-background-exclude = [
-        "class_g != 'kitty' && class_g != 'dmenu' && class_g != 'Rofi' && class_g != 'st-256color'"
+        "class_g != 'kitty' && class_g != 'dmenu' && class_g != 'Rofi' && class_g != 'spterm'"
       ];
 
       fade-exclude = [
