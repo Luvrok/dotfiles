@@ -59,6 +59,7 @@
     mappings = {
       u = "scroll half-up";
       d = "scroll half-down";
+      D = "toggle_page_mode";
       r = "reload";
       R = "rotate";
       K = "zoom in";
@@ -70,6 +71,7 @@
       # Custom mappings for fullscreen mode.
       "[fullscreen] u" = "scroll half-up";
       "[fullscreen] d" = "scroll half-down";
+      "[fullscreen] D" = "toggle_page_mode";
       "[fullscreen] r" = "reload";
       "[fullscreen] R" = "rotate";
       "[fullscreen] K" = "zoom in";
