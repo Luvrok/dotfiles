@@ -10,7 +10,7 @@
       font_family = "JetBrainsMonoNL Nerd Font";
       font_size = "${toString fontSize}.0";
 
-      background_opacity = "0.96";
+      background_opacity = "0.98";
 
       window_padding_width = 2.5;
       confirm_os_window_close = 0;

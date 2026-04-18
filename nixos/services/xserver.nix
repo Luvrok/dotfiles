@@ -27,7 +27,7 @@
   displayManager = {
     startx.enable = true;
     sessionCommands = ''
-      WALLPAPER="$HOME/HOME/wizzard/wallpaper/elden-ring--1.jpg"
+      WALLPAPER="$HOME/HOME/wizzard/wallpaper/art/nature/Church_Heart_of_the_Andes.jpg"
       ${pkgs.xwallpaper}/bin/xwallpaper --zoom "$WALLPAPER"
 
       export PATH=/home/${username}/.local/bin:$PATH
