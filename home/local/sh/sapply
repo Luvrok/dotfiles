@@ -1,14 +1,10 @@
 #!/bin/sh
 
-pushd ~/HOME/infra/dotfiles
-sudo nixos-rebuild --flake $HOME/HOME/infra/dotfiles#$whoami switch
-
-if [ $? -eq 0 ]; then
+if nh os switch "$HOME/HOME/infra/dotfiles#$USER"
+then
     notify-send -r 9991 "nixos-rebuild switch completed successfully"
     pw-play "$HOME/.local/media/soundeffect/minecraft-sheep2.mp3" &
 else
     notify-send -r 9991 "nixos-rebuild switch failed"
     pw-play "$HOME/.local/media/soundeffect/minecraft-cave.mp3" &
 fi
-
-popd

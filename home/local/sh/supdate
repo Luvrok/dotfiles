@@ -1,10 +1,10 @@
 #!/bin/sh
-sudo nix flake update &&
 
-if [ $? -eq 0 ]; then
-    notify-send -r 9991 "nix-channel (system) update completed successfully"
+if nh os switch -u "$HOME/HOME/infra/dotfiles#$USER"
+then
+    notify-send -r 9991 "nixos switch + flake update OK"
     pw-play "$HOME/.local/media/soundeffect/minecraft-sheep2.mp3" &
 else
-    notify-send -r 9991 "nix-channel (system) update failed"
+    notify-send -r 9991 "nixos switch FAILED"
     pw-play "$HOME/.local/media/soundeffect/minecraft-cave.mp3" &
 fi
