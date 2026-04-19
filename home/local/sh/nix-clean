@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 
 nix_clean() {(
         home-manager expire-generations 0

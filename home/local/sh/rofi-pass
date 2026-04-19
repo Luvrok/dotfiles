@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# this version has too much functionality, i need small version of that (TODO!)
+
 # rofi-pass
 # (c) 2015 Rasmus Steinke <rasi@xssn.at>
 basecommand="$0"
@@ -365,7 +367,18 @@ generatePass () {
     )
 
     askGenMenu=$(printf '%s\n' "${askmenu_content[@]}" | _rofi -dmenu -p "Generate new Password for ${selected_password}? > ")
-    askgen_exit=$?
+    askgen_exit=$?#!/bin/sh
+
+sel=$(
+    ps -eo pid,pgid,user,pcpu,pmem,cmd --sort=-pcpu --no-headers |
+    rofi -dmenu -i -p "run" -lines 10 \
+        -theme "$HOME/.config/rofi/rofi-pass.rasi" \
+        -theme-str "window { width: 1280px; }"
+) || exit 1
+
+pgid=$(printf '%s\n' "$sel" | awk '{print $2}')
+
+[ -n "$pgid" ] && kill -- "-$pgid"
 
     if [[ $askgen_exit -eq 1 ]]; then
         exit

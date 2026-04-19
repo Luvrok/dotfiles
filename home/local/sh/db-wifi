@@ -1,37 +1,47 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 INTERFACE="wlan0"
-WIFI_INFO="$(iwctl station "$INTERFACE" show)"
-SSID=$(echo "$WIFI_INFO" | grep 'Connected network' | awk '{print $3}')
-RAW_RSSI=$(echo "$WIFI_INFO" | grep 'RSSI' | grep -v 'Average' | awk '{print $2}')
+WIFI_INFO=$(iwctl station "$INTERFACE" show)
 
-if [[ "$RAW_RSSI" =~ ^-?[0-9]+$ ]]; then
-    RSSI=$RAW_RSSI
-else
+RAW_RSSI=$(printf "%s\n" "$WIFI_INFO" | grep 'RSSI' | grep -v 'Average' | awk '{print $2}')
+
+case "$RAW_RSSI" in
+  ''|*[!0-9-]*)
     {
-        echo "------ $(date) -----"
-        echo "磌 No Signal"
-        echo "RSSI is not valid: $RAW_RSSI"
-    } >> ~/.wifi_debug.log
+      echo "------ $(date '+%F %T') -----"
+      echo "iface: $INTERFACE"
+      echo "ssid: ${SSID:-<empty>}"
+      echo "raw_rssi: ${RAW_RSSI:-<empty>}"
+      echo
+      echo "[iwctl station show]"
+      iwctl station "$INTERFACE" show 2>&1
+      echo
+      echo "[iw dev link]"
+      iw dev "$INTERFACE" link 2>&1
+      echo
+      echo "[ip link]"
+      ip link show "$INTERFACE" 2>&1
+      echo
+    } >> "$HOME/.wifi_debug.log"
 
     ICON="󰤫"
-    echo "$ICON"
+    printf "%s\n" "$ICON"
     exit 0
+    ;;
+esac
 
-    exit 0
-fi
+RSSI=$RAW_RSSI
 
-# Determine icon based on RSSI
-if (( RSSI >= -50 )); then
-    ICON="󰤨"  # Full bars
-elif (( RSSI >= -60 )); then
-    ICON="󰤥"  # 3 bars
-elif (( RSSI >= -70 )); then
-    ICON="󰤢"  # 2 bars
-elif (( RSSI >= -80 )); then
-    ICON="󰤟"   # 1 bar
+if [ "$RSSI" -ge -50 ]; then
+    ICON="󰤨"
+elif [ "$RSSI" -ge -60 ]; then
+    ICON="󰤥"
+elif [ "$RSSI" -ge -70 ]; then
+    ICON="󰤢"
+elif [ "$RSSI" -ge -80 ]; then
+    ICON="󰤟"
 else
-    ICON="󰤫"  # No signal
+    ICON="󰤫"
 fi
 
-echo "$ICON"
+printf "%s\n" "$ICON"

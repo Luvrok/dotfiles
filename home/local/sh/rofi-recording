@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# (TODO!) test version 2 (on nvidia laptop, my amd pc) and move to it
+
 set -euo pipefail
 
 DIR="${HOME}/HOME/screen_recordings"

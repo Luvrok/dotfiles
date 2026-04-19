@@ -1,36 +1,21 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-notify() {
-    notify-send \
-        --icon=battery-good-symbolic \
-        --expire-time=4000 \
-        --hint=string:x-canonical-private-synchronous:battery \
-        "Battery" "$1"
-}
-
-case "${BLOCK_BUTTON:-}" in
-    1) notify "$(acpi -b | awk -F ': |, ' '{printf "%s\n%s\n", $2, $4}')" ;;
-esac
-
-# Loop through all attached batteries.
 for battery in /sys/class/power_supply/BAT?*; do
-    # If non-first battery, print a space separator.
-    [ -n "${capacity+x}" ] && printf " "
+    [ -n "$capacity" ] && printf " "
 
-    capacity="$(cat "$battery/capacity" 2>&1)"
-    if [[ "$capacity" -gt 100 ]]; then
+    capacity=$(cat "$battery/capacity" 2>/dev/null)
+
+    if [ "$capacity" -gt 100 ]; then
         status=" "
-    elif [[ "$capacity" -gt 90 ]]; then
-        status=" "
-    elif [[ "$capacity" -gt 66 ]]; then
+    elif [ "$capacity" -gt 75 ]; then
         status=" "
-    elif [[ "$capacity" -gt 33 ]]; then
+    elif [ "$capacity" -gt 50 ]; then
         status=" "
-    elif [[ "$capacity" -gt 10 ]]; then
+    elif [ "$capacity" -gt 20 ]; then
         status=" "
     else
         status=" "
     fi
 
-    echo "$status$capacity%"
+    printf "%s%s%%\n" "$status" "$capacity"
 done

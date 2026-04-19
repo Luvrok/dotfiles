@@ -1,8 +1,8 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 update_status() {
-    status=$(xset -q | grep LED)
-    led_indicator=$(echo $status | awk '{ print substr($10, 5, 1) }')
+    status="$(xset -q | grep LED)"
+    led_indicator="$(printf '%s\n' "$status" | awk '{ print substr($10, 5, 1) }')"
 
     PIDFILE="/tmp/recpid"
 
@@ -12,18 +12,18 @@ update_status() {
         prefix=" "
     fi
 
-    if [ "$led_indicator" -eq "1" ]; then
-        echo "${prefix}[RU]"
+    if [ "$led_indicator" = "1" ]; then
+        printf "%s[RU]\n" "$prefix"
     else
-        echo "${prefix}[EN]"
+        printf "%s[EN]\n" "$prefix"
     fi
 }
 
 toggle_lang() {
-    status=$(xset -q | grep LED)
-    led_indicator=$(echo $status | awk '{ print substr($10, 5, 1) }')
+    status="$(xset -q | grep LED)"
+    led_indicator="$(printf '%s\n' "$status" | awk '{ print substr($10, 5, 1) }')"
 
-    if [ "$led_indicator" -eq "1" ]; then
+    if [ "$led_indicator" = "1" ]; then
         xkb-switch -s us
     else
         xkb-switch -s ru
