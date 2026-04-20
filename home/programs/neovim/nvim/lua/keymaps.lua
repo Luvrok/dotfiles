@@ -1,15 +1,21 @@
 local map = vim.keymap.set
 
--- Undo / Redo в NORMAL режиме
+-- disable default undo/redo keys (prevent accidental presses)
+vim.keymap.set("n", "u", "<Nop>", { noremap = true, silent = true })
+vim.keymap.set("n", "<C-r>", "<Nop>", { noremap = true, silent = true })
+
+vim.keymap.set("x", "u", "<Nop>", { noremap = true, silent = true })
+vim.keymap.set("x", "<C-r>", "<Nop>", { noremap = true, silent = true })
+
+-- remap undo/redo to Ctrl+Z / Ctrl+Y
 map("n", "<C-z>", "u", { noremap = true, silent = true })
 map("n", "<C-y>", "<C-r>", { noremap = true, silent = true })
 
--- Undo / Redo в INSERT режиме
 map("i", "<C-z>", "<C-o>u", { noremap = true, silent = true })
 map("i", "<C-y>", "<C-o><C-r>", { noremap = true, silent = true })
 
--- nothing to do
-map("v", "<C-z>", "<Nop>", { noremap = true, silent = true })
+map("v", "<C-z>", "u", { noremap = true, silent = true })
+map("v", "<C-y>", "<C-r>", { noremap = true, silent = true })
 
 -- Window navigation
 map("n", "<C-h>", "<C-w><C-h>", opts)
@@ -56,3 +62,6 @@ map("v", "<", "<gv")
 -- shift scroll
 map({ "n", "i", "v" }, "<S-ScrollWheelUp>", "zh", { noremap = true, silent = true })
 map({ "n", "i", "v" }, "<S-ScrollWheelDown>", "zl", { noremap = true, silent = true })
+
+-- select all
+map({ "n", "i", "x" }, "<C-a>", "<Esc>ggVG", { noremap = true, silent = true })

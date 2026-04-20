@@ -1,5 +1,6 @@
 return {
 	"yetone/avante.nvim",
+	enabled = false,
 	-- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
 	-- ⚠️ must add this setting! ! !
 	build = vim.fn.has("win32") ~= 0 and "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false"
@@ -70,6 +71,18 @@ return {
 			},
 		},
 	},
+
+	config = function(_, opts)
+		require("avante").setup(opts)
+
+		-- убить inline hints полностью
+		vim.api.nvim_create_autocmd("FileType", {
+			pattern = "*",
+			callback = function()
+				vim.api.nvim_buf_clear_namespace(0, vim.api.nvim_create_namespace("avante_inline_hint"), 0, -1)
+			end,
+		})
+	end,
 
 	dependencies = {
 		"nvim-lua/plenary.nvim",

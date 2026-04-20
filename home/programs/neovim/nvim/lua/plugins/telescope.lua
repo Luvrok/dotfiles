@@ -15,6 +15,7 @@ return {
 				require("telescope.builtin").live_grep()
 			end,
 			desc = "Live grep",
+			mode = { "n", "x" },
 		},
 		{
 			"<C-f>",
@@ -25,6 +26,7 @@ return {
 				}))
 			end,
 			desc = "Fuzzy find in current buffer",
+			mode = { "n", "x" },
 		},
 		{
 			"<C-p>",
@@ -32,8 +34,14 @@ return {
 				require("telescope.builtin").find_files()
 			end,
 			desc = "Find files",
+			mode = { "n", "x" },
 		},
-		{ "<leader>o", "<cmd>Telescope projects<cr>", desc = "Projects" },
+		{
+			"<leader>o",
+			"<cmd>Telescope projects<cr>",
+			desc = "Projects",
+			mode = { "n", "x" }
+		},
 	},
 	config = function()
 		local actions = require("telescope.actions")
