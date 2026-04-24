@@ -11,16 +11,6 @@
     opacityRules = [
       "100:class_g = 'kitty' && focused"
       "95:class_g = 'kitty' && !focused"
-      "100:class_g = 'librewolf' && focused"
-      "95:class_g = 'librewolf' && !focused"
-      "100:class_g = 'obsidian' && focused"
-      "95:class_g = 'obsidian' && !focused"
-      "98:class_g = 'TelegramDesktop' && focused"
-      "95:class_g = 'TelegramDesktop' && !focused"
-      "98:class_g = 'Element' && focused"
-      "95:class_g = 'Element' && !focused"
-      "98:class_g = 'qBittorrent' && focused"
-      "95:class_g = 'qBittorrent' && !focused"
     ];
 
     settings = {
@@ -48,7 +38,7 @@
       focus-exclude = "x = 0 && y = 0 && override_redirect = true";
 
       blur-background-exclude = [
-        "class_g != 'kitty' && class_g != 'dmenu' && class_g != 'Rofi' && class_g != 'spterm' && class_g != 'qBittorrent' && class_g != 'Element' && class_g != 'TelegramDesktop' && class_g != 'obsidian'"
+        "class_g != 'kitty' && class_g != 'dmenu' && class_g != 'Rofi' && class_g != 'spterm'"
       ];
 
       fade-exclude = [
