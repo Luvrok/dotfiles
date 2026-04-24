@@ -126,22 +126,6 @@
     chown -R root:root /root/nixos-config
   '';
 
-  # services.xray = {
-  #   enable = true;
-  #   settingsFile = ./xray.json;
-  # };
-
-  # systemd.services.xray = {
-  #   serviceConfig = {
-  #     RuntimeDirectory = "xray";
-  #     RuntimeDirectoryMode = "0750";
-  #     ReadWritePaths = [ "/run/xray" ];
-  #
-  #     RuntimeMaxSec = "30min";
-  #     Restart = "always";
-  #   };
-  # };
-
   environment.systemPackages = with pkgs; [
     vim
     htop
@@ -149,7 +133,6 @@
     wget
     git
     btop
-    # xray
     vnstat
     dig
     git-crypt
