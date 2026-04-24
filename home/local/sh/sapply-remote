@@ -1,0 +1,20 @@
+#!/bin/sh
+
+if [ -z "$1" ] || [ -z "$2" ]; then
+    echo "usage: $0 <remote_ip> <flake_name>"
+    exit 1
+fi
+
+REMOTE_IP=$1
+REMOTE_NAME=$2
+
+HOST="root@$REMOTE_IP"
+FLAKE="$HOME/HOME/infra/dotfiles#$REMOTE_NAME"
+
+if nh os switch "$FLAKE" -H $REMOTE_NAME --target-host "$HOST"; then
+    notify-send -r 9991 "remote switch OK"
+    pw-play "$HOME/.local/media/soundeffect/minecraft-sheep2.mp3" &
+else
+    notify-send -r 9991 "remote switch FAIL"
+    pw-play "$HOME/.local/media/soundeffect/minecraft-cave.mp3" &
+fi

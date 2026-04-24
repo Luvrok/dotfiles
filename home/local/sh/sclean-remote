@@ -1,0 +1,16 @@
+#!/bin/sh
+
+if [ -z "$1" ]; then
+    echo "usage: $0 <remote_ip>"
+    exit 1
+fi
+
+HOST="root@$1"
+
+if ssh "$HOST" 'nh clean all && nix profile wipe-history && nix store optimise'; then
+    notify-send -r 9991 "remote nix clean OK"
+    pw-play "$HOME/.local/media/soundeffect/minecraft-sheep2.mp3" &
+else
+    notify-send -r 9991 "remote nix clean FAIL"
+    pw-play "$HOME/.local/media/soundeffect/minecraft-cave.mp3" &
+fi
