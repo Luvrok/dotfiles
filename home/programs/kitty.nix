@@ -1,14 +1,16 @@
 { fontSize, ... }:
 
 {
+  # todo: source http proxy
   programs.kitty = {
     enable = true;
-    shellIntegration.enableZshIntegration = true;
-    shellIntegration.enableBashIntegration = true;
+    shellIntegration.mode = "no-rc no-cursor";
     themeFile = "gruvbox-dark";
     settings = {
       font_family = "JetBrainsMonoNL Nerd Font";
       font_size = "${toString fontSize}.0";
+
+      clear_all_shortcuts = "yes";
 
       background_opacity = "0.98";
 
@@ -22,6 +24,14 @@
       bell_on_tab = "no";
 
       symbol_map = "U+0025 JetBrains Mono";
+
+      cursor_trail = 1;
+      cursor_trail_decay = "0.45 0.45";
+      cursor_shape = "block";
+      cursor_blink_interval = 0.5;
+
+      cursor = "#ebdbb2";
+      cursor_text_color = "#ebdbb2";
     };
 
     keybindings = {
