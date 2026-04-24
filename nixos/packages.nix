@@ -99,10 +99,12 @@
       networkmanager
       v2rayn
       shadowsocks-rust
+      mtr
 
       # --- system tools ---
       libnotify
       jq
+      nh
 
       # --- multimedia ---
       ffmpeg-full
@@ -123,6 +125,7 @@
       songrec
 
       # --- formatters ---
+      tree-sitter
       stylua # lua
       nixfmt # nix
       prettierd # js, ts, html, css, json, md, yaml
