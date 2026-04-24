@@ -6,8 +6,6 @@
     (modulesPath + "/profiles/qemu-guest.nix")
   ];
 
-  system.stateVersion = "25.11";
-
   networking = {
     hostName = "jedha";
 
@@ -128,6 +126,7 @@
 
   environment.systemPackages = with pkgs; [
     vim
+    neovim
     htop
     curl
     wget
@@ -138,4 +137,6 @@
     git-crypt
     nh
   ];
+
+  system.stateVersion = "25.11";
 }
