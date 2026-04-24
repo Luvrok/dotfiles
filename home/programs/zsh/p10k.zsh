@@ -75,6 +75,8 @@
   typeset -g POWERLEVEL9K_TRANSIENT_PROMPT=off
   typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
   typeset -g POWERLEVEL9K_DISABLE_HOT_RELOAD=true
+
+  typeset -g POWERLEVEL9K_DISABLE_CURSOR=true
   (( ! $+functions[p10k] )) || p10k reload
 }
 
