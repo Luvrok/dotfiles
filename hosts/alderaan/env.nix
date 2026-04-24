@@ -2,7 +2,7 @@
 
 {
   imports = [
-    ../../nixos/config/dash.nix
+    ../../nixos/config/alderaan.nix
   ];
 
   environment.sessionVariables = {

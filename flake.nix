@@ -138,27 +138,36 @@
         ];
       };
 
-      nixosConfigurations."sirius" = nixpkgs.lib.nixosSystem {
+      nixosConfigurations."kessel" = nixpkgs.lib.nixosSystem {
         inherit pkgs;
         specialArgs = {
-          username = "sirius";
+          username = "kessel";
         };
         modules = [
           disko.nixosModules.disko
-          ./hosts/sirius/sirius.nix
-          ./hosts/sirius/disk-config.nix
+          ./hosts/kessel
         ];
       };
 
-      nixosConfigurations."sirius-b" = nixpkgs.lib.nixosSystem {
+      nixosConfigurations."tatooine" = nixpkgs.lib.nixosSystem {
         inherit pkgs;
         specialArgs = {
-          username = "sirius";
+          username = "tatooine";
         };
         modules = [
           disko.nixosModules.disko
-          ./hosts/sirius-b/sirius.nix
-          ./hosts/sirius/disk-config.nix
+          ./hosts/tatooine
+        ];
+      };
+
+      nixosConfigurations."jedha" = nixpkgs.lib.nixosSystem {
+        inherit pkgs;
+        specialArgs = {
+          username = "jedha";
+        };
+        modules = [
+          disko.nixosModules.disko
+          ./hosts/jedha
         ];
       };
 

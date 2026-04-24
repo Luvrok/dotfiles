@@ -1,2 +1,2 @@
-hosts/sirius/xray.json filter=git-crypt diff=git-crypt
-hosts/sirius-b/xray.json filter=git-crypt diff=git-crypt
+hosts/kessel/xray.json filter=git-crypt diff=git-crypt
+hosts/tatooine/xray.json filter=git-crypt diff=git-crypt

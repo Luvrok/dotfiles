@@ -1,13 +1,11 @@
 { modulesPath, pkgs, ... }:
 
-# nix run --no-write-lock-file github:nix-community/nixos-anywhere -- --flake .#sirius root@45.137.99.130
-# nixos-rebuild switch --flake .#sirius --target-host root@45.137.99.130 --sudo
-
 {
-  system.stateVersion = "25.11";
   imports = [
+    ./disk-config.nix
     (modulesPath + "/profiles/qemu-guest.nix")
   ];
+  system.stateVersion = "25.11";
 
   boot.loader.grub = {
     enable = true;
@@ -15,12 +13,20 @@
     efiInstallAsRemovable = true;
   };
 
+  nix.settings = {
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
+    warn-dirty = false;
+  };
+
   time.timeZone = "Europe/Moscow";
   i18n.defaultLocale = "en_GB.UTF-8";
 
   # services.getty.autologinUser = "root";
 
-  networking.hostName = "sirius";
+  networking.hostName = "kessel";
   networking.wireless.enable = false;
 
   services.openssh = {
@@ -49,8 +55,8 @@
 
   systemd.network.networks."10-ens18" = {
     matchConfig.Name = "ens18";
-    address = [ "45.38.20.238/24" ];
-    routes = [ { routeConfig.Gateway = "45.38.20.1"; } ];
+    address = [ "45.137.99.130/24" ];
+    routes = [ { routeConfig.Gateway = "45.137.99.1"; } ];
     dns = [ "9.9.9.9" ];
   };
 
@@ -102,6 +108,7 @@
     vnstat
     dig
     git-crypt
+    nh
   ];
 
   services.vnstat.enable = true;
