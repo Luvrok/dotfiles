@@ -39,5 +39,14 @@ return {
 		})
 
 		vim.api.nvim_set_hl(0, "WinSeparator", { fg = "NONE", bg = "NONE" })
+
+		-- modicator
+		vim.api.nvim_set_hl(0, "NormalMode", { fg = "#d65d0e" })
+		vim.api.nvim_set_hl(0, "InsertMode", { fg = "#98971a" })
+		vim.api.nvim_set_hl(0, "VisualMode", { fg = "#d79921" })
+
+		vim.api.nvim_set_hl(0, "CommandMode", { fg = "#282828" })
+		vim.api.nvim_set_hl(0, "ReplaceMode", { fg = "#cc241d" })
+		vim.api.nvim_set_hl(0, "SelectMode", { fg = "#458588" })
 	end,
 }
