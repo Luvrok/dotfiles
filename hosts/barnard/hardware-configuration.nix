@@ -42,6 +42,7 @@
     options = [
       "noatime"
       "nofail"
+      "x-systemd.automount"
       "x-systemd.device-timeout=1s"
     ];
   };
