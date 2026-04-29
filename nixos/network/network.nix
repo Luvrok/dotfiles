@@ -10,14 +10,14 @@
 
     firewall = {
       allowedTCPPorts = [
+        7777
         8384
         22000
-        7777
       ];
       allowedUDPPorts = [
-        22000
-        21027
         7777
+        21027
+        22000
       ];
     };
   };
