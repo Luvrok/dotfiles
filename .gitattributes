@@ -1,2 +1,3 @@
-hosts/kessel/xray.json filter=git-crypt diff=git-crypt
+hosts/kessel-nl/xray.json filter=git-crypt diff=git-crypt
+hosts/kessel-fin/xray.json filter=git-crypt diff=git-crypt
 hosts/tatooine/xray.json filter=git-crypt diff=git-crypt

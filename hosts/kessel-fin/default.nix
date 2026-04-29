@@ -1,16 +1,13 @@
-{ modulesPath, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   imports = [
-    ./disk-config.nix
-    (modulesPath + "/profiles/qemu-guest.nix")
+    ./hardware-configuration.nix
   ];
-  system.stateVersion = "25.11";
 
   boot.loader.grub = {
     enable = true;
-    efiSupport = true;
-    efiInstallAsRemovable = true;
+    device = "/dev/sda";
   };
 
   nix.settings = {
@@ -19,12 +16,13 @@
       "flakes"
     ];
     warn-dirty = false;
+    max-jobs = 1;
+    cores = 1;
+    auto-optimise-store = true;
   };
 
-  time.timeZone = "Europe/Moscow";
+  time.timeZone = "Europe/Helsinki";
   i18n.defaultLocale = "en_GB.UTF-8";
-
-  # services.getty.autologinUser = "root";
 
   networking.hostName = "kessel";
   networking.wireless.enable = false;
@@ -53,10 +51,14 @@
     allowPing = true;
   };
 
-  systemd.network.networks."10-ens18" = {
-    matchConfig.Name = "ens18";
-    address = [ "45.137.99.130/24" ];
-    routes = [ { routeConfig.Gateway = "45.137.99.1"; } ];
+  systemd.network.networks."10-eth" = {
+    matchConfig.MACAddress = "00:cd:6c:68:d6:29";
+    address = [ "5.181.181.60/24" ];
+    routes = [
+      {
+        Gateway = "5.181.181.1";
+      }
+    ];
     dns = [ "9.9.9.9" ];
   };
 
@@ -64,7 +66,7 @@
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKfVMnRoTEwUBqxcm6tzRTiFGZVafQ6dHr95HDM//Wk+ barnard"
   ];
 
-  users.users.dash = {
+  users.users.kessel = {
     isNormalUser = true;
     extraGroups = [ "wheel" ];
     initialPassword = "nopassword";
@@ -109,7 +111,10 @@
     dig
     git-crypt
     nh
+    iperf
+    mtr
   ];
 
   services.vnstat.enable = true;
+  system.stateVersion = "25.11";
 }

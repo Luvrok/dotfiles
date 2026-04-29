@@ -16,13 +16,12 @@
       "nix-command"
       "flakes"
     ];
-    warn-dirty = false;
   };
 
-  time.timeZone = "America/Los_Angeles";
+  time.timeZone = "Europe/Amsterdam";
   i18n.defaultLocale = "en_GB.UTF-8";
 
-  networking.hostName = "tatooine";
+  networking.hostName = "kessel";
   networking.wireless.enable = false;
 
   services.openssh = {
@@ -54,25 +53,22 @@
   };
 
   systemd.network.networks."10-eth" = {
-    matchConfig.MACAddress = "bc:24:11:33:0e:80";
-    address = [ "45.38.20.238/32" ];
+    matchConfig.MACAddress = "bc:24:11:36:06:8e";
+    address = [ "45.135.180.21/32" ];
     routes = [
       {
-        Gateway = "100.64.3.229";
+        Gateway = "45.135.180.1";
         GatewayOnLink = true;
       }
     ];
-    dns = [
-      "9.9.9.9"
-      "1.1.1.1"
-    ];
+    dns = [ "9.9.9.9" ];
   };
 
   users.users.root.openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKfVMnRoTEwUBqxcm6tzRTiFGZVafQ6dHr95HDM//Wk+ barnard"
   ];
 
-  users.users.tatooine = {
+  users.users.kessel = {
     isNormalUser = true;
     extraGroups = [ "wheel" ];
     initialPassword = "nopassword";
@@ -119,12 +115,11 @@
     nh
     iperf
     mtr
-    openssl
-    whois
-    jq
     busybox
   ];
 
   services.vnstat.enable = true;
   system.stateVersion = "25.11";
 }
+
+

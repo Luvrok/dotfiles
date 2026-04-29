@@ -138,14 +138,23 @@
         ];
       };
 
-      nixosConfigurations."kessel" = nixpkgs.lib.nixosSystem {
+      nixosConfigurations."kessel-fin" = nixpkgs.lib.nixosSystem {
         inherit pkgs;
         specialArgs = {
           username = "kessel";
         };
         modules = [
-          disko.nixosModules.disko
-          ./hosts/kessel
+          ./hosts/kessel-fin
+        ];
+      };
+
+      nixosConfigurations."kessel-nl" = nixpkgs.lib.nixosSystem {
+        inherit pkgs;
+        specialArgs = {
+          username = "kessel";
+        };
+        modules = [
+          ./hosts/kessel-nl
         ];
       };
 
@@ -155,7 +164,6 @@
           username = "tatooine";
         };
         modules = [
-          disko.nixosModules.disko
           ./hosts/tatooine
         ];
       };

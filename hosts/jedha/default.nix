@@ -1,9 +1,9 @@
-{ modulesPath, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   imports = [
-    ./disk-config.nix
-    (modulesPath + "/profiles/qemu-guest.nix")
+    ./hardware-configuration.nix
+    ./yggdrasil.nix
   ];
 
   networking = {
@@ -86,8 +86,7 @@
 
   boot.loader.grub = {
     enable = true;
-    efiSupport = true;
-    efiInstallAsRemovable = true;
+    device = "/dev/sda";
   };
 
   nix.settings = {
@@ -136,6 +135,9 @@
     dig
     git-crypt
     nh
+    iperf
+    mtr
+    busybox
   ];
 
   system.stateVersion = "25.11";
