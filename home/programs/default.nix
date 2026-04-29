@@ -14,5 +14,6 @@
     ./mpv.nix
     ./zathura.nix
     ./clock-rs.nix
+    ./element-desktop.nix
   ];
 }

@@ -7,186 +7,185 @@
 {
   environment.systemPackages =
     (with pkgs; [
-      # --- dependencies ---
-      glibc
-      glib
-      gcc
-      cmake
-      buildPackages.gnumake
-      gamescope
-      tor
-      nodejs
-      cargo
-      rustc
-      yajl
-      chromium # need for via qmk
-      monero-cli
-
-      # --- xorg ---
-      libxcvt
-      xkb-switch
-      xdotool
-      xsetroot
-      xcursorthemes
-      xset
-      xsettingsd
-      xclip
-      xcolor
-      xwinwrap
-      xwininfo
-      xinit
-      xdg-desktop-portal
-      xdpyinfo
-      slop
-      dmenu
-      j4-dmenu-desktop
-      st
-      dwmblocks
-      better-swallow
-
-      # --- basic utilities ---
+      # --- base ---
       bash
-      lsof
-      coreutils
-      wget
-      curl
-      man
-      unzip
-      unrar
-      p7zip
-      zip
-      htop
-      iotop
-      killall
-      dig
-      nmap
-      inetutils # telnet, ftp, hostname, etc
-      usbutils
-      bc
-      powertop
-      lshw
-      mesa-demos
-      vnstat
-      sysstat
       bat
-      testdisk
-      feh
-      pciutils
-      qpwgraph
-      e2fsprogs
-      acpi
-      util-linux
-      parted
-      efibootmgr
-      grub2
-      pacman
-      ripgrep
-      gnugrep
-      gawk
+      bc
+      coreutils
       fd
-      ethtool
-      dnsmasq
-      tcpdump
-      procps
       file
-      alsa-utils
-      ddcutil
-      home-manager
+      gawk
+      gnugrep
+      ripgrep
+      wget
 
-      # --- networking ---
-      openssl
-      iptables
-      networkmanager
-      v2rayn
-      shadowsocks-rust
-      mtr
-
-      # --- system tools ---
-      libnotify
-      jq
-      nh
-
-      # --- multimedia ---
-      ffmpeg-full
-      v4l-utils
-      pulseaudioFull
-
-      # --- apps ---
-      qbittorrent
-      obsidian
-      wasabiwallet
-      syncthing
-      spotify
-      libreoffice
-      veracrypt
-      monero-gui
-      telegram-desktop
-      aseprite
-      songrec
-
-      # --- formatters ---
-      tree-sitter
-      stylua # lua
-      nixfmt # nix
-      prettierd # js, ts, html, css, json, md, yaml
-      sql-formatter # sql_formatter
-      beautysh # sh, zsh
-      clang-tools # clang-format
-      gofumpt # go
-
-      # --- lsp ---
-      nixd
-      nil
-      gopls
-      lua-language-server
-      marksman
-      taplo
-      sqls
-      vscode-langservers-extracted
-      typescript-language-server
-      yaml-language-server
-      bash-language-server
-
-      # --- talking ---
-      discord
-      element-desktop
-      element-call
-      irssi
-
-      # --- games ---
-      prismlauncher
-
-      # --- hardware ---
-      dualsensectl # CLI interface for controlling Sony Dualsense controllers
-      # openrgb-with-all-plugins
-
-      # --- android ---
-      android-tools
-      adbfs-rootless
-      jmtpfs
-
-      # --- live usb ---
-      woeusb
-      unetbootin
-
-      # --- testing system ---
-      vrrtest
-      stress-ng
-      lksctp-tools
-      evtest
-      xev
-      rocmPackages.rocminfo
-      rocmPackages.rocm-smi
-
-      # --- go ---
-      go
-      delve
+      # --- development ---
+      buildPackages.gnumake
+      cargo
+      clang-tools
+      cmake
+      gcc
       golangci-lint
       goimports-reviser
       gotools
+      jq
+      nodejs
+      rustc
+      tree-sitter
+      yajl
 
-      # --- temporary ---
+      # --- formatters ---
+      beautysh
+      gofumpt
+      nixfmt
+      prettierd
+      sql-formatter
+      stylua
+
+      # --- lsp ---
+      bash-language-server
+      gopls
+      lua-language-server
+      marksman
+      nil
+      nixd
+      sqls
+      taplo
+      typescript-language-server
+      vscode-langservers-extracted
+      yaml-language-server
+
+      # --- networking ---
+      dig
+      dnsmasq
+      ethtool
+      inetutils
+      iperf
+      busybox
+      iptables
+      mtr
+      networkmanager
+      nmap
+      openssl
+      shadowsocks-rust
+      tcpdump
+      tor
+      v2rayn
+
+      # --- system ---
+      acpi
+      alsa-utils
+      ddcutil
+      e2fsprogs
+      efibootmgr
+      glib
+      glibc
+      grub2
+      htop
+      iotop
+      killall
+      libnotify
+      lshw
+      lsof
+      pacman
+      parted
+      powertop
+      procps
+      sysstat
+      util-linux
+      vnstat
+
+      # --- archives ---
+      p7zip
+      unrar
+      unzip
+      zip
+
+      # --- media ---
+      ffmpeg-full
+      mesa-demos
+      pulseaudioFull
+      qpwgraph
+      v4l-utils
+
+      # --- xorg ---
+      better-swallow
+      dmenu
+      dwmblocks
+      j4-dmenu-desktop
+      libxcvt
+      slop
+      st
+      xclip
+      xcolor
+      xcursorthemes
+      xdg-desktop-portal
+      xdotool
+      xdpyinfo
+      xinit
+      xkb-switch
+      xset
+      xsetroot
+      xsettingsd
+      xwininfo
+      xwinwrap
+
+      # --- apps ---
+      aseprite
+      chromium
+      discord
+      feh
+      libreoffice
+      monero-cli
+      monero-gui
+      obsidian
       pavucontrol
+      qbittorrent
+      songrec
+      spotify
+      syncthing
+      telegram-desktop
+      veracrypt
+      wasabiwallet
+      graphviz
+      xdot
+
+      # --- tui ---
+      irssi
+
+      # --- games ---
+      gamescope
+      prismlauncher
+
+      # --- android ---
+      adbfs-rootless
+      android-tools
+      jmtpfs
+
+      # --- live-usb ---
+      unetbootin
+      woeusb
+
+      # --- hardware ---
+      # openrgb-with-all-plugins
+
+      # --- testing ---
+      evtest
+      lksctp-tools
+      rocmPackages.rocminfo
+      rocmPackages.rocm-smi
+      stress-ng
+      testdisk
+      vrrtest
+      xev
+
+      # --- management ---
+      dualsensectl
+      home-manager
+      nh
+
+      # --- debug ---
+      delve
     ])
     ++ (with pkgs-pinned; [
     ]);
