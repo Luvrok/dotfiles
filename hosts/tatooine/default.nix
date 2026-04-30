@@ -64,7 +64,6 @@
     ];
     dns = [
       "9.9.9.9"
-      "1.1.1.1"
     ];
   };
 
@@ -80,6 +79,13 @@
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKfVMnRoTEwUBqxcm6tzRTiFGZVafQ6dHr95HDM//Wk+ barnard"
     ];
   };
+
+  networking.enableIPv6 = true;
+
+  # https://popov.wtf/how-to-prioritize-ipv4-over-ipv6-in-linux
+  environment.etc."gai.conf".text = ''
+    precedence ::ffff:0:0/96  100
+  '';
 
   environment.etc."nixos".source = ./.;
   system.activationScripts.copyConfig.text = ''

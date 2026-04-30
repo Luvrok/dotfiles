@@ -90,6 +90,13 @@
     settingsFile = ./xray.json;
   };
 
+  networking.enableIPv6 = true;
+
+  # https://popov.wtf/how-to-prioritize-ipv4-over-ipv6-in-linux
+  environment.etc."gai.conf".text = ''
+    precedence ::ffff:0:0/96  100
+  '';
+
   systemd.services.xray = {
     serviceConfig = {
       RuntimeDirectory = "xray";
