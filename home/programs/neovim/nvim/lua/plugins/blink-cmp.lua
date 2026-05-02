@@ -19,14 +19,14 @@ return {
 		completion = {
 			ghost_text = {
 				enabled = true,
-				show_with_menu = true,
 			},
 			documentation = {
-				auto_show = true,
+				auto_show = false,
 				auto_show_delay_ms = 200,
 				treesitter_highlighting = true,
 			},
 			menu = {
+				auto_show = false,
 				draw = {
 					treesitter = { "lsp" },
 					columns = {

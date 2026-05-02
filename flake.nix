@@ -11,6 +11,7 @@
     disko.inputs.nixpkgs.follows = "nixpkgs";
     zapret-discord-youtube.url = "github:kartavkun/zapret-discord-youtube";
     better-swallow.url = "github:afishhh/better-swallow";
+    lazygit.url = "github:jesseduffield/lazygit";
 
     dwm.url = "github:Luvrok/dwm";
     dwm.flake = false;

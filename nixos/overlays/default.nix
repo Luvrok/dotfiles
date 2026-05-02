@@ -91,5 +91,6 @@ in
       };
     })
     inputs.better-swallow.overlay
+    inputs.lazygit.overlays.default
   ];
 }

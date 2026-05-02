@@ -25,6 +25,7 @@
       clang-tools
       cmake
       gcc
+      go
       golangci-lint
       goimports-reviser
       gotools
@@ -33,6 +34,7 @@
       rustc
       tree-sitter
       yajl
+      lazygit
 
       # --- formatters ---
       beautysh

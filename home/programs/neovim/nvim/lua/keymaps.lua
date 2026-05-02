@@ -60,8 +60,8 @@ map("v", ">", ">gv")
 map("v", "<", "<gv")
 
 -- shift scroll
-map({ "n", "i", "v" }, "<S-ScrollWheelUp>", "zh", { noremap = true, silent = true })
-map({ "n", "i", "v" }, "<S-ScrollWheelDown>", "zl", { noremap = true, silent = true })
+-- map({ "n", "i", "v" }, "<S-ScrollWheelUp>", "zh", { noremap = true, silent = true })
+-- map({ "n", "i", "v" }, "<S-ScrollWheelDown>", "zl", { noremap = true, silent = true })
 
 -- select all
 map({ "n", "i", "x" }, "<C-a>", "<Esc>ggVG", { noremap = true, silent = true })
