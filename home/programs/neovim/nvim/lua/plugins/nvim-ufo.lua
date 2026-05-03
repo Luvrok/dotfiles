@@ -22,7 +22,12 @@ return {
 		}
 
 		ufo.setup({
-			provider_selector = function()
+			provider_selector = function(_, filetype, buftype)
+				-- Disable UFO completely for Neo-tree or any non-file buffer
+				if filetype == "neo-tree" or buftype ~= "" then
+					return "" -- no providers
+				end
+
 				return { "treesitter", "indent" }
 			end,
 		})
