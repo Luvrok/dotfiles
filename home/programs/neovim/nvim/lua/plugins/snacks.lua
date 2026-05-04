@@ -6,71 +6,77 @@ return {
 		bigfile = { enabled = false },
 		dashboard = {
 			enabled = true,
-			sections = {
-				{ section = "header" },
-				{ section = "keys", gap = 1, padding = 1 },
-				{
-					pane = 2,
-					section = "recent_files",
-					icon = " ",
-					title = "Recent Files",
-					indent = 2,
-					padding = 1,
-				},
-				{
-					pane = 2,
-					section = "projects",
-					icon = " ",
-					title = "Projects",
-					indent = 2,
-					padding = 1,
-				},
-				{
-					pane = 2,
-					icon = " ",
-					title = "Git Status",
-					section = "terminal",
-					enabled = function()
-						return vim.fn.isdirectory(".git") == 1
-					end,
-					cmd = "git status --short --branch",
-					height = 5,
-					padding = 1,
-					indent = 3,
-				},
-				{ section = "startup" },
-			},
+			width = 24,
+
 			preset = {
 				keys = {
-					{ icon = " ", key = "f", desc = "Find File", action = ":Telescope find_files" },
-					{ icon = " ", key = "n", desc = "New File", action = ":ene | startinsert" },
-					{ icon = " ", key = "g", desc = "Find Text", action = ":Telescope live_grep" },
-					{ icon = " ", key = "r", desc = "Recent Files", action = ":Telescope oldfiles" },
-					{ icon = " ", key = "p", desc = "Projects", action = ":Telescope projects" },
-					{ icon = " ", key = "c", desc = "Config", action = ":e $MYVIMRC" },
-					{ icon = " ", key = "s", desc = "Restore Session", action = ":AutoSession restore" },
-					{ icon = "󰒲 ", key = "l", desc = "Lazy", action = ":Lazy" },
-					{ icon = " ", key = "q", desc = "Quit", action = ":qa" },
+					{
+						key = "g",
+						desc = "find text",
+						action = function()
+							require("telescope.builtin").live_grep({
+								prompt_title = "search",
+								results_title = "files",
+								preview_title = "preview",
+							})
+						end,
+					},
+					{
+						key = "r",
+						desc = "recent files",
+						action = function()
+							require("telescope.builtin").oldfiles({
+								prompt_title = "search",
+								results_title = "files",
+								preview_title = "preview",
+							})
+						end,
+					},
+					{
+						key = "f",
+						desc = "find file",
+						action = function()
+							require("telescope.builtin").find_files({
+								prompt_title = "search",
+								results_title = "files",
+								preview_title = "preview",
+							})
+						end,
+					},
+					{
+						key = "p",
+						desc = "projects",
+						action = function()
+							require("telescope").extensions.projects.projects({
+								prompt_title = "search",
+								results_title = "projects",
+								preview_title = "preview",
+							})
+						end,
+					},
+					{ key = "q", desc = "quit", action = ":qa" },
 				},
-				header = [[
-███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗███╗   ███╗
-████╗  ██║██╔════╝██╔═══██╗██║   ██║██║████╗ ████║
-██╔██╗ ██║█████╗  ██║   ██║██║   ██║██║██╔████╔██║
-██║╚██╗██║██╔══╝  ██║   ██║╚██╗ ██╔╝██║██║╚██╔╝██║
-██║ ╚████║███████╗╚██████╔╝ ╚████╔╝ ██║██║ ╚═╝ ██║
-╚═╝  ╚═══╝╚══════╝ ╚═════╝   ╚═══╝  ╚═╝╚═╝     ╚═╝
-        ]],
+			},
+
+			formats = {
+				key = { "%s", hl = "SnacksDashboardKey" },
+				desc = { "%s", hl = "SnacksDashboardDesc" },
+			},
+
+			sections = {
+				{
+					section = "keys",
+					gap = 0,
+					padding = 0,
+				},
 			},
 		},
-		explorer = { enabled = false },
-		indent = { enabled = false },
-		input = { enabled = false },
-		picker = { enabled = false },
-		notifier = { enabled = false },
-		quickfile = { enabled = false },
-		scope = { enabled = false },
-		scroll = { enabled = false },
-		statuscolumn = { enabled = false },
-		words = { enabled = false },
 	},
+
+	init = function()
+		vim.api.nvim_set_hl(0, "SnacksDashboardNormal", { fg = "#ebdbb2", bg = "NONE" })
+		vim.api.nvim_set_hl(0, "SnacksDashboardKey", { fg = "#d65d0e", bold = true })
+		vim.api.nvim_set_hl(0, "SnacksDashboardDesc", { fg = "#928374" })
+		vim.api.nvim_set_hl(0, "SnacksDashboardSpecial", { fg = "#a89984" })
+	end,
 }

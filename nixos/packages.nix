@@ -105,6 +105,7 @@
 
       # --- media ---
       ffmpeg-full
+      losslesscut-bin
       mesa-demos
       pulseaudioFull
       qpwgraph
@@ -151,6 +152,7 @@
       wasabiwallet
       graphviz
       xdot
+      worldpainter
 
       # --- tui ---
       irssi
