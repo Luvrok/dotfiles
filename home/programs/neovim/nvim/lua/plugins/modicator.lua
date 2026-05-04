@@ -2,7 +2,6 @@ return {
 	"mawkler/modicator.nvim",
 	dependencies = "ellisonleao/gruvbox.nvim",
 	init = function()
-		vim.opt.cursorline = true
 		vim.opt.number = true
 		vim.opt.termguicolors = true
 	end,

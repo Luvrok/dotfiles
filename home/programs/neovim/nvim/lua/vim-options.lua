@@ -24,7 +24,8 @@ vim.o.splitbelow = true
 vim.o.list = true
 vim.opt.listchars = { tab = "  ", trail = "·", nbsp = "␣" }
 vim.o.inccommand = "split"
-vim.o.cursorline = true
+vim.opt.cursorline = true
+-- vim.opt.cursorcolumn = true
 vim.o.scrolloff = 10
 vim.o.confirm = true
 vim.opt.swapfile = false
@@ -40,3 +41,9 @@ vim.opt.smartindent = true
 vim.opt.autoindent = true
 
 vim.wo.relativenumber = true
+
+-- disable search, dont like it
+vim.opt.hlsearch = false
+vim.opt.incsearch = false
+vim.keymap.set("n", "n", "<Nop>", { desc = "Disable next search result" })
+vim.keymap.set("n", "N", "<Nop>", { desc = "Disable previous search result" })
