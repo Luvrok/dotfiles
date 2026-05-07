@@ -12,6 +12,37 @@ return {
 	},
 	keys = {
 		{
+			"<leader>b",
+			function()
+				require("telescope.builtin").buffers({
+					initial_mode = "normal",
+					sort_lastused = true,
+					ignore_current_buffer = true,
+					show_all_buffers = true,
+
+					entry_maker = function(entry)
+						local make_entry = require("telescope.make_entry")
+						local gen = make_entry.gen_from_buffer({})
+
+						local e = gen(entry)
+
+						e.display = function()
+							return vim.fn.fnamemodify(entry.info.name, ":~:.")
+						end
+
+						return e
+					end,
+
+					attach_mappings = function(_, map_inner)
+						local actions = require("telescope.actions")
+						map_inner("n", "d", actions.delete_buffer)
+						return true
+					end,
+				})
+			end,
+			desc = "Buffers",
+		},
+		{
 			"<leader>p",
 			function()
 				require("telescope.builtin").live_grep({
