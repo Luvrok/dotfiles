@@ -35,6 +35,7 @@
       tree-sitter
       yajl
       lazygit
+      typst
 
       # --- formatters ---
       beautysh
@@ -43,6 +44,7 @@
       prettierd
       sql-formatter
       stylua
+      typstyle
 
       # --- lsp ---
       bash-language-server
@@ -56,6 +58,7 @@
       typescript-language-server
       vscode-langservers-extracted
       yaml-language-server
+      tinymist
 
       # --- networking ---
       dig
@@ -153,6 +156,7 @@
       graphviz
       xdot
       worldpainter
+      typstwriter
 
       # --- tui ---
       irssi
