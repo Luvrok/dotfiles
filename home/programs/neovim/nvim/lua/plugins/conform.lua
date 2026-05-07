@@ -10,6 +10,7 @@ return {
 			lua = { "stylua" },
 			nix = { "nixfmt" },
 			sql = { "sql_formatter" },
+			typst = { "typstyle" },
 
 			html = { "prettierd" },
 			css = { "prettierd" },

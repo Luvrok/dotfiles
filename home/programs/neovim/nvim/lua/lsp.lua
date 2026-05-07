@@ -1,7 +1,14 @@
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+local ok, blink = pcall(require, "blink.cmp")
+if ok then
+	capabilities = blink.get_lsp_capabilities(capabilities)
+end
+
 vim.lsp.config("nixd", {
 	cmd = { "nixd" },
 	filetypes = { "nix" },
 	root_markers = { "flake.nix", "default.nix", "shell.nix", ".git" },
+	capabilities = capabilities,
 	settings = {
 		formatting = {
 			command = { "nixfmt" },
@@ -25,6 +32,33 @@ vim.lsp.config("nixd", {
 	},
 })
 
+vim.lsp.config("tinymist", {
+	cmd = { "tinymist" },
+	filetypes = { "typst" },
+	root_markers = {
+		"typst.toml",
+		".git",
+	},
+	capabilities = capabilities,
+	single_file_support = true,
+	settings = {
+		exportPdf = "onSave",
+		formatterMode = "typstyle",
+	},
+})
+
+vim.lsp.config("tinymist", {
+	cmd = { "tinymist" },
+	filetypes = { "typst" },
+	root_markers = { "typst.toml", ".git" },
+	capabilities = capabilities,
+	settings = {
+		formatterMode = "typstyle", -- Use typstyle for formatting (bundled with tinymist)
+		exportPdf = "onSave", -- Export PDF when file is saved
+		semanticTokens = "enable", -- Enable semantic highlighting
+	},
+})
+
 vim.lsp.config("lua_ls", {
 	name = "lua_ls",
 	cmd = { "lua-language-server" },
@@ -41,6 +75,7 @@ vim.lsp.config("lua_ls", {
 		".git",
 		"Makefile",
 	},
+	capabilities = capabilities,
 
 	settings = {
 		Lua = {
@@ -64,6 +99,7 @@ vim.lsp.config("bash-language-server", {
 	cmd = { "bash-language-server", "start" },
 	filetypes = { "bash", "sh" },
 	root_markers = { ".git" },
+	capabilities = capabilities,
 	settings = {
 		bashIde = {
 			globPattern = vim.env.GLOB_PATTERN or "*@(.sh|.inc|.bash|.command)",
@@ -88,24 +124,28 @@ vim.lsp.config("gopls", {
 			buildFlags = { "-tags=amd64" },
 		},
 	},
+	capabilities = capabilities,
 })
 
 vim.lsp.config("marksman", {
 	cmd = { "marksman", "server" },
 	filetypes = { "markdown" },
 	root_markers = { ".marksman.toml" },
+	capabilities = capabilities,
 })
 
 vim.lsp.config("taplo", {
 	cmd = { "taplo", "lsp", "stdio" },
 	filetypes = { "toml" },
 	root_markers = { ".git" },
+	capabilities = capabilities,
 })
 
 vim.lsp.config("clangd", {
 	cmd = { "clangd" },
 	root_markers = { ".git", "compile_commands.json", "CMakeLists.txt" },
 	filetypes = { "c", "cpp", "objc", "objcpp" },
+	capabilities = capabilities,
 })
 
 vim.lsp.config("sqls", {
@@ -113,18 +153,21 @@ vim.lsp.config("sqls", {
 	filetypes = { "sql", "mysql" },
 	root_markers = { "config.yml" },
 	settings = {},
+	capabilities = capabilities,
 })
 
 vim.lsp.config("vscode-langservers-extracted", {
 	cmd = { "vscode-eslint-language-server", "--stdio" },
 	filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact", "graphql" },
 	root_markers = { ".eslintrc", ".eslintrc.js", ".eslintrc.json", "eslint.config.js", "eslint.config.mjs" },
+	capabilities = capabilities,
 })
 
 vim.lsp.config("typescript-language-server", {
 	cmd = { "typescript-language-server", "--stdio" },
 	root_markers = { "project.json", "tsconfig.json", "jsconfig.json", ".git" },
 	filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
+	capabilities = capabilities,
 })
 
 vim.lsp.config("yaml-language-server", {
@@ -134,6 +177,7 @@ vim.lsp.config("yaml-language-server", {
 		".git",
 	},
 	single_file_support = true,
+	capabilities = capabilities,
 })
 
 vim.lsp.enable({
@@ -151,18 +195,18 @@ vim.lsp.enable({
 })
 
 vim.api.nvim_create_autocmd("CursorHold", {
-  callback = function()
-    vim.diagnostic.open_float(nil, {
-      focus = false,
-      close_events = {
-        "BufLeave",
-        "CursorMoved",
-        "InsertEnter",
-        "FocusLost",
-      },
-      border = "rounded",
-      source = "if_many",
-      scope = "cursor",
-    })
-  end,
+	callback = function()
+		vim.diagnostic.open_float(nil, {
+			focus = false,
+			close_events = {
+				"BufLeave",
+				"CursorMoved",
+				"InsertEnter",
+				"FocusLost",
+			},
+			border = "rounded",
+			source = "if_many",
+			scope = "cursor",
+		})
+	end,
 })

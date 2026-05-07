@@ -19,8 +19,8 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require("vim-options")
-require("lsp")
 require("lazy").setup("plugins")
+require("lsp")
 require("keymaps")
 
 -- todo: https://github.com/saecki/live-rename.nvim
