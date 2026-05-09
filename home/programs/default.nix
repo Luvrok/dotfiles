@@ -15,6 +15,6 @@
     ./zathura.nix
     ./clock-rs.nix
     ./element-desktop.nix
-    ./qutebrowser.nix
+    ./qutebrowser
   ];
 }
