@@ -4,6 +4,8 @@
   imports = [
     ./hardware-configuration.nix
     ./yggdrasil.nix
+    ./navidrome.nix
+    ./syncthing.nix
   ];
 
   boot.loader.grub = {
@@ -44,6 +46,8 @@
       22
       80
       443
+      4533
+      8384
       8448
       42853
     ];
@@ -69,6 +73,7 @@
 
   users.users.root.openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKfVMnRoTEwUBqxcm6tzRTiFGZVafQ6dHr95HDM//Wk+ barnard"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBgLYyw9OjtzpBqHkmEXr0J9iDjGBInUG9YC7CoOIlEs tunneluser@barnard"
   ];
 
   users.users.tatooine = {
@@ -77,6 +82,7 @@
     initialPassword = "nopassword";
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKfVMnRoTEwUBqxcm6tzRTiFGZVafQ6dHr95HDM//Wk+ barnard"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBgLYyw9OjtzpBqHkmEXr0J9iDjGBInUG9YC7CoOIlEs tunneluser@barnard"
     ];
   };
 

@@ -6,6 +6,10 @@
 }:
 
 {
+  imports = [
+    ./tatooine-tunnel.nix
+  ];
+
   systemd.services.syncthing.environment.STNODEFAULTFOLDER = "true";
 
   services = {
