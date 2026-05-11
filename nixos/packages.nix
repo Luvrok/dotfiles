@@ -99,6 +99,7 @@
       sysstat
       util-linux
       vnstat
+      calibre # ebook convert
 
       # --- archives ---
       p7zip
