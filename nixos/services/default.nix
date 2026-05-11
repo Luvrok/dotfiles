@@ -7,7 +7,7 @@
 
 {
   imports = [
-    ./tatooine-tunnel.nix
+    ./jedha-tunnel.nix
   ];
 
   systemd.services.syncthing.environment.STNODEFAULTFOLDER = "true";
