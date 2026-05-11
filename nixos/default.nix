@@ -8,7 +8,6 @@
 {
   imports = [
     ./overlays
-    ./network
     ./services
     ./modules
     ./security.nix
@@ -16,6 +15,7 @@
     ./boot.nix
     ./env.nix
     ./packages.nix
+    ./network.nix
   ];
 
   time.timeZone = "Europe/Moscow";
