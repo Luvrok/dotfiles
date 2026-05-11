@@ -149,17 +149,16 @@
       qbittorrent
       songrec
       spotify
+      feishin
       syncthing
       telegram-desktop
+      hexchat
       veracrypt
       wasabiwallet
       graphviz
       xdot
       worldpainter
       typstwriter
-
-      # --- tui ---
-      irssi
 
       # --- games ---
       gamescope
