@@ -3,9 +3,8 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ./network.nix
     ./yggdrasil.nix
-    ./navidrome.nix
-    ./syncthing.nix
   ];
 
   boot.loader.grub = {
@@ -24,9 +23,6 @@
   time.timeZone = "America/Los_Angeles";
   i18n.defaultLocale = "en_GB.UTF-8";
 
-  networking.hostName = "tatooine";
-  networking.wireless.enable = false;
-
   services.openssh = {
     enable = true;
     settings = {
@@ -35,45 +31,8 @@
     };
   };
 
-  systemd.network.enable = true;
-  systemd.network.wait-online.anyInterface = true;
-  services.resolved.enable = true;
-  networking.useNetworkd = true;
-
-  networking.firewall = {
-    enable = true;
-    allowedTCPPorts = [
-      22
-      80
-      443
-      4533
-      8384
-      8448
-      42853
-    ];
-    allowedUDPPorts = [
-      42853
-    ];
-    allowPing = true;
-  };
-
-  systemd.network.networks."10-eth" = {
-    matchConfig.MACAddress = "bc:24:11:33:0e:80";
-    address = [ "45.38.20.238/32" ];
-    routes = [
-      {
-        Gateway = "100.64.3.229";
-        GatewayOnLink = true;
-      }
-    ];
-    dns = [
-      "9.9.9.9"
-    ];
-  };
-
   users.users.root.openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKfVMnRoTEwUBqxcm6tzRTiFGZVafQ6dHr95HDM//Wk+ barnard"
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBgLYyw9OjtzpBqHkmEXr0J9iDjGBInUG9YC7CoOIlEs tunneluser@barnard"
   ];
 
   users.users.tatooine = {
@@ -82,11 +41,8 @@
     initialPassword = "nopassword";
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKfVMnRoTEwUBqxcm6tzRTiFGZVafQ6dHr95HDM//Wk+ barnard"
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBgLYyw9OjtzpBqHkmEXr0J9iDjGBInUG9YC7CoOIlEs tunneluser@barnard"
     ];
   };
-
-  networking.enableIPv6 = true;
 
   # https://popov.wtf/how-to-prioritize-ipv4-over-ipv6-in-linux
   environment.etc."gai.conf".text = ''

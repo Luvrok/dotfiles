@@ -3,52 +3,14 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ./network.nix
+    ./navidrome.nix
+    ./syncthing.nix
     ./yggdrasil.nix
+    ./qbittorrent.nix
   ];
 
-  networking = {
-    hostName = "jedha";
-
-    networkmanager = {
-      enable = false;
-    };
-
-    firewall = {
-      enable = true;
-      allowedTCPPorts = [
-        22
-        80
-        443
-        8448
-      ];
-      allowPing = true;
-    };
-
-    wireless = {
-      enable = false;
-
-      iwd = {
-        enable = true;
-        settings = {
-          Settings.AutoConnect = true;
-          General = {
-            AddressRandomization = "network";
-            AddressRandomizationRange = "full";
-            EnableNetworkConfiguration = false;
-            RoamRetryInterval = 10;
-          };
-
-          Network = {
-            EnableIPv6 = false;
-            RoutePriorityOffset = 300;
-          };
-        };
-      };
-    };
-  };
-
   services = {
-    resolved.enable = true;
     vnstat.enable = true;
 
     openssh = {
@@ -56,30 +18,6 @@
       settings = {
         PasswordAuthentication = false;
         KbdInteractiveAuthentication = false;
-      };
-    };
-  };
-
-  systemd.network = {
-    enable = true;
-    wait-online.enable = false;
-    wait-online.anyInterface = true;
-    networks = {
-      "10-eth" = {
-        matchConfig.MACAddress = "bc:c3:42:af:59:e6";
-
-        networkConfig = {
-          Address = [ "192.168.0.216/24" ];
-          DNS = [ "9.9.9.9" ];
-        };
-
-        routes = [
-          { routeConfig.Gateway = "192.168.0.1"; }
-        ];
-      };
-      "20-wifi" = {
-        matchConfig.Name = "wlp2s0";
-        networkConfig.DHCP = "ipv4";
       };
     };
   };
@@ -100,10 +38,11 @@
   time.timeZone = "Europe/Moscow";
   i18n.defaultLocale = "en_GB.UTF-8";
 
-  networking.useNetworkd = true;
+  users.groups.media = { };
 
   users.users.root.openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKfVMnRoTEwUBqxcm6tzRTiFGZVafQ6dHr95HDM//Wk+ barnard"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBgLYyw9OjtzpBqHkmEXr0J9iDjGBInUG9YC7CoOIlEs tunneluser@barnard"
   ];
 
   users.users.jedha = {
@@ -112,6 +51,7 @@
     initialPassword = "nopassword";
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKfVMnRoTEwUBqxcm6tzRTiFGZVafQ6dHr95HDM//Wk+ barnard"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBgLYyw9OjtzpBqHkmEXr0J9iDjGBInUG9YC7CoOIlEs tunneluser@barnard"
     ];
   };
 
