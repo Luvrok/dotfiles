@@ -6,7 +6,7 @@
     group = lib.mkForce "media";
   };
 
-  systemd.services.syncthing.serviceConfig.UMask = lib.mkForce "0002";
+  systemd.services.qbittorrent.serviceConfig.UMask = lib.mkForce "0002";
 
   services.qbittorrent = {
     enable = true;

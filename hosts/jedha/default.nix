@@ -8,6 +8,7 @@
     ./syncthing.nix
     ./yggdrasil.nix
     ./qbittorrent.nix
+    ./audiobookshelf.nix
   ];
 
   services = {
@@ -39,6 +40,14 @@
   i18n.defaultLocale = "en_GB.UTF-8";
 
   users.groups.media = { };
+
+  systemd.tmpfiles.rules = [
+    "d /var/lib/media 2775 root media -"
+    "d /var/lib/media/downloads 2775 root media -"
+    "d /var/lib/media/music 2775 root media -"
+    "d /var/lib/media/books 2775 audiobookshelf media -"
+    "d /var/lib/media/books/data 2775 audiobookshelf media -"
+  ];
 
   users.users.root.openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKfVMnRoTEwUBqxcm6tzRTiFGZVafQ6dHr95HDM//Wk+ barnard"

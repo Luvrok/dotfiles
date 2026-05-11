@@ -18,10 +18,4 @@
       MusicFolder = "/var/lib/media/music";
     };
   };
-
-  systemd.tmpfiles.rules = [
-    "d /var/lib/media 2775 root media -"
-    "d /var/lib/media/downloads 2775 root media -"
-    "d /var/lib/media/music 2775 root media -"
-  ];
 }
