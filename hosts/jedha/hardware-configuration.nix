@@ -10,6 +10,10 @@
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
 
+  boot.kernelParams = [
+    "consoleblank=60"
+  ];
+
   swapDevices = [ ];
 
   fileSystems."/" = {
