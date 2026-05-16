@@ -12,6 +12,7 @@
   services.syncthing = {
     enable = true;
     user = "syncthing";
+    openDefaultPorts = true;
 
     dataDir = "/var/lib/syncthing";
     configDir = "/var/lib/syncthing";

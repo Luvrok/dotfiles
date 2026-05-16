@@ -34,6 +34,21 @@ in
       });
     })
     (final: prev: {
+      slock = prev.slock.overrideAttrs (_: {
+        version = "slock-1.6";
+        src = inputs.slock.outPath;
+        buildInputs = with pkgs; [
+          libX11
+          libxrandr
+          libxcrypt
+          libxext
+          libXinerama
+          imlib2
+          libXft
+        ];
+      });
+    })
+    (final: prev: {
       dwmblocks = prev.dwmblocks.overrideAttrs (old: {
         src = inputs.dwmblocks.outPath;
         buildInputs = with pkgs; [

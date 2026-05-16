@@ -2,6 +2,6 @@
 
 {
   config.videoDrivers = [ "amdgpu" ];
-  config.dpi = 112;
+  config.dpi = 109;
   config.fontSize = 11;
 }

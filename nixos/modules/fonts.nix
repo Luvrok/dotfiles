@@ -2,6 +2,7 @@
 
 {
   fonts = {
+    enableDefaultPackages = true;
     fontconfig.enable = true;
     packages = with pkgs; [
       # --- icons ---
@@ -21,6 +22,13 @@
       nerd-fonts.fira-code
       nerd-fonts.jetbrains-mono
       nerd-fonts.dejavu-sans-mono
+      nerd-fonts.hack
+      nerd-fonts.roboto-mono
+      nerd-fonts.droid-sans-mono
+      nerd-fonts.ubuntu
+      nerd-fonts.iosevka
+      nerd-fonts.meslo-lg
+      nerd-fonts.victor-mono
     ];
   };
 }

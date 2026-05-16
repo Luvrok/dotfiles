@@ -9,7 +9,7 @@
         enable = true;
         editor = lib.mkDefault false;
         consoleMode = lib.mkDefault "max";
-        configurationLimit = lib.mkDefault 10;
+        configurationLimit = lib.mkDefault 20;
       };
 
       efi.canTouchEfiVariables = lib.mkDefault true;
@@ -17,7 +17,10 @@
     };
 
     kernelParams = [
-      "quiet"
+      # "quiet"
+      # "splash"
+      # "console=tty4"
+      # "consoleblank=0"
     ];
 
     tmp.cleanOnBoot = lib.mkDefault true;

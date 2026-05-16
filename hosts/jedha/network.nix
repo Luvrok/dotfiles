@@ -30,6 +30,7 @@
         8448
         22000 # syncthing
         42853
+        61208
       ];
       allowedUDPPorts = [
         21027 # syncthing discovery

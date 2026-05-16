@@ -57,7 +57,7 @@ return {
 			"<C-f>",
 			function()
 				require("telescope.builtin").current_buffer_fuzzy_find(require("telescope.themes").get_dropdown({
-					previewer = false,
+					previewer = true,
 					layout_config = {
 						width = function(_, max_columns)
 							if max_columns < 100 then

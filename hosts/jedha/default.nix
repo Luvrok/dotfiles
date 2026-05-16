@@ -9,6 +9,7 @@
     ./yggdrasil.nix
     ./qbittorrent.nix
     ./audiobookshelf.nix
+    ./glances.nix
   ];
 
   services = {
@@ -87,6 +88,7 @@
     iperf
     mtr
     busybox
+    glances
   ];
 
   system.stateVersion = "25.11";

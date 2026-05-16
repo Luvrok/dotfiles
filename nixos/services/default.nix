@@ -8,6 +8,8 @@
 {
   imports = [
     ./jedha-tunnel.nix
+    ./glances.nix
+    ./ly.nix
   ];
 
   systemd.services.syncthing.environment.STNODEFAULTFOLDER = "true";
@@ -33,7 +35,6 @@
 
     ollama = (import ./ollama.nix { inherit pkgs; });
     open-webui = (import ./open-webui.nix { });
-    displayManager.ly = (import ./ly.nix { });
     pipewire = (import ./pipewire.nix { });
     syncthing = (import ./syncthing.nix { inherit username; });
     xserver = (import ./xserver.nix { inherit config pkgs username; });

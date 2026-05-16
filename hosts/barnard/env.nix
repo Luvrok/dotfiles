@@ -6,7 +6,7 @@
   ];
 
   environment.sessionVariables = {
-    XFT_DPI = "112";
+    XFT_DPI = "109";
     XCURSOR_THEME = "Vanilla-DMZ";
     XCURSOR_SIZE = "32";
     _JAVA_AWT_WM_NONREPARENTING = "1";

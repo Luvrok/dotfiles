@@ -18,8 +18,12 @@
     "usbhid"
     "sd_mod"
   ];
-  boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "kvm-amd" ];
+  boot.initrd.kernelModules = [ "amdgpu" ];
+  boot.kernelModules = [
+    "kvm-amd"
+    "video=DP-1:2560x1440@120"
+    "video=DP-2:2560x1440@120"
+  ];
   boot.extraModulePackages = [ ];
 
   fileSystems."/" = {

@@ -100,6 +100,7 @@
       util-linux
       vnstat
       calibre # ebook convert
+      glances
 
       # --- archives ---
       p7zip
@@ -126,7 +127,6 @@
       xclip
       xcolor
       xcursorthemes
-      xdg-desktop-portal
       xdotool
       xdpyinfo
       xinit
@@ -136,6 +136,10 @@
       xsettingsd
       xwininfo
       xwinwrap
+
+      # --- xdg ---
+      xdg-desktop-portal
+      xdg-desktop-portal-gtk
 
       # --- apps ---
       aseprite

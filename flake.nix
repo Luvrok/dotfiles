@@ -21,6 +21,8 @@
     dwmblocks.flake = false;
     dmenu.url = "github:Luvrok/dmenu";
     dmenu.flake = false;
+    slock.url = "github:Luvrok/slock";
+    slock.flake = false;
     textfoxy.url = "github:Luvrok/textfoxy";
   };
 
@@ -196,6 +198,9 @@
           yajl
           libXres
           imlib2
+          libxrandr
+          libxcrypt
+          libxext
         ];
       };
     };
