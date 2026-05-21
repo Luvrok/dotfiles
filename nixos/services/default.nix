@@ -34,7 +34,6 @@
     };
 
     ollama = (import ./ollama.nix { inherit pkgs; });
-    open-webui = (import ./open-webui.nix { });
     pipewire = (import ./pipewire.nix { });
     syncthing = (import ./syncthing.nix { inherit username; });
     xserver = (import ./xserver.nix { inherit config pkgs username; });
