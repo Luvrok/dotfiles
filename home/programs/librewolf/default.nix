@@ -256,6 +256,10 @@ in
             border-color: var(--tf-border) !important;
           }
         }
+
+        #translations-button {
+          display: none !important;
+        }
       '';
     };
   };
