@@ -10,6 +10,7 @@
     ./qbittorrent.nix
     ./audiobookshelf.nix
     ./glances.nix
+    ./anki.nix
   ];
 
   services = {

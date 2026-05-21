@@ -101,6 +101,7 @@
       vnstat
       calibre # ebook convert
       glances
+      acl
 
       # --- archives ---
       p7zip
@@ -115,6 +116,7 @@
       pulseaudioFull
       qpwgraph
       v4l-utils
+      shira
 
       # --- xorg ---
       better-swallow
@@ -164,6 +166,7 @@
       xdot
       worldpainter
       typstwriter
+      anki
 
       # --- games ---
       gamescope
