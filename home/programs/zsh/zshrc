@@ -89,5 +89,8 @@ function _ps_aux_grep() { command ps aux | grep --color=auto "$1" }
 
 alias ll='ls -lah --color'
 alias la='ls -A --color'
+alias dt='cd $HOME/HOME/infra/dotfiles'
+alias dm='cd $HOME/HOME/infra/dwm'
+alias learn='cd $HOME/HOME/learn'
 alias psg='_ps_aux_grep'
 alias ranger='yazi' # huh why not?
