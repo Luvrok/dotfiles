@@ -19,8 +19,10 @@
     "sd_mod"
   ];
   boot.initrd.kernelModules = [ "amdgpu" ];
+  boot.initrd.systemd.enable = true;
   boot.kernelModules = [
     "kvm-amd"
+    "nvme"
     "video=DP-1:2560x1440@120"
     "video=DP-2:2560x1440@120"
   ];
@@ -47,7 +49,7 @@
       "noatime"
       "nofail"
       "x-systemd.automount"
-      "x-systemd.device-timeout=1s"
+      "x-systemd.device-timeout=3s"
     ];
   };
 

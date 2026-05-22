@@ -37,9 +37,9 @@
 
   serverFlagsSection = ''
     Option "DPMS" "true"
-    Option "BlankTime"  "5"
-    Option "StandbyTime" "10"
-    Option "SuspendTime" "15"
-    Option "OffTime"     "20"
+    Option "BlankTime"  "20"
+    Option "StandbyTime" "30"
+    Option "SuspendTime" "40"
+    Option "OffTime"     "50"
   '';
 }

@@ -17,10 +17,8 @@
     };
 
     kernelParams = [
-      # "quiet"
-      # "splash"
-      # "console=tty4"
-      # "consoleblank=0"
+      "quiet"
+      "loglevel=3"
     ];
 
     tmp.cleanOnBoot = lib.mkDefault true;

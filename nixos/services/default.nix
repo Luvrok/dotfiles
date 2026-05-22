@@ -38,5 +38,9 @@
     syncthing = (import ./syncthing.nix { inherit username; });
     xserver = (import ./xserver.nix { inherit config pkgs username; });
     yggdrasil = (import ./yggdrasil.nix { });
+    fstrim = {
+      enable = true;
+      interval = "weekly";
+    };
   };
 }
