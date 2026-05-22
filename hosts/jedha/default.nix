@@ -54,6 +54,7 @@
   users.users.root.openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKfVMnRoTEwUBqxcm6tzRTiFGZVafQ6dHr95HDM//Wk+ barnard"
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBgLYyw9OjtzpBqHkmEXr0J9iDjGBInUG9YC7CoOIlEs tunneluser@barnard"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIn4ANeVS4CR7pGZW1pctYx7RXZtPixdUQnZDfPs7i6V tunneluser@kessel"
   ];
 
   users.users.jedha = {
@@ -63,6 +64,7 @@
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKfVMnRoTEwUBqxcm6tzRTiFGZVafQ6dHr95HDM//Wk+ barnard"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBgLYyw9OjtzpBqHkmEXr0J9iDjGBInUG9YC7CoOIlEs tunneluser@barnard"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIn4ANeVS4CR7pGZW1pctYx7RXZtPixdUQnZDfPs7i6V tunneluser@kessel"
     ];
   };
 

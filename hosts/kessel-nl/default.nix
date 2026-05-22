@@ -4,6 +4,7 @@
   imports = [
     ./hardware-configuration.nix
     ./yggdrasil.nix
+    ./jedha-tunnel.nix
   ];
 
   boot.loader.grub = {
@@ -44,6 +45,10 @@
       80
       443
       8448
+      14533
+      14544
+      18129
+      18208
       42853
     ];
     allowedUDPPorts = [

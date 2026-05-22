@@ -19,7 +19,7 @@
     serviceConfig = {
       User = "glances";
       Group = "glances";
-      ExecStart = "${pkgs.glances}/bin/glances -w --bind :: --port 61208 --time 3 --quiet";
+      ExecStart = "${pkgs.glances}/bin/glances -w --bind :: --port 8208 --time 3 --quiet";
 
       NoNewPrivileges = true;
       PrivateTmp = true;
