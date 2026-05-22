@@ -73,6 +73,7 @@
       nmap
       openssl
       shadowsocks-rust
+      proxychains-ng
       tcpdump
       tor
       v2rayn

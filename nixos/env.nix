@@ -21,4 +21,11 @@
       Option "XkbOptions" "grp:win_space_toggle"
     EndSection
   '';
+
+  environment.etc."proxychains.conf".text = ''
+    strict_chain
+    proxy_dns
+    [ProxyList]
+    socks5 127.0.0.1 10808
+  '';
 }
