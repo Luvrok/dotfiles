@@ -9,10 +9,20 @@
     shell = pkgs.bash;
   };
 
-  # systemd.tmpfiles.rules = [
-  #   "d /home/tunneluser/.ssh 700 tunneluser tunneluser -"
-  #   "f /home/tunneluser/.ssh/id_ed25519 600 tunneluser tunneluser -"
-  # ];
+  systemd.tmpfiles.settings = {
+    tunneluserSsh = {
+      "home/tunneluser/.ssh".d = {
+        mode = "700";
+        user = "tunneluser";
+        group = "tunneluser";
+      };
+      "home/tunneluser/.ssh/id_ed25519".f = {
+        mode = "600";
+        user = "tunneluser";
+        group = "tunneluser";
+      };
+    };
+  };
 
   systemd.services.jedha-tunnel = {
     description = "Persistent SSH tunnel to Jedha";
