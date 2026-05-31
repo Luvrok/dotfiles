@@ -19,6 +19,8 @@
       fira-code-symbols
       jetbrains-mono
       font-awesome_6
+      sarasa-gothic
+      noto-fonts-cjk-sans
       nerd-fonts.fira-code
       nerd-fonts.jetbrains-mono
       nerd-fonts.dejavu-sans-mono
