@@ -16,44 +16,46 @@
       statusbar-h-padding = "0"; # Sets horizontal padding of the status bar to 0.
       statusbar-v-padding = "0"; # Sets vertical padding of the status bar to 0.
 
-      default-fg = "#ebdbb2";
-      default-bg = "#282828";
+      default-bg = "#FFFFFF";
 
-      completion-bg = "#1d2021";
-      completion-fg = "#ebdbb2";
-      completion-highlight-bg = "#3c3836";
-      completion-highlight-fg = "#ebdbb2";
-      completion-group-bg = "#1d2021";
-      completion-group-fg = "#fbf1c7";
-
-      statusbar-fg = "#ebdbb2";
-      statusbar-bg = "#282828";
-
-      notification-bg = "#282828";
-      notification-fg = "#ebdbb2";
-      notification-error-bg = "#282828";
-      notification-error-fg = "#cc241d";
-      notification-warning-bg = "#282828";
-      notification-warning-fg = "#d79921";
-
-      inputbar-fg = "#ebdbb2";
-      inputbar-bg = "#282828";
-
-      recolor = "true";
-      recolor-lightcolor = "#282828";
-      recolor-darkcolor = "#ebdbb2";
-
-      index-fg = "#ebdbb2";
-      index-bg = "#1d2021";
-      index-active-fg = "#ebdbb2";
-      index-active-bg = "#282828";
-
-      render-loading-bg = "#1d2021";
-      render-loading-fg = "#ebdbb2";
-
-      highlight-color = "#1d2021";
-      highlight-fg = "#d65d0e";
-      highlight-active-color = "#d65d0e";
+      # default-fg = "#ebdbb2";
+      # default-bg = "#282828";
+      #
+      # completion-bg = "#1d2021";
+      # completion-fg = "#ebdbb2";
+      # completion-highlight-bg = "#3c3836";
+      # completion-highlight-fg = "#ebdbb2";
+      # completion-group-bg = "#1d2021";
+      # completion-group-fg = "#fbf1c7";
+      #
+      # statusbar-fg = "#ebdbb2";
+      # statusbar-bg = "#282828";
+      #
+      # notification-bg = "#282828";
+      # notification-fg = "#ebdbb2";
+      # notification-error-bg = "#282828";
+      # notification-error-fg = "#cc241d";
+      # notification-warning-bg = "#282828";
+      # notification-warning-fg = "#d79921";
+      #
+      # inputbar-fg = "#ebdbb2";
+      # inputbar-bg = "#282828";
+      #
+      # recolor = "true";
+      # recolor-lightcolor = "#282828";
+      # recolor-darkcolor = "#ebdbb2";
+      #
+      # index-fg = "#ebdbb2";
+      # index-bg = "#1d2021";
+      # index-active-fg = "#ebdbb2";
+      # index-active-bg = "#282828";
+      #
+      # render-loading-bg = "#1d2021";
+      # render-loading-fg = "#ebdbb2";
+      #
+      # highlight-color = "#1d2021";
+      # highlight-fg = "#d65d0e";
+      # highlight-active-color = "#d65d0e";
     };
 
     mappings = {
