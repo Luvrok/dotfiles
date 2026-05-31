@@ -36,9 +36,13 @@
 
     ollama = (import ./ollama.nix { inherit pkgs; });
     pipewire = (import ./pipewire.nix { });
-    syncthing = (import ./syncthing.nix { inherit username; });
     xserver = (import ./xserver.nix { inherit config pkgs username; });
     yggdrasil = (import ./yggdrasil.nix { });
+    syncthing = (import ./syncthing.nix { inherit username; });
+    open-webui = {
+      enable = true;
+      port = 11829;
+    };
     fstrim = {
       enable = true;
       interval = "weekly";
