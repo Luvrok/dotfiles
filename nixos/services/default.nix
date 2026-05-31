@@ -9,6 +9,7 @@
   imports = [
     ./jedha-tunnel.nix
     ./glances.nix
+    ./greenclip.nix
     ./ly.nix
   ];
 

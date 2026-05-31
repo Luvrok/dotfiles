@@ -30,6 +30,19 @@
     };
   };
 
+  xdg.configFile."greenclip.toml".text = ''
+    [greenclip]
+    blacklisted_applications = []
+    enable_image_support = true
+    history_file = "/home/${username}/.cache/greenclip.history"
+    image_cache_directory = "/tmp/greenclip"
+    max_history_length = 200
+    max_selection_size_bytes = 0
+    trim_space_from_selection = true
+    use_primary_selection_as_input = true
+    static_history = [""]
+  '';
+
   home.file.".local/share/v2rayN/bin/xray/xray".source = "${pkgs.xray}/bin/xray";
   home.file.".local/share/v2rayN/bin/sing_box/sing-box".source = "${pkgs.sing-box}/bin/sing-box";
 
