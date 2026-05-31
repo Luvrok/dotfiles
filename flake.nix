@@ -85,11 +85,11 @@
           ./hosts/barnard/hardware-configuration.nix
           ./hosts/barnard/env.nix
 
-          zapret-discord-youtube.nixosModules.default
+          zapret-discord-youtube.nixosModules.withTestTools
           {
             services.zapret-discord-youtube = {
               enable = true;
-              configName = "general(ALT)";
+              configName = "general(ALT9)";
             };
           }
 
