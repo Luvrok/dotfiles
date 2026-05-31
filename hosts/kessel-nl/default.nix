@@ -5,6 +5,7 @@
     ./hardware-configuration.nix
     ./yggdrasil.nix
     ./jedha-tunnel.nix
+    ./syncthing.nix
   ];
 
   boot.loader.grub = {
@@ -44,14 +45,23 @@
       22
       80
       443
+      8443
       8448
       14533
       14544
       18129
       18208
+      21027
+      22000
+      22067
+      22070
       42853
     ];
     allowedUDPPorts = [
+      8443
+      22000
+      22067
+      22070
       42853
     ];
     allowPing = true;
@@ -133,5 +143,3 @@
   services.vnstat.enable = true;
   system.stateVersion = "25.11";
 }
-
-
