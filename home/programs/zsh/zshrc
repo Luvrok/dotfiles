@@ -91,6 +91,7 @@ alias ll='ls -lah --color'
 alias la='ls -A --color'
 alias dt='cd $HOME/HOME/infra/dotfiles'
 alias dm='cd $HOME/HOME/infra/dwm'
+alias mustore='cd $HOME/HOME/wizzard/music-store'
 alias learn='cd $HOME/HOME/learn'
 alias psg='_ps_aux_grep'
 alias ranger='yazi' # huh why not?
