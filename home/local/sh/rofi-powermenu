@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 rofi_command=(rofi -theme "$HOME/.config/rofi/powermenu.rasi")
 
 lock=""
@@ -9,10 +9,14 @@ shutdown="⏻"
 
 chosen=$(printf '%s\n' "$lock" "$suspend" "$logout" "$reboot" "$shutdown" | "${rofi_command[@]}" -dmenu -selected-row 0)
 
+_clear() {
+  rm -f ~/.cache/greenclip.history
+}
+
 case "$chosen" in
-    "$lock") xset dpms force off ;;
-    "$suspend") pkill -x mpv; systemctl suspend ;;
-    "$logout") pkill dwm ;;
-    "$reboot") systemctl reboot ;;
-    "$shutdown") systemctl poweroff ;;
+    "$lock") _clear; loginctl lock-session ;;
+    "$suspend") _clear; pkill -x mpv; systemctl suspend ;;
+    "$logout") _clear; loginctl kill-user "$USER" ;;
+    "$reboot") _clear; systemctl reboot ;;
+    "$shutdown") _clear; systemctl poweroff ;;
 esac
