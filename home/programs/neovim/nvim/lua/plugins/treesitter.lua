@@ -34,6 +34,8 @@ return {
 				"yaml",
 				"clojure",
 				"go",
+				"css",
+				"scss",
 				"typst",
 			},
 			auto_install = false,

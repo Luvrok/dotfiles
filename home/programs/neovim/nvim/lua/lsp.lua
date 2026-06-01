@@ -35,32 +35,17 @@ vim.lsp.config("nixd", {
 vim.lsp.config("tinymist", {
 	cmd = { "tinymist" },
 	filetypes = { "typst" },
-	root_markers = {
-		"typst.toml",
-		".git",
-	},
+	root_markers = { "typst.toml", ".git" },
 	capabilities = capabilities,
 	single_file_support = true,
 	settings = {
-		exportPdf = "onSave",
 		formatterMode = "typstyle",
-	},
-})
-
-vim.lsp.config("tinymist", {
-	cmd = { "tinymist" },
-	filetypes = { "typst" },
-	root_markers = { "typst.toml", ".git" },
-	capabilities = capabilities,
-	settings = {
-		formatterMode = "typstyle", -- Use typstyle for formatting (bundled with tinymist)
-		exportPdf = "onSave", -- Export PDF when file is saved
-		semanticTokens = "enable", -- Enable semantic highlighting
+		exportPdf = "onSave",
+		semanticTokens = "enable",
 	},
 })
 
 vim.lsp.config("lua_ls", {
-	name = "lua_ls",
 	cmd = { "lua-language-server" },
 	filetypes = { "lua" },
 	single_file_support = true,
@@ -110,6 +95,7 @@ vim.lsp.config("bash-language-server", {
 vim.lsp.config("gopls", {
 	cmd = { "gopls" },
 	filetypes = { "go", "gomod" },
+	root_markers = { "go.work", "go.mod", ".git" },
 	cmd_env = {
 		GOOS = "linux",
 	},
@@ -180,6 +166,43 @@ vim.lsp.config("yaml-language-server", {
 	capabilities = capabilities,
 })
 
+vim.lsp.config("vscode-html-language-server", {
+	cmd = { "vscode-html-language-server", "--stdio" },
+	filetypes = { "html" },
+	root_markers = { "package.json", ".git" },
+	single_file_support = true,
+	capabilities = capabilities,
+	settings = {},
+	init_options = {
+		provideFormatter = false, -- you format with prettierd
+		embeddedLanguages = { css = true, javascript = true },
+		configurationSection = { "html", "css", "javascript" },
+	},
+})
+
+vim.lsp.config("vscode-css-language-server", {
+	cmd = { "vscode-css-language-server", "--stdio" },
+	filetypes = { "css", "scss", "less" },
+	root_markers = { "package.json", ".git" },
+	single_file_support = true,
+	capabilities = capabilities,
+	settings = {
+		css = { validate = true },
+		scss = { validate = true },
+		less = { validate = true },
+	},
+	init_options = { provideFormatter = false },
+})
+
+vim.lsp.config("vscode-json-language-server", {
+	cmd = { "vscode-json-language-server", "--stdio" },
+	filetypes = { "json", "jsonc" },
+	root_markers = { ".git" },
+	single_file_support = true,
+	capabilities = capabilities,
+	init_options = { provideFormatter = false },
+})
+
 vim.lsp.enable({
 	"nixd",
 	"lua_ls",
@@ -188,7 +211,11 @@ vim.lsp.enable({
 	"taplo",
 	"clangd",
 	"sqls",
+	"tinymist",
 	"vscode-langservers-extracted",
+	"vscode-html-language-server",
+	"vscode-css-language-server",
+	"vscode-json-language-server",
 	"typescript-language-server",
 	"yaml-language-server",
 	"bash-language-server",
