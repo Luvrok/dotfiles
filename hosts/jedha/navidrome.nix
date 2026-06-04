@@ -20,24 +20,6 @@
     };
   };
 
-  services.lidarr = {
-    enable = true;
-    user = "lidarr";
-    group = "lidarr";
-    dataDir = "/var/lib/media/music";
-    openFirewall = false;
-  };
-
-  systemd.services.lidarr.environment = {
-    LIDARR__AUTH__METHOD = "Forms";
-    LIDARR__AUTH__REQUIRED = "DisabledForLocalAddresses";
-  };
-
-  users.users.lidarr.extraGroups = [
-    "media"
-    "navidrome"
-  ];
-
   services.navidrome = {
     enable = true;
     openFirewall = true;
