@@ -58,11 +58,11 @@
     "dwm": {
       "flake": false,
       "locked": {
-        "lastModified": 1780230976,
-        "narHash": "sha256-Tm1aC8OiwU7HaM6uLhe2IZfbKgdSNNYeaTCbcO7x91k=",
+        "lastModified": 1780505952,
+        "narHash": "sha256-VH2OYNIK4vJ5PK4DDobNMvMV0lPMrfRYLQLH4xgkPNU=",
         "owner": "Luvrok",
         "repo": "dwm",
-        "rev": "77aafaad774cb5d9222bd8e96b04deb8559e1a09",
+        "rev": "e08366d87d7775c407d65dee0653112a700d40d0",
         "type": "github"
       },
       "original": {
