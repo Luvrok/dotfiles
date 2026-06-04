@@ -14,8 +14,6 @@
     dithered-present = true;
     use-damage = true;
 
-    unredir-if-possible = true;
-
     log-level = "warn";
     log-file = "${config.home.homeDirectory}/.cache/picom-log.log";
     show-all-xerrors = true;
@@ -72,11 +70,7 @@
         shadow-offset-y = "offset-y";
       },
 
-      # ---- show / hide: gentle fade only (no scale, no slide) ----
-      # With the dwm `windowmap` patch, switching tags maps/unmaps windows,
-      # so tag switches arrive here (show/hide) instead of as position changes.
-      # Pure opacity fade = the small fade-in/out on tag switch, without the
-      # grow/shrink or slide. Real moves/resizes below stay separate.
+      # ---- show / hide: fade only (no scale, no slide) ----
       {
         triggers = ["show"];
         opacity = {
@@ -85,13 +79,6 @@
           start = "0";
           end = "window-raw-opacity";
         };
-        offset-y = {
-          curve = "cubic-bezier(0.25,1,0.25,1)";
-          duration = 0.375;
-          start = "window-monitor-y + window-monitor-height - window-y";
-          end = 0;
-        };
-        shadow-offset-y = "offset-y";
       },
       {
         triggers = ["hide"];
@@ -101,13 +88,6 @@
           start = "window-raw-opacity-before";
           end = 0;
         };
-        offset-y = {
-          curve = "cubic-bezier(0.25,1,0.25,1)";
-          duration = 0.375;
-          start = 0;
-          end = "window-monitor-y + window-monitor-height - window-y";
-        };
-        shadow-offset-y = "offset-y";
       },
 
       # ---- size / position: smooth move & resize (mouse drag, retiling) ----
@@ -115,25 +95,25 @@
         triggers = ["size", "position"];
         scale-x = {
           curve = "cubic-bezier(0.25,0.8,0.25,1)";
-          duration = 0.2;
+          duration = 0.375;
           start = "window-width-before / window-width";
           end = 1;
         };
         scale-y = {
           curve = "cubic-bezier(0.25,0.8,0.25,1)";
-          duration = 0.2;
+          duration = 0.375;
           start = "window-height-before / window-height";
           end = 1;
         };
         offset-x = {
           curve = "cubic-bezier(0.25,0.8,0.25,1)";
-          duration = 0.2;
+          duration = 0.375;
           start = "window-x-before - window-x";
           end = 0;
         };
         offset-y = {
           curve = "cubic-bezier(0.25,0.8,0.25,1)";
-          duration = 0.2;
+          duration = 0.375;
           start = "window-y-before - window-y";
           end = 0;
         };
@@ -144,12 +124,9 @@
       }
     );
 
-    # ============================================================
-    # PER-WINDOW rules (override the global animations above)
-    # ============================================================
+    # --- PER-WINDOW rules (override the global animations) ---
     rules = (
-      # --- dunst + utility windows (e.g. transient extension popups) ---
-      # No open/show/close/hide animation: appear/disappear instantly.
+      # - dunst + utility windows. No open/show/close/hide animation: appear/disappear instantly. -
       {
         match = "class_g = 'Dunst' || window_type = 'utility'";
         animations = (
@@ -164,7 +141,7 @@
         );
       },
 
-      # --- rofi --- pure opacity fade, no scale/slide.
+      # - rofi. Pure opacity fade, no scale/slide.
       {
         match = "class_g = 'Rofi'";
         animations = (
@@ -189,7 +166,46 @@
         );
       },
 
-      # --- scratchpad (WM_CLASS "spterm") --- slide in/out from the TOP.
+      # - awesomebar-hidden windows (_DWM_HIDDEN set by dwm hide()/show()) -
+      {
+        match = "_DWM_HIDDEN@ = 1";
+        animations = (
+          {
+            triggers = ["open", "show"];
+            opacity = {
+              curve = "cubic-bezier(0.25,1,0.25,1)";
+              duration = 0.375;
+              start = "0";
+              end = "window-raw-opacity";
+            };
+            offset-y = {
+              curve = "cubic-bezier(0.25,1,0.25,1)";
+              duration = 0.375;
+              start = "window-monitor-y + window-monitor-height - window-y";
+              end = 0;
+            };
+            shadow-offset-y = "offset-y";
+          },
+          {
+            triggers = ["close", "hide"];
+            opacity = {
+              curve = "cubic-bezier(0.25,1,0.25,1)";
+              duration = 0.375;
+              start = "window-raw-opacity-before";
+              end = 0;
+            };
+            offset-y = {
+              curve = "cubic-bezier(0.25,1,0.25,1)";
+              duration = 0.375;
+              start = 0;
+              end = "window-monitor-y + window-monitor-height - window-y";
+            };
+            shadow-offset-y = "offset-y";
+          }
+        );
+      },
+
+      # - scratchpad (WM_CLASS "spterm"). Slide in/out from the TOP -
       {
         match = "_DWM_SCRATCHPAD@ = 1";
         animations = (
@@ -198,13 +214,13 @@
             triggers = ["open", "show"];
             opacity = {
               curve = "cubic-bezier(0.4,0,0.2,1)";
-              duration = 0.4;
+              duration = 0.375;
               start = "0";
               end = "window-raw-opacity";
             };
             offset-y = {
               curve = "cubic-bezier(0.4,0,0.2,1)";
-              duration = 0.4;
+              duration = 0.375;
               start = "0 - window-height - window-y";
               end = 0;
             };
@@ -214,20 +230,121 @@
             triggers = ["close", "hide"];
             opacity = {
               curve = "cubic-bezier(0.4,0,0.2,1)";
-              duration = 0.4;
+              duration = 0.375;
               start = "window-raw-opacity-before";
               end = 0;
             };
             offset-y = {
               curve = "cubic-bezier(0.4,0,0.2,1)";
-              duration = 0.4;
+              duration = 0.375;
               start = 0;
               end = "0 - window-height - window-y";
             };
             shadow-offset-y = "offset-y";
+          },
+          {
+            triggers = ["size", "position"];
+            scale-x = {
+              curve = "cubic-bezier(0.25,0.8,0.25,1)";
+              duration = 0.375;
+              start = "window-width-before / window-width";
+              end = 1;
+            };
+            scale-y = {
+              curve = "cubic-bezier(0.25,0.8,0.25,1)";
+              duration = 0.375;
+              start = "window-height-before / window-height";
+              end = 1;
+            };
+            offset-x = {
+              curve = "cubic-bezier(0.25,0.8,0.25,1)";
+              duration = 0.375;
+              start = "window-x-before - window-x";
+              end = 0;
+            };
+            offset-y = {
+              curve = "cubic-bezier(0.25,0.8,0.25,1)";
+              duration = 0.375;
+              start = "window-y-before - window-y";
+              end = 0;
+            };
+            shadow-scale-x = "scale-x";
+            shadow-scale-y = "scale-y";
+            shadow-offset-x = "offset-x";
+            shadow-offset-y = "offset-y";
           }
         );
-      }
+      },
+
+      # - scratchpad dock (WM_CLASS "spdock"). Slide in/out from the RIGHT (open/show, close/hide) -
+      {
+        match = "class_g = 'spdock'";
+        animations = (
+          {
+            triggers = ["open", "show"];
+            opacity = {
+              curve = "cubic-bezier(0.25,1,0.25,1)";
+              duration = 0.375;
+              start = "0";
+              end = "window-raw-opacity";
+            };
+            offset-x = {                    # ← изменили на offset-x
+              curve = "cubic-bezier(0.25,1,0.25,1)";
+              duration = 0.375;
+              start = "window-monitor-x + window-monitor-width - window-x";  # справа
+              end = 0;
+            };
+            shadow-offset-x = "offset-x";   # ← тоже по X
+          },
+          {
+            triggers = ["close", "hide"];
+            opacity = {
+              curve = "cubic-bezier(0.25,1,0.25,1)";
+              duration = 0.375;
+              start = "window-raw-opacity-before";
+              end = 0;
+            };
+            offset-x = {                    # ← изменили на offset-x
+              curve = "cubic-bezier(0.25,1,0.25,1)";
+              duration = 0.375;
+              start = 0;
+              end = "window-monitor-x + window-monitor-width - window-x";   # уезжает вправо
+            };
+            shadow-offset-x = "offset-x";   # ← тоже по X
+          },
+          {
+            triggers = ["size", "position"];
+            scale-x = {
+              curve = "cubic-bezier(0.25,0.8,0.25,1)";
+              duration = 0.375;
+              start = "window-width-before / window-width";
+              end = 1;
+            };
+            scale-y = {
+              curve = "cubic-bezier(0.25,0.8,0.25,1)";
+              duration = 0.375;
+              start = "window-height-before / window-height";
+              end = 1;
+            };
+            offset-x = {
+              curve = "cubic-bezier(0.25,0.8,0.25,1)";
+              duration = 0.375;
+              start = "window-x-before - window-x";
+              end = 0;
+            };
+            offset-y = {
+              curve = "cubic-bezier(0.25,0.8,0.25,1)";
+              duration = 0.375;
+              start = "window-y-before - window-y";
+              end = 0;
+            };
+            shadow-scale-x = "scale-x";
+            shadow-scale-y = "scale-y";
+            shadow-offset-x = "offset-x";
+            shadow-offset-y = "offset-y";
+          }
+        );
+      },
     );
   '';
 }
