@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 
-# (TODO!) test version 2 (on nvidia laptop, my amd pc) and move to it
-
 set -euo pipefail
 
 DIR="${HOME}/HOME/screen_recordings"
 PIDFILE="/tmp/recpid"
 MODEFILE="/tmp/recmode"
 
-FRAMERATE=30
-CRF=18
-PRESET="veryfast"
+VAAPI_DEVICE="/dev/dri/renderD128"
 
+# auto - vaapi - nvenc - software
+ENCODER_BACKEND="${ENCODER_BACKEND:-auto}"
+
+FRAMERATE=60
 OUTPUT_VOLUME="0.35"
 MIC_VOLUME="3.0"
 
@@ -20,6 +20,15 @@ ROFI_CMD=(
     -dmenu
     -theme "$HOME/.config/rofi/rofi-rec.rasi"
 )
+
+# Filled by set_encoder / set_audio
+VAAPI_INIT=()
+VFILTER=()
+VCODEC=()
+A_INPUTS=()
+A_FILTER=()
+MAPS=()
+A_CODEC=()
 
 notify() {
     notify-send "Screen recorder" "$1"
@@ -88,12 +97,68 @@ stop_recording() {
     fi
 }
 
+detect_encoder_backend() {
+    if [[ "$ENCODER_BACKEND" != "auto" ]]; then
+        printf '%s\n' "$ENCODER_BACKEND"
+        return
+    fi
+
+    # NVIDIA: есть устройство и nvenc собран в ffmpeg
+    if [[ -e /dev/nvidia0 ]] || command -v nvidia-smi >/dev/null 2>&1; then
+        if ffmpeg -hide_banner -encoders 2>/dev/null | grep -q h264_nvenc; then
+            printf '%s\n' "nvenc"
+            return
+        fi
+    fi
+
+    # VAAPI: есть render-нода и vaapi-кодер
+    if [[ -e "$VAAPI_DEVICE" ]] && \
+       ffmpeg -hide_banner -encoders 2>/dev/null | grep -q h264_vaapi; then
+        printf '%s\n' "vaapi"
+        return
+    fi
+
+    printf '%s\n' "software"
+}
+
+# --- selections ------------------------------------------------------------
+
 pick_video_target() {
     printf '%s\n' \
         "fullscreen" \
+        "monitor" \
         "window" \
         "area" \
+        | "${ROFI_CMD[@]}" -theme-str 'listview { lines: 4; }'
+}
+
+pick_quality() {
+    printf '%s\n' \
+        "game" \
+        "normal" \
+        "lossless" \
         | "${ROFI_CMD[@]}" -theme-str 'listview { lines: 3; }'
+}
+
+pick_framerate() {
+    printf '%s\n' \
+        "60" \
+        "30" \
+        | "${ROFI_CMD[@]}" -theme-str 'listview { lines: 2; }'
+}
+
+list_monitors() {
+    xrandr --listmonitors | tail -n +2 | awk '{print $NF}'
+}
+
+monitor_geometry() {
+    # WxH+X+Y for the named output (strips the /mm physical-size parts)
+    local name="$1"
+    xrandr --listmonitors | awk -v n="$name" '$NF==n {print $(NF-1)}' | sed 's#/[0-9]*##g'
+}
+
+pick_monitor() {
+    list_monitors | "${ROFI_CMD[@]}" -theme-str 'listview { lines: 2; }'
 }
 
 get_window_id() {
@@ -101,7 +166,6 @@ get_window_id() {
         notify "xwininfo is not installed"
         return 1
     fi
-
     xwininfo 2>/dev/null | awk '/Window id:/ {print $4; exit}'
 }
 
@@ -110,18 +174,98 @@ get_area_geometry() {
         notify "slop is not installed"
         return 1
     fi
-
     slop -f "%x %y %w %h"
+}
+
+# --- encoder / audio builders ---------------------------------------------
+
+set_encoder() {
+    local quality="$1"
+    VAAPI_INIT=()
+    VFILTER=()
+    VCODEC=()
+
+    local backend
+    backend="$(detect_encoder_backend)"
+
+    # lossless всегда софтверный - переносимый, не зависит от GPU
+    if [[ "$quality" == "lossless" ]]; then
+        VCODEC=(-c:v libx264 -qp 0 -preset ultrafast -pix_fmt yuv444p)
+        return
+    fi
+
+    case "$backend" in
+        nvenc)
+            VFILTER=(-vf "format=nv12")
+            case "$quality" in
+                "game")   VCODEC=(-c:v h264_nvenc -preset p4 -rc constqp -qp 24 -maxrate 30M -bufsize 60M) ;;
+                "normal") VCODEC=(-c:v h264_nvenc -preset p4 -rc constqp -qp 18 -maxrate 40M -bufsize 80M) ;;
+                *) notify "Unknown quality: $quality"; exit 1 ;;
+            esac
+            ;;
+        vaapi)
+            VAAPI_INIT=(-vaapi_device "$VAAPI_DEVICE")
+            VFILTER=(-vf "format=nv12,hwupload")
+            case "$quality" in
+                "game")   VCODEC=(-c:v h264_vaapi -qp 24 -maxrate 30M -bufsize 60M) ;;
+                "normal") VCODEC=(-c:v h264_vaapi -qp 18 -maxrate 40M -bufsize 80M) ;;
+                *) notify "Unknown quality: $quality"; exit 1 ;;
+            esac
+            ;;
+        software)
+            VFILTER=(-vf "format=yuv420p")
+            case "$quality" in
+                "game")   VCODEC=(-c:v libx264 -preset veryfast -crf 23 -maxrate 30M -bufsize 60M) ;;
+                "normal") VCODEC=(-c:v libx264 -preset veryfast -crf 18 -maxrate 40M -bufsize 80M) ;;
+                *) notify "Unknown quality: $quality"; exit 1 ;;
+            esac
+            ;;
+        *)
+            notify "Unknown encoder backend: $backend"; exit 1 ;;
+    esac
+}
+
+set_audio() {
+    local mode="$1"
+    A_INPUTS=()
+    A_FILTER=()
+    MAPS=(-map 0:v:0)
+    A_CODEC=()
+
+    case "$mode" in
+        "screen_only")
+            ;;
+        "screen_mic")
+            A_INPUTS=(-f pulse -i "$(get_mic_source)")
+            A_FILTER=(-af "pan=stereo|c0=c0|c1=c0,volume=${MIC_VOLUME}")
+            MAPS+=(-map 1:a:0)
+            A_CODEC=(-c:a aac -b:a 192k)
+            ;;
+        "screen_output")
+            A_INPUTS=(-f pulse -i "$(get_output_source)")
+            A_FILTER=(-af "volume=${OUTPUT_VOLUME}")
+            MAPS+=(-map 1:a:0)
+            A_CODEC=(-c:a aac -b:a 192k)
+            ;;
+        "screen_mic_output")
+            A_INPUTS=(-f pulse -i "$(get_output_source)" -f pulse -i "$(get_mic_source)")
+            A_FILTER=(-filter_complex "[1:a]volume=${OUTPUT_VOLUME}[sys];[2:a]pan=stereo|c0=c0|c1=c0,volume=${MIC_VOLUME}[mic];[sys][mic]amix=inputs=2:normalize=0[aout]")
+            MAPS+=(-map "[aout]")
+            A_CODEC=(-c:a aac -b:a 192k)
+            ;;
+        *)
+            notify "Unknown mode: $mode"
+            exit 1
+            ;;
+    esac
 }
 
 watch_recording() {
     local recpid="$1"
-
     (
         while kill -0 "$recpid" 2>/dev/null; do
             sleep 1
         done
-
         if [[ -f "$PIDFILE" ]] && [[ "$(cat "$PIDFILE" 2>/dev/null)" = "$recpid" ]]; then
             cleanup_recording_state
             sleep 1
@@ -130,118 +274,77 @@ watch_recording() {
     ) >/dev/null 2>&1 &
 }
 
+build_video_args() {
+    # echoes nothing; sets video_args via nameref
+    local -n out="$1"
+    local target="$2"
+    local screen_size wid X Y W H area_geometry mon geo
+
+    case "$target" in
+        "fullscreen")
+            screen_size="$(get_screen_size)"
+            out=(-f x11grab -video_size "$screen_size" -framerate "$FRAMERATE" -i :0.0)
+            ;;
+        "monitor")
+            mon="$(pick_monitor || true)"
+            [[ -n "$mon" ]] || exit 0
+            geo="$(monitor_geometry "$mon")"
+            [[ -n "$geo" ]] || { notify "Monitor geometry not found"; exit 1; }
+            read -r W H X Y <<< "$(printf '%s\n' "$geo" | sed 's/[x+]/ /g')"
+            out=(-f x11grab -video_size "${W}x${H}" -framerate "$FRAMERATE" -i ":0.0+${X},${Y}")
+            ;;
+        "window")
+            wid="$(get_window_id || true)"
+            [[ -n "$wid" ]] || exit 0
+            out=(-f x11grab -framerate "$FRAMERATE" -window_id "$wid" -i :0.0)
+            ;;
+        "area")
+            area_geometry="$(get_area_geometry || true)"
+            [[ -n "$area_geometry" ]] || exit 0
+            read -r X Y W H <<< "$area_geometry"
+            [[ -n "${W:-}" && -n "${H:-}" ]] || exit 0
+            out=(-f x11grab -video_size "${W}x${H}" -framerate "$FRAMERATE" -i ":0.0+${X},${Y}")
+            ;;
+        *)
+            notify "Unknown target: $target"
+            exit 1
+            ;;
+    esac
+}
+
 start_recording() {
     local mode="$1"
     local target="$2"
-    local screen_size
-    local outfile
-    local recpid
-
-    local wid
-    local X Y W H
+    local quality="$3"
+    local outfile recpid
     local video_args=()
-    local area_geometry
-
-    mkdir -p "$DIR"
-    screen_size="$(get_screen_size)"
-    outfile="${DIR}/recording_$(date '+%Y-%m-%d_%H-%M-%S').mkv"
 
     if is_recording; then
         notify "Recording is already running"
         exit 0
     fi
 
-    case "$target" in
-        "fullscreen")
-            video_args=(-f x11grab -video_size "$screen_size" -framerate "$FRAMERATE" -i :0.0)
-            ;;
+    mkdir -p "$DIR"
+    outfile="${DIR}/recording_$(date '+%Y-%m-%d_%H-%M-%S').mkv"
 
-        "window")
-            wid="$(get_window_id || true)"
-            [[ -n "$wid" ]] || exit 0
-            video_args=(-f x11grab -framerate "$FRAMERATE" -window_id "$wid" -i :0.0)
-            ;;
+    set_encoder "$quality"
+    set_audio "$mode"
+    build_video_args video_args "$target"
 
-        "area")
-            area_geometry="$(get_area_geometry || true)"
-            [[ -n "$area_geometry" ]] || exit 0
-            read -r X Y W H <<< "$area_geometry"
-            [[ -n "${W:-}" && -n "${H:-}" ]] || exit 0
-            video_args=(-f x11grab -video_size "${W}x${H}" -framerate "$FRAMERATE" -i ":0.0+${X},${Y}")
-            ;;
-
-        *)
-            notify "Unknown target: $target"
-            exit 1
-            ;;
-    esac
-
-    case "$mode" in
-        "screen_only")
-            ffmpeg -vaapi_device /dev/dri/renderD128 \
-                "${video_args[@]}" \
-                -vf 'format=nv12,hwupload' \
-                -c:v h264_vaapi -qp 20 \
-                -maxrate 25M -bufsize 50M \
-                "$outfile" \
-                >/dev/null 2>&1 &
-            recpid=$!
-            ;;
-
-        "screen_mic")
-            ffmpeg -vaapi_device /dev/dri/renderD128 \
-                "${video_args[@]}" \
-                -f pulse -i "$(get_mic_source)" \
-                -map 0:v:0 -map 1:a:0 \
-                -af "pan=stereo|c0=c0|c1=c0,volume=${MIC_VOLUME}" \
-                -vf 'format=nv12,hwupload' \
-                -c:v h264_vaapi -qp 20 \
-                -maxrate 25M -bufsize 50M \
-                -c:a aac -b:a 192k \
-                "$outfile" \
-                >/dev/null 2>&1 &
-            recpid=$!
-            ;;
-
-        "screen_output")
-            ffmpeg -vaapi_device /dev/dri/renderD128 \
-                "${video_args[@]}" \
-                -f pulse -i "$(get_output_source)" \
-                -map 0:v:0 -map 1:a:0 \
-                -af "volume=${OUTPUT_VOLUME}" \
-                -vf 'format=nv12,hwupload' \
-                -c:v h264_vaapi -qp 20 \
-                -maxrate 25M -bufsize 50M \
-                -c:a aac -b:a 192k \
-                "$outfile" \
-                >/dev/null 2>&1 &
-            recpid=$!
-            ;;
-
-        "screen_mic_output")
-            ffmpeg -vaapi_device /dev/dri/renderD128 \
-                "${video_args[@]}" \
-                -f pulse -i "$(get_output_source)" \
-                -f pulse -i "$(get_mic_source)" \
-                -filter_complex "[1:a]volume=${OUTPUT_VOLUME}[sys];[2:a]pan=stereo|c0=c0|c1=c0,volume=${MIC_VOLUME}[mic];[sys][mic]amix=inputs=2:normalize=0[aout]" \
-                -map 0:v:0 -map "[aout]" \
-                -vf 'format=nv12,hwupload' \
-                -c:v h264_vaapi -qp 20 \
-                -maxrate 25M -bufsize 50M \
-                -c:a aac -b:a 192k \
-                "$outfile" \
-                >/dev/null 2>&1 &
-            recpid=$!
-            ;;
-
-        *)
-            notify "Unknown mode: $mode"
-            exit 1
-            ;;
-    esac
+    ffmpeg "${VAAPI_INIT[@]}" \
+        "${video_args[@]}" \
+        "${A_INPUTS[@]}" \
+        "${A_FILTER[@]}" \
+        "${MAPS[@]}" \
+        "${VFILTER[@]}" \
+        "${VCODEC[@]}" \
+        "${A_CODEC[@]}" \
+        "$outfile" \
+        >/dev/null 2>&1 &
+    recpid=$!
 
     echo "$recpid" > "$PIDFILE"
-    echo "${mode}:${target}" > "$MODEFILE"
+    echo "${mode}:${target}:${quality}:${FRAMERATE}" > "$MODEFILE"
     update_dwmblocks
     watch_recording "$recpid"
     notify "Recording started: $outfile"
@@ -257,8 +360,7 @@ menu() {
 }
 
 main() {
-    local choice
-    local target
+    local choice mode quality fps target
 
     if [[ "${1:-}" = "stop" ]]; then
         stop_recording
@@ -267,16 +369,25 @@ main() {
 
     choice="$(menu || true)"
     [[ -n "$choice" ]] || exit 0
+    case "$choice" in
+        "Screen + mic + output") mode="screen_mic_output" ;;
+        "Screen only")           mode="screen_only" ;;
+        "Screen + mic")          mode="screen_mic" ;;
+        "Screen + output")       mode="screen_output" ;;
+        *) exit 0 ;;
+    esac
+
+    quality="$(pick_quality || true)"
+    [[ -n "$quality" ]] || exit 0
+
+    fps="$(pick_framerate || true)"
+    [[ -n "$fps" ]] || exit 0
+    FRAMERATE="$fps"
 
     target="$(pick_video_target || true)"
     [[ -n "$target" ]] || exit 0
 
-    case "$choice" in
-        "Screen + mic + output") start_recording "screen_mic_output" "$target" ;;
-        "Screen only") start_recording "screen_only" "$target" ;;
-        "Screen + mic") start_recording "screen_mic" "$target" ;;
-        "Screen + output") start_recording "screen_output" "$target" ;;
-    esac
+    start_recording "$mode" "$target" "$quality"
 }
 
 main "$@"
