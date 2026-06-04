@@ -12,6 +12,8 @@
 
       clear_all_shortcuts = "yes";
 
+      background_opacity = "0.98";
+
       window_padding_width = 2.5;
       confirm_os_window_close = 0;
 
