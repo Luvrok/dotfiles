@@ -26,11 +26,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1777713215,
-        "narHash": "sha256-8GzXDOXckDWwST8TY5DbwYFjdvQLlP7K9CLSVx6iTTo=",
+        "lastModified": 1780290312,
+        "narHash": "sha256-eTAlX0CwgB84Ts3GaBd944A3DRXVMzgA0EqroZBISUo=",
         "owner": "nix-community",
         "repo": "disko",
-        "rev": "63b4e7e6cf75307c1d26ac3762b886b5b0247267",
+        "rev": "115e5211780054d8a890b41f0b7734cafad54dfe",
         "type": "github"
       },
       "original": {
@@ -58,11 +58,11 @@
     "dwm": {
       "flake": false,
       "locked": {
-        "lastModified": 1780505952,
-        "narHash": "sha256-VH2OYNIK4vJ5PK4DDobNMvMV0lPMrfRYLQLH4xgkPNU=",
+        "lastModified": 1780867437,
+        "narHash": "sha256-l0WLbYO/F+Wqwp+SIKa02Fi8g6CB98rzyhDWzDXwIv0=",
         "owner": "Luvrok",
         "repo": "dwm",
-        "rev": "e08366d87d7775c407d65dee0653112a700d40d0",
+        "rev": "f35716f55e4133379a7f38b96ebe00bb4b8bec31",
         "type": "github"
       },
       "original": {
@@ -182,11 +182,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778937626,
-        "narHash": "sha256-OzLAT0G96WlT/WWaNdkTvQ7E9ohq9h0xQTdL1oe3gm0=",
+        "lastModified": 1780679734,
+        "narHash": "sha256-KmRNvpNOb7QEORa06bVgjW9kITcx0VhsI7w0vhmZyD8=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "d5ece85b6d3d6b5ab5a514b2785fb952b629bfea",
+        "rev": "b2b7db486e06e098711dc291bb25db82850e1d16",
         "type": "github"
       },
       "original": {
@@ -204,11 +204,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1778509716,
-        "narHash": "sha256-ABHT3bml1Mxf5H4G3SSBR4P2c5ujWMzj/tNwqmXUre4=",
+        "lastModified": 1780557409,
+        "narHash": "sha256-I9mnnQWvpah38YS7GcfksvOH5Nf7Iz8nXLbDZr7HiQU=",
         "owner": "jesseduffield",
         "repo": "lazygit",
-        "rev": "c493503620051fcd2c07ac429fa3b70e5c43f13a",
+        "rev": "68f3bcf53b0e19da3f7b1aaee19718605e339e8c",
         "type": "github"
       },
       "original": {
@@ -249,16 +249,16 @@
     },
     "nixpkgs-pinned": {
       "locked": {
-        "lastModified": 1778737229,
-        "narHash": "sha256-6xWoytx8jFW4PF1GjRm/i/53trbpKGfz6zjzQGBr4cI=",
+        "lastModified": 1780453794,
+        "narHash": "sha256-bXMRa9VTsHSPXL4Cw8R6JJLQeY3Y/IP4+YJCYVmQ7FY=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "d7a713c0b7e47c908258e71cba7a2d77cc8d71d5",
+        "rev": "6b316287bae2ee04c9b93c8c858d930fd07d7338",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
-        "ref": "nixos-25.11",
+        "ref": "nixos-26.05",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -297,11 +297,11 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1778869304,
-        "narHash": "sha256-30sZNZoA1cqF5JNO9fVX+wgiQYjB7HJqqJ4ztCDeBZE=",
+        "lastModified": 1780243769,
+        "narHash": "sha256-x5UQuRsH3MqI0U9afaXSNqzTPSeZlRLvFAav2Ux1pNw=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "d233902339c02a9c334e7e593de68855ad26c4cb",
+        "rev": "331800de5053fcebacf6813adb5db9c9dca22a0c",
         "type": "github"
       },
       "original": {
@@ -329,11 +329,11 @@
     },
     "nixpkgs_6": {
       "locked": {
-        "lastModified": 1779560665,
-        "narHash": "sha256-tpyBcxPpcQb8ukyNF7DoCwfSY3VPsxHoYwj00Cayv5o=",
+        "lastModified": 1780243769,
+        "narHash": "sha256-x5UQuRsH3MqI0U9afaXSNqzTPSeZlRLvFAav2Ux1pNw=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "64c08a7ca051951c8eae34e3e3cb1e202fe36786",
+        "rev": "331800de5053fcebacf6813adb5db9c9dca22a0c",
         "type": "github"
       },
       "original": {
@@ -466,11 +466,11 @@
         "zapret-flowseal": "zapret-flowseal"
       },
       "locked": {
-        "lastModified": 1779994034,
-        "narHash": "sha256-rDNAp9IoScJ83ZD23+clu/3YjeFdT0poqzmf4sPAbio=",
+        "lastModified": 1780392383,
+        "narHash": "sha256-bOkyfmMUnPk7DSPJbsQwt9xRuIHgt5DR3xdK8+7JVBM=",
         "owner": "kartavkun",
         "repo": "zapret-discord-youtube",
-        "rev": "f7e8d6767a8f26ee726150c247c675f9061e8bd4",
+        "rev": "a5a13cfacb18afc64c6f125f5c62244fb573f1c6",
         "type": "github"
       },
       "original": {
