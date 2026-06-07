@@ -89,39 +89,6 @@
           end = 0;
         };
       },
-
-      # ---- size / position: smooth move & resize (mouse drag, retiling) ----
-      {
-        triggers = ["size", "position"];
-        scale-x = {
-          curve = "cubic-bezier(0.25,0.8,0.25,1)";
-          duration = 0.375;
-          start = "window-width-before / window-width";
-          end = 1;
-        };
-        scale-y = {
-          curve = "cubic-bezier(0.25,0.8,0.25,1)";
-          duration = 0.375;
-          start = "window-height-before / window-height";
-          end = 1;
-        };
-        offset-x = {
-          curve = "cubic-bezier(0.25,0.8,0.25,1)";
-          duration = 0.375;
-          start = "window-x-before - window-x";
-          end = 0;
-        };
-        offset-y = {
-          curve = "cubic-bezier(0.25,0.8,0.25,1)";
-          duration = 0.375;
-          start = "window-y-before - window-y";
-          end = 0;
-        };
-        shadow-scale-x = "scale-x";
-        shadow-scale-y = "scale-y";
-        shadow-offset-x = "offset-x";
-        shadow-offset-y = "offset-y";
-      }
     );
 
     # --- PER-WINDOW rules (override the global animations) ---
@@ -162,6 +129,44 @@
               start = "window-raw-opacity-before";
               end = 0;
             };
+          }
+        );
+      },
+
+      # ---- size / position: smooth move & resize (mouse drag, retiling) ----
+      {
+        match = "class_g != 'Rofi'";
+        animations = (
+          {
+            triggers = ["size", "position"];
+            scale-x = {
+              curve = "cubic-bezier(0.25,0.8,0.25,1)";
+              duration = 0.375;
+              start = "window-width-before / window-width";
+              end = 1;
+            };
+            scale-y = {
+              curve = "cubic-bezier(0.25,0.8,0.25,1)";
+              duration = 0.375;
+              start = "window-height-before / window-height";
+              end = 1;
+            };
+            offset-x = {
+              curve = "cubic-bezier(0.25,0.8,0.25,1)";
+              duration = 0.375;
+              start = "window-x-before - window-x";
+              end = 0;
+            };
+            offset-y = {
+              curve = "cubic-bezier(0.25,0.8,0.25,1)";
+              duration = 0.375;
+              start = "window-y-before - window-y";
+              end = 0;
+            };
+            shadow-scale-x = "scale-x";
+            shadow-scale-y = "scale-y";
+            shadow-offset-x = "offset-x";
+            shadow-offset-y = "offset-y";
           }
         );
       },
