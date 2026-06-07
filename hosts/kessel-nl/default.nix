@@ -4,7 +4,6 @@
   imports = [
     ./hardware-configuration.nix
     ./yggdrasil.nix
-    ./jedha-tunnel.nix
     ./syncthing.nix
   ];
 
@@ -51,10 +50,6 @@
       8208
       8443
       8448
-      14533
-      14544
-      18129
-      18208
       21027
       22000
       22067
