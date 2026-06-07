@@ -60,64 +60,6 @@
     ];
   };
 
-  # maybe someday
-
-  # systemd.services = {
-  #   "autovt@".enable = false;
-  #   "getty@".enable = false;
-  #   "getty@tty1".enable = lib.mkForce false;
-  #   "kmsconvt@".enable = lib.mkForce false;
-  #   "kmsconvt@tty1".enable = lib.mkForce false;
-  #   "ly@".enable = false;
-  #   "kmscon-ly@tty1" = {
-  #     description = "Kmscon + Ly on tty1";
-  #     after = [
-  #       "systemd-user-sessions.service"
-  #       "plymouth-quit-wait.service"
-  #       "systemd-logind.service"
-  #     ];
-  #     conflicts = [
-  #       "getty@tty1.service"
-  #       "kmsconvt@tty1.service"
-  #     ];
-  #     before = [
-  #       "getty.target"
-  #       "multi-user.target"
-  #     ];
-  #
-  #     serviceConfig = {
-  #       Type = "simple";
-  #       User = "root";
-  #       DynamicUser = false;
-  #       ExecStart = "${pkgs.kmscon}/bin/kmscon --vt=%I --seats=seat0 --login -- ${pkgs.ly}/bin/ly";
-  #       Restart = "always";
-  #       TTYPath = "/dev/%I";
-  #       TTYReset = "yes";
-  #       TTYVHangup = "yes";
-  #       StandardInput = "tty";
-  #       StandardOutput = "tty";
-  #     };
-  #
-  #     wantedBy = [ "multi-user.target" ];
-  #   };
-  # };
-  #
-  # services.kmscon = {
-  #   enable = true;
-  #   fonts = [
-  #     {
-  #       name = "JetBrainsMono Nerd Font Mono";
-  #       package = pkgs.nerd-fonts.jetbrains-mono;
-  #     }
-  #   ];
-  #   # hwRender = lib.mkDefault false;
-  #   useXkbConfig = true;
-  #   extraConfig = ''
-  #     font-size=12
-  #     font-dpi=109
-  #   '';
-  # };
-
   nix = {
     nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
     settings = {
@@ -201,5 +143,5 @@
     dconf.enable = true;
   };
 
-  system.stateVersion = "25.11";
+  system.stateVersion = "26.05";
 }

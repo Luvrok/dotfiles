@@ -2,7 +2,7 @@
   description = "Luvrok's nixos configuration";
 
   inputs = {
-    nixpkgs-pinned.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs-pinned.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
