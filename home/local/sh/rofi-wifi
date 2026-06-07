@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+
+## rofi-wifi — iwd backend
+
+DEVICE=${1:-wlan0}
+# THEME="$HOME/.config/rofi/rofi-wifi.rasi"
+THEME="$HOME/HOME/infra/dotfiles/home/programs/rofi/config/rofi-wifi.rasi"
+
+## Theme args, built once and reused everywhere
+THEME_ARGS=()
+[[ -f "$THEME" ]] && THEME_ARGS=(-theme "$THEME")
+
+notify() { command -v notify-send &>/dev/null && notify-send "WiFi" "$1"; }
+
+## Trigger a scan and wait for it to finish (max 5s)
+do_scan() {
+    notify "Сканирую сети…"
+    iwctl station "$DEVICE" scan &>/dev/null
+    for _ in {1..10}; do
+        sleep 0.5
+        scanning=$(iwctl station "$DEVICE" show \
+            | sed -n 's/^\s*Scanning\s*\(yes\|no\)\s*$/\1/p')
+        [[ "$scanning" != "yes" ]] && break
+    done
+}
+
+do_scan
+
+## Current SSID (strip ANSI, no xargs — SSID may contain quotes/spaces)
+CURR_SSID=$(iwctl station "$DEVICE" show \
+    | sed -r 's/\x1B\[([0-9;]*)[A-Za-z]//g' \
+    | sed -n 's/^\s*Connected network\s*\(.*\S\)\s*$/\1/p')
+
+## Parse networks → tab-separated: "<real ssid>\t<display>"
+## display = truncated+padded SSID followed by a signal-bar icon.
+## The real SSID is kept intact in field 1 so connect/highlight never use the
+## truncated name. Security (psk/open) is detected only to locate the SSID,
+## never printed.
+parse_networks() {
+    iwctl station "$DEVICE" get-networks \
+        | sed -r 's/\x1B\[([0-9;]*)[A-Za-z]//g' \
+        | sed 's/^[>[:space:]]*//' \
+        | awk '{
+            for (i=NF; i>=1; i--) {
+                if ($i ~ /^(psk|open|8021x|PSK|Open|8021X)$/) {
+                    ssid_end = i - 1
+                    sig      = ""
+
+                    # Signal after security (most common: SSID SEC SIG)
+                    if (i < NF) {
+                        for (k=i+1; k<=NF; k++) sig = sig $k
+
+                    # Signal before security (SSID SIG SEC)
+                    } else if (ssid_end > 0 && $ssid_end ~ /^\*+$/) {
+                        sig = $ssid_end
+                        ssid_end--
+                    }
+
+                    real = ""
+                    for (j=1; j<=ssid_end; j++) real = real (j>1 ? " " : "") $j
+                    if (real == "") break
+
+                    # Count asterisks → bar icon
+                    tmp = sig; gsub(/[^*]/, "", tmp); n = length(tmp)
+                    if      (n >= 4) icon = "▂▄▆█"
+                    else if (n == 3) icon = "▂▄▆_"
+                    else if (n == 2) icon = "▂▄__"
+                    else if (n >= 1) icon = "▂___"
+                    else             icon = "    "
+
+                    # Truncate for display only
+                    maxw = 24
+                    disp = real
+                    if (length(disp) > maxw) disp = substr(disp, 1, maxw - 3) "..."
+
+                    printf "%s\t%-*s  %s\n", real, maxw, disp, icon
+                    break
+                }
+            }
+        }'
+}
+
+## Build map (display line → real SSID) and ordered display list (current first)
+declare -A SSID_OF
+CURRENT_DISP=""
+OTHER_DISP=()
+while IFS=$'\t' read -r real disp; do
+    [[ -z "$real" || -z "$disp" ]] && continue
+    SSID_OF["$disp"]="$real"
+    if [[ -n "$CURR_SSID" && "$real" == "$CURR_SSID" ]]; then
+        CURRENT_DISP="$disp"
+    else
+        OTHER_DISP+=("$disp")
+    fi
+done < <(parse_networks)
+
+NETWORK_LINES=()
+[[ -n "$CURRENT_DISP" ]] && NETWORK_LINES+=("$CURRENT_DISP")
+NETWORK_LINES+=("${OTHER_DISP[@]}")
+
+## Header entries
+HEADER_LINES=()
+[[ -n "$CURR_SSID" ]] && HEADER_LINES+=("disconnect from ${CURR_SSID}")
+HEADER_LINES+=("rescan")
+
+MENU=("${HEADER_LINES[@]}" "${NETWORK_LINES[@]}")
+
+## Highlight current network (always first network row, 0-based)
+HIGHLINE=""
+[[ -n "$CURRENT_DISP" ]] && HIGHLINE=${#HEADER_LINES[@]}
+
+## Show rofi (cap at 10 lines → no scrollbar)
+MENU_LINE_COUNT=${#MENU[@]}
+(( MENU_LINE_COUNT > 10 )) && MENU_LINE_COUNT=10
+ROFI_ARGS=(-dmenu -p "WiFi" -i -theme-str "listview { lines: ${MENU_LINE_COUNT}; }")
+ROFI_ARGS+=("${THEME_ARGS[@]}")
+[[ -n "$HIGHLINE" ]] && ROFI_ARGS+=(-a "$HIGHLINE")
+
+CHOSEN=$(printf '%s\n' "${MENU[@]}" | rofi "${ROFI_ARGS[@]}")
+[[ -z "$CHOSEN" ]] && exit 0
+
+rofi_pass() {
+    rofi -dmenu -password -p "Password" -lines 0 "${THEME_ARGS[@]}"
+}
+
+if [[ -n "$CURR_SSID" && "$CHOSEN" == "disconnect from ${CURR_SSID}" ]]; then
+    if iwctl station "$DEVICE" disconnect; then
+        notify "Отключено: ${CURR_SSID}"
+    else
+        notify "Не удалось отключиться от ${CURR_SSID}"
+    fi
+
+elif [[ "$CHOSEN" == "rescan" ]]; then
+    exec "$0" "$DEVICE"
+
+else
+    REAL="${SSID_OF["$CHOSEN"]}"
+    [[ -z "$REAL" ]] && exit 0
+
+    notify "Подключаюсь к ${REAL}…"
+    iwctl station "$DEVICE" disconnect &>/dev/null
+
+    if iwctl station "$DEVICE" connect "$REAL" </dev/null 2>/dev/null; then
+        notify "Подключено: ${REAL}"
+    else
+        PASS=$(rofi_pass)
+        [[ -z "$PASS" ]] && { notify "Отменено"; exit 0; }
+        if iwctl --passphrase "$PASS" station "$DEVICE" connect "$REAL"; then
+            notify "Подключено: ${REAL}"
+        else
+            notify "Ошибка подключения к ${REAL}"
+        fi
+    fi
+fi

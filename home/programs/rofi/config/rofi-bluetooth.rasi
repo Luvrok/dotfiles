@@ -1,0 +1,58 @@
+@import "theme.rasi"
+
+
+configuration {
+  kb-row-up: "Up,k";
+  kb-row-down: "Down,j";
+  kb-accept-entry: "Return,l";
+  kb-cancel: "Escape,q";
+}
+
+window {
+    padding: 0;
+    width: 520px;
+    anchor:           north east;
+    location:         north east;
+    y-offset:         33px;
+    x-offset:         -5px;
+}
+
+mainbox {
+    border:    @BW;
+    spacing:   0px;
+    children:  [ listview ];
+}
+
+listview {
+    background-color: @BG;
+    border-color:     @BDR;
+    scrollbar:        true;
+    spacing:          0px;
+}
+
+element {
+    border:  @B-NONE;
+    padding: 0;
+}
+
+element-text {
+    text-color: @FG;
+    foreground: @FG;
+    padding:    2px 4px;
+}
+
+element-text selected {
+    background-color: @SELBG;
+    text-color:       @SEL;
+    foreground:       @SEL;
+    border:           @B-NONE;
+}
+
+scrollbar {
+    background-color: @BG;
+    border: @B-NONE;
+    handle-color: @FG;
+    padding:      0;
+    width:        4px;
+    handle-width: 4px;
+}
