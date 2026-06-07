@@ -77,6 +77,7 @@
       tcpdump
       tor
       v2rayn
+      wireshark
 
       # --- system ---
       acpi
@@ -125,6 +126,7 @@
       dwmblocks
       j4-dmenu-desktop
       libxcvt
+      librsvg
       slop
       st
       xclip

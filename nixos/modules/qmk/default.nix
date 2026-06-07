@@ -7,6 +7,7 @@
     qmk
     vial
     via
+    keymap-drawer
   ];
 
   services.udev.extraRules = ''

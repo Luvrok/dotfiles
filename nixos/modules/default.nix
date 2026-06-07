@@ -3,7 +3,7 @@
 {
   imports = [
     ./fonts.nix
-    ./qmk.nix
+    ./qmk
     ./virtualisation.nix
     ./udevil.nix
   ];
