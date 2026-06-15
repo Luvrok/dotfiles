@@ -49,6 +49,36 @@ layers:
   - ["LEFT SHIFT", Ф, Ы, В, А, П, Р, О, Л, Д, Ж, Э]
   - ["LEFT CTRL", Я, Ч, С, М, И, "LEFT ALT", "RIGHT ALT", Т, Ь, Б, Ю, {tl: ",", t: "."}, "RIGHT SHIFT"]
   - ["WIN", {t: "SP_1", type: tap}, ENT, "SPACE", "SP_2", {t: ▽, type: trans}]
+  "Win":
+  - ['', 'tag 1', 'tag 2', 'tag 3', 'tag 4', 'tag 5', 'tag 6', 'tag 7', 'tag 8', 'tag 9', "view all", '']
+  - ["prev tag", "window 1", "power menu", "dwm schpd", "rec menu", "tile", "full screen", "pass menu", "master +", '', "app menu", '']
+  - ["LEFT SHIFT", "window 2", "sticky window", "master -", "center float", "kitty schpd", "master width -", "focus ↓", "focus ↑", "master widht +", "focus dock ↑", "new dock schpd"]
+  - ["LEFT CTRL", "window 3", "last window", "clip board", "dots schpd", '', '', '', "prev sel window", "monocle", "monitor ←", "monitor →", '', '']
+  - [{t: "WIN", type: ghost}, '', '', "change lang", '', '']
+  "Win+Ctrl":
+  - ['', 'tag 1(move)', 'tag 2(move)', 'tag 3(move)', 'tag 4(move)', 'tag 5(move)', 'tag 6(move)', 'tag 7(move)', 'tag 8(move)', 'tag 9(move)', '', '']
+  - ['', '', "wifi menu", '', '', '', '', '', '', '', '', '']
+  - ["LEFT SHIFT", '', "show all windows", '', '', "set schpd", "hide window", '', "killer menu", '', '', '']
+  - ["LEFT CTRL", '', '', '', '', '', '', '', '', '', '', '', '', '']
+  - [{t: "WIN", type: ghost}, '', '', "master", '', '']
+  "Win+Shift":
+  - ['', '1', '2', '3', '4', '5', '6', '7', '8', '9', "tag all", "quit"]
+  - ['', "push 1", "webcam", '', "rec stop", "term", '', "nixos", '', "cfact 0", "floatpos", '']
+  - ["LEFT SHIFT", "push 2", '', "audio", "browser", "rm scr", "cfact +", "push ↓", "push ↑", "cfact -", "dock -", "adopt"]
+  - ["LEFT CTRL", "push 3", "push last", "kill", '', "bar", '', '', "push prev", "zoom", "tag mon ←", "tag mon →", '', '']
+  - [{t: "WIN", type: ghost}, '', '', "float", '', '']
+  "Win+Ctrl+Shift":
+  - ['', '1', '2', '3', '4', '5', '6', '7', '8', '9', '', '']
+  - ['', "restart", '', '', '', '', '', '', '', '', '', '']
+  - ["LEFT SHIFT", '', '', '', '', '', '', '', "rst test", '', '', '']
+  - ["LEFT CTRL", '', '', '', '', '', '', '', '', '', '', '', '', '']
+  - [{t: "WIN", type: ghost}, '', '', '', '', '']
+  "Media":
+  - ['', '', '', '', '', '', '', '', '', '', '', "PrtSc shot"]
+  - ['', '', '', '', '', '', '', '', '', '', '', '']
+  - ['', '', '', '', '', '', '', '', '', '', '', '']
+  - ['', '', '', '', '', '', '', '', '', '', '', '', '', '']
+  - ['', '', '', '', '', '']
 draw_config:
   outer_pad_h: 20
   footer_text: ""
