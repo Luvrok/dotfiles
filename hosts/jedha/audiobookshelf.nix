@@ -13,7 +13,7 @@
     user = "audiobookshelf";
     group = "media";
     openFirewall = true;
-    dataDir = "media/books";
+    dataDir = "audiobookshelf";
   };
 
   systemd.services.audiobookshelf = {
