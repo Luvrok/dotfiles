@@ -11,6 +11,7 @@
     ./audiobookshelf.nix
     ./glances.nix
     ./anki.nix
+    ./kavita.nix
   ];
 
   services = {
@@ -92,6 +93,9 @@
     mtr
     busybox
     glances
+    openssl
+    ranger
+    calibre
   ];
 
   system.stateVersion = "25.11";
