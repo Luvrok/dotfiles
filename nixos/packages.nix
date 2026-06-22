@@ -104,6 +104,7 @@
       calibre # ebook convert
       glances
       acl
+      inotify-info
 
       # --- archives ---
       p7zip

@@ -32,6 +32,8 @@
 
       cursor = "#ebdbb2";
       cursor_text_color = "#ebdbb2";
+
+      auto_reload_config = -1;
     };
 
     keybindings = {
