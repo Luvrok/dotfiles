@@ -1,0 +1,223 @@
+#!/usr/bin/env bash
+set -u
+
+# ── Конфиг ──
+ENGINE="google"
+ENGINE_FALLBACK="bing"
+
+PRIMARY_LANG="ru"     # родной язык
+FOREIGN_LANG="en"     # язык по умолчанию для родного текста
+
+APP="rofi-translate"
+
+# Тема: грузится из файла, если он есть; иначе дефолт rofi + theme-str.
+THEME_FILE="${ROFI_TRANSLATE_THEME:-${XDG_CONFIG_HOME:-$HOME/.config}/rofi/translate.rasi}"
+theme_args=()
+[[ -f "$THEME_FILE" ]] && theme_args=(-theme "$THEME_FILE")
+
+# ── Хоткеи внутри окна rofi ──
+KEY_SEL="Alt+p"       # перевести PRIMARY selection
+KEY_CLIP="Alt+c"      # перевести clipboard
+KEY_TARGET="Alt+t"    # выбрать целевой язык вручную
+KEY_VERBOSE="Alt+v"   # подробный (словарный) перевод
+KEY_SPEAK="Alt+s"     # озвучить
+
+# ── Строки-действия в listview (точное совпадение = диспетчеризация) ──
+ROW_SEL="⇄  selection — перевести выделение        ($KEY_SEL)"
+ROW_CLIP="⇄  clipboard — перевести буфер            ($KEY_CLIP)"
+ROW_TGT="⇄  target — выбрать целевой язык           ($KEY_TARGET)"
+ROW_VERB="⇄  verbose — словарный разбор             ($KEY_VERBOSE)"
+ROW_SPEAK="⇄  speak — озвучить                      ($KEY_SPEAK)"
+
+LANGUAGES=(
+    "en  English"
+    "ru  Русский"
+    "es  Español"
+    "de  Deutsch"
+    "fr  Français"
+    "ja  日本語"
+    "zh-CN  中文"
+    "ko  한국어"
+    "uk  Українська"
+    "it  Italiano"
+)
+
+# ── Утилиты ──
+trim() { sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
+flat() { tr '\n' ' ' | sed -e 's/[[:space:]]\+/ /g' | trim; }
+
+resolve_lang() {
+    case "$1" in
+        jp) echo ja ;;
+        cn|zh) echo zh-CN ;;
+        tw) echo zh-TW ;;
+        kr) echo ko ;;
+        ua) echo uk ;;
+        cz) echo cs ;;
+        se) echo sv ;;
+        gr) echo el ;;
+        *) echo "$1" ;;
+    esac
+}
+
+is_cyrillic() { printf '%s' "$1" | LC_ALL=C.UTF-8 grep -qP '[\x{0400}-\x{04FF}]'; }
+
+detect_target() {
+    if is_cyrillic "$1"; then printf '%s' "$FOREIGN_LANG"; else printf '%s' "$PRIMARY_LANG"; fi
+}
+
+notify() {
+    if command -v dunstify >/dev/null 2>&1; then
+        dunstify -u "$1" -a "$APP" "$2" "$3"
+    else
+        notify-send -u "$1" -a "$APP" "$2" "$3"
+    fi
+}
+
+copy() { printf '%s' "$1" | xclip -selection clipboard; }
+
+translate_brief() {
+    local text="$1" tgt="$2" out
+    out="$(trans -e "$ENGINE" -b -no-ansi ":$tgt" "$text" 2>/dev/null)"
+    [[ -z "$out" ]] && out="$(trans -e "$ENGINE_FALLBACK" -b -no-ansi ":$tgt" "$text" 2>/dev/null)"
+    printf '%s' "$out"
+}
+
+translate_verbose() {
+    trans -e "$ENGINE" -no-ansi -show-original-phonetics n ":$2" "$1" 2>/dev/null
+}
+
+speak() { trans -e "$ENGINE" -b -speak ":$2" "$1" >/dev/null 2>&1 & }
+
+pick_target() {
+    printf '%s\n' "${LANGUAGES[@]}" \
+        | rofi -dmenu -i -p "target" "${theme_args[@]}" -theme-str 'listview { lines: 8; }' \
+        | awk '{print $1}'
+}
+
+prompt_text() {
+    printf '' | rofi -dmenu -i -p "$1" "${theme_args[@]}" -theme-str 'listview { lines: 0; }'
+}
+
+# Разбор ":код текст" → OV_CODE / OV_TEXT
+parse_override() {
+    OV_CODE=""
+    OV_TEXT="$(printf '%s' "$1" | trim)"
+    if [[ "$OV_TEXT" =~ ^:([A-Za-z-]+)[[:space:]]+(.+)$ ]]; then
+        OV_CODE="$(resolve_lang "${BASH_REMATCH[1]}")"
+        OV_TEXT="$(printf '%s' "${BASH_REMATCH[2]}" | trim)"
+    fi
+}
+
+# Перевести → clipboard → dunst. $2 (опц.) принудительный target.
+do_translate() {
+    local raw tgt res
+    parse_override "$1"
+    raw="$OV_TEXT"
+    [[ -z "$raw" ]] && { notify low "$APP" "нет текста"; return 1; }
+
+    if [[ -n "${2:-}" ]]; then tgt="$2"
+    elif [[ -n "$OV_CODE" ]]; then tgt="$OV_CODE"
+    else tgt="$(detect_target "$raw")"; fi
+
+    res="$(translate_brief "$raw" "$tgt")"
+    if [[ -z "$res" ]]; then
+        notify critical "перевод не удался" "$raw"
+        return 1
+    fi
+    copy "$res"
+    notify normal "→ $tgt · скопировано" "$res"
+}
+
+do_selection() {
+    local sel
+    sel="$(xclip -o -selection primary 2>/dev/null | flat)"
+    [[ -z "$sel" ]] && { notify low "$APP" "selection пустой"; exit 1; }
+    do_translate "$sel"
+}
+
+do_clip() {
+    local clp
+    clp="$(xclip -o -selection clipboard 2>/dev/null | flat)"
+    [[ -z "$clp" ]] && { notify low "$APP" "clipboard пустой"; exit 1; }
+    do_translate "$clp"
+}
+
+show_verbose() {
+    local raw tgt
+    parse_override "$1"
+    raw="$OV_TEXT"
+    [[ -z "$raw" ]] && exit 0
+    if [[ -n "$OV_CODE" ]]; then tgt="$OV_CODE"; else tgt="$(detect_target "$raw")"; fi
+    translate_verbose "$raw" "$tgt" \
+        | rofi -dmenu -i -p "verbose" "${theme_args[@]}" -theme-str 'window { width: 60%; } listview { lines: 16; }' >/dev/null
+}
+
+act_speak() {
+    local txt tgt
+    parse_override "$1"
+    txt="$OV_TEXT"
+    [[ -z "$txt" ]] && exit 0
+    if [[ -n "$OV_CODE" ]]; then tgt="$OV_CODE"; else tgt="$(detect_target "$txt")"; fi
+    speak "$txt" "$tgt"
+}
+
+act_target() {
+    local tgt txt
+    tgt="$(pick_target)"
+    [[ -z "$tgt" ]] && exit 0
+    txt="$(prompt_text "→ $tgt")"
+    [[ -z "$txt" ]] && exit 0
+    do_translate "$txt" "$tgt"
+}
+
+menu() {
+    local mesg sel code rows
+    mesg="Enter — перевести · Ctrl+Enter — перевести введённое поверх подсветки · ':es текст' — в нужный язык"
+    rows="$ROW_SEL
+$ROW_CLIP
+$ROW_TGT
+$ROW_VERB
+$ROW_SPEAK"
+
+    sel="$(printf '%s\n' "$rows" | rofi -dmenu -i -p "tr" -mesg "$mesg" \
+        "${theme_args[@]}" -theme-str 'listview { lines: 5; }' \
+        -kb-custom-1 "$KEY_SEL" \
+        -kb-custom-2 "$KEY_CLIP" \
+        -kb-custom-3 "$KEY_TARGET" \
+        -kb-custom-4 "$KEY_VERBOSE" \
+        -kb-custom-5 "$KEY_SPEAK")"
+    code=$?
+
+    case $code in
+        1|130) exit 0 ;;
+        0)
+            case "$sel" in
+                "$ROW_SEL")   do_selection ;;
+                "$ROW_CLIP")  do_clip ;;
+                "$ROW_TGT")   act_target ;;
+                "$ROW_VERB")  show_verbose "$(prompt_text verbose)" ;;
+                "$ROW_SPEAK") act_speak "$(prompt_text speak)" ;;
+                *)            do_translate "$sel" ;;
+            esac
+            ;;
+        10) do_selection ;;
+        11) do_clip ;;
+        12)
+            local tgt
+            tgt="$(pick_target)"
+            [[ -z "$tgt" || -z "$sel" ]] && exit 0
+            do_translate "$sel" "$tgt"
+            ;;
+        13) show_verbose "$sel" ;;
+        14) act_speak "$sel" ;;
+    esac
+}
+
+# ── Точка входа ──
+case "${1:-}" in
+    sel|selection|primary) do_selection ;;
+    clip|clipboard)        do_clip ;;
+    "")                    menu ;;
+    *)                     do_translate "$*" ;;
+esac

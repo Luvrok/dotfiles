@@ -15,5 +15,6 @@
     ./clock-rs.nix
     ./element-desktop.nix
     ./qutebrowser
+    ./translate-shell.nix
   ];
 }
