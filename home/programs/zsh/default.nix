@@ -20,7 +20,7 @@
           owner = "Aloxaf";
           repo = "fzf-tab";
           rev = "master";
-          sha256 = "sha256-yvPQyuK4Dw+LkwxrkWTRcw4PIf/79fW61jWbEg8Pe9Y=";
+          sha256 = "sha256-YhTSu0P7mFlVx1zBvbT0jNstkamcZHhPYJHKMAHgyuM=";
         };
         file = "fzf-tab.plugin.zsh";
       }

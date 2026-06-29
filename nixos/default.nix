@@ -78,7 +78,6 @@
 
   users = {
     groups = {
-      libvirt = { };
       vboxsf = { };
       plugdev = { };
       storage = { };
@@ -97,7 +96,6 @@
           "network"
           "wheel"
           "kvm"
-          "libvirt"
           "libvirtd"
           "vboxusers"
           "vboxsf"

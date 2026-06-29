@@ -11,12 +11,12 @@
 
   systemd.tmpfiles.settings = {
     tunneluserSsh = {
-      "home/tunneluser/.ssh".d = {
+      "/home/tunneluser/.ssh".d = {
         mode = "700";
         user = "tunneluser";
         group = "tunneluser";
       };
-      "home/tunneluser/.ssh/id_ed25519".f = {
+      "/home/tunneluser/.ssh/id_ed25519".f = {
         mode = "600";
         user = "tunneluser";
         group = "tunneluser";

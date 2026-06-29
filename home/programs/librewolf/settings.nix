@@ -17,15 +17,16 @@
     "dom.webgpu.enabled" = true;
     "gfx.webrender.all" = true;
     "layers.gpu-process.enabled" = true;
-    "layers.mlgpu.enabled" = true;
     "media.ffmpeg.vaapi.enabled" = true;
-    "media.ffvpx.enabled" = false;
     "media.gpu-process-decoder" = true;
     "media.navigator.mediadatadecoder_vpx_enabled" = true;
     "media.rdd-ffmpeg.enabled" = true;
-    "media.rdd-vpx.enabled" = false;
     "media.gmp-widevinecdm.enabled" = true;
     "webgl.disabled" = false;
+    "gfx.x11-egl.force-enabled" = true;
+    "widget.dmabuf.force-enabled" = true;
+    "media.hardware-video-decoding.enabled" = true;
+    "media.av1.enabled" = true;
 
     # === Updates / warnings ===
     "app.update.auto" = false;

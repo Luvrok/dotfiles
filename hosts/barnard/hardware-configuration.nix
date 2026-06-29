@@ -22,10 +22,15 @@
   boot.initrd.systemd.enable = true;
   boot.kernelModules = [
     "kvm-amd"
-    "nvme"
+  ];
+
+  boot.kernelParams = [
     "video=DP-1:2560x1440@120"
     "video=DP-2:2560x1440@120"
+    "quiet"
+    "loglevel=3"
   ];
+
   boot.extraModulePackages = [ ];
 
   fileSystems."/" = {

@@ -16,11 +16,6 @@
       grub.enable = lib.mkForce false;
     };
 
-    kernelParams = [
-      "quiet"
-      "loglevel=3"
-    ];
-
     tmp.cleanOnBoot = lib.mkDefault true;
   };
 }

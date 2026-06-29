@@ -13,8 +13,6 @@
     lm_sensors
     dmidecode
     vulkan-tools
-    libva-vdpau-driver
-    libvdpau-va-gl
     libva-utils
     libva
     mangohud
@@ -27,7 +25,6 @@
         Driver "amdgpu"
         Option "TearFree" "true"
         Option "DRI" "3"
-        Option "Hotplug" "false"
     EndSection
   '';
 

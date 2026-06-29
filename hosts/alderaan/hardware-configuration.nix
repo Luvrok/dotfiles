@@ -22,6 +22,11 @@
     ];
   };
 
+  boot.kernelParams = [
+    "quiet"
+    "loglevel=3"
+  ];
+
   swapDevices = [ { device = "/dev/disk/by-uuid/69cd13c1-0608-4c52-8947-2a3ae000e4f3"; } ];
 
   hardware.enableAllFirmware = true;
