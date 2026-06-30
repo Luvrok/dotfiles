@@ -33,8 +33,6 @@
       ScanSchedule = "@every 1h";
 
       ListenBrainz.Enabled = true;
-      LastFM.Enabled = true;
-      LastFM.ScrobbleFirstArtistOnly = true; # lastfm doesn't support multiple artists very well
 
       Backup = {
         Path = "/var/backup/navidrome";

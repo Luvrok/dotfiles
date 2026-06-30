@@ -13,6 +13,9 @@
     better-swallow.url = "github:afishhh/better-swallow";
     lazygit.url = "github:jesseduffield/lazygit";
 
+    sops-nix.url = "github:Mic92/sops-nix";
+    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+
     dwm.url = "github:Luvrok/dwm";
     dwm.flake = false;
     st.url = "github:Luvrok/st";
@@ -33,6 +36,7 @@
       nixpkgs-pinned,
       home-manager,
       disko,
+      sops-nix,
       zapret-discord-youtube,
       ...
     }@inputs:
@@ -85,6 +89,7 @@
           ./hosts/barnard/hardware-configuration.nix
           ./hosts/barnard/env.nix
 
+          sops-nix.nixosModules.sops
           zapret-discord-youtube.nixosModules.withTestTools
           {
             services.zapret-discord-youtube = {
@@ -145,23 +150,13 @@
         ];
       };
 
-      nixosConfigurations."kessel-fin" = nixpkgs.lib.nixosSystem {
+      nixosConfigurations."kessel" = nixpkgs.lib.nixosSystem {
         inherit pkgs;
         specialArgs = {
           username = "kessel";
         };
         modules = [
-          ./hosts/kessel-fin
-        ];
-      };
-
-      nixosConfigurations."kessel-nl" = nixpkgs.lib.nixosSystem {
-        inherit pkgs;
-        specialArgs = {
-          username = "kessel";
-        };
-        modules = [
-          ./hosts/kessel-nl
+          ./hosts/kessel
         ];
       };
 
@@ -182,6 +177,7 @@
         };
         modules = [
           disko.nixosModules.disko
+          sops-nix.nixosModules.sops
           ./hosts/jedha
         ];
       };

@@ -9,7 +9,6 @@
     fastfetch
     p7zip
     tree-sitter
-    rnnoise-plugin
     ly
     nsxiv
     figlet

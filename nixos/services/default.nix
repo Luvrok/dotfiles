@@ -35,7 +35,7 @@
     };
 
     ollama = (import ./ollama.nix { inherit pkgs; });
-    pipewire = (import ./pipewire.nix { });
+    pipewire = (import ./pipewire.nix { inherit pkgs; });
     xserver = (import ./xserver.nix { inherit config pkgs username; });
     yggdrasil = (import ./yggdrasil.nix { });
     syncthing = (import ./syncthing.nix { inherit username; });

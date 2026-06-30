@@ -1,6 +1,7 @@
-{ username, ... }:
+{ username, config, ... }:
 
 {
+  sops.secrets.anki-pwd = { };
   services.anki-sync-server = {
     enable = true;
     port = 8130;
@@ -9,7 +10,7 @@
     users = [
       {
         username = username;
-        passwordFile = "/run/secrets/anki-${username}-password";
+        passwordFile = config.sops.secrets.anki-pwd.path;
       }
     ];
   };
@@ -23,11 +24,8 @@
       RemainAfterExit = true;
     };
     script = ''
-      mkdir -p /run/secrets
-
-      cp ${../../secrets/anki-${username}-password} /run/secrets/anki-${username}-password
-      chmod 400 /run/secrets/anki-${username}-password
-      chown root:root /run/secrets/anki-${username}-password
+      chmod 400 /run/secrets/anki-pwd
+      chown root:root /run/secrets/anki-pwd
     '';
   };
 }

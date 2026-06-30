@@ -91,6 +91,8 @@
     whois
     jq
     busybox
+    age
+    sops
   ];
 
   services.vnstat.enable = true;

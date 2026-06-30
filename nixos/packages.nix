@@ -105,6 +105,8 @@
       glances
       acl
       inotify-info
+      age
+      sops
 
       # --- archives ---
       p7zip

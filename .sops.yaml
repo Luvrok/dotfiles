@@ -1,0 +1,24 @@
+keys:
+  - &barnard  age18uengv7au9we7sh6j73y5u7yayucxdg5r62nk8trlgw2ycpkh58sphmrrz
+  - &jedha    age1ylmhdnj5gp49p7403hjchxkyc8607snhmk8pdx76znyqk26htpeq2jma56
+  - &kessel   age1l0akldwr5q056yvhzsm9zwsdzkequrfj8qjlt2zdqr39hyywlewqyte3p7
+  - &tatooine age1pxd4w7tgfd0fytwv5qrgtpzlfhssqh3gz5chsyjjr0ldmyum4vuqwv547c
+
+creation_rules:
+  - path_regex: secrets/(alderaan|barnard|jedha)\.yaml$
+    key_groups:
+      - age:
+          - *barnard
+          - *jedha
+
+  - path_regex: secrets/kessel\.yaml$
+    key_groups:
+      - age:
+          - *barnard
+          - *kessel
+
+  - path_regex: secrets/tatooine\.yaml$
+    key_groups:
+      - age:
+          - *barnard
+          - *tatooine

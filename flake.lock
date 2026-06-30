@@ -329,22 +329,6 @@
     },
     "nixpkgs_6": {
       "locked": {
-        "lastModified": 1781577229,
-        "narHash": "sha256-lrp67w8AulE9Ks53n27I45ADSzbOCn4H+CNW1Ck8B+8=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "567a49d1913ce81ac6e9582e3553dd90a955875f",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_7": {
-      "locked": {
         "lastModified": 1780243769,
         "narHash": "sha256-x5UQuRsH3MqI0U9afaXSNqzTPSeZlRLvFAav2Ux1pNw=",
         "owner": "NixOS",
@@ -374,7 +358,6 @@
         "sops-nix": "sops-nix",
         "st": "st",
         "textfoxy": "textfoxy",
-        "thyx": "thyx",
         "zapret-discord-youtube": "zapret-discord-youtube"
       }
     },
@@ -479,24 +462,6 @@
         "type": "github"
       }
     },
-    "thyx": {
-      "inputs": {
-        "nixpkgs": "nixpkgs_6"
-      },
-      "locked": {
-        "lastModified": 1782491382,
-        "narHash": "sha256-JB132Bwzq6UpXP5y6slNAYE00q8qJdyTRUzaiUpGbqw=",
-        "owner": "rccyx",
-        "repo": "thyx",
-        "rev": "68a0d7d9617ae8b110490810993005131bfa1f21",
-        "type": "github"
-      },
-      "original": {
-        "owner": "rccyx",
-        "repo": "thyx",
-        "type": "github"
-      }
-    },
     "treefmt-nix": {
       "inputs": {
         "nixpkgs": "nixpkgs_3"
@@ -518,7 +483,7 @@
     "zapret-discord-youtube": {
       "inputs": {
         "flake-utils": "flake-utils_2",
-        "nixpkgs": "nixpkgs_7",
+        "nixpkgs": "nixpkgs_6",
         "zapret-flowseal": "zapret-flowseal"
       },
       "locked": {
