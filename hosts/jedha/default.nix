@@ -8,7 +8,6 @@
     ./syncthing.nix
     ./yggdrasil.nix
     ./qbittorrent.nix
-    ./audiobookshelf.nix
     ./glances.nix
     ./anki.nix
     ./kavita.nix
@@ -52,8 +51,8 @@
     "d /var/lib/media 2775 root media -"
     "d /var/lib/media/downloads 2775 root media -"
     "d /var/lib/media/music 2775 root media -"
-    "d /var/lib/media/books 2775 audiobookshelf media -"
-    "d /var/lib/media/books/data 2775 audiobookshelf media -"
+    "d /var/lib/media/books 2775 root media -"
+    "d /var/lib/media/books/data 2775 root media -"
   ];
 
   users.users.root.openssh.authorizedKeys.keys = [
