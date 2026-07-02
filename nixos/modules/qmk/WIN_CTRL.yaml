@@ -1,0 +1,70 @@
+layout: {qmk_keyboard: keebio/iris_ce/rev1, layout_name: LAYOUT}
+layers:
+  "Win+Ctrl":
+    - ['', 'tag 1(move)', 'tag 2(move)', 'tag 3(move)', 'tag 4(move)', 'tag 5(move)', 'tag 6(move)', 'tag 7(move)', 'tag 8(move)', 'tag 9(move)', '', '']
+    - ['', '', "wifi menu", '', '', '', '', '', '', '', '', '']
+    - ["LEFT SHIFT", '', "show all windows", '', '', "set schpd", "hide window", '', "killer menu", '', '', '']
+    - [{t: "LEFT CTRL", type: ghost}, '', '', '', '', '', '', '', '', '', '', '', '', '']
+    - [{t: "WIN", type: ghost}, '', '', "master", '', '']
+draw_config:
+  outer_pad_h: 40
+  footer_text: ""
+  key_h: 80
+  key_w: 80
+  combo_h: 24
+  combo_w: 24
+  key_rx: 0
+  key_ry: 0
+  inner_pad_w: 4
+  inner_pad_h: 4
+  dark_mode: true
+  style_layer_activators: false
+  svg_extra_style: |
+    svg.keymap {
+      background: #282828;
+    }
+
+    text.tl {
+      font-size: 16px;
+      transform: translate(4px, 4px);
+    }
+
+    text {
+      paint-order: stroke fill;
+      stroke: none;
+    }
+
+    text.label {
+      font-size: 24px;
+      display: none;
+      stroke: none;
+    }
+
+    .tap {
+      font-size: 18px;
+    }
+
+    text.hold {
+      font-size: 18px;
+    }
+
+    rect.key {
+      fill: #171717;
+    }
+
+    rect.key, rect.combo {
+      stroke: #d65d0e;
+      stroke-width: 1;
+    }
+
+    svg.keymap {
+      fill: #ebdbb2;
+    }
+
+    text.trans {
+      fill: #ebdbb2;
+    }
+
+    rect.held {
+      fill: #171717;
+    }

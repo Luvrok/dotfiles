@@ -1,0 +1,70 @@
+layout: {qmk_keyboard: keebio/iris_ce/rev1, layout_name: LAYOUT}
+layers:
+  Base:
+  - [ESC, {tl: "!", t: '1'}, {tl: "@", t: '2'}, {tl: "#", t: '3'}, {tl: "$", t: '4'}, {tl: "%", t: '5'}, {tl: "^", t: '6'}, {tl: "&", t: '7'}, {tl: "*", t: '8'}, {tl: "(", t: '9'}, {tl: ")", t: '0'}, "BACK SPACE"]
+  - [TAB, Q, W, E, R, T, Y, U, I, O, P, {tl: "{", t: '['}]
+  - ["LEFT SHIFT", A, S, D, F, G, H, J, K, L, {tl: ":", t: ";"}, {tl: "\"", t: ''''}]
+  - ["LEFT CTRL", Z, X, C, V, B, "LEFT ALT", "RIGHT ALT", N, M, {tl: "<", t: ","}, {tl: ">", t: "."}, {tl: "?", t: "/"}, "RIGHT SHIFT"]
+  - ["WIN", {t: "SP_1", type: tap}, ENTER, "SPACE", "SP_2", {t: ▽, type: trans}]
+draw_config:
+  outer_pad_h: 40
+  footer_text: ""
+  key_h: 80
+  key_w: 80
+  combo_h: 24
+  combo_w: 24
+  key_rx: 0
+  key_ry: 0
+  inner_pad_w: 4
+  inner_pad_h: 4
+  dark_mode: true
+  style_layer_activators: false
+  svg_extra_style: |
+    svg.keymap {
+      background: #282828;
+    }
+
+    text.tl {
+      font-size: 16px;
+      transform: translate(4px, 4px);
+    }
+
+    text {
+      paint-order: stroke fill;
+      stroke: none;
+    }
+
+    text.label {
+      font-size: 24px;
+      display: none;
+      stroke: none;
+    }
+
+    .tap {
+      font-size: 18px;
+    }
+
+    text.hold {
+      font-size: 18px;
+    }
+
+    rect.key {
+      fill: #171717;
+    }
+
+    rect.key, rect.combo {
+      stroke: #d65d0e;
+      stroke-width: 1;
+    }
+
+    svg.keymap {
+      fill: #ebdbb2;
+    }
+
+    text.trans {
+      fill: #ebdbb2;
+    }
+
+    rect.held {
+      fill: #171717;
+    }

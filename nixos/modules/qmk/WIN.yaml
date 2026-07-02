@@ -1,0 +1,70 @@
+layout: {qmk_keyboard: keebio/iris_ce/rev1, layout_name: LAYOUT}
+layers:
+  "Win":
+    - ['', 'tag 1', 'tag 2', 'tag 3', 'tag 4', 'tag 5', 'tag 6', 'tag 7', 'tag 8', 'tag 9', "view all", '']
+    - ["prev tag", "window 1", "power menu", "dwm schpd", "rec menu", "tile", "full screen", "pass menu", "master +", '', "app menu", '']
+    - ["LEFT SHIFT", "window 2", "sticky window", "master -", "center float", "kitty schpd", "master width -", "focus ↓", "focus ↑", "master widht +", "focus dock ↑", "new dock schpd"]
+    - ["LEFT CTRL", "window 3", "last window", "clip board", "dots schpd", '', '', '', "prev sel window", "monocle", "monitor ←", "monitor →", '', '']
+    - [{t: "WIN", type: ghost}, '', '', "change lang", '', '']
+draw_config:
+  outer_pad_h: 40
+  footer_text: ""
+  key_h: 80
+  key_w: 80
+  combo_h: 24
+  combo_w: 24
+  key_rx: 0
+  key_ry: 0
+  inner_pad_w: 4
+  inner_pad_h: 4
+  dark_mode: true
+  style_layer_activators: false
+  svg_extra_style: |
+    svg.keymap {
+      background: #282828;
+    }
+
+    text.tl {
+      font-size: 16px;
+      transform: translate(4px, 4px);
+    }
+
+    text {
+      paint-order: stroke fill;
+      stroke: none;
+    }
+
+    text.label {
+      font-size: 24px;
+      display: none;
+      stroke: none;
+    }
+
+    .tap {
+      font-size: 18px;
+    }
+
+    text.hold {
+      font-size: 18px;
+    }
+
+    rect.key {
+      fill: #171717;
+    }
+
+    rect.key, rect.combo {
+      stroke: #d65d0e;
+      stroke-width: 1;
+    }
+
+    svg.keymap {
+      fill: #ebdbb2;
+    }
+
+    text.trans {
+      fill: #ebdbb2;
+    }
+
+    rect.held {
+      fill: #171717;
+    }

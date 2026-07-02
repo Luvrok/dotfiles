@@ -1,4 +1,17 @@
 layout: {qmk_keyboard: keebio/iris_ce/rev1, layout_name: LAYOUT}
+# M(0)
+# M(1)
+# M(2)
+# M(3)
+# M(4)
+# M(5)
+# M(6)
+# M(7)
+# M(8)
+# M(9)
+# M(10)
+# M(11)
+# M(12)
 layers:
   Base:
   - [ESC, {tl: "!", t: '1'}, {tl: "@", t: '2'}, {tl: "#", t: '3'}, {tl: "$", t: '4'}, {tl: "%", t: '5'}, {tl: "^", t: '6'}, {tl: "&", t: '7'}, {tl: "*", t: '8'}, {tl: "(", t: '9'}, {tl: ")", t: '0'}, "BACK SPACE"]
@@ -8,10 +21,10 @@ layers:
   - ["WIN", {t: "SP_1", type: tap}, ENTER, "SPACE", "SP_2", {t: ▽, type: trans}]
   "SP_1":
   - ["~", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "PGUP"]
-  - ['`', M(2), ↑, M(3), HOME, END, INS, '1', '2', '3', '0', PGDN]
-  - [CAPS, ←, ↓, →, M(6), "[", "]", '4', '5', '6', +, '|']
-  - [M(0), M(1), M(4), M(5), M(7), '{', "(", ")", '}', '7', '8', '9']
-  - - '-'
+  - ['`', M(0), ↑, M(1), HOME, END, INS, '1', '2', '3', '0', PGDN]
+  - [CAPS, ←, ↓, →, M(2), "[", "]", '4', '5', '6', +, '/']
+  - [M(3), M(4), M(5), M(6), M(7), '{', "(", ")", '}', '7', '8', '9']
+  - - {t: ▽, type: trans}
     - {t: ▽, type: trans}
     - {t: ▽, type: trans}
     - {t: "SP_1", type: ghost}
@@ -56,31 +69,25 @@ layers:
   - ["LEFT CTRL", "window 3", "last window", "clip board", "dots schpd", '', '', '', "prev sel window", "monocle", "monitor ←", "monitor →", '', '']
   - [{t: "WIN", type: ghost}, '', '', "change lang", '', '']
   "Win+Ctrl":
-  - ['', 'tag 1(move)', 'tag 2(move)', 'tag 3(move)', 'tag 4(move)', 'tag 5(move)', 'tag 6(move)', 'tag 7(move)', 'tag 8(move)', 'tag 9(move)', '', '']
-  - ['', '', "wifi menu", '', '', '', '', '', '', '', '', '']
-  - ["LEFT SHIFT", '', "show all windows", '', '', "set schpd", "hide window", '', "killer menu", '', '', '']
-  - ["LEFT CTRL", '', '', '', '', '', '', '', '', '', '', '', '', '']
-  - [{t: "WIN", type: ghost}, '', '', "master", '', '']
+    - ['', 'tag 1(show)', 'tag 2(show)', 'tag 3(show)', 'tag 4(show)', 'tag 5(show)', 'tag 6(show)', 'tag 7(show)', 'tag 8(show)', 'tag 9(show)', '', '']
+    - ['', '', "wifi menu", '', '', '', '', '', '', '', '', '']
+    - ["LEFT SHIFT", '', "show all windows", '', '', "set schpd", "hide window", '', "killer menu", '', '', '']
+    - [{t: "LEFT CTRL", type: ghost}, '', '', '', '', '', '', '', '', '', '', '', '', '']
+    - [{t: "WIN", type: ghost}, '', '', "master", '', '']
   "Win+Shift":
-  - ['', '1', '2', '3', '4', '5', '6', '7', '8', '9', "tag all", "quit"]
-  - ['', "push 1", "webcam", '', "rec stop", "term", '', "nixos", '', "cfact 0", "floatpos", '']
-  - ["LEFT SHIFT", "push 2", '', "audio", "browser", "rm scr", "cfact +", "push ↓", "push ↑", "cfact -", "dock -", "adopt"]
-  - ["LEFT CTRL", "push 3", "push last", "kill", '', "bar", '', '', "push prev", "zoom", "tag mon ←", "tag mon →", '', '']
-  - [{t: "WIN", type: ghost}, '', '', "float", '', '']
+    - ['', 'tag 1(move)', 'tag 2(move)', 'tag 3(move)', 'tag 4(move)', 'tag 5(move)', 'tag 6(move)', 'tag 7(move)', 'tag 8(move)', 'tag 9(move)', '', '']
+    - ['', "push 1", "webcam", '', "rec stop", "term", 'trans late', "nixos", '', "cfact 0", "floatpos", '']
+    - [{t: "LEFT SHIFT", type: ghost}, "push 2", '', "audio", "browser", "rm scr", "cfact +", "push ↓", "push ↑", "cfact -", "dock -", "adopt"]
+    - ["LEFT CTRL", "push 3", "push last", "kill", '', "bar", '', '', "push prev", "zoom", "tag mon ←", "tag mon →", '', '']
+    - [{t: "WIN", type: ghost}, '', '', "float", '', '']
   "Win+Ctrl+Shift":
-  - ['', '1', '2', '3', '4', '5', '6', '7', '8', '9', '', '']
-  - ['', "restart", '', '', '', '', '', '', '', '', '', '']
-  - ["LEFT SHIFT", '', '', '', '', '', '', '', "rst test", '', '', '']
-  - ["LEFT CTRL", '', '', '', '', '', '', '', '', '', '', '', '', '']
-  - [{t: "WIN", type: ghost}, '', '', '', '', '']
-  "Media":
-  - ['', '', '', '', '', '', '', '', '', '', '', "PrtSc shot"]
-  - ['', '', '', '', '', '', '', '', '', '', '', '']
-  - ['', '', '', '', '', '', '', '', '', '', '', '']
-  - ['', '', '', '', '', '', '', '', '', '', '', '', '', '']
-  - ['', '', '', '', '', '']
+    - ['', '1', '2', '3', '4', '5', '6', '7', '8', '9', '', '']
+    - ['', "restart", '', '', '', '', '', '', '', '', '', '']
+    - [{t: "LEFT SHIFT", type: ghost}, '', '', '', '', '', '', '', "rst test", '', '', '']
+    - [{t: "LEFT CTRL", type: ghost}, '', '', '', '', '', '', '', '', '', '', '', '', '']
+    - [{t: "WIN", type: ghost}, '', '', '', '', '']
 draw_config:
-  outer_pad_h: 20
+  outer_pad_h: 80
   footer_text: ""
   key_h: 80
   key_w: 80
@@ -108,6 +115,7 @@ draw_config:
     }
 
     text.label {
+      font-size: 24px;
       display: none;
       stroke: none;
     }
