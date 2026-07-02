@@ -35,6 +35,7 @@
 
     # === Homepage / cookies ===
     "cookiebanners.service.mode" = 2;
+    "xpinstall.signatures.required" = false;
 
     # === HTTPS-only ===
     "dom.security.https_only_mode" = true;

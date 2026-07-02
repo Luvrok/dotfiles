@@ -36,6 +36,7 @@
       yajl
       lazygit
       typst
+      python3
 
       # --- formatters ---
       beautysh

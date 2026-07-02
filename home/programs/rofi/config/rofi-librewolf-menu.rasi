@@ -1,0 +1,58 @@
+@import "theme.rasi"
+
+window {
+    padding: 0;
+    width: 80ch;
+}
+
+mainbox {
+    border: @BW;
+    spacing: 0px;
+    children:   [ inputbar, listview ];
+}
+
+inputbar {
+    background-color: @BG;
+    border: @B-B;
+    children:   [ entry ];
+}
+
+listview {
+    background-color: @BG;
+    border-color: @BDR;
+    scrollbar:    true;
+    spacing: 0px;
+}
+
+entry {
+    padding: 2px 4px;
+    text-color: @FG;
+}
+
+element {
+    border: @B-NONE;
+    padding: 0;
+}
+
+element-text {
+    text-color: @FG;
+    foreground: @FG;
+    padding: 2px 4px;
+}
+
+element-text selected {
+    background-color: @BDR;
+    text-color: @FG;
+    foreground: @FG;
+    border: @B-NONE;
+}
+
+scrollbar {
+    background-color: @BG;
+    border: @B-NONE;
+    handle-color: @FG;
+    padding:      0;
+    width:        4px;
+    handle-width: 4px;
+}
+

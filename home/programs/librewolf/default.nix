@@ -9,6 +9,10 @@
 let
   settings = import ./settings.nix { inherit system pkgs; };
 
+  rofiTabs = pkgs.callPackage ./rofi-tabs-switcher.nix {
+    theme = "~/.config/rofi/rofi-librewolf-menu.rasi";
+  };
+
   profiles = {
     "life" = {
       id = 0;
@@ -71,7 +75,11 @@ let
     PostQuantumKeyAgreementEnabled = true;
 
     ExtensionSettings = {
-
+      "@rofi.tab.switcher" = {
+        install_url = "file://${rofiTabs.xpi}/rofi-tab-switcher.xpi";
+        installation_mode = "force_installed";
+        allowed_in_private_browsing = true;
+      };
     }
     // builtins.listToAttrs [
       (extension "sidebery" "{3c078156-979c-498b-8990-85f7987dd929}")
@@ -91,9 +99,7 @@ let
     ];
   };
 
-  nativeMessagingHosts = with pkgs; [
-    ff2mpv-rust
-  ];
+  nativeMessagingHosts = [ rofiTabs.plugin ];
 
   extension = shortId: extension_id: {
     name = extension_id;
