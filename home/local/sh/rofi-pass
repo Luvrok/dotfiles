@@ -81,8 +81,8 @@ showEntry () {
 
 	pass_content="$(for key in "${!stuff[@]}"; do printf '%s\n' "${key}: ${stuff[$key]}"; done)"
 
-	bla=$(printf '%s\n' "< Return" && printf '%s\n' "${!stuff[@]}" | sort \
-		| _rofi -dmenu -mesg "Enter: Copy field to clipboard" -p "> ")
+	bla=$({ printf '%s\n' "< Return"; printf '%s\n' "${!stuff[@]}" | sort; } \
+    | _rofi -dmenu -mesg "Enter: Copy field to clipboard" -p "> ")
 	rofi_exit=$?
 
 	if [[ ${rofi_exit} -eq 1 ]]; then

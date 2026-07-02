@@ -4,25 +4,17 @@
 let
   version = "1.1";
 
-  # --- source ---
-  # Вариант A: локальная папка (как было)
-  # src = ./rofi-tabs-switcher;
-  #
-  # Вариант B: с GitHub. Заполни owner/repo/rev, hash оставь lib.fakeHash,
-  # запусти `nix build` — Nix выдаст правильный hash в ошибке, подставь его.
   src = fetchFromGitHub {
-    owner = "Luvrok";              # TODO
-    repo  = "rofi-tab-switcher";   # TODO
-    rev   = "f9679dc82a52a18c3b65349ef991244998aaa781";                    # TODO: пин конкретного коммита, не master
-    hash  = "sha256-XNa6aUR0olMvUHwDqyVFdfjZcAW1yYbD95UX0pMOyvI=";          # TODO: заменить на реальный
+    owner = "Luvrok";
+    repo  = "rofi-tab-switcher";
+    rev   = "f9679dc82a52a18c3b65349ef991244998aaa781";
+    hash  = "sha256-XNa6aUR0olMvUHwDqyVFdfjZcAW1yYbD95UX0pMOyvI=";
   };
 
-  # --- native messaging helper (backend) ---
   native_helper = stdenv.mkDerivation {
     pname = "rofi-tab-switcher-helper";
     inherit version src;
 
-    # python3 нужен, чтобы patchShebangs разрешил `#!/usr/bin/env python3`
     buildInputs = [ python3 ];
     nativeBuildInputs = [ makeWrapper ];
     dontBuild = true;
@@ -37,7 +29,6 @@ let
     '';
   };
 
-  # --- WebExtension .xpi (просто zip нужных файлов) ---
   xpi = stdenv.mkDerivation {
     pname = "rofi-tab-switcher-xpi";
     inherit version src;
@@ -48,10 +39,8 @@ let
     buildPhase = ''
       runHook preBuild
       mkdir ext
-      # кладём только файлы расширения, без .py/.nix/.sh
       cp manifest.json background.js ext/
       [ -d icons ] && cp -r icons ext/
-      # детерминированный архив: фиксируем mtime (1980-01-01, минимум для zip)
       find ext -exec touch -d @315532800 {} +
       ( cd ext && zip -q -X -r -9 ../rofi-tab-switcher.xpi . )
       runHook postBuild
@@ -62,7 +51,6 @@ let
     '';
   };
 
-  # --- native messaging manifest ---
   manifest = {
     name = "rofi_interface";
     description = "Native backend for rofi tab switcher.";
