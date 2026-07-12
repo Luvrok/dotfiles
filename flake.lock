@@ -449,11 +449,11 @@
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
-        "lastModified": 1775669311,
-        "narHash": "sha256-StwMf/Tpw9+n002az9sq0lxQ5sFZzW/kCqbJx43RCJw=",
+        "lastModified": 1783185433,
+        "narHash": "sha256-g10sKob4hMdO8IOvTflnMLXSUpcY67Q5I0e6XJnCJCM=",
         "owner": "Luvrok",
         "repo": "textfoxy",
-        "rev": "83c8ba60a3406e3f928bdfe600811b28c9d9f21f",
+        "rev": "fbcab7975b318b30d877f5b13a53a011a3b83991",
         "type": "github"
       },
       "original": {
