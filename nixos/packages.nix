@@ -108,6 +108,7 @@
       inotify-info
       age
       sops
+      sshfs
 
       # --- archives ---
       p7zip
@@ -174,6 +175,7 @@
       worldpainter
       typstwriter
       anki
+      picard
 
       # --- games ---
       gamescope
