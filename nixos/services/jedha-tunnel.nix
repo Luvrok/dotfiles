@@ -41,6 +41,40 @@
     ];
   };
 
+  fileSystems."/media/jedha-books" = {
+    device = "root@192.168.0.217:/var/lib/media/books";
+    fsType = "sshfs";
+    options = [
+      "_netdev"
+      "x-systemd.automount"
+      "x-systemd.idle-timeout=600"
+      "StrictHostKeyChecking=accept-new"
+      "IdentityFile=/home/tunneluser/.ssh/id_ed25519"
+      "allow_other"
+      "reconnect"
+      "ServerAliveInterval=15"
+      "ServerAliveCountMax=3"
+      "noauto"
+    ];
+  };
+
+  fileSystems."/media/jedha-programming-books" = {
+    device = "root@192.168.0.217:/var/lib/media/programming-books";
+    fsType = "sshfs";
+    options = [
+      "_netdev"
+      "x-systemd.automount"
+      "x-systemd.idle-timeout=600"
+      "StrictHostKeyChecking=accept-new"
+      "IdentityFile=/home/tunneluser/.ssh/id_ed25519"
+      "allow_other"
+      "reconnect"
+      "ServerAliveInterval=15"
+      "ServerAliveCountMax=3"
+      "noauto"
+    ];
+  };
+
   systemd.services.jedha-tunnel = {
     description = "Persistent SSH tunnel to Jedha";
     wantedBy = [ "multi-user.target" ];
