@@ -1,12 +1,21 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 sel=$(
     ps -eo pid,pgid,user,pcpu,pmem,cmd --sort=-pcpu --no-headers |
-    rofi -dmenu -i -p "run" -lines 10 \
+    rofi -dmenu -i -p "kill" -lines 10 \
         -theme "$HOME/.config/rofi/rofi-pass.rasi" \
         -theme-str "window { width: 1280px; }"
 ) || exit 1
 
-pgid=$(printf '%s\n' "$sel" | awk '{print $2}')
+read -r pid pgid _ <<< "$sel"
 
-[ -n "$pgid" ] && kill -- "-$pgid"
+# kernel and other stuff exlude
+[[ "$pgid" =~ ^[1-9][0-9]*$ ]] || exit 1
+
+# dont kill our group of process
+(( pgid == $(ps -o pgid= -p $$) )) && exit 1
+
+kill -TERM -- "-$pgid" 2>/dev/null
+
+# SIGKILL fallback, if process still live after 2s
+{ sleep 2; kill -0 "$pid" 2>/dev/null && kill -KILL -- "-$pgid" 2>/dev/null; } &

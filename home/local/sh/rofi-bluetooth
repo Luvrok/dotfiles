@@ -73,13 +73,13 @@ scan_on() {
 # Toggles scanning state
 toggle_scan() {
     if scan_on; then
-        kill $(pgrep -f "bluetoothctl --timeout 5 scan on")
+        kill $(pgrep -f "bluetoothctl --timeout 12 scan on")
         bluetoothctl scan off
         notify "Поиск устройств остановлен"
         show_menu
     else
-        notify "Поиск устройств... (5 сек)"
-        bluetoothctl --timeout 5 scan on
+        notify "Поиск устройств... (12 сек)"
+        bluetoothctl --timeout 12 scan on
         notify "Поиск завершён"
         show_menu
     fi
@@ -329,8 +329,9 @@ device_menu() {
     device=$1
 
     # Get device name and mac address
-    device_name=$(echo "$device" | cut -d ' ' -f 3-)
     mac=$(echo "$device" | cut -d ' ' -f 2)
+    device_name=$(bluetoothctl info "$mac" | grep "Alias:" | cut -d ' ' -f 2-)
+    [ -z "$device_name" ] && device_name=$(echo "$device" | cut -d ' ' -f 3-)
 
     # Build options
     if device_connected "$mac"; then
@@ -382,9 +383,22 @@ show_menu() {
     if power_on; then
         power="Power: on"
 
-        # Human-readable names of devices, one per line
+        # Список устройств в виде "Имя  [MAC]" — адрес виден всегда,
+        # даже если имя ещё не подтянулось после скана.
         # If scan is off, will only list paired devices
-        devices=$(bluetoothctl devices | grep Device | cut -d ' ' -f 3-)
+        devices=""
+        while read -r mac name; do
+            [ -z "$mac" ] && continue
+            alias=$(bluetoothctl info "$mac" | grep "Alias:" | cut -d ' ' -f 2-)
+            [ -z "$alias" ] && alias="$name"
+            # Если "имя" совпадает с MAC — устройство ещё не назвалось
+            mac_dashes=${mac//:/-}
+            if [ -z "$alias" ] || [ "$alias" = "$mac_dashes" ] || [ "$alias" = "$mac" ]; then
+                alias="(без имени)"
+            fi
+            devices+="$alias  [$mac]\n"
+        done < <(bluetoothctl devices | grep '^Device ' | sed 's/^Device //')
+        devices=${devices%\\n}
 
         # Get controller flags
         scan=$(scan_on)
@@ -419,9 +433,13 @@ show_menu() {
             toggle_pairable
             ;;
         *)
-            device=$(bluetoothctl devices | grep "$chosen")
-            # Open a submenu if a device is selected
-            if [[ $device ]]; then device_menu "$device"; fi
+            # Достаём MAC из выбранной строки "Имя  [MAC]"
+            mac=$(echo "$chosen" | grep -oiE '([0-9a-f]{2}:){5}[0-9a-f]{2}')
+            if [ -n "$mac" ]; then
+                device=$(bluetoothctl devices | grep -i "$mac")
+                # Open a submenu if a device is selected
+                [ -n "$device" ] && device_menu "$device"
+            fi
             ;;
     esac
 }

@@ -18,6 +18,7 @@
       gnugrep
       ripgrep
       wget
+      expect
 
       # --- development ---
       buildPackages.gnumake
@@ -173,7 +174,7 @@
       graphviz
       xdot
       worldpainter
-      typstwriter
+      typstwrinixos/services/jedha-tunnel.nixter
       anki
       picard
 
