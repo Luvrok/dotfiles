@@ -1,0 +1,88 @@
+layout: {qmk_keyboard: keebio/iris_ce/rev1, layout_name: LAYOUT}
+layers:
+  "SP_2":
+  - [F12, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11]
+  - ['', "!", "\"", "№", ";", "%", ":", "?", "*", "(", ")", PSCR]
+  - ['\', '/', '.', VOLU, BRIU, "_", '=', '', '', '', '', '\']
+  - - ''
+    - ''
+    - ''
+    - VOLD
+    - BRD
+    - '-'
+    - "("
+    - "RIGHT ALT"
+    - "+"
+    - ''
+    - ''
+    - ''
+    - ''
+    - DEL
+  - - {t: ▽, type: trans}
+    - "SP_1"
+    - {t: ▽, type: trans}
+    - {t: ▽, type: trans}
+    - {t: "SP_2", type: ghost}
+    - {t: ▽, type: trans}
+draw_config:
+  outer_pad_h: 80
+  footer_text: ""
+  key_h: 80
+  key_w: 80
+  combo_h: 24
+  combo_w: 24
+  key_rx: 0
+  key_ry: 0
+  inner_pad_w: 4
+  inner_pad_h: 4
+  dark_mode: true
+  style_layer_activators: false
+  svg_extra_style: |
+    svg.keymap {
+      background: #282828;
+    }
+
+    text.tl {
+      font-size: 16px;
+      transform: translate(4px, 4px);
+    }
+
+    text {
+      paint-order: stroke fill;
+      stroke: none;
+    }
+
+    text.label {
+      font-size: 24px;
+      display: none;
+      stroke: none;
+    }
+
+    .tap {
+      font-size: 18px;
+    }
+
+    text.hold {
+      font-size: 18px;
+    }
+
+    rect.key {
+      fill: #171717;
+    }
+
+    rect.key, rect.combo {
+      stroke: #d65d0e;
+      stroke-width: 1;
+    }
+
+    svg.keymap {
+      fill: #ebdbb2;
+    }
+
+    text.trans {
+      fill: #ebdbb2;
+    }
+
+    rect.held {
+      fill: #171717;
+    }

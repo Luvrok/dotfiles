@@ -1,0 +1,77 @@
+layout: {qmk_keyboard: keebio/iris_ce/rev1, layout_name: LAYOUT}
+layers:
+  "RU_SP_1":
+  - ["Ё", "!", "\"", "№", ";", "%", ":", "?", "*", "(", ")", PGUP]
+  - ['ё', M(0), ↑, M(1), HOME, END, INS, '1', '2', '3', '0', PGDN]
+  - [CAPS, ←, ↓, →, M(2), "Х", "Ъ", '4', '5', '6', +, '.']
+  - [M(3), M(4), M(5), M(6), M(7), 'х', "(", ")", 'ъ', '7', '8', '9']
+  - - {t: ▽, type: trans}
+    - {t: ▽, type: trans}
+    - {t: ▽, type: trans}
+    - {t: "SP_1", type: ghost}
+    - {t: ▽, type: trans}
+    - {t: ▽, type: trans}
+    - "SP_2"
+    - {t: ▽, type: trans}
+draw_config:
+  outer_pad_h: 80
+  footer_text: ""
+  key_h: 80
+  key_w: 80
+  combo_h: 24
+  combo_w: 24
+  key_rx: 0
+  key_ry: 0
+  inner_pad_w: 4
+  inner_pad_h: 4
+  dark_mode: true
+  style_layer_activators: false
+  svg_extra_style: |
+    svg.keymap {
+      background: #282828;
+    }
+
+    text.tl {
+      font-size: 16px;
+      transform: translate(4px, 4px);
+    }
+
+    text {
+      paint-order: stroke fill;
+      stroke: none;
+    }
+
+    text.label {
+      font-size: 24px;
+      display: none;
+      stroke: none;
+    }
+
+    .tap {
+      font-size: 18px;
+    }
+
+    text.hold {
+      font-size: 18px;
+    }
+
+    rect.key {
+      fill: #171717;
+    }
+
+    rect.key, rect.combo {
+      stroke: #d65d0e;
+      stroke-width: 1;
+    }
+
+    svg.keymap {
+      fill: #ebdbb2;
+    }
+
+    text.trans {
+      fill: #ebdbb2;
+    }
+
+    rect.held {
+      fill: #171717;
+    }
