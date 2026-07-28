@@ -147,6 +147,7 @@
       xsettingsd
       xwininfo
       xwinwrap
+      xwallpaper
 
       # --- xdg ---
       xdg-desktop-portal
@@ -174,7 +175,7 @@
       graphviz
       xdot
       worldpainter
-      typstwrinixos/services/jedha-tunnel.nixter
+      typstwriter
       anki
       picard
 

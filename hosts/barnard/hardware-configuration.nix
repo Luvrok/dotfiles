@@ -24,12 +24,7 @@
     "kvm-amd"
   ];
 
-  boot.kernelParams = [
-    "video=DP-1:2560x1440@120"
-    "video=DP-2:2560x1440@120"
-    "quiet"
-    "loglevel=3"
-  ];
+  boot.kernelParams = [ ];
 
   boot.extraModulePackages = [ ];
 

@@ -10,7 +10,8 @@
     ./jedha-tunnel.nix
     ./glances.nix
     ./greenclip.nix
-    ./ly.nix
+    ./sddm.nix
+    ./sway.nix
   ];
 
   systemd.services.syncthing.environment.STNODEFAULTFOLDER = "true";

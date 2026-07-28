@@ -1,9 +1,13 @@
-{ ... }:
+{ pkgs, ... }:
 
 {
   imports = [
     ../../nixos/config/barnard.nix
   ];
+
+  services.displayManager.sddm.setupScript = ''
+    ${pkgs.xorg.xrandr}/bin/xrandr --output DisplayPort-0 --off
+  '';
 
   environment.sessionVariables = {
     XFT_DPI = "109";

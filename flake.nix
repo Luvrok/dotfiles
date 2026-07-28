@@ -27,6 +27,9 @@
     slock.url = "github:Luvrok/slock";
     slock.flake = false;
     textfoxy.url = "github:Luvrok/textfoxy";
+    textfoxy.flake = false;
+    voidsddm.url = "github:Luvrok/VoidSDDM";
+    voidsddm.flake = false;
   };
 
   outputs =

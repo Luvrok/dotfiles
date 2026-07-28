@@ -1,10 +1,20 @@
 {
   config,
   pkgs,
-  username,
   ...
 }:
 
+let
+  monitorLayout =
+    if config.networking.hostName == "barnard" then ''
+      ${pkgs.xorg.xrandr}/bin/xrandr --output DisplayPort-1 --primary --mode 2560x1440 --rate 120
+      ${pkgs.xorg.xrandr}/bin/xrandr --output DisplayPort-0 --mode 2560x1440 --rate 120 --left-of DisplayPort-1
+    ''
+    else if config.networking.hostName == "dash" then ''
+      ${pkgs.xorg.xrandr}/bin/xrandr --output eDP-1 --primary --auto
+    ''
+    else "";
+in
 {
   enable = true;
   upscaleDefaultCursor = true;
@@ -25,21 +35,26 @@
   };
 
   displayManager = {
-    startx.enable = true;
+    startx.enable = false;
     sessionCommands = ''
-      WALLPAPER="$HOME/HOME/wizzard/wallpaper/art/nature/Church_Heart_of_the_Andes.jpg"
-      ${pkgs.xwallpaper}/bin/xwallpaper --zoom "$WALLPAPER"
+      ${monitorLayout}
 
-      export PATH=/home/${username}/.local/bin:$PATH
+      W="$HOME/HOME/wizzard/wallpaper/art/nature/Church_Heart_of_the_Andes.jpg"
+      [ -f "$W" ] && ${pkgs.xwallpaper}/bin/xwallpaper --zoom "$W" || true
+
+      ${pkgs.xidlehook}/bin/xidlehook \
+        --not-when-fullscreen --not-when-audio \
+        --timer 300 "${pkgs.xset}/bin/xset dpms force off" \
+                    "${pkgs.xset}/bin/xset dpms force on" &
+
       dwmblocks &
     '';
   };
 
   serverFlagsSection = ''
-    Option "DPMS" "true"
-    Option "BlankTime"  "20"
-    Option "StandbyTime" "30"
-    Option "SuspendTime" "40"
-    Option "OffTime"     "50"
+    Option "BlankTime" "0"
+    Option "StandbyTime" "0"
+    Option "SuspendTime" "0"
+    Option "OffTime" "0"
   '';
 }
