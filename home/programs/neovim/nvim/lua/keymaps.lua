@@ -47,6 +47,7 @@ map("i", "<M-BS>", "<C-w>", { silent = true })
 
 -- Disable annoying stuff with q
 map({ "n", "v" }, "q", "<Nop>", { silent = true })
+map("n", "q", "<cmd>confirm qall<cr>", { desc = "Quit all" })
 
 -- Disable annoying visual-blocks mode
 map({ "i", "n", "v" }, "<C-q>", "<Nop>", { silent = true })
