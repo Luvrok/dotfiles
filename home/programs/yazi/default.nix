@@ -7,29 +7,17 @@
 
 let
   inherit (lib) getExe;
-  xclip-system-clipboard = pkgs.fetchFromGitHub {
-    owner = "seqizz";
-    repo = "xclip-system-clipboard.yazi";
-    rev = "67f63710c892e9443c81df8dd396b93ff658a9ba";
-    hash = "sha256-+jzVFosUjNHKAdOrRz4HXNweFggUoWoGMtYv2L3GYyA=";
-  };
-  yatline = pkgs.fetchFromGitHub {
-    owner = "imsi32";
-    repo = "yatline.yazi";
-    rev = "c5d4b487d6277dd68ea9d3c6537641bf4ae9cf8e";
-    hash = "sha256-HjTRAfUHs6vlEWKruQWeA2wT/Mcd+WEHM90egFTYcWQ=";
-  };
-  githead = pkgs.fetchFromGitHub {
-    owner = "llanosrocas";
-    repo = "githead.yazi";
-    rev = "317d09f728928943f0af72ff6ce31ea335351202";
-    hash = "sha256-o2EnQYOxp5bWn0eLn0sCUXcbtu6tbO9pdUdoquFCTVw=";
-  };
   yatline-gruvbox = pkgs.fetchFromGitHub {
     owner = "imsi32";
     repo = "yatline-gruvbox.yazi";
     rev = "1ce46ebe1f48139de30051638d7c6ba71d867220";
     hash = "sha256-Dsf6FlUmGQTLSM63++Wa9ChQmTqhAp03rIWYtS1rrv8=";
+  };
+  bunny = pkgs.fetchFromGitHub {
+    owner = "stelcodes";
+    repo = "bunny.yazi";
+    rev = "71b14a3d624572f4884354c2e218296e9ece07cc";
+    hash = "sha256-uQO0C00yOFPWq8KEO/kEZM6tFZRc9SiXfgN7kzlwDeA=";
   };
 in
 {
@@ -38,19 +26,24 @@ in
     enableBashIntegration = true;
     enableZshIntegration = true;
 
+    extraPackages = with pkgs; [
+      sox
+    ];
+
     plugins = {
       inherit (pkgs.yaziPlugins) full-border;
       inherit (pkgs.yaziPlugins) smart-enter;
       inherit (pkgs.yaziPlugins) jump-to-char;
       inherit (pkgs.yaziPlugins) smart-filter;
-      inherit xclip-system-clipboard;
-      inherit yatline;
-      inherit githead;
+      inherit (pkgs.yaziPlugins) yatline;
+      inherit (pkgs.yaziPlugins) githead;
+      inherit (pkgs.yaziPlugins) clipboard;
+
+      inherit bunny;
       inherit yatline-gruvbox;
 
       # todo:
       # vcs-files
-      # smart-filter
       # chmod
       # augment-command
     };
@@ -87,7 +80,10 @@ in
             desc = "Create directory";
           }
           {
-            on = [ "r" ];
+            on = [
+              "r"
+              "r"
+            ];
             run = "rename";
             desc = "Rename";
           }
@@ -101,15 +97,15 @@ in
           }
           {
             on = [
-              "d"
               "c"
+              "t"
             ];
             run = "yank --cut";
             desc = "Cut (toggle)";
           }
           {
             on = [ "." ];
-            run = "toggle hidden";
+            run = "hidden toggle";
             desc = "Toggle hidden files";
           }
           {
@@ -143,12 +139,18 @@ in
           }
           # some plugins keymaps
           {
-            on = [ "F" ];
+            on = [
+              "f"
+              "s"
+            ];
             run = "plugin smart-filter";
             desc = "Smart filter";
           }
           {
-            on = [ "f" ];
+            on = [
+              "f"
+              "j"
+            ];
             run = "plugin jump-to-char";
             desc = "Jump to char";
           }
@@ -163,12 +165,57 @@ in
             desc = "Enter directory";
           }
           {
-            on = [ "y" ];
-            run = "plugin xclip-system-clipboard";
+            on = [ "l" ];
+            run = "plugin --sync smart-enter";
+            desc = "Enter directory";
           }
           {
-            on = [ "<C-n>" ];
+            on = [
+              "d"
+              "r"
+            ];
             run = ''shell -- ${getExe pkgs.dragon-drop} -x -T -i -s 128 "$0"'';
+          }
+          # clipboard.yazi
+          {
+            on = [
+              "c"
+              "c"
+            ];
+            run = [
+              "yank"
+              "plugin clipboard -- --action=copy"
+            ];
+            desc = "Yank selected files (copy)";
+          }
+          # nvim
+          {
+            on = [
+              "n"
+              "n"
+            ];
+            run = "shell --block -- ${getExe pkgs.neovim} .";
+            desc = "nvim new";
+          }
+          # bookmarks
+          {
+            on = ";";
+            run = "plugin bunny";
+            desc = "Start bunny.yazi";
+          }
+          {
+            on = "'";
+            run = "plugin bunny fuzzy";
+            desc = "Start bunny.yazi fuzzy";
+          }
+          # terminal with nvim
+          {
+            on = [
+              "n"
+              "t"
+            ];
+            run = "shell --orphan -- ${getExe pkgs.kitty} -e ${getExe pkgs.neovim} .";
+            desc = "nvim new terminal";
           }
         ];
       };
