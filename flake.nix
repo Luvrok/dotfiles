@@ -131,8 +131,8 @@
         modules = [
           ./nixos
           ./nixos/hardware/nvidia.nix
-          ./hosts/sun/hardware-configuration.nix
-          ./hosts/sun/env.nix
+          ./hosts/alderaan/hardware-configuration.nix
+          ./hosts/alderaan/env.nix
 
           zapret-discord-youtube.nixosModules.default
           {

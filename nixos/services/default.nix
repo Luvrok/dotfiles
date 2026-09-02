@@ -7,7 +7,7 @@
 
 {
   imports = [
-    ./jedha-tunnel.nix
+    # ./jedha-tunnel.nix
     ./glances.nix
     ./greenclip.nix
     ./sddm.nix

@@ -57,7 +57,7 @@
     enable = true;
     settings.Resolve = {
       DNSSEC = false;
-      DNSOverTLS = true;
+      DNSOverTLS = false;
       Domains = [ "~." ];
       LLMNR = false;
       FallbackDNS = [

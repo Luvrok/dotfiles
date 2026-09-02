@@ -1,7 +1,7 @@
 { ... }:
 
 {
-  enable = true;
+  enable = false;
   persistentKeys = true;
   settings = {
     Peers = [
