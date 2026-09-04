@@ -7,7 +7,7 @@
 
 {
   imports = [
-    # ./jedha-tunnel.nix
+    ./jedha-tunnel.nix
     ./glances.nix
     ./greenclip.nix
     ./sddm.nix
@@ -35,7 +35,6 @@
       implementation = "broker";
     };
 
-    ollama = (import ./ollama.nix { inherit pkgs; });
     pipewire = (import ./pipewire.nix { inherit pkgs; });
     xserver = (import ./xserver.nix { inherit config pkgs username; });
     yggdrasil = (import ./yggdrasil.nix { });

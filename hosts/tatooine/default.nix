@@ -2,26 +2,25 @@
 
 {
   imports = [
+    # ./disk-config.nix
     ./hardware-configuration.nix
-    ./network.nix
     ./yggdrasil.nix
   ];
-
-  boot.loader.grub = {
-    enable = true;
-    device = "/dev/sda";
-  };
 
   nix.settings = {
     experimental-features = [
       "nix-command"
       "flakes"
     ];
-    warn-dirty = false;
   };
 
-  time.timeZone = "America/Los_Angeles";
+  services.getty.autologinUser = "root";
+
+  time.timeZone = "Europe/Amsterdam";
   i18n.defaultLocale = "en_GB.UTF-8";
+
+  networking.hostName = "tatooine";
+  networking.wireless.enable = false;
 
   services.openssh = {
     enable = true;
@@ -31,12 +30,63 @@
     };
   };
 
+  systemd.network.enable = true;
+  systemd.network.wait-online.anyInterface = true;
+  services.resolved.enable = true;
+  networking.useNetworkd = true;
+
+  networking.firewall = {
+    enable = true;
+    allowedTCPPorts = [
+      22
+      80
+      443
+      4533
+      4545
+      8129
+      8130
+      8208
+      8443
+      8448
+      21027
+      22000
+      22067
+      22070
+      42853
+    ];
+    allowedUDPPorts = [
+      8443
+      22000
+      22067
+      22070
+      42853
+    ];
+    allowPing = true;
+  };
+
+  systemd.network.networks."10-eth" = {
+    matchConfig.Name = "ens18";
+    address = [ "78.17.70.36/32" ];
+    routes = [
+      {
+        Gateway = "78.17.70.1";
+        GatewayOnLink = true;
+      }
+    ];
+    dns = [
+      "9.9.9.9"
+      "149.112.112.112"
+      "2620:fe::fe"
+      "2620:fe::9"
+    ];
+  };
+
   users.users.root.openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKfVMnRoTEwUBqxcm6tzRTiFGZVafQ6dHr95HDM//Wk+ barnard"
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGifq/+thCOHb5sXkWRQl9RXtddSAemKErUkdngEa7sJ dash@dash"
   ];
 
-  users.users.tatooine = {
+  users.users.kessel = {
     isNormalUser = true;
     extraGroups = [ "wheel" ];
     initialPassword = "nopassword";
@@ -45,11 +95,6 @@
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGifq/+thCOHb5sXkWRQl9RXtddSAemKErUkdngEa7sJ dash@dash"
     ];
   };
-
-  # https://popov.wtf/how-to-prioritize-ipv4-over-ipv6-in-linux
-  environment.etc."gai.conf".text = ''
-    precedence ::ffff:0:0/96  100
-  '';
 
   environment.etc."nixos".source = ./.;
   system.activationScripts.copyConfig.text = ''
@@ -64,6 +109,13 @@
     settingsFile = ./xray.json;
   };
 
+  networking.enableIPv6 = true;
+
+  # https://popov.wtf/how-to-prioritize-ipv4-over-ipv6-in-linux
+  environment.etc."gai.conf".text = ''
+    precedence ::ffff:0:0/96  100
+  '';
+
   systemd.services.xray = {
     serviceConfig = {
       RuntimeDirectory = "xray";
@@ -77,6 +129,7 @@
 
   environment.systemPackages = with pkgs; [
     vim
+    jq
     htop
     curl
     wget
@@ -89,9 +142,6 @@
     nh
     iperf
     mtr
-    openssl
-    whois
-    jq
     busybox
     age
     sops

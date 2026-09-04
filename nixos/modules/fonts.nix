@@ -7,8 +7,6 @@
     packages = with pkgs; [
       # --- icons ---
       adwaita-icon-theme
-      gtk-engine-murrine
-      vimix-gtk-themes
       material-icons
       material-design-icons
 

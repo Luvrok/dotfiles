@@ -2,15 +2,9 @@
 
 {
   imports = [
+    # ./disk-config.nix
     ./hardware-configuration.nix
-    ./yggdrasil.nix
-    ./syncthing.nix
   ];
-
-  boot.loader.grub = {
-    enable = true;
-    device = "/dev/sda";
-  };
 
   nix.settings = {
     experimental-features = [
@@ -68,15 +62,20 @@
   };
 
   systemd.network.networks."10-eth" = {
-    matchConfig.MACAddress = "bc:24:11:36:06:8e";
-    address = [ "45.135.180.21/32" ];
+    matchConfig.Name = "enp0s4";
+    address = [ "45.38.20.187/32" ];
     routes = [
       {
-        Gateway = "45.135.180.1";
+        Gateway = "100.195.242.189";
         GatewayOnLink = true;
       }
     ];
-    dns = [ "9.9.9.9" ];
+    dns = [
+      "9.9.9.9"
+      "149.112.112.112"
+      "2620:fe::fe"
+      "2620:fe::9"
+    ];
   };
 
   users.users.root.openssh.authorizedKeys.keys = [
@@ -127,6 +126,7 @@
 
   environment.systemPackages = with pkgs; [
     vim
+    jq
     htop
     curl
     wget

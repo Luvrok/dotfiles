@@ -27,7 +27,6 @@
     slock.url = "github:Luvrok/slock";
     slock.flake = false;
     textfoxy.url = "github:Luvrok/textfoxy";
-    textfoxy.flake = false;
     voidsddm.url = "github:Luvrok/VoidSDDM";
     voidsddm.flake = false;
   };
@@ -97,7 +96,7 @@
           {
             services.zapret-discord-youtube = {
               enable = true;
-              configName = "general(ALT9)";
+              configName = "general(ALT)";
             };
           }
 
@@ -159,7 +158,9 @@
           username = "kessel";
         };
         modules = [
+          disko.nixosModules.disko
           ./hosts/kessel
+          ./hosts/kessel/disk-config.nix
         ];
       };
 
@@ -169,7 +170,9 @@
           username = "tatooine";
         };
         modules = [
+          disko.nixosModules.disko
           ./hosts/tatooine
+          ./hosts/tatooine/disk-config.nix
         ];
       };
 

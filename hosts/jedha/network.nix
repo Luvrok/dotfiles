@@ -65,7 +65,7 @@
     enable = true;
     settings.Resolve = {
       DNSSEC = false;
-      DNSOverTLS = true;
+      DNSOverTLS = false;
       Domains = [ "~." ];
       LLMNR = false;
       FallbackDNS = [
@@ -95,7 +95,7 @@
             "2620:fe::9"
           ];
           IPv6AcceptRA = "yes";
-          DNSOverTLS = true;
+          DNSOverTLS = false;
         };
 
         dhcpV4Config = {
@@ -124,7 +124,7 @@
             "2620:fe::9"
           ];
           IPv6AcceptRA = "yes";
-          DNSOverTLS = true;
+          DNSOverTLS = false;
         };
 
         dhcpV4Config = {

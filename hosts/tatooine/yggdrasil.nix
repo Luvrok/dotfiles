@@ -6,8 +6,8 @@
     persistentKeys = true;
     settings = {
       Peers = [
-        "tls://45.135.180.21:42853" # nl server
-        "tls://leo.node.3dt.net:9003" # Liberty Lake public peer
+        "tls://vpn.itrus.su:7992" # Amsterdam public peer
+        "tls://95.217.35.92:1337"
       ];
       Listen = [
         "tls://0.0.0.0:42853"

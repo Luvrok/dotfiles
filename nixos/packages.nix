@@ -169,7 +169,6 @@
       feishin
       syncthing
       telegram-desktop
-      hexchat
       veracrypt
       wasabiwallet
       graphviz
@@ -186,7 +185,6 @@
       # --- android ---
       adbfs-rootless
       android-tools
-      jmtpfs
 
       # --- live-usb ---
       unetbootin

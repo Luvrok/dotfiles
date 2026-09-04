@@ -6,8 +6,9 @@
     persistentKeys = true;
     settings = {
       Peers = [
-        "tls://45.38.20.238:42853" # us server
-        "tls://vpn.itrus.su:7992" # Amsterdam public peer
+        # "tls://vpn.itrus.su:7992" # Amsterdam public peer
+        # "tls://95.217.35.92:1337"
+        "tls://78.17.70.36:42853" # my nl server
       ];
       Listen = [
         "tls://0.0.0.0:42853"
