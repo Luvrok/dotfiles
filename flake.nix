@@ -176,6 +176,18 @@
         ];
       };
 
+      nixosConfigurations."mos-eisley" = nixpkgs.lib.nixosSystem {
+        inherit pkgs;
+        specialArgs = {
+          username = "mos-eisley";
+        };
+        modules = [
+          disko.nixosModules.disko
+          ./hosts/mos-eisley
+          ./hosts/mos-eisley/disk-config.nix
+        ];
+      };
+
       nixosConfigurations."jedha" = nixpkgs.lib.nixosSystem {
         inherit pkgs;
         specialArgs = {
