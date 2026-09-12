@@ -4,7 +4,6 @@
   imports = [
     # ./disk-config.nix
     ./hardware-configuration.nix
-    ./yggdrasil.nix
   ];
 
   nix.settings = {
@@ -148,5 +147,5 @@
   ];
 
   services.vnstat.enable = true;
-  system.stateVersion = "25.11";
+  system.stateVersion = "26.05";
 }

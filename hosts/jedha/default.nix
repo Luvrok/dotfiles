@@ -6,7 +6,6 @@
     ./network.nix
     ./navidrome.nix
     ./syncthing.nix
-    ./yggdrasil.nix
     ./qbittorrent.nix
     ./glances.nix
     ./anki.nix
@@ -80,6 +79,11 @@
     chown -R root:root /root/nixos-config
   '';
 
+  services.xray = {
+    enable = true;
+    settingsFile = ./xray.json;
+  };
+
   environment.systemPackages = with pkgs; [
     vim
     neovim
@@ -103,5 +107,5 @@
     sops
   ];
 
-  system.stateVersion = "25.11";
+  system.stateVersion = "26.05";
 }

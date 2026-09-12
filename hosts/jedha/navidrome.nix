@@ -32,6 +32,10 @@
       MusicFolder = "/var/lib/media/music";
       ScanSchedule = "@every 1h";
 
+      EnableSharing = true;
+      DefaultShareExpiration = "2h";
+      ShareURL = "https://navidrome.vxrnt.ru";
+
       ListenBrainz.Enabled = true;
 
       Backup = {
