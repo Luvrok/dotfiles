@@ -7,6 +7,8 @@
       General = {
         savePath = "${config.home.homeDirectory}/HOME/wizzard/media/screenshot";
         saveAsFileExtension = ".png";
+        useX11LegacyScreenshot = true;
+        captureActiveMonitor = true;
         showHelp = false;
         showSidePanelButton = false;
         showDesktopNotification = false;
