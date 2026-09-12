@@ -137,7 +137,7 @@
     "dom.push.enabled" = false;
     "dom.push.connection.enabled" = false;
     "dom.battery.enabled" = false;
-    "dom.event.clipboardevents.enabled" = false;
+    "dom.event.clipboardevents.enabled" = true;
     "dom.event.contextmenu.enabled" = true;
     "devtools.chrome.enabled" = true;
     "devtools.debugger.remote-enabled" = false;
