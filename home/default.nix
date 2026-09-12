@@ -39,7 +39,7 @@
     max_history_length = 200
     max_selection_size_bytes = 0
     trim_space_from_selection = true
-    use_primary_selection_as_input = true
+    use_primary_selection_as_input = false
     static_history = [""]
   '';
 
