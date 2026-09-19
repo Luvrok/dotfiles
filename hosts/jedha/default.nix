@@ -10,6 +10,7 @@
     ./glances.nix
     ./anki.nix
     ./kavita.nix
+    ./koito.nix
   ];
 
   sops.defaultSopsFile = ../../secrets/barnard.yaml;

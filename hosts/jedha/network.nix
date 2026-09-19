@@ -23,6 +23,7 @@
         22
         80
         443
+        4110
         4533
         4545
         5201
@@ -95,7 +96,7 @@
             "2620:fe::9"
           ];
           IPv6AcceptRA = "yes";
-          DNSOverTLS = false;
+          DNSOverTLS = true;
         };
 
         dhcpV4Config = {
@@ -124,7 +125,7 @@
             "2620:fe::9"
           ];
           IPv6AcceptRA = "yes";
-          DNSOverTLS = false;
+          DNSOverTLS = true;
         };
 
         dhcpV4Config = {

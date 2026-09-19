@@ -37,6 +37,7 @@
       ShareURL = "https://navidrome.vxrnt.ru";
 
       ListenBrainz.Enabled = true;
+      ListenBrainz.BaseURL = "http://127.0.0.1:4110/apis/listenbrainz/1/";
 
       Backup = {
         Path = "/var/backup/navidrome";
