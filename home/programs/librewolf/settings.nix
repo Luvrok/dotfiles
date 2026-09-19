@@ -27,6 +27,8 @@
     "widget.dmabuf.force-enabled" = true;
     "media.hardware-video-decoding.enabled" = true;
     "media.av1.enabled" = true;
+    "browser.tabs.unloadOnLowMemory" = true;
+    "browser.low_commit_space_threshold_percent" = 25;
 
     # === Updates / warnings ===
     "app.update.auto" = false;
