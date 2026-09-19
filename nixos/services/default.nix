@@ -37,7 +37,6 @@
 
     pipewire = (import ./pipewire.nix { inherit pkgs; });
     xserver = (import ./xserver.nix { inherit config pkgs username; });
-    yggdrasil = (import ./yggdrasil.nix { });
     syncthing = (import ./syncthing.nix { inherit username; });
     open-webui = {
       enable = true;
