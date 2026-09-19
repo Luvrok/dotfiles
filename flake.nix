@@ -196,6 +196,13 @@
         modules = [
           disko.nixosModules.disko
           sops-nix.nixosModules.sops
+          zapret-discord-youtube.nixosModules.withTestTools
+          {
+            services.zapret-discord-youtube = {
+              enable = true;
+              configName = "general(ALT)";
+            };
+          }
           ./hosts/jedha
         ];
       };
