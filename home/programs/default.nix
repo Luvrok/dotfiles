@@ -16,5 +16,6 @@
     ./element-desktop.nix
     ./qutebrowser
     ./translate-shell.nix
+    ./llm-home.nix
   ];
 }

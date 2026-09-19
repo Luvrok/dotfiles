@@ -105,6 +105,23 @@ in
         '';
       };
     })
+    (final: prev: {
+      llama-cpp =
+        (prev.llama-cpp.override {
+          rocmSupport = true;
+          # Enable BLAS for optimized CPU layer performance (OpenBLAS)
+          blasSupport = true;
+        }).overrideAttrs (oldAttrs: {
+          # Enable native CPU optimizations (AVX, AVX2, etc.)
+          cmakeFlags =
+            (oldAttrs.cmakeFlags or []) ++ ["-DGGML_NATIVE=ON"];
+          # Disable Nix's march=native stripping
+          preConfigure = ''
+            export NIX_ENFORCE_NO_NATIVE=0
+            ${oldAttrs.preConfigure or ""}
+          '';
+        });
+    })
     inputs.better-swallow.overlay
     inputs.lazygit.overlays.default
   ];

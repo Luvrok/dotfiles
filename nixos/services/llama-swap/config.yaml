@@ -1,0 +1,85 @@
+# Docs: https://github.com/mostlygeek/llama-swap/blob/main/docs/config.example.yaml
+
+logLevel: info
+logToStdout: "both"
+
+healthCheckTimeout: 300
+
+globalTTL: 120
+
+includeAliasesInList: true
+
+macros:
+  "models": "/var/lib/models"
+  "llama": >
+    llama-server --port ${PORT} --threads 8 --fit-target 3072
+
+x-qwen-params: &qwen-params
+  filters:
+    setParams:
+      top_k: 20
+      min_p: 0.0
+      repetition_penalty: 1.0
+
+    setParamsByID:
+      "${MODEL_ID}":
+        temperature: 0.7
+        top_p: 0.8
+        presence_penalty: 1.5
+        chat_template_kwargs:
+          enable_thinking: false
+
+      "${MODEL_ID}:Thinking":
+        temperature: 1.0
+        top_p: 0.95
+        presence_penalty: 0.0
+        chat_template_kwargs:
+          enable_thinking: true
+
+      "${MODEL_ID}:Coding":
+        temperature: 0.6
+        top_p: 0.95
+        presence_penalty: 0.0
+        chat_template_kwargs:
+          enable_thinking: false
+
+      "${MODEL_ID}:Thinking Coding":
+        temperature: 0.6
+        top_p: 0.95
+        presence_penalty: 0.0
+        chat_template_kwargs:
+          enable_thinking: true
+
+models:
+  "qwen-fast":
+    description: "Qwen3.8 27B UD-Q3_K_XL, fully on GPU. Fast, everyday use."
+    cmd: |
+      ${llama}
+      -m ${models}/Qwen3.8-27B-UD-Q3_K_XL.gguf
+      # --gpu-layers all
+      --ctx-size 32768
+      --cache-type-k q8_0
+      --cache-type-v q8_0
+    <<: *qwen-params
+
+  # ~17.6 GB, a few GB spill to RAM. Main coding model.
+  "qwen-code":
+    description: "Qwen3.8 27B UD-Q4_K_XL, partly on CPU. Coding with long context."
+    cmd: |
+      ${llama}
+      -m ${models}/Qwen3.8-27B-UD-Q4_K_XL.gguf
+      --ctx-size 131072
+      --cache-type-k q8_0
+      --cache-type-v q8_0
+    <<: *qwen-params
+
+  # ~22 GB, ~8 GB in RAM. Smartest, slow (~5-7 t/s). Hard questions only.
+  "qwen-smart":
+    description: "Qwen3.8 27B UD-Q6_K, heavily on CPU. Smartest, slow."
+    cmd: |
+      ${llama}
+      -m ${models}/Qwen3.8-27B-UD-Q6_K.gguf
+      --ctx-size 65536
+      --cache-type-k q8_0
+      --cache-type-v q8_0
+    <<: *qwen-params

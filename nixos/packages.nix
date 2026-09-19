@@ -38,6 +38,7 @@
       lazygit
       typst
       python3
+      llama-cpp
 
       # --- formatters ---
       beautysh
