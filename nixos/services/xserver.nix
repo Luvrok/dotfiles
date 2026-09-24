@@ -7,11 +7,11 @@
 let
   monitorLayout =
     if config.networking.hostName == "barnard" then ''
-      ${pkgs.xorg.xrandr}/bin/xrandr --output DisplayPort-1 --primary --mode 2560x1440 --rate 120
-      ${pkgs.xorg.xrandr}/bin/xrandr --output DisplayPort-0 --mode 2560x1440 --rate 120 --left-of DisplayPort-1
+      ${pkgs.xrandr}/bin/xrandr --output DisplayPort-1 --primary --mode 2560x1440 --rate 120
+      ${pkgs.xrandr}/bin/xrandr --output DisplayPort-0 --mode 2560x1440 --rate 120 --left-of DisplayPort-1
     ''
     else if config.networking.hostName == "dash" then ''
-      ${pkgs.xorg.xrandr}/bin/xrandr --output eDP-1 --primary --auto
+      ${pkgs.xrandr}/bin/xrandr --output eDP-1 --primary --auto
     ''
     else "";
 in

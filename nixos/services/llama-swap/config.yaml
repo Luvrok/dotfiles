@@ -12,7 +12,7 @@ includeAliasesInList: true
 macros:
   "models": "/var/lib/models"
   "llama": >
-    llama-server --port ${PORT} --threads 8 --fit-target 3072
+    llama-server --port ${PORT} --threads 8 --fit-target 3072 --jinja
 
 x-qwen-params: &qwen-params
   filters:
@@ -36,6 +36,13 @@ x-qwen-params: &qwen-params
         chat_template_kwargs:
           enable_thinking: true
 
+      "${MODEL_ID}:Tools":
+        temperature: 0.7
+        top_p: 0.8
+        presence_penalty: 0.0
+        chat_template_kwargs:
+          enable_thinking: false
+
       "${MODEL_ID}:Coding":
         temperature: 0.6
         top_p: 0.95
@@ -51,6 +58,21 @@ x-qwen-params: &qwen-params
           enable_thinking: true
 
 models:
+  "gpt-oss":
+    description: "gpt-oss-20b MXFP4, fully on GPU. Fast, web search."
+    cmd: |
+      llama-server --port ${PORT} --threads 8
+      -m ${models}/gpt-oss-20b-MXFP4.gguf
+      --gpu-layers all
+      --ctx-size 65536
+      --jinja
+    filters:
+      setParams:
+        temperature: 1.0
+        top_p: 1.0
+        top_k: 0
+        chat_template_kwargs:
+          reasoning_effort: medium
   "qwen-fast":
     description: "Qwen3.8 27B UD-Q3_K_XL, fully on GPU. Fast, everyday use."
     cmd: |
@@ -83,3 +105,96 @@ models:
       --cache-type-k q8_0
       --cache-type-v q8_0
     <<: *qwen-params
+
+  # ---- Картинки: stable-diffusion.cpp (sd-server), API /v1/images/generations ----
+  # Флаги по docs/ в репозитории sd.cpp. Параметры генерации, заданные при старте
+  # (--cfg-scale, --steps), становятся дефолтами для запросов.
+  # Файлы лежат в ${models}/image.
+
+  # Основная. 6B, 8 шагов, быстрая. Всё влезает в VRAM (~12 GB).
+  "z-image":
+    description: "Z-Image-Turbo Q8_0. Fast text-to-image, photorealism."
+    cmd: |
+      sd-server
+      --listen-ip 127.0.0.1
+      --listen-port ${PORT}
+      --diffusion-model ${models}/image/z_image_turbo-Q8_0.gguf
+      --llm ${models}/image/Qwen3-4B-Instruct-2507-Q8_0.gguf
+      --vae ${models}/image/ae.safetensors
+      --diffusion-fa
+      --vae-conv-direct
+      --cfg-scale 1.0
+      --steps 8
+    # у sd-server может не быть /health — не ждём проверку
+    checkEndpoint: none
+    ttl: 600
+
+  # Генерация + редактирование по референсу (-r / image в запросе). 4 шага.
+  "flux2-klein":
+    description: "FLUX.2-klein-4B Q8_0. Text-to-image and image editing."
+    cmd: |
+      sd-server
+      --listen-ip 127.0.0.1
+      --listen-port ${PORT}
+      --diffusion-model ${models}/image/flux-2-klein-4b-Q8_0.gguf
+      --llm ${models}/image/Qwen3-4B-Q8_0.gguf
+      --vae ${models}/image/flux2-vae.safetensors
+      --diffusion-fa
+      --vae-conv-direct
+      --cfg-scale 1.0
+      --sampling-method euler
+      --steps 4
+    checkEndpoint: none
+    ttl: 600
+
+  # 20B, лучший текст на картинках. Медленная: DiT 13.2 GB + энкодер на CPU.
+  # Нативное разрешение 1328x1328.
+  "qwen-image":
+    description: "Qwen-Image-2512 Q4_K_M. Best text rendering, slow."
+    cmd: |
+      sd-server
+      --listen-ip 127.0.0.1
+      --listen-port ${PORT}
+      --diffusion-model ${models}/image/qwen-image-2512-Q4_K_M.gguf
+      --llm ${models}/image/Qwen2.5-VL-7B-Instruct.Q4_K_M.gguf
+      --vae ${models}/image/qwen_image_vae.safetensors
+      --offload-to-cpu
+      --clip-on-cpu
+      --diffusion-fa
+      --vae-conv-direct
+      --cfg-scale 2.5
+      --sampling-method euler
+      --flow-shift 3
+      --steps 30
+    checkEndpoint: none
+    ttl: 600
+
+  "embed":
+    description: "Qwen3-Embedding-0.6B Q8_0, CPU. For Open WebUI RAG."
+    cmd: |
+      llama-server --port ${PORT} --threads 8
+      -m ${models}/Qwen3-Embedding-0.6B-Q8_0.gguf
+      --embeddings --pooling last
+      --gpu-layers 0
+      --ctx-size 8192
+      --ubatch-size 8192
+    ttl: 0
+
+groups:
+  "main":
+    swap: true
+    exclusive: false
+    members:
+      - gpt-oss
+      - qwen-fast
+      - qwen-code
+      - qwen-smart
+      - z-image
+      - flux2-klein
+      - qwen-image
+  "embed":
+    swap: false
+    exclusive: false
+    persistent: true
+    members:
+      - embed

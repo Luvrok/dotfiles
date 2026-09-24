@@ -2,13 +2,21 @@
 set -u
 
 # ── Конфиг ──
-ENGINE="google"
-ENGINE_FALLBACK="bing"
+LT_URL="${LT_URL:-https://lt.vxrnt.ru}"
+LT_KEY_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/rofi-translate/api_key"
+LT_API_KEY="${LT_API_KEY:-}"
+[[ -z "$LT_API_KEY" && -r "$LT_KEY_FILE" ]] && LT_API_KEY="$(<"$LT_KEY_FILE")"
+LT_TIMEOUT=15
+LT_ALTERNATIVES=5     # сколько альтернатив в verbose (LibreTranslate >= 1.5)
 
 PRIMARY_LANG="ru"     # родной язык
 FOREIGN_LANG="en"     # язык по умолчанию для родного текста
 
 APP="rofi-translate"
+
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/rofi-translate"
+LANG_CACHE="$CACHE_DIR/languages.json"
+LANG_CACHE_TTL=86400  # список языков с сервера обновляется раз в сутки
 
 # Тема: грузится из файла, если он есть; иначе дефолт rofi + theme-str.
 THEME_FILE="${ROFI_TRANSLATE_THEME:-${XDG_CONFIG_HOME:-$HOME/.config}/rofi/translate.rasi}"
@@ -19,51 +27,42 @@ theme_args=()
 KEY_SEL="Alt+p"       # перевести PRIMARY selection
 KEY_CLIP="Alt+c"      # перевести clipboard
 KEY_TARGET="Alt+t"    # выбрать целевой язык вручную
-KEY_VERBOSE="Alt+v"   # подробный (словарный) перевод
+KEY_VERBOSE="Alt+v"   # перевод + альтернативы
 KEY_SPEAK="Alt+s"     # озвучить
 
 # ── Строки-действия в listview (точное совпадение = диспетчеризация) ──
 ROW_SEL="⇄  selection — перевести выделение        ($KEY_SEL)"
 ROW_CLIP="⇄  clipboard — перевести буфер            ($KEY_CLIP)"
 ROW_TGT="⇄  target — выбрать целевой язык           ($KEY_TARGET)"
-ROW_VERB="⇄  verbose — словарный разбор             ($KEY_VERBOSE)"
+ROW_VERB="⇄  verbose — перевод + альтернативы       ($KEY_VERBOSE)"
 ROW_SPEAK="⇄  speak — озвучить                      ($KEY_SPEAK)"
 
-LANGUAGES=(
+# Если сервер недоступен и кэша нет
+FALLBACK_LANGUAGES=(
     "en  English"
-    "ru  Русский"
-    "es  Español"
-    "de  Deutsch"
-    "fr  Français"
-    "ja  日本語"
-    "zh-CN  中文"
-    "ko  한국어"
-    "uk  Українська"
-    "it  Italiano"
+    "ru  Russian"
+    "es  Spanish"
+    "de  German"
+    "fr  French"
+    "ja  Japanese"
+    "zh  Chinese"
+    "ko  Korean"
+    "uk  Ukrainian"
+    "it  Italian"
 )
 
 # ── Утилиты ──
 trim() { sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
 flat() { tr '\n' ' ' | sed -e 's/[[:space:]]\+/ /g' | trim; }
 
-resolve_lang() {
-    case "$1" in
-        jp) echo ja ;;
-        cn|zh) echo zh-CN ;;
-        tw) echo zh-TW ;;
-        kr) echo ko ;;
-        ua) echo uk ;;
-        cz) echo cs ;;
-        se) echo sv ;;
-        gr) echo el ;;
-        *) echo "$1" ;;
-    esac
-}
-
 is_cyrillic() { printf '%s' "$1" | LC_ALL=C.UTF-8 grep -qP '[\x{0400}-\x{04FF}]'; }
 
 detect_target() {
     if is_cyrillic "$1"; then printf '%s' "$FOREIGN_LANG"; else printf '%s' "$PRIMARY_LANG"; fi
+}
+
+other_default() {
+    if [[ "$1" == "$PRIMARY_LANG" ]]; then printf '%s' "$FOREIGN_LANG"; else printf '%s' "$PRIMARY_LANG"; fi
 }
 
 notify() {
@@ -76,21 +75,93 @@ notify() {
 
 copy() { printf '%s' "$1" | xclip -selection clipboard; }
 
-translate_brief() {
-    local text="$1" tgt="$2" out
-    out="$(trans -e "$ENGINE" -b -no-ansi ":$tgt" "$text" 2>/dev/null)"
-    [[ -z "$out" ]] && out="$(trans -e "$ENGINE_FALLBACK" -b -no-ansi ":$tgt" "$text" 2>/dev/null)"
-    printf '%s' "$out"
+# ── LibreTranslate API ──
+with_key() { jq -c --arg k "$LT_API_KEY" 'if $k != "" then .api_key = $k else . end'; }
+
+lt_post() {  # $1 endpoint, $2 json → body
+    printf '%s' "$2" | curl -s --max-time "$LT_TIMEOUT" -X POST "$LT_URL/$1" \
+        -H 'Content-Type: application/json' --data-binary @- 2>/dev/null
 }
 
-translate_verbose() {
-    trans -e "$ENGINE" -no-ansi -show-original-phonetics n ":$2" "$1" 2>/dev/null
+# $1 текст, $2 target, $3 (опц.) кол-во альтернатив
+# → LT_OUT, LT_DETECTED, LT_BODY, LT_ERR
+lt_translate() {
+    local payload body
+    LT_OUT=""; LT_DETECTED=""; LT_BODY=""; LT_ERR=""
+    payload="$(jq -nc --arg q "$1" --arg t "$2" --argjson a "${3:-0}" \
+        '{q:$q, source:"auto", target:$t, format:"text"}
+         + (if $a > 0 then {alternatives:$a} else {} end)' | with_key)"
+
+    if ! body="$(lt_post translate "$payload")" || [[ -z "$body" ]]; then
+        LT_ERR="нет ответа от $LT_URL"
+        return 1
+    fi
+    LT_BODY="$body"
+    LT_OUT="$(jq -r '.translatedText // empty' <<<"$body" 2>/dev/null)"
+    LT_DETECTED="$(jq -r '.detectedLanguage.language // empty' <<<"$body" 2>/dev/null)"
+    if [[ -z "$LT_OUT" ]]; then
+        LT_ERR="$(jq -r '.error // empty' <<<"$body" 2>/dev/null)"
+        [[ -z "$LT_ERR" ]] && LT_ERR="${body:0:200}"
+        return 1
+    fi
 }
 
-speak() { trans -e "$ENGINE" -b -speak ":$2" "$1" >/dev/null 2>&1 & }
+lt_detect() {
+    local body
+    body="$(lt_post detect "$(jq -nc --arg q "$1" '{q:$q}' | with_key)")" || return 1
+    jq -r '.[0].language // empty' <<<"$body" 2>/dev/null
+}
+
+# ── Языки ──
+fetch_languages() {
+    local age tmp
+    mkdir -p "$CACHE_DIR"
+    age=$LANG_CACHE_TTL
+    [[ -s "$LANG_CACHE" ]] && age=$(( $(date +%s) - $(stat -c %Y "$LANG_CACHE") ))
+    if (( age >= LANG_CACHE_TTL )); then
+        tmp="$(mktemp)"
+        if curl -s --max-time "$LT_TIMEOUT" "$LT_URL/languages" -o "$tmp" \
+            && jq -e 'type == "array" and length > 0' "$tmp" >/dev/null 2>&1; then
+            mv "$tmp" "$LANG_CACHE"
+        else
+            rm -f "$tmp"   # старый кэш (если есть) остаётся в ходу
+        fi
+    fi
+    [[ -s "$LANG_CACHE" ]]
+}
+
+language_list() {
+    if fetch_languages; then
+        jq -r '.[] | "\(.code)  \(.name)"' "$LANG_CACHE"
+    else
+        printf '%s\n' "${FALLBACK_LANGUAGES[@]}"
+    fi
+}
+
+has_lang() { fetch_languages && jq -e --arg c "$1" 'any(.[]; .code == $c)' "$LANG_CACHE" >/dev/null; }
+
+resolve_lang() {
+    local c="$1"
+    case "$c" in
+        jp) c=ja ;;
+        cn|zh-CN|zh-cn) c=zh ;;
+        tw|zh-TW|zh-tw) c=zh-Hant ;;
+        kr) c=ko ;;
+        ua) c=uk ;;
+        cz) c=cs ;;
+        se) c=sv ;;
+        gr) c=el ;;
+    esac
+    # новые версии LT: zh-Hans/zh-Hant, старые: zh/zt
+    case "$c" in
+        zh)      has_lang zh      || { has_lang zh-Hans && c=zh-Hans; } ;;
+        zh-Hant) has_lang zh-Hant || { has_lang zt      && c=zt; } ;;
+    esac
+    printf '%s' "$c"
+}
 
 pick_target() {
-    printf '%s\n' "${LANGUAGES[@]}" \
+    language_list \
         | rofi -dmenu -i -p "target" "${theme_args[@]}" -theme-str 'listview { lines: 8; }' \
         | awk '{print $1}'
 }
@@ -111,22 +182,28 @@ parse_override() {
 
 # Перевести → clipboard → dunst. $2 (опц.) принудительный target.
 do_translate() {
-    local raw tgt res
+    local raw tgt forced=""
     parse_override "$1"
     raw="$OV_TEXT"
     [[ -z "$raw" ]] && { notify low "$APP" "нет текста"; return 1; }
 
-    if [[ -n "${2:-}" ]]; then tgt="$2"
-    elif [[ -n "$OV_CODE" ]]; then tgt="$OV_CODE"
+    if [[ -n "${2:-}" ]]; then tgt="$2"; forced=1
+    elif [[ -n "$OV_CODE" ]]; then tgt="$OV_CODE"; forced=1
     else tgt="$(detect_target "$raw")"; fi
 
-    res="$(translate_brief "$raw" "$tgt")"
-    if [[ -z "$res" ]]; then
-        notify critical "перевод не удался" "$raw"
+    if ! lt_translate "$raw" "$tgt"; then
+        notify critical "перевод не удался" "$LT_ERR"
         return 1
     fi
-    copy "$res"
-    notify normal "→ $tgt · скопировано" "$res"
+
+    # Эвристика ошиблась (сервер определил язык = target) → переводим в другой дефолтный
+    if [[ -z "$forced" && "$LT_DETECTED" == "$tgt" ]]; then
+        tgt="$(other_default "$tgt")"
+        lt_translate "$raw" "$tgt" || { notify critical "перевод не удался" "$LT_ERR"; return 1; }
+    fi
+
+    copy "$LT_OUT"
+    notify normal "${LT_DETECTED:-?} → $tgt · скопировано" "$LT_OUT"
 }
 
 do_selection() {
@@ -143,23 +220,48 @@ do_clip() {
     do_translate "$clp"
 }
 
+# Перевод + альтернативы; Enter копирует выбранную строку
 show_verbose() {
-    local raw tgt
+    local raw tgt conf pick
     parse_override "$1"
     raw="$OV_TEXT"
     [[ -z "$raw" ]] && exit 0
     if [[ -n "$OV_CODE" ]]; then tgt="$OV_CODE"; else tgt="$(detect_target "$raw")"; fi
-    translate_verbose "$raw" "$tgt" \
-        | rofi -dmenu -i -p "verbose" "${theme_args[@]}" -theme-str 'window { width: 60%; } listview { lines: 16; }' >/dev/null
+
+    lt_translate "$raw" "$tgt" "$LT_ALTERNATIVES" || { notify critical "перевод не удался" "$LT_ERR"; exit 1; }
+    if [[ -z "$OV_CODE" && "$LT_DETECTED" == "$tgt" ]]; then
+        tgt="$(other_default "$tgt")"
+        lt_translate "$raw" "$tgt" "$LT_ALTERNATIVES" || { notify critical "перевод не удался" "$LT_ERR"; exit 1; }
+    fi
+
+    conf="$(jq -r '.detectedLanguage.confidence // empty' <<<"$LT_BODY" 2>/dev/null)"
+    pick="$(
+        { printf '%s\n' "$LT_OUT"; jq -r '.alternatives[]?' <<<"$LT_BODY" 2>/dev/null; } \
+            | awk 'NF && !seen[$0]++' \
+            | rofi -dmenu -i -p "${LT_DETECTED:-?} → $tgt" \
+                -mesg "Enter — скопировать строку${conf:+ · уверенность определения: ${conf}%}" \
+                "${theme_args[@]}" -theme-str 'window { width: 60%; } listview { lines: 10; }'
+    )"
+    [[ -n "$pick" ]] && { copy "$pick"; notify normal "скопировано" "$pick"; }
+}
+
+# LibreTranslate не умеет TTS: trans (если есть) или espeak-ng
+speak() {
+    local lang
+    if command -v trans >/dev/null 2>&1; then
+        trans -b -speak "$1" >/dev/null 2>&1 &
+    elif command -v espeak-ng >/dev/null 2>&1; then
+        lang="$(lt_detect "$1")"
+        espeak-ng -v "${lang:-en}" "$1" >/dev/null 2>&1 &
+    else
+        notify low "$APP" "нет движка озвучки (trans или espeak-ng)"
+    fi
 }
 
 act_speak() {
-    local txt tgt
     parse_override "$1"
-    txt="$OV_TEXT"
-    [[ -z "$txt" ]] && exit 0
-    if [[ -n "$OV_CODE" ]]; then tgt="$OV_CODE"; else tgt="$(detect_target "$txt")"; fi
-    speak "$txt" "$tgt"
+    [[ -z "$OV_TEXT" ]] && exit 0
+    speak "$OV_TEXT"
 }
 
 act_target() {

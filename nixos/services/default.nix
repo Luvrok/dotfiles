@@ -6,21 +6,26 @@
   ...
 }:
 
+let
+  sd-cpp = pkgs.stable-diffusion-cpp.override { vulkanSupport = true; };
+in
 {
   imports = [
     ./jedha-tunnel.nix
-    ./glances.nix
     ./greenclip.nix
     ./sddm.nix
-    ./sway.nix
     ./searxng.nix
+    ./librechat.nix
   ];
 
   systemd.services.syncthing.environment.STNODEFAULTFOLDER = "true";
 
   systemd.services.llama-swap = {
     # llama-swap starts `llama-server` from cmd, so it must be in PATH
-    path = [ pkgs.llama-cpp ];
+    path = [
+      pkgs.llama-cpp
+      sd-cpp
+    ];
 
     # Restart the service when the config changes on rebuild
     restartTriggers = [ config.environment.etc."llama-swap/config.yaml".source ];
@@ -73,10 +78,7 @@
     pipewire = (import ./pipewire.nix { inherit pkgs; });
     xserver = (import ./xserver.nix { inherit config pkgs username; });
     syncthing = (import ./syncthing.nix { inherit username; });
-    open-webui = {
-      enable = true;
-      port = 11829;
-    };
+    open-webui = (import ./open-webui { inherit pkgs; });
     llama-swap = {
       enable = true;
       port = 11434;

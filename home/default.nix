@@ -99,6 +99,7 @@
   };
 
   home.pointerCursor = {
+    enable = true;
     name = "Vanilla-DMZ";
     package = pkgs.vanilla-dmz;
     size = 32;
@@ -106,7 +107,7 @@
 
   qt = {
     enable = true;
-    platformTheme.name = "gtk";
+    platformTheme.name = "gtk3";
   };
 
   home.file.".local/bin" = {

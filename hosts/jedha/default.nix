@@ -11,6 +11,7 @@
     ./anki.nix
     ./kavita.nix
     ./koito.nix
+    ./libretranslate.nix
   ];
 
   sops.defaultSopsFile = ../../secrets/barnard.yaml;
@@ -106,6 +107,7 @@
     calibre
     age
     sops
+    tmux
   ];
 
   system.stateVersion = "26.05";

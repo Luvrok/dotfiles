@@ -109,6 +109,7 @@ in
       llama-cpp =
         (prev.llama-cpp.override {
           rocmSupport = true;
+          vulkanSupport = true;
           # Enable BLAS for optimized CPU layer performance (OpenBLAS)
           blasSupport = true;
         }).overrideAttrs (oldAttrs: {

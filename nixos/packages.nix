@@ -38,7 +38,6 @@
       lazygit
       typst
       python3
-      llama-cpp
 
       # --- formatters ---
       beautysh
@@ -149,6 +148,8 @@
       xwininfo
       xwinwrap
       xwallpaper
+      libxrandr
+      xsel
 
       # --- xdg ---
       xdg-desktop-portal
@@ -171,13 +172,11 @@
       syncthing
       telegram-desktop
       veracrypt
-      wasabiwallet
       graphviz
       xdot
       worldpainter
       typstwriter
       anki
-      picard
 
       # --- games ---
       gamescope

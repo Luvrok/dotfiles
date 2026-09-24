@@ -6,7 +6,7 @@
   ];
 
   services.displayManager.sddm.setupScript = ''
-    ${pkgs.xorg.xrandr}/bin/xrandr --output DisplayPort-0 --off
+    ${pkgs.xrandr}/bin/xrandr --output DisplayPort-0 --off
   '';
 
   environment.sessionVariables = {

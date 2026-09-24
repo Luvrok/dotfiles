@@ -7,6 +7,7 @@ let
     "qbt.vxrnt.ru"       = 8129;
     "anki.vxrnt.ru"      = 8130;
     "koito.vxrnt.ru"     = 4110;
+    "lt.vxrnt.ru"        = 5389;
   };
 
   mkHost = host: port: {
@@ -47,6 +48,7 @@ in
         qbt.vxrnt.ru           web;
         anki.vxrnt.ru          web;
         koito.vxrnt.ru         web;
+        lt.vxrnt.ru            web;
         default                xray;
       }
 
