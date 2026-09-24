@@ -42,6 +42,8 @@ server), `kessel`, `tatooine`, `mos-eisley` (VPS).
   flameshot, Xresources, the console and textfoxy read it.
 - Scripts are built with `writeShellApplication` (shellcheck, pinned dependencies).
 
+Подробная документация: [docs/](docs/README.md).
+
 ## Deploy
 
 ```sh
