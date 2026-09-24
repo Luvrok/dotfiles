@@ -1,43 +1,29 @@
-{ pkgs, ... }:
-
+# VPS in Russia: nginx on :443 (SNI split between sites and xray), xray portal.
 {
   imports = [
-    # ./disk-config.nix
     ./hardware-configuration.nix
-    ./nginx.nix
+    ./disk-config.nix
   ];
 
-  nix.settings = {
-    experimental-features = [
-      "nix-command"
-      "flakes"
-    ];
+  galaxy.host.user = "kessel";
+  galaxy.profiles.vps.enable = true;
+
+  galaxy.services.nginx.enable = true;
+  galaxy.services.xray = {
+    legacyConfig = ./xray.json; # remove once the xray/* secrets are in sops
+    role = "portal";
+    # Behind nginx: take what nginx doesn't claim.
+    # portal = { listen = "127.0.0.1"; port = 10443; };
   };
 
-  services.getty.autologinUser = "root";
-
-  time.timeZone = "Europe/Moscow";
-  i18n.defaultLocale = "en_GB.UTF-8";
-
-  networking.hostName = "mos-eisley";
-  networking.wireless.enable = false;
-
-  services.openssh = {
-    enable = true;
-    settings = {
-      PasswordAuthentication = false;
-      KbdInteractiveAuthentication = false;
+  galaxy.network = {
+    interfaces."10-eth" = {
+      match.Name = "ens3";
+      dhcp = false;
+      address = "192.168.0.5/32";
+      gateway = "192.168.0.1";
     };
-  };
-
-  systemd.network.enable = true;
-  systemd.network.wait-online.anyInterface = true;
-  services.resolved.enable = true;
-  networking.useNetworkd = true;
-
-  networking.firewall = {
-    enable = true;
-    allowedTCPPorts = [
+    tcpPorts = [
       22
       80
       443
@@ -56,7 +42,7 @@
       22070
       42853
     ];
-    allowedUDPPorts = [
+    udpPorts = [
       4110
       4533
       4545
@@ -72,92 +58,7 @@
       22070
       42853
     ];
-    allowPing = true;
   };
 
-  systemd.network.networks."10-eth" = {
-    matchConfig.Name = "ens3";
-    address = [ "192.168.0.5/32" ];
-    routes = [
-      {
-        Gateway = "192.168.0.1";
-        GatewayOnLink = true;
-      }
-    ];
-    dns = [
-      "9.9.9.9"
-      "149.112.112.112"
-      "2620:fe::fe"
-      "2620:fe::9"
-    ];
-  };
-
-  users.users.root.openssh.authorizedKeys.keys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKfVMnRoTEwUBqxcm6tzRTiFGZVafQ6dHr95HDM//Wk+ barnard"
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGifq/+thCOHb5sXkWRQl9RXtddSAemKErUkdngEa7sJ dash@dash"
-  ];
-
-  users.users.kessel = {
-    isNormalUser = true;
-    extraGroups = [ "wheel" ];
-    initialPassword = "nopassword";
-    openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKfVMnRoTEwUBqxcm6tzRTiFGZVafQ6dHr95HDM//Wk+ barnard"
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGifq/+thCOHb5sXkWRQl9RXtddSAemKErUkdngEa7sJ dash@dash"
-    ];
-  };
-
-  environment.etc."nixos".source = ./.;
-  system.activationScripts.copyConfig.text = ''
-    rm -rf /root/nixos-config
-    mkdir -p /root
-    cp -rT ${./../..} /root/nixos-config
-    chown -R root:root /root/nixos-config
-  '';
-
-  services.xray = {
-    enable = true;
-    settingsFile = ./xray.json;
-  };
-
-  networking.enableIPv6 = true;
-
-  # https://popov.wtf/how-to-prioritize-ipv4-over-ipv6-in-linux
-  environment.etc."gai.conf".text = ''
-    precedence ::ffff:0:0/96  100
-  '';
-
-  systemd.services.xray = {
-    serviceConfig = {
-      RuntimeDirectory = "xray";
-      RuntimeDirectoryMode = "0750";
-      ReadWritePaths = [ "/run/xray" ];
-
-      RuntimeMaxSec = "30min";
-      Restart = "always";
-    };
-  };
-
-  environment.systemPackages = with pkgs; [
-    vim
-    jq
-    htop
-    curl
-    wget
-    git
-    btop
-    xray
-    vnstat
-    dig
-    git-crypt
-    nh
-    iperf
-    mtr
-    busybox
-    age
-    sops
-  ];
-
-  services.vnstat.enable = true;
-  system.stateVersion = "26.05";
+  services.getty.autologinUser = "root";
 }

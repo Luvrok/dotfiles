@@ -1,0 +1,101 @@
+stty -ixon
+
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+# history
+HISTFILE=~/.zsh_history
+HISTSIZE=5000
+SAVEHIST=5000
+HISTDUP=erase
+
+# load completions
+autoload -Uz compinit
+
+ZCOMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zcompdump"
+
+if [[ ! -f "$ZCOMPDUMP" || -n "$ZCOMPDUMP"(#qN.mh+24) ]]; then
+  compinit -d "$ZCOMPDUMP"
+else
+  compinit -C -d "$ZCOMPDUMP"
+fi
+
+autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
+autoload -Uz zsh/terminfo
+
+autoload -Uz add-zsh-hook
+
+__first_prompt_fix() {
+  print -n "\033[2J\033[H"
+  zle && zle reset-prompt
+  add-zsh-hook -d precmd __first_prompt_fix
+}
+
+add-zsh-hook precmd __first_prompt_fix
+
+bindkey -M emacs "${terminfo[khome]}" beginning-of-line
+bindkey -M emacs "${terminfo[kend]}" end-of-line
+
+bindkey "^[[H" beginning-of-line
+bindkey "^[[F" end-of-line
+bindkey "^[OH" beginning-of-line
+bindkey "^[OF" end-of-line
+
+# p10k
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+# register plugins
+zle -N up-line-or-beginning-search
+zle -N down-line-or-beginning-search
+
+# opts
+setopt autocd              # change directory just by typing its name
+setopt magicequalsubst     # enable filename expansion for arguments of the form ‘anything=expression’
+setopt nonomatch           # hide error message if there is no match for the pattern
+setopt notify              # report the status of background jobs immediately
+setopt numericglobsort     # sort filenames numerically when it makes sense
+setopt promptsubst         # enable command substitution in prompt
+setopt hist_save_no_dups
+setopt hist_ignore_dups
+setopt hist_ignore_all_dups
+setopt hist_find_no_dups
+setopt appendhistory
+setopt sharehistory
+
+# bindkeys
+bindkey -e
+bindkey '^[[1;5D' backward-word
+bindkey '^[[1;5C' forward-word
+bindkey '^[[D' backward-char
+bindkey '^[[C' forward-char
+bindkey '^f' autosuggest-accept
+bindkey '^H' backward-kill-word
+bindkey "^[[A" up-line-or-beginning-search # Up
+bindkey "^[[B" down-line-or-beginning-search # Down
+bindkey '^[OA' up-line-or-beginning-search
+bindkey '^[OB' down-line-or-beginning-search
+bindkey -M emacs "${terminfo[khome]}" beginning-of-line
+bindkey -M emacs "${terminfo[kend]}"  end-of-line
+
+# Completion styling
+# zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
+# zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+# zstyle ':completion:*' menu no
+zstyle ":fzf-tab:*" use-fzf-default-opts yes
+zstyle ":fzf-tab:complete:cd:*" fzf-preview "ls --color=always \${realpath}"
+
+function _ps_aux_grep() { command ps aux | grep --color=auto "$1" }
+
+alias ll='ls -lah --color'
+alias la='ls -A --color'
+alias dt='cd $HOME/HOME/infra/dotfiles'
+alias dm='cd $HOME/HOME/infra/dwm'
+alias gg='cd $HOME/HOME/wizzard/Gringotts-Grid'
+alias mustore='cd $HOME/HOME/wizzard/music-store'
+alias learn='cd $HOME/HOME/learn'
+alias psg='_ps_aux_grep'
+alias ranger='yazi' # huh why not?
+alias r='y'
+
+export SYSTEMD_LESS=FRX

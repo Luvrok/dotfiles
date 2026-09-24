@@ -1,9 +1,0 @@
-* {
-    BG:    rgb(23, 23, 23, 0.9); /* background */
-    BGA:   rgb(40, 40, 40, 0.9); /* background alternate */
-    FG:    #ebdbb2; /* foreground (main text) */
-    FGA:   #ebdbb2; /* foreground accent (error/warning) */
-    BDR:   #d65d0e; /* border */
-    SEL:   #fbf1c7; /* selection */
-    SELBG: rgb(214, 93, 14); /* selection background */
-}

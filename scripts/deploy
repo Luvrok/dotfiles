@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Replaces sapply, supdate, sclean and their -remote variants.
+#
+#   deploy                       switch this machine (flake attr = hostname)
+#   deploy update                flake update + switch this machine
+#   deploy <host> <ip>           switch a remote host over ssh as root
+#   deploy clean [ip]            garbage-collect this machine or a remote one
+set -u
+
+FLAKE="$(cd "$(dirname "$0")/.." && pwd)"
+MEDIA="$HOME/.local/media/soundeffect"
+
+report() {
+    if [ "$1" -eq 0 ]; then
+        notify-send -r 9991 "$2 OK"
+        pw-play "$MEDIA/minecraft-sheep2.mp3" &
+    else
+        notify-send -r 9991 "$2 FAILED"
+        pw-play "$MEDIA/minecraft-cave.mp3" &
+    fi
+    return "$1"
+}
+
+case "${1:-}" in
+    "")
+        nh os switch "$FLAKE#$(hostname)"
+        report $? "switch"
+        ;;
+    update)
+        nh os switch -u "$FLAKE#$(hostname)"
+        report $? "flake update + switch"
+        ;;
+    clean)
+        if [ -n "${2:-}" ]; then
+            ssh "root@$2" 'nh clean all && nix profile wipe-history && nix store optimise'
+            report $? "remote clean"
+        else
+            nh clean all && nix profile wipe-history && nix store optimise
+            report $? "clean"
+        fi
+        ;;
+    -h | --help)
+        sed -n '2,8p' "$0"
+        ;;
+    *)
+        if [ -z "${2:-}" ]; then
+            echo "usage: $0 <host> <ip>" >&2
+            exit 1
+        fi
+        nh os switch "$FLAKE#$1" -H "$1" --target-host "root@$2"
+        report $? "remote switch $1"
+        ;;
+esac

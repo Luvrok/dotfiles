@@ -1,0 +1,53 @@
+# Glances web UI as a sandboxed system service.
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+
+{
+  options.galaxy.services.glances.enable = lib.mkEnableOption "the glances web UI";
+
+  config = lib.mkIf config.galaxy.services.glances.enable {
+    galaxy.expose.glances.port = 8208;
+
+    users.users.glances = {
+      isSystemUser = true;
+      group = "glances";
+      description = "Glances monitoring service";
+      home = "/var/lib/glances";
+      createHome = true;
+    };
+
+    users.groups.glances = { };
+
+    systemd.services.glances = {
+      description = "Glances Web Interface";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
+
+      serviceConfig = {
+        User = "glances";
+        Group = "glances";
+        ExecStart = "${pkgs.glances}/bin/glances -w --bind :: --port ${toString config.galaxy.expose.glances.port} --time 3 --quiet";
+
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        PrivateDevices = true;
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        ReadWritePaths = [ "/var/lib/glances" ];
+        RestrictSUIDSGID = true;
+        RestrictRealtime = true;
+        RestrictNamespaces = true;
+        MemoryDenyWriteExecute = true;
+        CapabilityBoundingSet = "";
+        SystemCallFilter = [
+          "@system-service"
+          "~@privileged"
+        ];
+      };
+    };
+  };
+}

@@ -32,180 +32,28 @@
   };
 
   outputs =
-    {
-      self,
-      nixpkgs,
-      nixpkgs-pinned,
-      home-manager,
-      disko,
-      sops-nix,
-      zapret-discord-youtube,
-      ...
-    }@inputs:
+    { self, nixpkgs, ... }@inputs:
     let
+      inherit (nixpkgs) lib;
       system = "x86_64-linux";
-      pkgs = import nixpkgs {
-        inherit system;
-        config = {
-          allowBroken = false;
-          allowUnfree = true;
-          allowInsecure = false;
-        };
-      };
+      pkgs = nixpkgs.legacyPackages.${system};
+      galaxyLib = import ./lib { inherit lib; };
 
-      make_hm =
-        username:
-        { config, ... }:
-        {
-          home-manager = {
-            useGlobalPkgs = true;
-            useUserPackages = true;
-            backupFileExtension = "backup";
-            users.${username} = {
-              imports = [ "${self}/home" ];
-            };
-            extraSpecialArgs = {
-              inherit username inputs system;
-              inherit (config) videoDrivers dpi fontSize;
-              pkgs-pinned = import nixpkgs-pinned { inherit system; };
-            };
-          };
-        };
+      # Every folder in hosts/ is a machine.
+      hosts = lib.attrNames (lib.filterAttrs (_: type: type == "directory") (builtins.readDir ./hosts));
+      machines = lib.genAttrs hosts (name: galaxyLib.mkHost { inherit name inputs self; });
     in
     {
-      nixosConfigurations.barnard = nixpkgs.lib.nixosSystem {
-        inherit pkgs;
-        specialArgs = {
-          username = "barnard";
-          pkgs-pinned = import nixpkgs-pinned {
-            inherit system;
-            config = {
-              allowUnfree = true;
-            };
-          };
-          inherit inputs system;
-        };
-        modules = [
-          ./nixos
-          ./nixos/hardware/amd.nix
-          ./hosts/barnard/hardware-configuration.nix
-          ./hosts/barnard/env.nix
-
-          sops-nix.nixosModules.sops
-          zapret-discord-youtube.nixosModules.withTestTools
-          {
-            services.zapret-discord-youtube = {
-              enable = true;
-              configName = "general(ALT)";
-            };
-          }
-
-          home-manager.nixosModules.home-manager
-          (make_hm "barnard")
-          (
-            { pkgs, ... }:
-            {
-              # Issue: kernel panic "BUG at mm/vmalloc.c:3167" occurring ~once a week since last year, sometimes more often.
-              # Context: AMD + amdgpu with dual-monitor setup (both 120 Hz); may be related (see forum thread).
-              # Best solution yet: pin the Linux 6.12 kernel.
-              # Ref: https://bbs.archlinux.org/viewtopic.php?id=306587
-              boot.kernelPackages = pkgs.linuxPackages_6_12;
-            }
-          )
-        ];
+      nixosConfigurations = machines // {
+        # alderaan's hostname is still "dash"; `nh os switch` looks it up by hostname.
+        dash = machines.alderaan;
       };
 
-      nixosConfigurations.dash = nixpkgs.lib.nixosSystem {
-        inherit pkgs;
-        specialArgs = {
-          username = "dash";
-          pkgs-pinned = import nixpkgs-pinned {
-            inherit system;
-            config = {
-              allowUnfree = true;
-            };
-          };
-          inherit inputs system;
-        };
-        modules = [
-          ./nixos
-          ./nixos/hardware/nvidia.nix
-          ./hosts/alderaan/hardware-configuration.nix
-          ./hosts/alderaan/env.nix
+      checks.${system} = lib.mapAttrs (_: machine: machine.config.system.build.toplevel) machines;
 
-          zapret-discord-youtube.nixosModules.default
-          {
-            services.zapret-discord-youtube = {
-              enable = true;
-              configName = "general(ALT)";
-            };
-          }
+      formatter.${system} = pkgs.nixfmt-tree;
 
-          home-manager.nixosModules.home-manager
-          (make_hm "dash")
-          (
-            { pkgs, ... }:
-            {
-              boot.kernelPackages = pkgs.linuxPackages_6_12;
-            }
-          )
-        ];
-      };
-
-      nixosConfigurations."kessel" = nixpkgs.lib.nixosSystem {
-        inherit pkgs;
-        specialArgs = {
-          username = "kessel";
-        };
-        modules = [
-          disko.nixosModules.disko
-          ./hosts/kessel
-          ./hosts/kessel/disk-config.nix
-        ];
-      };
-
-      nixosConfigurations."tatooine" = nixpkgs.lib.nixosSystem {
-        inherit pkgs;
-        specialArgs = {
-          username = "tatooine";
-        };
-        modules = [
-          disko.nixosModules.disko
-          ./hosts/tatooine
-          ./hosts/tatooine/disk-config.nix
-        ];
-      };
-
-      nixosConfigurations."mos-eisley" = nixpkgs.lib.nixosSystem {
-        inherit pkgs;
-        specialArgs = {
-          username = "mos-eisley";
-        };
-        modules = [
-          disko.nixosModules.disko
-          ./hosts/mos-eisley
-          ./hosts/mos-eisley/disk-config.nix
-        ];
-      };
-
-      nixosConfigurations."jedha" = nixpkgs.lib.nixosSystem {
-        inherit pkgs;
-        specialArgs = {
-          username = "jedha";
-        };
-        modules = [
-          disko.nixosModules.disko
-          sops-nix.nixosModules.sops
-          zapret-discord-youtube.nixosModules.withTestTools
-          {
-            services.zapret-discord-youtube = {
-              enable = true;
-              configName = "general(ALT)";
-            };
-          }
-          ./hosts/jedha
-        ];
-      };
+      overlays.default = import ./pkgs inputs;
 
       devShells.${system}.default = pkgs.mkShell {
         buildInputs = with pkgs; [
