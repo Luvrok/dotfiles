@@ -1,12 +1,23 @@
 { pkgs, ... }:
 
 let
+  # LibreTranslate and everything under it (Python, CTranslate2, argostranslate, …) come from
+  # this frozen nixpkgs, the one the patches were built and tested on. System updates don't
+  # touch it, so the patches keep applying and the translator keeps working as it did.
+  # To move on some day: put a newer nixexprs.tar.xz URL and hash here, rebuild, test.
+  pinned = import (builtins.fetchTarball {
+    url = "https://releases.nixos.org/nixos/26.05/nixos-26.05.10529.c508844df6c2/nixexprs.tar.xz";
+    sha256 = "1sngm135201mwkqy1xcann3bybjq9wpkd3vknglxbaza9953ilx9";
+  }) {
+    inherit (pkgs.stdenv.hostPlatform) system;
+    config = { };
+    overlays = [ ];
+  };
+
   # Stock LibreTranslate runs the model once per line of a batch request. The patches
   # send the whole batch to CTranslate2 in one call: 3-5x faster on CPU, same output.
-  # Written for LibreTranslate 1.9.6 / argostranslate 1.11.0; if a nixpkgs update makes
-  # them fail to apply, drop `package` below to get the stock (slow) build back.
   # Only argostranslate and the few packages built on it get rebuilt.
-  python = pkgs.python3.override {
+  python = pinned.python3.override {
     self = python;
     packageOverrides = final: prev: {
       argostranslate = prev.argostranslate.overridePythonAttrs (old: {
@@ -72,7 +83,7 @@ in
     # a core, so a batch finishes instead of starving until BATCH_TIMEOUT_S.
     serviceConfig = {
       CPUWeight = 10; # default 100
-      CPUQuota = "300%"; # uncomment to leave one of the 4 threads idle if the laptop runs hot
+      # CPUQuota = "300%"; # uncomment to leave one of the 4 threads idle if the laptop runs hot
     };
   };
 }
