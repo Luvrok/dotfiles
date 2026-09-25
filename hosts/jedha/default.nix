@@ -11,7 +11,9 @@
     ./anki.nix
     ./kavita.nix
     ./koito.nix
-    ./libretranslate.nix
+    ./libretranslate
+    ./kiss-worker.nix
+    ./subtitle-translator
   ];
 
   sops.defaultSopsFile = ../../secrets/barnard.yaml;
@@ -90,6 +92,7 @@
     vim
     neovim
     htop
+    jq
     curl
     wget
     git

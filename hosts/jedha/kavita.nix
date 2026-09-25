@@ -20,7 +20,7 @@
     tokenKeyFile = "/etc/secrets/kavita-token.key";
     settings = {
       Port = 4545;
-      IpAddresses = "::";
+      IpAddresses = "127.0.0.1";
     };
   };
 }

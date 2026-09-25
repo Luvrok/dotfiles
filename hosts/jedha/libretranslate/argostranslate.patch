@@ -1,0 +1,180 @@
+Batched translation for LibreTranslate batch requests (q as a list).
+
+ITranslation.translate_batch() translates several texts with the same result as
+translate() on each, but PackageTranslation sends the sentences of all texts to
+CTranslate2 in one translate_batch() call instead of one call per text. On CPU
+that is several times faster: decoding steps are shared by the whole batch.
+Pivot (CompositeTranslation) and cached translations pass the batch through.
+
+Also keeps argostranslate's INFO logs (every sentence with its tokens) out of the
+journal unless ARGOS_DEBUG is set.
+
+diff --git a/argostranslate/translate.py b/argostranslate/translate.py
+index fd13651..5ff77a6 100644
+--- a/argostranslate/translate.py
++++ b/argostranslate/translate.py
+@@ -63,6 +63,20 @@ class ITranslation:
+         """
+         return self.hypotheses(input_text, num_hypotheses=1)[0].value
+ 
++    def translate_batch(self, input_texts: list[str]) -> list[str]:
++        """Translates several strings, same result as translate() on each of them.
++
++        Translations backed by a local model override it to run the model once
++        for the whole batch, which is several times faster on CPU.
++
++        Args:
++            input_texts: The texts to be translated.
++
++        Returns:
++            The translations, in the order of input_texts.
++        """
++        return [self.translate(input_text) for input_text in input_texts]
++
+     def hypotheses(self, input_text: str, num_hypotheses: int = 4) -> list[Hypothesis]:
+         """Translates a string from self.from_lang to self.to_lang
+ 
+@@ -183,7 +197,7 @@ class PackageTranslation(ITranslation):
+             # Any other SBD dependency should be defined as a class in the SBD module.
+             raise NotImplementedError()
+ 
+-    def hypotheses(self, input_text: str, num_hypotheses: int = 4) -> list[Hypothesis]:
++    def lazy_translator(self) -> Translator:
+         if self.translator is None:
+             model_path = str(self.pkg.package_path / "model")
+             self.translator = ctranslate2.Translator(
+@@ -193,6 +207,10 @@ class PackageTranslation(ITranslation):
+                 intra_threads=settings.intra_threads,
+                 compute_type=settings.compute_type,
+             )
++        return self.translator
++
++    def hypotheses(self, input_text: str, num_hypotheses: int = 4) -> list[Hypothesis]:
++        self.lazy_translator()
+         paragraphs = ITranslation.split_into_paragraphs(input_text)
+         info("paragraphs:", paragraphs)
+         translated_paragraphs = []
+@@ -221,6 +239,32 @@ class PackageTranslation(ITranslation):
+         info("hypotheses_to_return:", hypotheses_to_return)
+         return hypotheses_to_return
+ 
++    def translate_batch(self, input_texts: list[str]) -> list[str]:
++        # Same steps as hypotheses() with one hypothesis, but the sentences of all
++        # texts go to CTranslate2 in one call: [text][paragraph] -> sentences
++        split = [
++            [self.sentencizer.split_sentences(paragraph)
++             for paragraph in ITranslation.split_into_paragraphs(input_text)]
++            for input_text in input_texts
++        ]
++        tokenized = [
++            self.pkg.tokenizer.encode(sentence)
++            for paragraphs in split
++            for sentences in paragraphs
++            for sentence in sentences
++        ]
++        translated = iter(
++            translate_tokenized_batch(self.pkg, self.lazy_translator(), tokenized)
++        )
++        translations = []
++        for paragraphs in split:
++            values = []
++            for sentences in paragraphs:
++                tokens = [token for _ in sentences for token in next(translated)]
++                values.append(decode_translation(self.pkg, tokens))
++            translations.append("\n".join(values).lstrip("\n"))
++        return translations
++
+ 
+ class IdentityTranslation(ITranslation):
+     """A Translation that doesn't modify input_text."""
+@@ -239,6 +283,9 @@ class IdentityTranslation(ITranslation):
+     def hypotheses(self, input_text: str, num_hypotheses: int = 4):
+         return [Hypothesis(input_text, 0) for i in range(num_hypotheses)]
+ 
++    def translate_batch(self, input_texts: list[str]) -> list[str]:
++        return list(input_texts)
++
+ 
+ class CompositeTranslation(ITranslation):
+     """A ITranslation that is performed by chaining two Translations
+@@ -283,6 +330,9 @@ class CompositeTranslation(ITranslation):
+         to_return.sort(reverse=True)
+         return to_return[0:num_hypotheses]
+ 
++    def translate_batch(self, input_texts: list[str]) -> list[str]:
++        return self.t2.translate_batch(self.t1.translate_batch(input_texts))
++
+ 
+ class CachedTranslation(ITranslation):
+     """Caches a translation to improve performance.
+@@ -346,6 +396,9 @@ class CachedTranslation(ITranslation):
+             hypotheses_to_return[i].value = hypotheses_to_return[i].value.lstrip("\n")
+         return hypotheses_to_return
+ 
++    def translate_batch(self, input_texts: list[str]) -> list[str]:
++        return self.underlying.translate_batch(input_texts)
++
+ 
+ class RemoteTranslation(ITranslation):
+     """A translation provided by a remote LibreTranslate server"""
+@@ -540,6 +593,45 @@ def apply_packaged_translation(
+     return value_hypotheses
+ 
+ 
++def translate_tokenized_batch(
++    pkg: Package, translator: Translator, tokenized: list[list[str]]
++) -> list[list[str]]:
++    """Translates tokenized sentences with one CTranslate2 call.
++
++    CTranslate2 splits them into sub-batches of up to ARGOS_BATCH_SIZE tokens
++    and spreads those over its ARGOS_INTER_THREADS workers.
++
++    Returns:
++        The tokens of the best hypothesis for every sentence.
++    """
++    if len(tokenized) == 0:
++        return []
++    target_prefix = None
++    if pkg.target_prefix != "":
++        target_prefix = [[pkg.target_prefix]] * len(tokenized)
++    translated_batches = translator.translate_batch(
++        tokenized,
++        target_prefix=target_prefix,
++        replace_unknowns=True,
++        max_batch_size=settings.batch_size,
++        batch_type="tokens",
++        beam_size=settings.beam_size,
++        num_hypotheses=1,
++        length_penalty=0.2,
++    )
++    return [translated_batch.hypotheses[0] for translated_batch in translated_batches]
++
++
++def decode_translation(pkg: Package, translated_tokens: list[str]) -> str:
++    """Turns translated tokens into text, as apply_packaged_translation does."""
++    value = pkg.tokenizer.decode(translated_tokens)
++    if pkg.target_prefix != "" and value.startswith(pkg.target_prefix):
++        value = value[len(pkg.target_prefix) :]
++    if len(value) > 0 and value[0] == " ":
++        value = value[1:]
++    return value
++
++
+ class InstalledTranslate:
+     """
+     Global storage of instances of the CachedTranslation class by unique keys.
+diff --git a/argostranslate/utils.py b/argostranslate/utils.py
+index 96fea3b..0dce5e0 100644
+--- a/argostranslate/utils.py
++++ b/argostranslate/utils.py
+@@ -4,7 +4,9 @@ import sys
+ from argostranslate import settings
+ 
+ logger = logging.getLogger(__name__)
+-logger.setLevel(logging.DEBUG if settings.debug else logging.INFO)
++# INFO records (every sentence and its tokens) are meant for debug mode; at INFO they
++# reach the root handler LibreTranslate sets up and flood the journal with every request
++logger.setLevel(logging.DEBUG if settings.debug else logging.WARNING)
+ 
+ # Print to standard output if in debug mode
+ if settings.debug:

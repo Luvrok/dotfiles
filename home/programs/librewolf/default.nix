@@ -215,6 +215,10 @@ in
         #translations-button {
           display: none !important;
         }
+
+        findbar[hidden] {
+          display: none !important;
+        }
       '';
     };
   };

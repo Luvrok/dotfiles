@@ -24,7 +24,7 @@
     enable = true;
     openFirewall = true;
     settings = {
-      Address = "[::]";
+      Address = "127.0.0.1";
       Port = 4533;
       Scanner.Enabled = true;
       Scanner.WatcherWait = "1m";

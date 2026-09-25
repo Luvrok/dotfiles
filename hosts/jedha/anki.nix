@@ -5,7 +5,7 @@
   services.anki-sync-server = {
     enable = true;
     port = 8130;
-    address = "::";
+    address = "127.0.0.1";
 
     users = [
       {

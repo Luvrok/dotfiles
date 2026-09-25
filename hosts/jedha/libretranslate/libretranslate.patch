@@ -1,0 +1,30 @@
+LibreTranslate: translate a plain-text batch request (q as a list, no alternatives)
+with one argostranslate translate_batch() call (argostranslate.patch) instead of
+calling the model once per text.
+
+diff --git a/libretranslate/app.py b/libretranslate/app.py
+index 58fba7d..d494fb7 100644
+--- a/libretranslate/app.py
++++ b/libretranslate/app.py
+@@ -817,7 +817,20 @@ def create_app(args):
+             abort(400, description=_("%(format)s format is not supported", format=text_format))
+ 
+         try:
+-            if batch:
++            if batch and translatable and text_format == "text" and num_alternatives == 0 \
++                    and hasattr(src_lang.get_translation(tgt_lang), "translate_batch"):
++                # All texts in one model call (argostranslate.patch), several times
++                # faster than the loop below that translates them one by one
++                translator = src_lang.get_translation(tgt_lang)
++                batch_results = [
++                    unescape(improve_translation_formatting(text, translated_text))
++                    for text, translated_text in zip(q, translator.translate_batch(q))
++                ]
++                result = {"translatedText": batch_results}
++
++                if source_lang == "auto":
++                    result["detectedLanguage"] = [model2iso(detected_src_lang)] * len(q)
++            elif batch:
+                 batch_results = []
+                 batch_alternatives = []
+                 for text in q:

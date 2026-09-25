@@ -3,19 +3,31 @@
 let
   services = {
     "navidrome.vxrnt.ru" = 4533;
-    "kavita.vxrnt.ru"    = 4545;
-    "qbt.vxrnt.ru"       = 8129;
-    "anki.vxrnt.ru"      = 8130;
-    "koito.vxrnt.ru"     = 4110;
-    "lt.vxrnt.ru"        = 5389;
+    "kavita.vxrnt.ru" = 4545;
+    "qbt.vxrnt.ru" = 8129;
+    "anki.vxrnt.ru" = 8130;
+    "koito.vxrnt.ru" = 4110;
   };
 
   mkHost = host: port: {
     enableACME = true;
     forceSSL = true;
     listen = [
-      { addr = "127.0.0.1"; port = 8443; ssl = true; }
-      { addr = "0.0.0.0";   port = 80;   ssl = false; }
+      {
+        addr = "127.0.0.1";
+        port = 8443;
+        ssl = true;
+      }
+      {
+        addr = "0.0.0.0";
+        port = 80;
+        ssl = false;
+      }
+      {
+        addr = "[::]";
+        port = 80;
+        ssl = false;
+      }
     ];
     locations."/" = {
       proxyPass = "http://127.0.0.1:${toString port}";
@@ -38,6 +50,11 @@ in
     recommendedProxySettings = true;
     recommendedTlsSettings = true;
     recommendedGzipSettings = true;
+
+    appendHttpConfig = ''
+      absolute_redirect off;
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    '';
 
     streamConfig = ''
       map $ssl_preread_server_name $upstream {
@@ -70,10 +87,40 @@ in
         enableACME = true;
         forceSSL = true;
         listen = [
-          { addr = "127.0.0.1"; port = 8443; ssl = true; }
-          { addr = "0.0.0.0";   port = 80;   ssl = false; }
+          {
+            addr = "127.0.0.1";
+            port = 8443;
+            ssl = true;
+          }
+          {
+            addr = "0.0.0.0";
+            port = 80;
+            ssl = false;
+          }
         ];
       };
-    } // builtins.mapAttrs mkHost services;
+
+      "lt.vxrnt.ru" =
+        let
+          base = mkHost "lt.vxrnt.ru" 5389;
+        in
+        base
+        // {
+          locations = base.locations // {
+            "= /sync".proxyPass = "http://127.0.0.1:8291";
+            "= /rules".proxyPass = "http://127.0.0.1:8291";
+            "= /subtitle-translator".return = "301 /subtitle-translator/";
+            "/subtitle-translator/" = {
+              proxyPass = "http://127.0.0.1:5390";
+              extraConfig = ''
+                client_max_body_size 20m;
+                proxy_read_timeout 3600s;
+                proxy_send_timeout 3600s;
+              '';
+            };
+          };
+        };
+    }
+    // builtins.mapAttrs mkHost services;
   };
 }
