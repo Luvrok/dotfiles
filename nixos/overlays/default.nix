@@ -10,6 +10,18 @@ in
 
   nixpkgs.overlays = [
     (final: prev: {
+      stable-diffusion-cpp = prev.stable-diffusion-cpp.overrideAttrs (_: {
+        version = "master-920-2f88688";
+        src = prev.fetchFromGitHub {
+          owner = "leejet";
+          repo = "stable-diffusion.cpp";
+          tag = "master-920-2f88688";
+          hash = "sha256-TkPBSL0DBIYP4fSFXGaV/zHsswic4LbniK/Ug+fl7Hw=";
+          fetchSubmodules = true;
+        };
+      });
+    })
+    (final: prev: {
       dwm = prev.dwm.overrideAttrs (old: {
         version = "dwm-6.7";
         src = inputs.dwm.outPath;
@@ -112,16 +124,16 @@ in
           vulkanSupport = true;
           # Enable BLAS for optimized CPU layer performance (OpenBLAS)
           blasSupport = true;
-        }).overrideAttrs (oldAttrs: {
-          # Enable native CPU optimizations (AVX, AVX2, etc.)
-          cmakeFlags =
-            (oldAttrs.cmakeFlags or []) ++ ["-DGGML_NATIVE=ON"];
-          # Disable Nix's march=native stripping
-          preConfigure = ''
-            export NIX_ENFORCE_NO_NATIVE=0
-            ${oldAttrs.preConfigure or ""}
-          '';
-        });
+        }).overrideAttrs
+          (oldAttrs: {
+            # Enable native CPU optimizations (AVX, AVX2, etc.)
+            cmakeFlags = (oldAttrs.cmakeFlags or [ ]) ++ [ "-DGGML_NATIVE=ON" ];
+            # Disable Nix's march=native stripping
+            preConfigure = ''
+              export NIX_ENFORCE_NO_NATIVE=0
+              ${oldAttrs.preConfigure or ""}
+            '';
+          });
     })
     inputs.better-swallow.overlay
     inputs.lazygit.overlays.default

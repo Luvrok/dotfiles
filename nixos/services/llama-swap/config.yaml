@@ -169,6 +169,28 @@ models:
     checkEndpoint: none
     ttl: 600
 
+  # unsloth GGUF. Нужен sd.cpp новее master-827 (overlay в nixos/overlays).
+  # DiT ~4.3 GB + Qwen3-VL-8B ~5 GB — влезает в VRAM, остальное решает --auto-fit.
+  # flow-shift не задаём: sd.cpp сам подбирает расписание под разрешение.
+  # Размеры должны делиться на 32.
+  "qwen-image-2.1":
+    description: "Qwen-Image-2.1 Q4_K_M (unsloth). Text-to-image, text rendering, RGBA."
+    cmd: |
+      sd-server
+      --listen-ip 127.0.0.1
+      --listen-port ${PORT}
+      --diffusion-model ${models}/qwen-image-2.1/qwen-image-2.1-Q4_K_M.gguf
+      --llm ${models}/qwen-image-2.1/Qwen3-VL-8B-Instruct-UD-Q4_K_XL.gguf
+      --vae ${models}/qwen-image-2.1/qwen_image_2.1_vae_bf16.safetensors
+      --diffusion-fa
+      --cfg-scale 6.0
+      --sampling-method euler
+      --steps 20
+      -W 1024
+      -H 1024
+    checkEndpoint: none
+    ttl: 600
+
   "embed":
     description: "Qwen3-Embedding-0.6B Q8_0, CPU. For Open WebUI RAG."
     cmd: |
@@ -192,9 +214,11 @@ groups:
       - z-image
       - flux2-klein
       - qwen-image
+      - qwen-image-2.1
   "embed":
     swap: false
     exclusive: false
     persistent: true
     members:
       - embed
+

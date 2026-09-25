@@ -7,6 +7,7 @@
 }:
 
 let
+  # Version is bumped in nixos/overlays (Qwen-Image-2.1 support)
   sd-cpp = pkgs.stable-diffusion-cpp.override { vulkanSupport = true; };
 in
 {
@@ -19,6 +20,10 @@ in
   ];
 
   systemd.services.syncthing.environment.STNODEFAULTFOLDER = "true";
+
+  # Same sd-cli/sd-server build as llama-swap uses, for manual runs.
+  # `nix shell nixpkgs#stable-diffusion-cpp-*` ignores overlays and gives the old version.
+  environment.systemPackages = [ sd-cpp ];
 
   systemd.services.llama-swap = {
     # llama-swap starts `llama-server` from cmd, so it must be in PATH
