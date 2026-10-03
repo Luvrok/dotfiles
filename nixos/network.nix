@@ -1,6 +1,36 @@
 { username, ... }:
 
+let
+  # DNS comes only from modules/doh.nix, so DNS servers pushed by DHCP/RA
+  # (the ISP's, spoofable) are ignored.
+  # Lower metric wins: ethernet is preferred over wifi when both are up.
+  mkLink = name: metric: {
+    matchConfig.Name = name;
+
+    networkConfig = {
+      DHCP = "yes";
+      IPv6AcceptRA = true;
+    };
+
+    dhcpV4Config = {
+      UseDNS = false;
+      RouteMetric = metric;
+    };
+
+    dhcpV6Config.UseDNS = false;
+
+    ipv6AcceptRAConfig = {
+      UseDNS = false;
+      RouteMetric = metric;
+    };
+  };
+in
 {
+  imports = [
+    ../modules/doh
+    ../modules/doh/local-doh.nix
+  ];
+
   networking = {
     hostName = "${username}";
 
@@ -8,13 +38,6 @@
     useDHCP = false;
     usePredictableInterfaceNames = true;
     networkmanager.enable = false;
-
-    nameservers = [
-      "9.9.9.9"
-      "149.112.112.112"
-      "2620:fe::fe"
-      "2620:fe::9"
-    ];
 
     firewall = {
       enable = true;
@@ -33,6 +56,7 @@
       ];
     };
 
+    # iwd only authenticates; addresses and routes come from networkd
     wireless.iwd = {
       enable = true;
       settings = {
@@ -43,79 +67,18 @@
           EnableNetworkConfiguration = false;
           RoamRetryInterval = 10;
         };
-
-        Network = {
-          EnableIPv6 = true;
-          RoutePriorityOffset = 300;
-        };
+        Network.EnableIPv6 = true;
       };
     };
   };
 
-  # systemd-resolved
-  services.resolved = {
-    enable = true;
-    settings.Resolve = {
-      DNSSEC = false;
-      DNSOverTLS = false;
-      Domains = [ "~." ];
-      LLMNR = false;
-      FallbackDNS = [
-        "9.9.9.9"
-        "149.112.112.112"
-        "2620:fe::fe"
-        "2620:fe::9"
-      ];
-    };
-  };
-
-  # systemd-networkd
   systemd.network = {
     enable = true;
     wait-online.enable = false;
 
     networks = {
-      "10-eth" = {
-        matchConfig.Name = "enp14s0";
-
-        networkConfig = {
-          DHCP = "yes";
-          DNS = [
-            "9.9.9.9"
-            "149.112.112.112"
-            "2620:fe::fe"
-            "2620:fe::9"
-          ];
-          IPv6AcceptRA = "yes";
-          DNSOverTLS = true;
-        };
-
-        dhcpV4Config = {
-          UseDNS = false;
-          RouteMetric = 20;
-        };
-      };
-
-      "20-wifi" = {
-        matchConfig.Name = "wlan0";
-
-        networkConfig = {
-          DHCP = "yes";
-          DNS = [
-            "9.9.9.9"
-            "149.112.112.112"
-            "2620:fe::fe"
-            "2620:fe::9"
-          ];
-          IPv6AcceptRA = "yes";
-          DNSOverTLS = true;
-        };
-
-        dhcpV4Config = {
-          UseDNS = false;
-          RouteMetric = 10;
-        };
-      };
+      "10-eth" = mkLink "enp14s0" 100;
+      "20-wifi" = mkLink "wlan0" 600;
     };
   };
 }

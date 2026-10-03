@@ -1,6 +1,8 @@
 { lib, ... }:
 
 {
+  imports = [ ./beets.nix ];
+
   users.users.navidrome = {
     isSystemUser = true;
     group = lib.mkForce "media";

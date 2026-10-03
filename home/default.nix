@@ -85,6 +85,13 @@
 
       Xcursor.theme: Vanilla-DMZ
       Xcursor.size: 32
+
+      Nsxiv.window.background: #1d2021
+      Nsxiv.window.foreground: #ebdbb2
+      Nsxiv.bar.background: #1d2021
+      Nsxiv.bar.foreground: #ebdbb2
+      Nsxiv.mark.foreground: #d65d0e
+      Nsxiv.bar.font: JetBrainsMonoNL Nerd Font:size=14
     '';
   };
 

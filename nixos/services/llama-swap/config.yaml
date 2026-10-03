@@ -4,22 +4,25 @@ logLevel: info
 logToStdout: "both"
 
 healthCheckTimeout: 300
-
 globalTTL: 120
-
 includeAliasesInList: true
 
 macros:
   "models": "/var/lib/models"
+  # --fit-target 2048: fit сам раскидывает слои/экспертов между VRAM и RAM,
+  # оставляя ~2 GB VRAM свободными.
   "llama": >
-    llama-server --port ${PORT} --threads 8 --fit-target 3072 --jinja
+    llama-server --port ${PORT} --threads 8 --fit-target 2048 --jinja
+  "sd": >
+    sd-server --listen-ip 127.0.0.1 --listen-port ${PORT} --diffusion-fa
+
+# ---- Общие параметры ----
 
 x-qwen-params: &qwen-params
   filters:
     setParams:
       top_k: 20
       min_p: 0.0
-      repetition_penalty: 1.0
 
     setParamsByID:
       "${MODEL_ID}":
@@ -57,15 +60,84 @@ x-qwen-params: &qwen-params
         chat_template_kwargs:
           enable_thinking: true
 
+x-gemma-params: &gemma-params
+  filters:
+    setParams:
+      temperature: 1.0
+      top_p: 0.95
+      top_k: 64
+
+    setParamsByID:
+      "${MODEL_ID}":
+        chat_template_kwargs:
+          enable_thinking: false
+
+      "${MODEL_ID}:Thinking":
+        chat_template_kwargs:
+          enable_thinking: true
+
+x-sd-common: &sd-common
+  checkEndpoint: none
+  ttl: 600
+
 models:
+  # ---- Текст: llama.cpp ----
+
+  "Qwen-Benchmark":
+    description: "qwen for test"
+    cmd: |
+      llama-server
+      --port ${PORT}
+      --verbosity 4
+      -m /var/lib/models/Qwen3.8-27B-UD-IQ3_XXS.gguf
+      --gpu-layers all
+      --ctx-size 32768
+      --spec-type draft-mtp,ngram-mod
+      --spec-draft-n-max 2
+      --chat-template-kwargs '{"reasoning_effort":"low","enable_thinking":false}'
+      --reasoning-preserve
+      --temperature 0.7
+      --top_p 0.8
+      --presence_penalty 1.5
+
+  # ~9.75 GB, целиком в VRAM. Abliterated, MTP (спекулятивное декодирование).
+  "qwen-uncensored":
+    description: "Qwen3.8 27B GSQ-RCO IQ3_XXS abliterated, fully on GPU. MTP."
+    cmd: |
+      ${llama}
+      -m ${models}/qwen3.8-27b-UC/Qwen3.8-27B-GSQ-RCO-IQ3_XXS-Uncensored-v1.1.gguf
+      --chat-template-file ${models}/qwen3.8-27b-UC/froggeric-qwen3.8-tool-use.jinja
+      --ctx-size 32768
+      --cache-type-k q8_0
+      --cache-type-v q8_0
+      --spec-type draft-mtp
+      --spec-draft-n-max 2
+      --spec-draft-type-k q8_0
+      --spec-draft-type-v q8_0
+    <<: *qwen-params
+
+  # То же + vision projector (~0.9 GB VRAM). Контекст меньше, чтобы всё влезло.
+  "qwen-uncensored-vision":
+    description: "Qwen3.8 27B GSQ-RCO IQ3_XXS abliterated with vision (mmproj). Image input."
+    cmd: |
+      ${llama}
+      -m ${models}/qwen3.8-27b-UC/Qwen3.8-27B-GSQ-RCO-IQ3_XXS-Uncensored-v1.1.gguf
+      --mmproj ${models}/qwen3.8-27b-UC/mmproj/mmproj-Qwen3.8-27B-BF16.gguf
+      --chat-template-file ${models}/qwen3.8-27b-UC/froggeric-qwen3.8-tool-use.jinja
+      --ctx-size 32768
+      --cache-type-k q8_0
+      --cache-type-v q8_0
+      --spec-type draft-mtp
+      --spec-draft-n-max 2
+    <<: *qwen-params
+
+  # ~12 GB, fit целиком кладёт в VRAM. Самая быстрая, простые задачи и поиск.
   "gpt-oss":
     description: "gpt-oss-20b MXFP4, fully on GPU. Fast, web search."
     cmd: |
-      llama-server --port ${PORT} --threads 8
+      ${llama}
       -m ${models}/gpt-oss-20b-MXFP4.gguf
-      --gpu-layers all
       --ctx-size 65536
-      --jinja
     filters:
       setParams:
         temperature: 1.0
@@ -73,18 +145,37 @@ models:
         top_k: 0
         chat_template_kwargs:
           reasoning_effort: medium
+
+  # ~6.7 GB, fully on GPU. Быстрые задачи, поиск (хороший tool use).
+  "gemma-12b":
+    description: "Gemma 4 12B QAT UD-Q4_K_XL, fully on GPU. Fast, web search."
+    cmd: |
+      ${llama}
+      -m ${models}/gemma-4-12B-it-qat-UD-Q4_K_XL.gguf
+      --ctx-size 65536
+    <<: *gemma-params
+
+  # MoE, 4B active, ~14.2 GB. fit выносит часть экспертов в RAM, скорость почти не страдает.
+  "gemma-26b":
+    description: "Gemma 4 26B-A4B QAT UD-Q4_K_XL. MoE, fast, strong everyday model."
+    cmd: |
+      ${llama}
+      -m ${models}/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf
+      --ctx-size 65536
+    <<: *gemma-params
+
+  # Чуть быстрее qwen-code. Кандидат на удаление: gemma-26b закрывает ту же нишу.
   "qwen-fast":
-    description: "Qwen3.8 27B UD-Q3_K_XL, fully on GPU. Fast, everyday use."
+    description: "Qwen3.8 27B UD-Q3_K_XL, mostly on GPU. Everyday use."
     cmd: |
       ${llama}
       -m ${models}/Qwen3.8-27B-UD-Q3_K_XL.gguf
-      # --gpu-layers all
       --ctx-size 32768
       --cache-type-k q8_0
       --cache-type-v q8_0
     <<: *qwen-params
 
-  # ~17.6 GB, a few GB spill to RAM. Main coding model.
+  # ~17.6 GB, несколько GB в RAM. Основная для кода, слабая в поиске.
   "qwen-code":
     description: "Qwen3.8 27B UD-Q4_K_XL, partly on CPU. Coding with long context."
     cmd: |
@@ -95,7 +186,7 @@ models:
       --cache-type-v q8_0
     <<: *qwen-params
 
-  # ~22 GB, ~8 GB in RAM. Smartest, slow (~5-7 t/s). Hard questions only.
+  # ~22 GB, ~8 GB в RAM. Самая умная, медленная (~5-7 t/s). Только сложные вопросы.
   "qwen-smart":
     description: "Qwen3.8 27B UD-Q6_K, heavily on CPU. Smartest, slow."
     cmd: |
@@ -107,90 +198,73 @@ models:
     <<: *qwen-params
 
   # ---- Картинки: stable-diffusion.cpp (sd-server), API /v1/images/generations ----
-  # Флаги по docs/ в репозитории sd.cpp. Параметры генерации, заданные при старте
-  # (--cfg-scale, --steps), становятся дефолтами для запросов.
-  # Файлы лежат в ${models}/image.
+  # Параметры генерации, заданные при старте (--cfg-scale, --steps),
+  # становятся дефолтами для запросов.
 
-  # Основная. 6B, 8 шагов, быстрая. Всё влезает в VRAM (~12 GB).
+  # 6B, быстрая. Всё в VRAM (~12 GB).
   "z-image":
     description: "Z-Image-Turbo Q8_0. Fast text-to-image, photorealism."
     cmd: |
-      sd-server
-      --listen-ip 127.0.0.1
-      --listen-port ${PORT}
+      ${sd}
       --diffusion-model ${models}/image/z_image_turbo-Q8_0.gguf
       --llm ${models}/image/Qwen3-4B-Instruct-2507-Q8_0.gguf
-      --vae ${models}/image/ae.safetensors
-      --diffusion-fa
+      --vae ${models}/image/ae.safete- qwen-uncensorednsors
       --vae-conv-direct
-      --cfg-scale 1.0
-      --steps 8
-    # у sd-server может не быть /health — не ждём проверку
-    checkEndpoint: none
-    ttl: 600
+      --cfg-scale 3.0
+      --steps 20
+    <<: *sd-common
 
-  # Генерация + редактирование по референсу (-r / image в запросе). 4 шага.
+  # Генерация + редактирование по референсу (-r / image в запросе). Всё в VRAM.
   "flux2-klein":
     description: "FLUX.2-klein-4B Q8_0. Text-to-image and image editing."
     cmd: |
-      sd-server
-      --listen-ip 127.0.0.1
-      --listen-port ${PORT}
+      ${sd}
       --diffusion-model ${models}/image/flux-2-klein-4b-Q8_0.gguf
       --llm ${models}/image/Qwen3-4B-Q8_0.gguf
       --vae ${models}/image/flux2-vae.safetensors
-      --diffusion-fa
       --vae-conv-direct
-      --cfg-scale 1.0
+      --cfg-scale- qwen-uncensored 3.0
       --sampling-method euler
-      --steps 4
-    checkEndpoint: none
-    ttl: 600
+      --steps 20
+    <<: *sd-common
 
   # 20B, лучший текст на картинках. Медленная: DiT 13.2 GB + энкодер на CPU.
-  # Нативное разрешение 1328x1328.
+  # Нативное разрешение 1328x1328.- qwen-uncensored
   "qwen-image":
     description: "Qwen-Image-2512 Q4_K_M. Best text rendering, slow."
     cmd: |
-      sd-server
-      --listen-ip 127.0.0.1
-      --listen-port ${PORT}
+      ${sd}
       --diffusion-model ${models}/image/qwen-image-2512-Q4_K_M.gguf
       --llm ${models}/image/Qwen2.5-VL-7B-Instruct.Q4_K_M.gguf
       --vae ${models}/image/qwen_image_vae.safetensors
       --offload-to-cpu
       --clip-on-cpu
-      --diffusion-fa
       --vae-conv-direct
-      --cfg-scale 2.5
+      --cfg-scale 3.0
       --sampling-method euler
       --flow-shift 3
       --steps 30
-    checkEndpoint: none
-    ttl: 600
+    <<: *sd-common
 
-  # unsloth GGUF. Нужен sd.cpp новее master-827 (overlay в nixos/overlays).
-  # DiT ~4.3 GB + Qwen3-VL-8B ~5 GB — влезает в VRAM, остальное решает --auto-fit.
+  # Нужен sd.cpp новее master-827 (overlay в nixos/overlays).
+  # DiT ~4.3 GB + Qwen3-VL-8B ~5 GB, влезает в VRAM.
   # flow-shift не задаём: sd.cpp сам подбирает расписание под разрешение.
   # Размеры должны делиться на 32.
   "qwen-image-2.1":
     description: "Qwen-Image-2.1 Q4_K_M (unsloth). Text-to-image, text rendering, RGBA."
     cmd: |
-      sd-server
-      --listen-ip 127.0.0.1
-      --listen-port ${PORT}
+      ${sd}
       --diffusion-model ${models}/qwen-image-2.1/qwen-image-2.1-Q4_K_M.gguf
       --llm ${models}/qwen-image-2.1/Qwen3-VL-8B-Instruct-UD-Q4_K_XL.gguf
       --vae ${models}/qwen-image-2.1/qwen_image_2.1_vae_bf16.safetensors
-      --diffusion-fa
-      --cfg-scale 6.0
+      --cfg-scale 3.0
       --sampling-method euler
-      --steps 20
+      --steps 25
       -W 1024
       -H 1024
-    checkEndpoint: none
-    ttl: 600
+    <<: *sd-common
 
+  # ---- Эмбеддинги для RAG в Open WebUI (CPU, всегда загружена) ----
   "embed":
     description: "Qwen3-Embedding-0.6B Q8_0, CPU. For Open WebUI RAG."
     cmd: |
@@ -207,7 +281,11 @@ groups:
     swap: true
     exclusive: false
     members:
+      - Qwen-Benchmark
+      - qwen-uncensored
       - gpt-oss
+      - gemma-12b
+      - gemma-26b
       - qwen-fast
       - qwen-code
       - qwen-smart
@@ -221,4 +299,3 @@ groups:
     persistent: true
     members:
       - embed
-

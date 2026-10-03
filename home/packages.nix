@@ -8,9 +8,7 @@
     fish
     fastfetch
     p7zip
-    tree-sitter
     ly
-    nsxiv
     figlet
 
     # pass

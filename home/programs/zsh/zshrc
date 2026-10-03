@@ -98,5 +98,6 @@ alias psg='_ps_aux_grep'
 alias ranger='yazi' # huh why not?
 alias r='y'
 alias llm-off='curl -s localhost:11434/unload'
+alias piu='pi --no-extensions --provider llama-swap --model qwen-uncensored'
 
 export SYSTEMD_LESS=FRX

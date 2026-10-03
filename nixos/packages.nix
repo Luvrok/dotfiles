@@ -110,6 +110,7 @@
       age
       sops
       sshfs
+      pciutils
 
       # --- archives ---
       p7zip

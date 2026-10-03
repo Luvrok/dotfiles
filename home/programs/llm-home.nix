@@ -38,6 +38,16 @@ let
       name = "Qwen 27B Q6 smart";
       ctx = 65536;
     }
+    {
+      id = "gemma-26b";
+      name = "Gemma 4 26B-A4B";
+      ctx = 65536;
+    }
+    {
+      id = "qwen-uncensored";
+      name = "Qwen 27B IQ3 uncensored";
+      ctx = 65536;
+    }
   ];
 
   variants = [
@@ -74,7 +84,14 @@ let
         inherit (v) thinking;
       }
     ) variants
-  ) bases;
+  ) bases
+  ++ [
+    (mkModel {
+      id = "Qwen-Benchmark";
+      name = "Qwen 27B IQ3_XXS · benchmark";
+      ctx = 32768;
+    })
+  ];
 
   piModels = {
     providers.llama-swap = {
@@ -134,4 +151,9 @@ in
   home.file.".pi/agent/models.json".text = builtins.toJSON piModels;
   home.file.".pi/agent/settings.json".text = builtins.toJSON piSettings;
   home.file.".pi/web-search.json".text     = builtins.toJSON webSearch;
+
+  home.file.".pi/agent/skills" = {
+    source = ./pi-skills;
+    recursive = true;
+  };
 }

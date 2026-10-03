@@ -14,5 +14,6 @@
     ./zathura.nix
     ./element-desktop.nix
     ./llm-home.nix
+    ./nsxiv.nix
   ];
 }

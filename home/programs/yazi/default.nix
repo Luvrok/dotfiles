@@ -121,7 +121,7 @@ in
               "u"
               "u"
             ];
-            run = ''shell --confirm 'unzip "$1"' '';
+            run = "shell --block -- ${pkgs.unzip}/bin/unzip %h";
             desc = "Unzip file";
           }
           {
@@ -174,7 +174,7 @@ in
               "d"
               "r"
             ];
-            run = ''shell -- ${getExe pkgs.dragon-drop} -x -T -i -s 128 "$0"'';
+            run = "shell -- ${getExe pkgs.dragon-drop} -x -T -i -s 128 %h";
           }
           # clipboard.yazi
           {
@@ -243,8 +243,26 @@ in
       opener = {
         edit = [
           {
-            run = ''nvim "$@"'';
+            run = "nvim %s";
             block = true;
+          }
+        ];
+        image = [
+          {
+            run = "nsxiv %s";
+            orphan = true;
+            desc = "nsxiv";
+          }
+        ];
+      };
+      open = {
+        prepend_rules = [
+          {
+            mime = "image/*";
+            use = [
+              "image"
+              "reveal"
+            ];
           }
         ];
       };
@@ -258,7 +276,6 @@ in
         wrap = "yes";
       };
       tasks = {
-        macro_workers = 2;
         image_alloc = 268435456; # 256MB
         image_bound = [
           0
