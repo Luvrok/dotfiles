@@ -137,6 +137,7 @@
       slop
       st
       xclip
+      (tesseract.override { enableLanguages = [ "eng" "rus" ]; })
       xcolor
       xcursorthemes
       xdotool
