@@ -2,7 +2,6 @@
 
 {
   environment.systemPackages = with pkgs; [ beets ffmpeg ];
-  systemd.services.beets-auto.path = with pkgs; [ beets ffmpeg ];
   environment.variables.BEETSDIR = "/var/lib/beets";
 
   systemd.tmpfiles.rules = [ "d /var/lib/beets 0700 root root -" ];
@@ -16,12 +15,23 @@
       library: /var/lib/beets/library.db
 
       import:
-        move: yes
+        copy: no
+        move: no
         write: yes
+        resume: ask
         quiet_fallback: skip
         log: /var/lib/beets/import.log
 
-      plugins: musicbrainz fetchart embedart subsonicupdate subsonicplaylist
+      match:
+        strong_rec_thresh: 0.04
+        medium_rec_thresh: 0.10
+        rec_gap_thresh: 0.10
+        max_rec:
+            missing_tracks: medium
+            unmatched_tracks: medium
+        ignored: []
+
+      plugins: chroma musicbrainz mbsync spotify deezer lyrics fetchart embedart lastgenre duplicates info missing edit subsonicupdate fromfilename scrub replaygain unimported
 
       paths:
         default: $albumartist/$album%aunique{}/$track $title
@@ -30,6 +40,8 @@
 
       clutter: ["Thumbs.DB", ".DS_Store", "cover.jpg", "cover.png"]
 
+      chroma:
+        auto: yes
       fetchart:
         auto: yes
       embedart:
@@ -47,6 +59,9 @@
         password: '${config.sops.placeholder.navidrome_password}'
         playlist_names: ["delete"]
         delete: yes
+
+      ignore: ['_RETTUNG_*', '.*', '*.tmp', '*.part', 'lost+found']
+      ignore_hidden: yes
     '';
   };
 }

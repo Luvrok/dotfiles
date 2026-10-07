@@ -44,6 +44,11 @@ let
       ctx = 65536;
     }
     {
+      id = "gemma-12b";
+      name = "Gemma 4 12B";
+      ctx = 65536;
+    }
+    {
       id = "qwen-uncensored";
       name = "Qwen 27B IQ3 uncensored";
       ctx = 65536;

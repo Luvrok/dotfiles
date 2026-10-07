@@ -12,7 +12,7 @@ macros:
   # --fit-target 2048: fit сам раскидывает слои/экспертов между VRAM и RAM,
   # оставляя ~2 GB VRAM свободными.
   "llama": >
-    llama-server --port ${PORT} --threads 8 --fit-target 2048 --jinja
+    llama-server --port ${PORT} --threads 16 --fit-target 1024 --jinja
   "sd": >
     sd-server --listen-ip 127.0.0.1 --listen-port ${PORT} --diffusion-fa
 
@@ -107,7 +107,8 @@ models:
       ${llama}
       -m ${models}/qwen3.8-27b-UC/Qwen3.8-27B-GSQ-RCO-IQ3_XXS-Uncensored-v1.1.gguf
       --chat-template-file ${models}/qwen3.8-27b-UC/froggeric-qwen3.8-tool-use.jinja
-      --ctx-size 32768
+      --ctx-size 65536
+      --gpu-layers all
       --cache-type-k q8_0
       --cache-type-v q8_0
       --spec-type draft-mtp

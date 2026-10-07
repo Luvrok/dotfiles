@@ -111,6 +111,7 @@
     age
     sops
     tmux
+    chromaprint
   ];
 
   system.stateVersion = "26.05";

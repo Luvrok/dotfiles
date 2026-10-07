@@ -31,4 +31,7 @@
   environment.variables = {
     LIBVA_DRIVER_NAME = "radeonsi";
   };
+
+  hardware.amdgpu.overdrive.enable = true;
+  services.lact.enable = true;
 }
