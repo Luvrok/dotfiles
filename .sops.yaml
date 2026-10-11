@@ -3,6 +3,7 @@ keys:
   - &jedha    age1ylmhdnj5gp49p7403hjchxkyc8607snhmk8pdx76znyqk26htpeq2jma56
   - &kessel   age1l0akldwr5q056yvhzsm9zwsdzkequrfj8qjlt2zdqr39hyywlewqyte3p7
   - &tatooine age1pxd4w7tgfd0fytwv5qrgtpzlfhssqh3gz5chsyjjr0ldmyum4vuqwv547c
+  - &mos-eisley age1e8gcp4eux9sfydkq9a8l7gm2qda7npg6e4e8yl8n9gjldk706cjsyqqt3v
 
 creation_rules:
   - path_regex: secrets/(alderaan|barnard|jedha)\.yaml$
@@ -22,3 +23,9 @@ creation_rules:
       - age:
           - *barnard
           - *tatooine
+
+  - path_regex: secrets/mos-eisley\.yaml$
+    key_groups:
+      - age:
+          - *barnard
+          - *mos-eisley

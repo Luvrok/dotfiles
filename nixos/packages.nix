@@ -125,7 +125,6 @@
       pulseaudioFull
       qpwgraph
       v4l-utils
-      shira
 
       # --- xorg ---
       better-swallow
@@ -168,6 +167,7 @@
       obsidian
       pavucontrol
       qbittorrent
+      gopeed
       songrec
       spotify
       feishin

@@ -1,4 +1,4 @@
-{ ... }:
+{ config, ... }:
 
 let
   services = {
@@ -7,6 +7,8 @@ let
     "qbt.vxrnt.ru" = 8129;
     "anki.vxrnt.ru" = 8130;
     "koito.vxrnt.ru" = 4110;
+    "betanin.vxrnt.ru" = 9393;
+    "metube.vxrnt.ru" = 8081;
   };
 
   mkHost = host: port: {
@@ -45,6 +47,8 @@ in
     defaults.email = "an0ni442@yandex.ru";
   };
 
+  sops.secrets.metube_htpasswd.owner = "nginx";
+
   services.nginx = {
     enable = true;
     recommendedProxySettings = true;
@@ -66,6 +70,8 @@ in
         anki.vxrnt.ru          web;
         koito.vxrnt.ru         web;
         lt.vxrnt.ru            web;
+        betanin.vxrnt.ru       web;
+        metube.vxrnt.ru        web;
         default                xray;
       }
 
@@ -121,6 +127,11 @@ in
           };
         };
     }
-    // builtins.mapAttrs mkHost services;
+    // builtins.mapAttrs mkHost services
+    // {
+      "metube.vxrnt.ru" = mkHost "metube.vxrnt.ru" 8081 // {
+        basicAuthFile = config.sops.secrets.metube_htpasswd.path;
+      };
+    };
   };
 }

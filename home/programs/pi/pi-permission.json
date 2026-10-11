@@ -1,0 +1,94 @@
+{
+  "$schema": "https://raw.githubusercontent.com/gotgenes/pi-packages/main/packages/pi-permission-system/schemas/permissions.schema.json",
+
+  "permission": {
+    "*": "allow",
+
+    "path": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow",
+      "~/.ssh/*": "deny",
+      "~/.gnupg/*": "deny",
+      "~/.config/sops/*": "deny",
+      "~/.config/sops-nix/*": "deny",
+      "/run/secrets/*": "deny",
+      "/run/secrets.d/*": "deny",
+      "/run/user/*/secrets.d/*": "deny",
+      "~/.netrc": "deny",
+      "~/.config/gh/*": "deny",
+      "~/.aws/*": "deny"
+    },
+
+    "external_directory_read": "allow",
+    "external_directory_write": "ask",
+
+    "bash": {
+      "*": "ask",
+
+      "cd *": "allow",
+      "pwd": "allow",
+      "echo *": "allow",
+      "which *": "allow",
+      "type *": "allow",
+      "date": "allow",
+      "uname *": "allow",
+      "ps *": "allow",
+
+      "cat *": "allow",
+      "head *": "allow",
+      "tail *": "allow",
+      "ls *": "allow",
+      "tree *": "allow",
+      "stat *": "allow",
+      "file *": "allow",
+      "wc *": "allow",
+      "du *": "allow",
+      "df *": "allow",
+
+      "grep *": "allow",
+      "rg *": "allow",
+      "find *": "allow",
+      "find * -delete*": "ask",
+      "fd *": "allow",
+
+      "sort *": "allow",
+      "uniq *": "allow",
+      "cut *": "allow",
+      "tr *": "allow",
+      "jq *": "allow",
+      "sed -n *": "allow",
+      "diff *": "allow",
+      "sha256sum *": "allow",
+
+      "git status *": "allow",
+      "git diff *": "allow",
+      "git log *": "allow",
+      "git show *": "allow",
+      "git blame *": "allow",
+      "git ls-files *": "allow",
+      "git rev-parse *": "allow",
+      "git branch": "allow",
+      "git remote -v": "allow",
+
+      "go build *": "allow",
+      "go vet *": "allow",
+      "go test *": "allow",
+      "nix eval *": "allow",
+      "nix flake show *": "allow",
+      "nix flake check *": "allow",
+
+      "qmd search *": "allow",
+      "qmd vsearch *": "allow",
+      "qmd query *": "allow",
+      "qmd get *": "allow",
+      "qmd multi-get *": "allow",
+      "qmd ls": "allow",
+      "qmd ls *": "allow",
+      "qmd status": "allow",
+      "qmd collection list": "allow",
+      "qmd context list": "allow"
+    }
+  }
+}

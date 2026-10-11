@@ -8,6 +8,8 @@
     ./nginx.nix
   ];
 
+  sops.defaultSopsFile = ../../secrets/mos-eisley.yaml;
+
   nix.settings = {
     experimental-features = [
       "nix-command"

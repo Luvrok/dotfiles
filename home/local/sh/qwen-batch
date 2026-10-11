@@ -1,0 +1,311 @@
+#!/usr/bin/env bash
+# Пакетная генерация: Qwen-Image-2.1 (unsloth Q4_K_M GGUF) через stable-diffusion.cpp
+#
+#   qwen-batch                     # все слоты из файла промптов
+#   qwen-batch 2 5                 # только слоты 2 и 5
+#   CFG=3 qwen-batch 4             # разово: слот 4 с другим cfg
+#   SEEDS="303 404" qwen-batch 4   # разово: другие сиды
+#   SIZE=1536x1024 qwen-batch 4    # разово: другой размер
+#   REF=photo.png qwen-batch 4     # с картинкой-референсом; REF= (пусто) — без референса, даже если он есть в слоте
+#   DRY=1 qwen-batch               # показать команды, ничего не запускать
+#   PROMPTS=файл qwen-batch 40     # другой файл промптов
+#   qwen-batch --defaults          # напечатать папку, файл промптов и дефолты (их читает qwen-gen.sh)
+#
+# Откуда берётся каждый параметр, по убыванию приоритета:
+#   1. переменная при запуске:        SIZE   CFG   STEPS  SEEDS  REF
+#   2. значение слота в файле промптов: S[n]   C[n]  T[n]   D[n]   R[n]
+#   3. дефолт из блока НАСТРОЙКИ ниже
+#
+# Имя файла говорит, из чего картинка сделана:
+#   p39_s52812910_cfg3_st40_1248x832_q4km_vae-fix_8ffdc0.png
+#   слот _ сид _ cfg _ шаги _ размер _ квант модели _ VAE [_ref-имя] [_extra] _ хэш текста
+# Хэш в конце не случайный: это md5 от промпта, негатива, референса и EXTRA. Тот же текст — тот же хэш,
+# поправил промпт в слоте — хэш другой. Любая смена текста или настроек даёт другое имя, картинка сгенерится заново.
+# Готовые картинки пропускаются — можно прервать (Ctrl-C) и запустить снова.
+# Упавшая генерация не останавливает очередь: один повтор с --offload-to-cpu, потом следующая.
+# Весь вывод sd-cli — в $OUT/run.log.
+set -uo pipefail
+
+# ═══════════════════════════ НАСТРОЙКИ ═══════════════════════════
+
+DEF_SEEDS="101 202"   # сколько сидов — столько картинок на слот
+DEF_CFG=2.5           # Замеры на этой связке (Q4_K_M, sd.cpp, 1248x832, 40 шагов):
+#   1.0 — мелкие лица и дальний план расплываются; негатив не действует; один проход модели на шаг.
+#   Выше 1 — два прохода на шаг, вдвое дольше. Детали чётче, но вдоль кромок и по мелкой параллельной фактуре
+#   (доски, штакетник, сайдинг) появляются линии с шагом 8 px, и растут они примерно пропорционально cfg:
+#   на фото с дощатым домом 1.1 → 2.3 → 3.8 уровня яркости при cfg 1 → 2 → 4; на картине маслом вдвое слабее.
+#   Фото: 2–3. Иллюстрация, живопись, аниме: 3–4.
+DEF_STEPS=40          # 40 — официальный режим Qwen-Image-2.1; 20 — дефолт sd.cpp: вдвое быстрее, грубее
+DEF_SIZE=832x1248     # обе стороны кратны 32
+#   1K:  4:3 1152x864 | 3:4 864x1152 | 3:2 1248x832 | 2:3 832x1248 | 16:9 1536x864 | 9:16 864x1536 | 1:1 1024x1024
+#   2K (нативные, в разы дольше и больше VRAM):
+#        4:3 2400x1792 | 3:4 1792x2400 | 3:2 2528x1696 | 2:3 1696x2528 | 16:9 2752x1536 | 9:16 1536x2752 | 1:1 2048x2048
+#   В sd.cpp от ~1536 по стороне и выше сетка с шагом 8/4 px заметно сильнее (leejet/stable-diffusion.cpp#2041, не закрыт).
+OUT=${OUT:-/var/lib/models/qwen-image-2.1/out}   # папка для картинок и лога
+PROMPTS=${PROMPTS:-$HOME/HOME/scripts/qwen-prompts.sh}   # файл со слотами; туда же пишет qwen-gen.sh
+
+# что задано при запуске; пусто — не задано, берётся слот или дефолт
+RUN_SIZE=${SIZE:-} RUN_CFG=${CFG:-} RUN_STEPS=${STEPS:-} RUN_SEEDS=${SEEDS:-}
+RUN_REF_SET=${REF+x} RUN_REF=${REF:-}   # REF различает «не задан» и «задан пустым»
+
+if [[ ${1:-} == --defaults ]]; then
+  printf 'OUT=%s\nPROMPTS=%s\nCFG=%s\nSTEPS=%s\nSIZE=%s\nSEEDS=%s\n' "$OUT" "$PROMPTS" "$DEF_CFG" "$DEF_STEPS" "$DEF_SIZE" "$DEF_SEEDS"
+  exit 0
+fi
+
+# ═══════════════════════════ ПРОМПТЫ ═══════════════════════════
+#
+# Слоты лежат в отдельном файле: PROMPTS из блока НАСТРОЙКИ или PROMPTS=файл при запуске.
+# Туда же пишет qwen-gen.sh (скилл qwen-generate). Поля слота n:
+#   P[n] — промпт. Пустой → слот пропускается.
+#   N[n] — негатив. Пустой → без негатива. На cfg 1.0 не действует.
+#   S[n] — размер ШxВ.              Нет → пропорции референса, если он есть, иначе DEF_SIZE.
+#   C[n] — cfg.                     Нет → DEF_CFG.
+#   T[n] — шаги.                    Нет → DEF_STEPS.
+#   D[n] — сиды через пробел.       Нет → DEF_SEEDS.
+#   R[n] — путь к картинке-референсу (PNG/JPEG). Нет → обычная генерация по тексту.
+#          С референсом промпт пишется как правка этой картинки или как новая сцена с её объектом.
+#          Нужен файл mmproj рядом с моделями (F_MMPROJ ниже).
+# Обязателен только P[n]. Один негатив на несколько слотов: N[2]=${N[1]}.
+# В тексте: апостроф внутри '...' пишется как '\''. Скобки ( ) [ ] sd.cpp читает как веса токенов —
+# не использовать или экранировать: \( \).
+unset P N S C T D R   # на случай одноимённых переменных в окружении
+declare -a P N S C T D R
+[[ -f $PROMPTS ]] && source "$PROMPTS"
+
+# ═══════════════════════════ ПУТИ И ФЛАГИ ═══════════════════════════
+
+SD=${SD:-sd-cli}
+
+# Имена файлов моделей (лежат в одной папке)
+DEF_MODEL=qwen-image-2.1-Q4_K_M.gguf
+DEF_VAE=qwen_image_2.1_vae_bf16.safetensors    # только VAE от 2.1; от Qwen-Image/Wan даёт шум
+# DEF_VAE=texture_fix_vae_for_qwen_image_2.1_bf16.safetensors
+# Модель и VAE можно подменить на один запуск, чтобы сравнить на том же слоте и сиде:
+#   F_VAE=texture_fix_vae_for_qwen_image_2.1_bf16.safetensors qwen-batch 44
+#   F_MODEL=qwen-image-2.1-Q6_K.gguf qwen-batch 44
+# Штатный декодер VAE даёт мелкую сетку с шагом 2 px (рябь на ткани, листве, коже).
+# madebyollin/texture-fix-vae-for-qwen-image-2.1 — тот же латент, переобученный декодер: сетку 2 px убирает
+# полностью, но линии с шагом 8 px показывает в 1.5–3 раза контрастнее штатного. Что хуже — решать глазами.
+# Квант модели и VAE пишутся в имя картинки, так что варианты не затирают друг друга и не пропускаются.
+F_MODEL=${F_MODEL:-$DEF_MODEL}
+F_VAE=${F_VAE:-$DEF_VAE}
+F_LLM=Qwen3-VL-8B-Instruct-UD-Q4_K_XL.gguf
+F_MMPROJ=mmproj-F16.gguf                       # нужен только с референсом; лежит в unsloth/Qwen3-VL-8B-Instruct-GGUF
+
+# Папка с моделями: DIR=/путь qwen-batch — или ищется сама по списку ниже (первая, где лежит модель).
+# Скрипт можно запускать из любого места.
+SEARCH_DIRS=("$PWD" "$(dirname -- "$(readlink -f -- "$0")")" /var/lib/models/qwen-image-2.1)
+
+# EXTRA="--offload-to-cpu"  — доп. флаги sd-cli.
+
+# Сэмплинг под Qwen-Image-2.1 в sd.cpp (docs/qwen_image_2.1.md + гайд unsloth):
+#   euler; --flow-shift и --scheduler НЕ задавать — sd.cpp сам строит расписание под разрешение,
+#   фиксированное значение его молча портит; энкодер через --llm (не --qwen2vl).
+SAMPLING=(--sampling-method euler --diffusion-fa)
+
+# ═══════════════════════════ ДВИЖОК ═══════════════════════════
+
+LOG=$OUT/run.log
+TMP=$OUT/.part.$$.png
+log() { if [[ -n ${DRY:-} ]]; then printf '%s\n' "$*"; else printf '%s\n' "$*" | tee -a "$LOG"; fi; }
+die() { printf 'ошибка: %s\n' "$*" >&2; exit 1; }
+hm()  { printf '%dч%02dм' $(($1 / 3600)) $(($1 % 3600 / 60)); }
+short() { local t=${1,,}; t=${t//[^a-z0-9]/}; printf '%s' "${t:0:${2:-16}}"; }   # строчные буквы и цифры, не длиннее N
+
+# папка с моделями → абсолютный путь
+if [[ -n ${DIR:-} ]]; then
+  SEARCH_DIRS=("$DIR")
+fi
+DIR=
+for d in "${SEARCH_DIRS[@]}"; do
+  [[ -f $d/$F_MODEL ]] && { DIR=$(cd -- "$d" && pwd); break; }
+done
+if [[ -z $DIR ]]; then
+  [[ -n ${DRY:-} ]] || die "не нашёл $F_MODEL; искал в: ${SEARCH_DIRS[*]}"
+  DIR=${SEARCH_DIRS[0]}
+fi
+MODEL=$DIR/$F_MODEL VAE=$DIR/$F_VAE LLM=$DIR/$F_LLM MMPROJ=$DIR/$F_MMPROJ
+
+# размер картинки "Ш В" из заголовка PNG или JPEG, без внешних утилит
+img_size() {
+  local f=$1 pos=2 b
+  read -r -d '' -a b < <(od -An -tu1 -N24 -- "$f") || true # od печатает по 16 байт в строке
+  if ((${#b[@]} == 24 && b[0] == 137 && b[1] == 80)); then # PNG: IHDR
+    echo "$(((b[16] << 24) | (b[17] << 16) | (b[18] << 8) | b[19])) $(((b[20] << 24) | (b[21] << 16) | (b[22] << 8) | b[23]))"
+    return 0
+  fi
+  ((${#b[@]} >= 2 && b[0] == 255 && b[1] == 216)) || return 1 # не JPEG
+  while read -ra b < <(od -An -tu1 -j"$pos" -N9 -- "$f") && ((${#b[@]} == 9 && b[0] == 255)); do
+    case ${b[1]} in
+      192 | 193 | 194 | 195 | 197 | 198 | 199 | 201 | 202 | 203 | 205 | 206 | 207) # SOFn: высота, ширина
+        echo "$(((b[7] << 8) | b[8])) $(((b[5] << 8) | b[6]))"
+        return 0
+        ;;
+    esac
+    pos=$((pos + 2 + (b[2] << 8) + b[3]))
+  done
+  return 1
+}
+
+# референс слота → REF_ABS (абсолютный путь), REF_ID (путь + размер файла + время, идёт в хэш),
+# REF_SIZE (кадр по пропорциям референса с площадью DEF_SIZE; пусто, если размер не прочитался), REF_TAG (для имени)
+[[ $DEF_SIZE =~ ^([0-9]+)x([0-9]+)$ ]] || die "DEF_SIZE '$DEF_SIZE' не в формате ШxВ"
+AREA=$((BASH_REMATCH[1] * BASH_REMATCH[2]))
+ref_setup() {
+  local path=$1 wh t
+  REF_ABS='' REF_ID='' REF_SIZE='' REF_TAG=''
+  [[ -n $path ]] || return 0
+  # shellcheck disable=SC2088
+  [[ $path == "~/"* ]] && path=$HOME/${path#"~/"}   # в слоте путь стоит в кавычках, тильду оболочка не раскроет
+  [[ -f $path ]] || die "нет файла референса: $path"
+  REF_ABS=$(readlink -f -- "$path")
+  REF_ID="$REF_ABS $(stat -c '%s.%Y' -- "$REF_ABS")"
+  if wh=$(img_size "$REF_ABS"); then
+    REF_SIZE=$(awk -v w="${wh% *}" -v h="${wh#* }" -v a="$AREA" 'BEGIN {
+      W = int(sqrt(a * w / h) / 32 + 0.5) * 32; H = int(sqrt(a * h / w) / 32 + 0.5) * 32
+      printf "%dx%d", (W < 32 ? 32 : W), (H < 32 ? 32 : H) }')
+  fi
+  t=${REF_ABS##*/}
+  REF_TAG=_ref-$(short "${t%.*}")
+}
+
+# ── метки для имени файла, общие на весь запуск ──
+t=${F_MODEL%.*}
+t=${t##*2.1[-_]}                                         # qwen-image-2.1-Q4_K_M.gguf → Q4_K_M → q4km
+MODEL_TAG=$(short "$t")
+case $F_VAE in
+  qwen_image_2.1_vae_*) VAE_TAG=vae-stock ;;
+  texture_fix_vae*) VAE_TAG=vae-fix ;;
+  *) VAE_TAG=vae-$(short "${F_VAE%.*}") ;;
+esac
+# EXTRA может менять результат (например --model-args), поэтому помечается в имени и входит в хэш.
+# --offload-to-cpu картинку не меняет и не считается.
+read -ra EXTRA_ARR <<<"${EXTRA:-}"
+EXTRA_KEY=$(sed -E 's/--offload-to-cpu//g; s/  +/ /g; s/^ //; s/ $//' <<<"${EXTRA:-}")
+EXTRA_TAG=${EXTRA_KEY:+_extra}
+
+# какие слоты гоняем: аргументы или все заполненные
+sel=()
+if (($#)); then
+  for a in "$@"; do
+    [[ $a =~ ^[0-9]+$ ]] || die "'$a' — не номер слота"
+    a=$((10#$a))
+    [[ -n ${P[$a]:-} ]] || die "слот $a пуст: нет P[$a] в $PROMPTS"
+    sel+=("$a")
+  done
+else
+  for i in "${!P[@]}"; do [[ -n ${P[$i]} ]] && sel+=("$i"); done
+fi
+((${#sel[@]})) || die "нет ни одного заполненного слота — впиши P[n] в $PROMPTS"
+
+# очередь: по одной записи на картинку; готовые файлы пропускаем
+q_i=() q_seed=() q_sz=() q_cfg=() q_steps=() q_ref=() q_name=()
+skipped=0 need_mmproj=0
+for i in "${sel[@]}"; do
+  # параметры слота: запуск → слот → дефолт
+  cfg=${RUN_CFG:-${C[$i]:-$DEF_CFG}}
+  steps=${RUN_STEPS:-${T[$i]:-$DEF_STEPS}}
+  seeds=${RUN_SEEDS:-${D[$i]:-$DEF_SEEDS}}
+  if [[ -n $RUN_REF_SET ]]; then ref=$RUN_REF; else ref=${R[$i]:-}; fi
+  ref_setup "$ref"
+  sz=${RUN_SIZE:-${S[$i]:-${REF_SIZE:-$DEF_SIZE}}}
+
+  [[ $cfg =~ ^[0-9]+([.][0-9]+)?$ ]] || die "слот $i: cfg '$cfg' — не число"
+  [[ $steps =~ ^[0-9]+$ ]] && ((10#$steps > 0)) || die "слот $i: шаги '$steps' — не целое положительное число"
+  read -ra seed_arr <<<"${seeds//,/ }"
+  ((${#seed_arr[@]})) || die "слот $i: нет ни одного сида"
+  for s in "${seed_arr[@]}"; do [[ $s =~ ^[0-9]+$ ]] || die "слот $i: сид '$s' — не число"; done
+  [[ $sz =~ ^([0-9]+)x([0-9]+)$ ]] || die "слот $i: размер '$sz' не в формате ШxВ"
+  ((BASH_REMATCH[1] > 0 && BASH_REMATCH[2] > 0 && BASH_REMATCH[1] % 32 == 0 && BASH_REMATCH[2] % 32 == 0)) ||
+    die "слот $i: размер $sz не кратен 32"
+  [[ -n $REF_ABS ]] && need_mmproj=1
+
+  cfg_tag=$(awk -v c="$cfg" 'BEGIN { printf "%g", c }')   # 4.0 и 4 → одно имя: cfg4
+  # настройки стоят в имени открытым текстом; хэш покрывает то, что в имя не влезает: промпт, негатив,
+  # сам файл референса и EXTRA. Новый промпт в том же слоте не примется за уже готовый.
+  h=$(printf '%s\0' "${P[$i]}" "${N[$i]:-}" "$REF_ID" "$EXTRA_KEY" | md5sum | cut -c1-6)
+  for seed in "${seed_arr[@]}"; do
+    printf -v name 'p%02d_s%s_cfg%s_st%s_%s_%s_%s%s%s_%s.png' \
+      "$i" "$seed" "$cfg_tag" "$((10#$steps))" "$sz" "$MODEL_TAG" "$VAE_TAG" "$REF_TAG" "$EXTRA_TAG" "$h"
+    if [[ -s $OUT/$name ]]; then
+      skipped=$((skipped + 1))
+    else
+      q_i+=("$i") q_seed+=("$seed") q_sz+=("$sz") q_cfg+=("$cfg") q_steps+=("$((10#$steps))") q_ref+=("$REF_ABS") q_name+=("$name")
+    fi
+  done
+done
+total=${#q_name[@]}
+
+if [[ -z ${DRY:-} ]]; then
+  command -v "$SD" >/dev/null || die "не найден $SD"
+  for f in "$VAE" "$LLM"; do [[ -f $f ]] || die "нет файла $f"; done
+  ((!need_mmproj)) || [[ -f $MMPROJ ]] || die "для референса нужен $MMPROJ — скачай $F_MMPROJ из unsloth/Qwen3-VL-8B-Instruct-GGUF"
+  mkdir -p "$OUT" || die "не могу создать $OUT"
+  # не даём системе уснуть, пока скрипт жив
+  if command -v systemd-inhibit >/dev/null; then
+    systemd-inhibit --what=idle:sleep --why='image batch' tail --pid=$$ -f /dev/null >/dev/null 2>&1 &
+  fi
+  log ""
+  log "=== $(date '+%F %T')  $("$SD" --version 2>/dev/null | head -1)"
+fi
+run_note=''
+[[ -n $RUN_SIZE ]] && run_note+=" SIZE=$RUN_SIZE"
+[[ -n $RUN_CFG ]] && run_note+=" CFG=$RUN_CFG"
+[[ -n $RUN_STEPS ]] && run_note+=" STEPS=$RUN_STEPS"
+[[ -n $RUN_SEEDS ]] && run_note+=" SEEDS=\"$RUN_SEEDS\""
+[[ -n $RUN_REF_SET ]] && run_note+=" REF=${RUN_REF:-<без референса>}"
+log "=== к генерации: $total, уже готово: $skipped | слотов: ${#sel[@]} | задано при запуске:${run_note:- ничего, всё из слотов и дефолтов} | $F_MODEL, $F_VAE"
+
+ok=0 failed=() spent=0
+finish() {
+  rm -f "$TMP"
+  log "=== итог: готово $ok из $total, ошибок ${#failed[@]}, время $(hm "$spent")"
+  ((${#failed[@]})) && printf '    не получилось: %s\n' "${failed[@]}" | tee -a "$LOG"
+  exit "$1"
+}
+trap 'log "!! прервано"; finish 130' INT TERM
+
+for ((j = 0; j < total; j++)); do
+  i=${q_i[j]} seed=${q_seed[j]} sz=${q_sz[j]} cfg=${q_cfg[j]} steps=${q_steps[j]} ref=${q_ref[j]} name=${q_name[j]}
+  n=$((j + 1))
+  neg=${N[$i]:-}
+
+  cmd=("$SD" --diffusion-model "$MODEL" --vae "$VAE" --llm "$LLM"
+    "${SAMPLING[@]}" --cfg-scale "$cfg" --steps "$steps"
+    -W "${sz%x*}" -H "${sz#*x}" -s "$seed")
+  [[ -n $ref ]] && cmd+=(-r "$ref" --llm_vision "$MMPROJ")
+  [[ -n $neg ]] && cmd+=(-n "$neg")   # пустой негатив → флаг -n не передаётся вообще
+  cmd+=("${EXTRA_ARR[@]}" -p "${P[$i]}" -o "$TMP")
+
+  log ">>> [$n/$total] $name  (негатив: $([[ -n $neg ]] && echo да || echo нет)${ref:+, референс: ${ref##*/}})"
+  if [[ -n ${DRY:-} ]]; then
+    printf '%q ' "${cmd[@]}"; printf '\n\n'
+    continue
+  fi
+
+  t0=$SECONDS
+  rm -f "$TMP"
+  "${cmd[@]}" 2>&1 | tee -a "$LOG"
+  rc=${PIPESTATUS[0]}
+  if [[ ($rc -ne 0 || ! -s $TMP) && " ${EXTRA:-} " != *" --offload-to-cpu "* ]]; then
+    log "!! сбой (код $rc), повтор с --offload-to-cpu"
+    rm -f "$TMP"
+    "${cmd[@]}" --offload-to-cpu 2>&1 | tee -a "$LOG"
+    rc=${PIPESTATUS[0]}
+  fi
+  dt=$((SECONDS - t0))
+  spent=$((spent + dt))
+
+  if [[ $rc -eq 0 && -s $TMP ]]; then
+    mv -f "$TMP" "$OUT/$name"
+    ok=$((ok + 1))
+    log "<<< ok за $(hm "$dt"), осталось ~$(hm $((spent * (total - n) / n)))"
+  else
+    failed+=("$name")
+    log "<<< ОШИБКА (код $rc): $name"
+  fi
+done
+
+[[ -n ${DRY:-} ]] && exit 0
+finish $((${#failed[@]} > 0))

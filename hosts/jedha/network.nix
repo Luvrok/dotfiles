@@ -54,36 +54,10 @@ in
       allowPing = true;
       allowedTCPPorts = [
         22
-        80
-        443
-        4110
-        4533
-        4545
-        5201
-        5389
-        8129
-        8130
-        8208
-        8291
-        8384
-        8392
-        8448
         22000 # syncthing
         42853
       ];
       allowedUDPPorts = [
-        4110
-        4533
-        4545
-        5201
-        5389
-        8129
-        8130
-        8208
-        8291
-        8384
-        8392
-        8448
         21027 # syncthing discovery
         22000 # syncthing
         42853

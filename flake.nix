@@ -29,6 +29,8 @@
     textfoxy.url = "github:Luvrok/textfoxy";
     voidsddm.url = "github:Luvrok/VoidSDDM";
     voidsddm.flake = false;
+
+    qmd.url = "github:tobi/qmd";
   };
 
   outputs =
@@ -92,6 +94,10 @@
           ./hosts/barnard/env.nix
 
           sops-nix.nixosModules.sops
+
+          inputs.artcraft.nixosModules.default
+          { programs.artcraft.enable = true; }
+
           zapret-discord-youtube.nixosModules.withTestTools
           {
             services.zapret-discord-youtube = {
@@ -164,24 +170,13 @@
         ];
       };
 
-      nixosConfigurations."tatooine" = nixpkgs.lib.nixosSystem {
-        inherit pkgs;
-        specialArgs = {
-          username = "tatooine";
-        };
-        modules = [
-          disko.nixosModules.disko
-          ./hosts/tatooine
-          ./hosts/tatooine/disk-config.nix
-        ];
-      };
-
       nixosConfigurations."mos-eisley" = nixpkgs.lib.nixosSystem {
         inherit pkgs;
         specialArgs = {
           username = "mos-eisley";
         };
         modules = [
+          sops-nix.nixosModules.sops
           disko.nixosModules.disko
           ./hosts/mos-eisley
           ./hosts/mos-eisley/disk-config.nix

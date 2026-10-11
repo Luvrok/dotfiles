@@ -44,13 +44,10 @@ in
       trustedInterfaces = [ "virbr0" ];
       allowPing = true;
       allowedTCPPorts = [
-        7777
-        8384
         22000 # syncthing
         61208
       ];
       allowedUDPPorts = [
-        7777
         21027 # syncthing discovery
         22000 # syncthing
       ];

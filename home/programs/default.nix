@@ -13,7 +13,7 @@
     ./mpv.nix
     ./zathura.nix
     ./element-desktop.nix
-    ./llm-home.nix
+    ./pi
     ./nsxiv.nix
   ];
 }
