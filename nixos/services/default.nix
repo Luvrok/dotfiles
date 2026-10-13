@@ -7,7 +7,6 @@
 }:
 
 let
-  # Version is bumped in nixos/overlays (Qwen-Image-2.1 support)
   sd-cpp = pkgs.stable-diffusion-cpp.override { vulkanSupport = true; };
 in
 {
@@ -19,20 +18,18 @@ in
     ./librechat.nix
   ];
 
+  environment.etc."i3blocks.conf".source = ./i3/i3blocks.conf;
+
   systemd.services.syncthing.environment.STNODEFAULTFOLDER = "true";
 
-  # Same sd-cli/sd-server build as llama-swap uses, for manual runs.
-  # `nix shell nixpkgs#stable-diffusion-cpp-*` ignores overlays and gives the old version.
   environment.systemPackages = [ sd-cpp ];
 
   systemd.services.llama-swap = {
-    # llama-swap starts `llama-server` from cmd, so it must be in PATH
     path = [
       pkgs.llama-cpp
       sd-cpp
     ];
 
-    # Restart the service when the config changes on rebuild
     restartTriggers = [ config.environment.etc."llama-swap/config.yaml".source ];
 
     serviceConfig = {
@@ -44,17 +41,13 @@ in
         ]
       );
 
-      # GPU access for the sandboxed service user
       SupplementaryGroups = [
         "render"
         "video"
       ];
+
       PrivateDevices = lib.mkForce false;
-
-      # llama.cpp JIT-compiles GPU kernels, fails with this on
       MemoryDenyWriteExecute = lib.mkForce false;
-
-      # Model in swap = unusable speed
       MemorySwapMax = "0";
     };
   };
@@ -64,7 +57,7 @@ in
   services = {
     vnstat.enable = true;
     devmon.enable = true;
-    displayManager.defaultSession = "none+dwm";
+    displayManager.defaultSession = "none+i3";
     blueman.enable = true;
     journald.console = "/dev/tty4";
     earlyoom.enable = true;
@@ -87,7 +80,6 @@ in
     llama-swap = {
       enable = true;
       port = 11434;
-      # listenAddress defaults to localhost; set "0.0.0.0" + open firewall for LAN access
     };
     fstrim = {
       enable = true;

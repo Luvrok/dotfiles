@@ -31,6 +31,9 @@
     voidsddm.flake = false;
 
     qmd.url = "github:tobi/qmd";
+
+    picom-pijulius.url = "github:pijulius/picom";
+    picom-pijulius.flake = false;
   };
 
   outputs =
@@ -94,9 +97,6 @@
           ./hosts/barnard/env.nix
 
           sops-nix.nixosModules.sops
-
-          inputs.artcraft.nixosModules.default
-          { programs.artcraft.enable = true; }
 
           zapret-discord-youtube.nixosModules.withTestTools
           {

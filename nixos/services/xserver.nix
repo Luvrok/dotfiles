@@ -29,9 +29,18 @@ in
     layout = "us,ru";
   };
 
+  windowManager.i3 = {
+    enable = true;
+    configFile = ./i3/config;
+    extraPackages = with pkgs; [ i3blocks ];
+  };
+
   windowManager.dwm = {
     enable = true;
     package = pkgs.dwm;
+    extraSessionCommands = ''
+      dwmblocks &
+    '';
   };
 
   displayManager = {
@@ -46,8 +55,6 @@ in
         --not-when-fullscreen --not-when-audio \
         --timer 300 "${pkgs.xset}/bin/xset dpms force off" \
                     "${pkgs.xset}/bin/xset dpms force on" &
-
-      dwmblocks &
     '';
   };
 
