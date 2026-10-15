@@ -1,5 +1,7 @@
 set $mod Mod4
 
+include ~/.config/eww/wifi-menu/i3-wifi.conf
+
 font pango:JetBrainsMonoNL NFP 10
 
 set_from_resource $normbg     dwm.normbgcolor     #000000
@@ -19,7 +21,7 @@ client.background       $normbg
 
 default_border pixel 1
 default_floating_border pixel 1
-hide_edge_borders none
+hide_edge_borders smart_no_gaps
 
 gaps inner 10
 gaps outer 0
@@ -28,37 +30,61 @@ smart_gaps off
 focus_follows_mouse yes
 mouse_warping output
 focus_on_window_activation smart
-focus_wrapping yes
+focus_wrapping workspace
 
 # workspaces
+# Теги как в dwm: у каждого монитора свои 1..9, переключение и перенос окон
+# идут через i3-ws. Основной монитор — воркспейсы 1..9, второй — 11..19,
+# в баре на обоих видно 1..9.
+# Привязка к мониторам: i3 создаёт эти воркспейсы только на своём мониторе
+# и возвращает их туда, когда монитор снова подключается.
+workspace 1 output primary
+workspace 2 output primary
+workspace 3 output primary
+workspace 4 output primary
+workspace 5 output primary
+workspace 6 output primary
+workspace 7 output primary
+workspace 8 output primary
+workspace 9 output primary
 
-set $ws1 "1"
-set $ws2 "2"
-set $ws3 "3"
-set $ws4 "4"
-set $ws5 "5"
-set $ws6 "6"
-set $ws7 "7"
-set $ws8 "8"
-set $ws9 "9"
+# Второй монитор. Подключишь другой — допиши его имя через пробел.
+workspace 11 output DisplayPort-0
+workspace 12 output DisplayPort-0
+workspace 13 output DisplayPort-0
+workspace 14 output DisplayPort-0
+workspace 15 output DisplayPort-0
+workspace 16 output DisplayPort-0
+workspace 17 output DisplayPort-0
+workspace 18 output DisplayPort-0
+workspace 19 output DisplayPort-0
 
-# tabbed = 1, 2, 9
-for_window [workspace="^(1|2|9)$"] layout tabbed
+# tabbed: tags 1, 2, 9 on both monitors (11, 12, 19 on the second one)
+workspace 1 gaps inner 0
+workspace 2 gaps inner 0
+workspace 9 gaps inner 0
+workspace 11 gaps inner 0
+workspace 12 gaps inner 0
+workspace 19 gaps inner 0
+for_window [workspace="^(1|2|9|11|12|19)$"] layout tabbed
 
-assign [class="^librewolf$"]   $ws1
-assign [class="^obsidian$"]    $ws2
-assign [class="^qBittorrent$"] $ws9
-assign [class="^v2rayN$"]      $ws9
+assign [class="^librewolf$"]   number 1
+assign [class="^obsidian$"]    number 2
+assign [class="^qBittorrent$"] number 9
+assign [class="^v2rayN$"]      number 9
 
 for_window [title="^Picture-in-Picture$"] floating enable, sticky enable, resize set 720 400
 
 for_window [class="^Dragon-drop$"] floating enable, move position center
 for_window [class="^ffplay$" title="^android-webcam$"] floating enable
 
+# i3-sp finds scratchpads by these marks. size is duplicated in i3-sp
+for_window [class="^spterm$"]     mark --add _sp_spterm
+for_window [class="^spdotfiles$"] mark --add _sp_spdotfiles
+for_window [class="^rangerterm$"] mark --add _sp_rangerterm
 for_window [class="^(spterm|spdotfiles|rangerterm)$"] floating enable, resize set 1280 910, move scratchpad, scratchpad show, move position center
 
 # mouse
-
 floating_modifier $mod
 tiling_drag modifier
 # middle mouse
@@ -66,14 +92,12 @@ bindsym --whole-window $mod+button2 floating toggle
 
 # programs
 
-bindsym $mod+p exec --no-startup-id "xkb-switch -s us; pkill -RTMIN+1 i3blocks; rofi-menu"
+bindsym $mod+p exec --no-startup-id "xkb-switch -s us; rofi-menu"
 
 bindsym $mod+c         exec --no-startup-id rofi-greenclip
 bindsym $mod+Shift+t   exec kitty
 bindsym $mod+Shift+f   exec --no-startup-id rofi-librewolf
-bindsym --release $mod+space exec --no-startup-id pkill -RTMIN+1 i3blocks
 bindsym $mod+w         exec --no-startup-id rofi-powermenu
-bindsym $mod+Ctrl+w    exec --no-startup-id rofi-wifi
 bindsym $mod+b         exec --no-startup-id rofi-bluetooth
 bindsym $mod+Shift+w   exec --no-startup-id webcam
 bindsym $mod+r         exec --no-startup-id rofi-recording
@@ -99,61 +123,66 @@ bindsym $mod+F7       exec --no-startup-id xrandr --output DisplayPort-0 --left-
 bindsym $mod+Shift+F7 exec --no-startup-id xrandr --output DisplayPort-0 --off
 
 # scratchpads
+bindsym $mod+g exec --no-startup-id i3-sp toggle spterm kitty --class spterm --name spterm --title scratchpad
+bindsym $mod+v exec --no-startup-id i3-sp toggle spdotfiles kitty --class spdotfiles --name spdotfiles --title dotfiles -e sh -c 'cd ~/HOME/infra/dotfiles && nvim'
+bindsym $mod+e exec --no-startup-id i3-sp toggle rangerterm kitty --class rangerterm --name rangerterm --title ranger -e sh -c 'cd && yazi'
 
-bindsym $mod+g exec --no-startup-id "i3-msg -q '[class=^spterm$] scratchpad show' || kitty --class spterm --name spterm --title scratchpad"
-bindsym $mod+v exec --no-startup-id "i3-msg -q '[class=^spdotfiles$] scratchpad show' || kitty --class spdotfiles --name spdotfiles --title dotfiles -e sh -c 'cd ~/HOME/infra/dotfiles && nvim'"
-bindsym $mod+e exec --no-startup-id "i3-msg -q '[class=^rangerterm$] scratchpad show' || kitty --class rangerterm --name rangerterm --title ranger -e sh -c 'cd && yazi'"
+# setscratch: focused window becomes the $mod+g scratchpad
+bindsym $mod+Ctrl+g  exec --no-startup-id i3-sp set spterm
+# removescratch: $mod+g scratchpad becomes a normal tile, $mod+g opens a new one
+bindsym $mod+Shift+g [con_id="__focused__" con_mark="^_sp_spterm$"] unmark _sp_spterm; floating disable
 
-# removescratch to tile
-bindsym $mod+Shift+g floating disable
-# setscratch: set current window to scratchpad
-bindsym $mod+Ctrl+g  floating enable, move scratchpad
+# hide / showall: per tag, windows come back tiled or floating as they were
+bindsym $mod+Ctrl+h  exec --no-startup-id i3-sp hide
+bindsym $mod+Ctrl+s  exec --no-startup-id i3-sp showall
 
 # tiling <-> floating
 bindsym $mod+semicolon        focus mode_toggle
-
-# hide / showall
-bindsym $mod+Ctrl+h move scratchpad
-bindsym $mod+Ctrl+s scratchpad show
 
 # windows
 bindsym $mod+Shift+b bar mode toggle
 bindsym $mod+y       fullscreen toggle
 
-# focusstack / pushstack
-bindsym $mod+j       focus next
-bindsym $mod+k       focus prev
-bindsym $mod+Shift+j move down
-bindsym $mod+Shift+k move up
+# focusstack / pushstack: one ring per tag, master then the stack top to
+# bottom (clockwise), tabs in tab order. j goes clockwise, k back, both wrap
+bindsym $mod+j       exec --no-startup-id i3-tile focus next
+bindsym $mod+k       exec --no-startup-id i3-tile focus prev
+bindsym $mod+Shift+j exec --no-startup-id i3-tile move next
+bindsym $mod+Shift+k exec --no-startup-id i3-tile move prev
 
 # setmfact, setcfact
-bindsym $mod+h       resize shrink width 5 px or 5 ppt
-bindsym $mod+l       resize grow width 5 px or 5 ppt
-bindsym $mod+Shift+h resize grow height 5 px or 5 ppt
-bindsym $mod+Shift+l resize shrink height 5 px or 5 ppt
+bindsym $mod+h      resize shrink width 5 px or 5 ppt
+bindsym $mod+l      resize grow width 5 px or 5 ppt
+bindsym $mod+Mod1+h resize grow height 5 px or 5 ppt
+bindsym $mod+Mod1+l resize shrink height 5 px or 5 ppt
 
 # like master window
 bindsym $mod+i split h
 bindsym $mod+d split v
 
-bindsym $mod+Shift+c kill
-bindsym $mod+Tab     workspace back_and_forth
+# any window fades out and hides, then gets closed. if it refuses (unsaved
+# stuff), it's back on its tag in 2 s
+bindsym $mod+Shift+c exec --no-startup-id i3-sp kill
+# предыдущий тег этого монитора (workspace back_and_forth общий на все мониторы)
+bindsym $mod+Tab     exec --no-startup-id i3-ws back
 
-# setlayout: tile / monocle
-bindsym $mod+t layout toggle split
-bindsym $mod+m layout tabbed
+# setlayout: tile / monocle. monocle flattens master/stack first, else
+# it'd tab only the stack
+bindsym $mod+t gaps inner current set 10; gaps outer current set 0; layout default; exec --no-startup-id i3-tile fix
+bindsym $mod+m gaps inner current set 0;  gaps outer current set 0; exec --no-startup-id i3-tile monocle
 
 bindsym $mod+Shift+space floating toggle
 bindsym $mod+f           move position center
 bindsym $mod+s           sticky toggle
 
 # focusmon / tagmon / tagmonstay
+# Окно уходит на открытый тег соседнего монитора, воркспейсы остаются на месте.
 bindsym $mod+comma        focus output left
 bindsym $mod+period       focus output right
-bindsym $mod+Shift+comma  move container to output left
-bindsym $mod+Shift+period move container to output right
-bindsym $mod+Ctrl+comma   move container to output left, focus output left
-bindsym $mod+Ctrl+period  move container to output right, focus output right
+bindsym $mod+Shift+comma  move container to output left, focus output left
+bindsym $mod+Shift+period move container to output right, focus output right
+bindsym $mod+Ctrl+comma   move container to output left
+bindsym $mod+Ctrl+period  move container to output right
 
 # xrdb
 bindsym $mod+F5 exec --no-startup-id "xrdb -merge ~/.Xresources && i3-msg reload"
@@ -162,58 +191,38 @@ bindsym $mod+F5 exec --no-startup-id "xrdb -merge ~/.Xresources && i3-msg reload
 bindsym $mod+Ctrl+Shift+q restart
 bindsym $mod+Shift+BackSpace exit
 
-# view / tag / tagswitch
+# view / tag / tagswitch — в пределах текущего монитора
 
-bindsym $mod+1 workspace number $ws1
-bindsym $mod+2 workspace number $ws2
-bindsym $mod+3 workspace number $ws3
-bindsym $mod+4 workspace number $ws4
-bindsym $mod+5 workspace number $ws5
-bindsym $mod+6 workspace number $ws6
-bindsym $mod+7 workspace number $ws7
-bindsym $mod+8 workspace number $ws8
-bindsym $mod+9 workspace number $ws9
+bindsym $mod+1 exec --no-startup-id i3-ws 1
+bindsym $mod+2 exec --no-startup-id i3-ws 2
+bindsym $mod+3 exec --no-startup-id i3-ws 3
+bindsym $mod+4 exec --no-startup-id i3-ws 4
+bindsym $mod+5 exec --no-startup-id i3-ws 5
+bindsym $mod+6 exec --no-startup-id i3-ws 6
+bindsym $mod+7 exec --no-startup-id i3-ws 7
+bindsym $mod+8 exec --no-startup-id i3-ws 8
+bindsym $mod+9 exec --no-startup-id i3-ws 9
 
-bindsym $mod+Shift+1 move container to workspace number $ws1
-bindsym $mod+Shift+2 move container to workspace number $ws2
-bindsym $mod+Shift+3 move container to workspace number $ws3
-bindsym $mod+Shift+4 move container to workspace number $ws4
-bindsym $mod+Shift+5 move container to workspace number $ws5
-bindsym $mod+Shift+6 move container to workspace number $ws6
-bindsym $mod+Shift+7 move container to workspace number $ws7
-bindsym $mod+Shift+8 move container to workspace number $ws8
-bindsym $mod+Shift+9 move container to workspace number $ws9
+bindsym $mod+Shift+1 exec --no-startup-id i3-ws move 1
+bindsym $mod+Shift+2 exec --no-startup-id i3-ws move 2
+bindsym $mod+Shift+3 exec --no-startup-id i3-ws move 3
+bindsym $mod+Shift+4 exec --no-startup-id i3-ws move 4
+bindsym $mod+Shift+5 exec --no-startup-id i3-ws move 5
+bindsym $mod+Shift+6 exec --no-startup-id i3-ws move 6
+bindsym $mod+Shift+7 exec --no-startup-id i3-ws move 7
+bindsym $mod+Shift+8 exec --no-startup-id i3-ws move 8
+bindsym $mod+Shift+9 exec --no-startup-id i3-ws move 9
 
-bindsym $mod+Mod1+1 move container to workspace number $ws1, workspace number $ws1
-bindsym $mod+Mod1+2 move container to workspace number $ws2, workspace number $ws2
-bindsym $mod+Mod1+3 move container to workspace number $ws3, workspace number $ws3
-bindsym $mod+Mod1+4 move container to workspace number $ws4, workspace number $ws4
-bindsym $mod+Mod1+5 move container to workspace number $ws5, workspace number $ws5
-bindsym $mod+Mod1+6 move container to workspace number $ws6, workspace number $ws6
-bindsym $mod+Mod1+7 move container to workspace number $ws7, workspace number $ws7
-bindsym $mod+Mod1+8 move container to workspace number $ws8, workspace number $ws8
-bindsym $mod+Mod1+9 move container to workspace number $ws9, workspace number $ws9
+bindsym $mod+Mod1+1 exec --no-startup-id i3-ws follow 1
+bindsym $mod+Mod1+2 exec --no-startup-id i3-ws follow 2
+bindsym $mod+Mod1+3 exec --no-startup-id i3-ws follow 3
+bindsym $mod+Mod1+4 exec --no-startup-id i3-ws follow 4
+bindsym $mod+Mod1+5 exec --no-startup-id i3-ws follow 5
+bindsym $mod+Mod1+6 exec --no-startup-id i3-ws follow 6
+bindsym $mod+Mod1+7 exec --no-startup-id i3-ws follow 7
+bindsym $mod+Mod1+8 exec --no-startup-id i3-ws follow 8
+bindsym $mod+Mod1+9 exec --no-startup-id i3-ws follow 9
 
-# i3bar + i3blocks
-bar {
-    status_command exec i3blocks -c /etc/i3blocks.conf
-    position top
-    font pango:JetBrainsMonoNL NFP 10
-    separator_symbol " | "
-    tray_output yes
-    workspace_buttons yes
-    binding_mode_indicator yes
-
-    colors {
-        background $normbg
-        statusline $normfg
-        separator  $normfg
-
-        #                  border  bground text
-        focused_workspace  $selbg  $selbg  $selfg
-        active_workspace   $normbg $normbg $selfg
-        inactive_workspace $normbg $normbg $normfg
-        urgent_workspace   $urgent $urgent $normfg
-        binding_mode       $urgent $urgent $normfg
-    }
-}
+exec_always --no-startup-id eww-launch
+# master/stack like dwm tile. i3 restart starts a fresh one, it kills the old
+exec_always --no-startup-id i3-tile daemon

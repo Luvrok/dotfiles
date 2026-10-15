@@ -135,6 +135,14 @@ in
             '';
           });
     })
+    (final: prev: {
+      i3 = prev.i3.overrideAttrs (old: {
+        postPatch = (old.postPatch or "") + ''
+          substituteInPlace src/render.c --replace-fail 'return deco_height;' 'return 0;'
+        '';
+        doCheck = false;
+      });
+    })
     inputs.better-swallow.overlay
     inputs.lazygit.overlays.default
   ];

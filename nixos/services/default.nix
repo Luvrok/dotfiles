@@ -76,7 +76,6 @@ in
     pipewire = (import ./pipewire.nix { inherit pkgs; });
     xserver = (import ./xserver.nix { inherit config pkgs username; });
     syncthing = (import ./syncthing.nix { inherit username; });
-    open-webui = (import ./open-webui { inherit pkgs; });
     llama-swap = {
       enable = true;
       port = 11434;

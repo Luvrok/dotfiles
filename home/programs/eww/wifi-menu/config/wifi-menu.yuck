@@ -1,0 +1,55 @@
+;; keyboard-first wifi menu, keys come from the i3 "wifi" mode
+;; state is pushed by the wifi-menu script
+
+(defvar wifi_reveal false)
+(defvar wifi_rows false)
+(defvar wifi_scanning false)
+(defvar wifi_view "[]")
+(defvar wifi_status "")
+(defvar wifi_ssid "")
+
+;; overlay, never takes focus
+(defwindow wifi-menu
+  :monitor 0
+  :geometry (geometry :x "0" :y "32px" :width "400px" :height "400px" :anchor "top center")
+  :stacking "overlay"
+  :wm-ignore true
+  ;; valign start so the panel takes only the height it needs
+  (revealer
+    :reveal wifi_reveal
+    :transition "slidedown"
+    :duration "180ms"
+    :valign "start"
+    (box :class "wifi" :orientation "v" :space-evenly false
+      (box :class "wifi-head" :space-evenly false
+        (label :class "wifi-title" :halign "start" :hexpand true :text "wi-fi")
+        (label :class "wifi-status wifi-scanning" :visible wifi_scanning :text "scanning  ")
+        (label :class "wifi-status" :text wifi_status))
+      (box :orientation "v" :space-evenly false
+        (for net in wifi_view
+          ;; each row has its own revealer, later rows take longer = cascade on open
+          (revealer
+            :reveal wifi_rows
+            :transition "slidedown"
+            :duration "${120 + net.i * 40}ms"
+            (box :class "wifi-row ${net.sel ? 'sel' : ''} ${net.inuse == '*' ? 'active' : ''}"
+                 :space-evenly false
+              (label :class "wifi-ssid" :halign "start" :hexpand true :limit-width 28 :text {net.ssid})
+              (label :class "wifi-type" :text {net.type == "open" ? "open" : net.type == "psk" ? "psk" : "eap"})
+              (label :class "wifi-bars" :text {net.bars})))))
+      (label :class "wifi-hint" :halign "start" :text "j/k move  g/G top/end  enter join  r rescan  esc"))))
+
+;; managed window so the input gets keyboard focus, i3 floats dialogs
+(defwindow wifi-pass
+  :monitor 0
+  :geometry (geometry :x "0" :y "32px" :width "400px" :height "100px" :anchor "top center")
+  :stacking "fg"
+  :wm-ignore false
+  :windowtype "dialog"
+  (box :class "wifi wifi-pass" :orientation "v" :space-evenly false
+    (box :class "wifi-head" :space-evenly false
+      (label :class "wifi-title" :halign "start" :hexpand true :text "enter password")
+      (label :class "wifi-status" :limit-width 24 :text wifi_ssid))
+    ;; & so eww doesn't kill it on timeout mid-connect
+    (input :class "wifi-input" :password true :onaccept "wifi-menu pass '{}' &")
+    (label :class "wifi-hint" :halign "start" :text "enter connect  esc cancel")))

@@ -14,6 +14,7 @@
     ./zathura.nix
     ./element-desktop.nix
     ./pi
+    ./eww
     ./nsxiv.nix
   ];
 }

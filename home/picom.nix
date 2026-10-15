@@ -1,155 +1,139 @@
+# picom (pijulius fork) for i3
 {
-  config,
   lib,
   pkgs,
   inputs,
   ...
 }:
-
 let
-  bounce = "cubic-bezier(0.25, 1.35, 0.5, 1)";
-  bounceStrong = "cubic-bezier(0.34, 1.56, 0.64, 1)";
-  easeIn = "cubic-bezier(0.55, 0, 1, 0.45)";
-  anticipate = "cubic-bezier(0.36, 0, 0.66, -0.56)";
-
-  wsInDuration = "0.38";
-  wsOutDuration = "0.25";
-  openDuration = "0.3";
-  geometryDuration = "0.35";
-  closeDuration = "0.22";
-
-  crop = ''
-    crop-x = "window-monitor-x";
-    crop-y = "window-monitor-y";
-    crop-width = "window-monitor-width";
-    crop-height = "window-monitor-height";
-  '';
-
-  slide = trigger: curve: duration: from: to: opacity: ''
-    {
-      triggers = [ "${trigger}" ];
-      offset-x = {
-        curve = "${curve}";
-        duration = ${duration};
-        start = "${from}";
-        end = "${to}";
-      };
-      shadow-offset-x = "offset-x";
-      opacity = {
-        duration = ${duration};
-        start = "${opacity}";
-        end = "${opacity}";
-      };
-      blur-opacity = "opacity";
-      shadow-opacity = "opacity";
-      ${crop}
-    }
-  '';
+  # 1 normal, 8 slow motion with debug logs
+  slow = 8;
+  d = x: toString (x * slow);
 in
 {
   services.picom = {
     enable = true;
-
-    package = pkgs.picom.overrideAttrs (_: {
+    package = pkgs.picom.overrideAttrs (old: {
       src = inputs.picom-pijulius;
+      # no carousel on big jumps: lower index -> inverse, higher -> normal
+      postPatch = (old.postPatch or "") + ''
+        substituteInPlace src/wm/win.c \
+          --replace-fail 'ps->root_desktop_switch_direction >= -1' '1' \
+          --replace-fail 'ps->root_desktop_switch_direction > 1' '0'
+      '';
     });
   };
 
+  # i3-sp reads its fade time from here
+  xdg.configFile."picom/fade".text = d 0.15;
+
+  # i3-ws-anim keeps its _WS_SWITCH tags this long, slow mode included
+  xdg.configFile."picom/ws-untag".text = d 0.3;
+
+  # mkForce: the hm module writes this file too and adds keys that clash with rules
   xdg.configFile."picom/picom.conf".text = lib.mkForce ''
     backend = "glx";
     vsync = true;
-    dbus = false;
     use-damage = true;
+    # unredirected screen = no animations under fullscreen windows
+    unredir-if-possible = false;
+    log-level = "${if slow > 1 then "debug" else "warn"}";
+    # i3-sp sets opacity on the app window
+    detect-client-opacity = true;
 
-    unredir-if-possible = true;
-
-    log-level = "warn";
-    log-file = "${config.home.homeDirectory}/.cache/picom-log.log";
-    show-all-xerrors = true;
+    shadow = false;
+    corner-radius = 0;
 
     animations = (
-      ${slide "workspace-out" easeIn wsOutDuration "0" "0 - window-monitor-width" "window-raw-opacity-before"},
-      ${slide "workspace-out-inverse" easeIn wsOutDuration "0" "window-monitor-width" "window-raw-opacity-before"},
-      ${slide "workspace-in" bounce wsInDuration "window-monitor-width" "0" "window-raw-opacity"},
-      ${slide "workspace-in-inverse" bounce wsInDuration "0 - window-monitor-width" "0" "window-raw-opacity"},
+
+      # workspace switch by ewmh index, i3-ws-anim rules below override it
+      {
+        triggers = [ "workspace-out" ];
+        offset-x = { curve = "cubic-bezier(0.33, 1, 0.68, 1)"; duration = ${d 0.25}; start = 0; end = "0 - window-monitor-width * 0.06"; };
+        shadow-offset-x = "offset-x";
+        opacity = { curve = "linear"; duration = ${d 0.15}; start = "window-raw-opacity-before"; end = 0; };
+        shadow-opacity = "opacity";
+        blur-opacity = "opacity";
+        crop-x = "window-monitor-x";
+        crop-y = "window-monitor-y";
+        crop-width = "window-monitor-width";
+        crop-height = "window-monitor-height";
+      },
+      {
+        triggers = [ "workspace-out-inverse" ];
+        offset-x = { curve = "cubic-bezier(0.33, 1, 0.68, 1)"; duration = ${d 0.25}; start = 0; end = "window-monitor-width * 0.06"; };
+        shadow-offset-x = "offset-x";
+        opacity = { curve = "linear"; duration = ${d 0.15}; start = "window-raw-opacity-before"; end = 0; };
+        shadow-opacity = "opacity";
+        blur-opacity = "opacity";
+        crop-x = "window-monitor-x";
+        crop-y = "window-monitor-y";
+        crop-width = "window-monitor-width";
+        crop-height = "window-monitor-height";
+      },
+      {
+        triggers = [ "workspace-in" ];
+        offset-x = { curve = "cubic-bezier(0.33, 1, 0.68, 1)"; duration = ${d 0.25}; start = "window-monitor-width * 0.06"; end = 0; };
+        shadow-offset-x = "offset-x";
+        opacity = { curve = "cubic-bezier(0.4, 0, 0.2, 1)"; duration = ${d 0.25}; start = 0; end = "window-raw-opacity"; };
+        shadow-opacity = "opacity";
+        blur-opacity = "opacity";
+        crop-x = "window-monitor-x";
+        crop-y = "window-monitor-y";
+        crop-width = "window-monitor-width";
+        crop-height = "window-monitor-height";
+      },
+      {
+        triggers = [ "workspace-in-inverse" ];
+        offset-x = { curve = "cubic-bezier(0.33, 1, 0.68, 1)"; duration = ${d 0.25}; start = "0 - window-monitor-width * 0.06"; end = 0; };
+        shadow-offset-x = "offset-x";
+        opacity = { curve = "cubic-bezier(0.4, 0, 0.2, 1)"; duration = ${d 0.25}; start = 0; end = "window-raw-opacity"; };
+        shadow-opacity = "opacity";
+        blur-opacity = "opacity";
+        crop-x = "window-monitor-x";
+        crop-y = "window-monitor-y";
+        crop-width = "window-monitor-width";
+        crop-height = "window-monitor-height";
+      },
+
+      # slide down from above. reset: never start from below after a quick re-show
       {
         triggers = [ "open", "show" ];
-        scale-x = {
-          curve = "${bounceStrong}";
-          duration = ${openDuration};
-          start = 0.85;
-          end = 1;
-        };
-        scale-y = "scale-x";
-        offset-x = "(1 - scale-x) / 2 * window-width";
-        offset-y = "(1 - scale-y) / 2 * window-height";
-        shadow-scale-x = "scale-x";
-        shadow-scale-y = "scale-y";
-        shadow-offset-x = "offset-x";
+        offset-y = { curve = "cubic-bezier(0.33, 1, 0.68, 1)"; duration = ${d 0.25}; start = "0 - window-monitor-height * 0.06"; end = 0; reset = true; };
         shadow-offset-y = "offset-y";
-        opacity = {
-          duration = 0.12;
-          start = 0;
-          end = "window-raw-opacity";
-        };
-        blur-opacity = "opacity";
+        opacity = { curve = "cubic-bezier(0.4, 0, 0.2, 1)"; duration = ${d 0.25}; start = 0; end = "window-raw-opacity"; };
         shadow-opacity = "opacity";
+        blur-opacity = "opacity";
       },
+
+      # sink down. close of i3 windows is instant, see rules
       {
         triggers = [ "close", "hide" ];
-        scale-x = {
-          curve = "${anticipate}";
-          duration = ${closeDuration};
-          start = 1;
-          end = 0.8;
-        };
-        scale-y = "scale-x";
-        offset-x = "(1 - scale-x) / 2 * window-width";
-        offset-y = "(1 - scale-y) / 2 * window-height";
-        shadow-scale-x = "scale-x";
-        shadow-scale-y = "scale-y";
-        shadow-offset-x = "offset-x";
+        offset-y = { curve = "cubic-bezier(0.33, 1, 0.68, 1)"; duration = ${d 0.25}; start = 0; end = "window-monitor-height * 0.06"; };
         shadow-offset-y = "offset-y";
-        opacity = {
-          curve = "${easeIn}";
-          duration = ${closeDuration};
-          start = "window-raw-opacity-before";
-          end = 0;
-        };
-        blur-opacity = "opacity";
+        opacity = { curve = "linear"; duration = ${d 0.15}; start = "window-raw-opacity-before"; end = 0; };
         shadow-opacity = "opacity";
+        blur-opacity = "opacity";
       },
+
+      # i3-sp fade, same sink while the window is still on top
+      {
+        triggers = [ "decrease-opacity" ];
+        offset-y = { curve = "cubic-bezier(0.33, 1, 0.68, 1)"; duration = ${d 0.25}; start = 0; end = "window-monitor-height * 0.06"; };
+        shadow-offset-y = "offset-y";
+        opacity = { curve = "linear"; duration = ${d 0.15}; start = "window-raw-opacity-before"; end = "window-raw-opacity"; };
+        shadow-opacity = "opacity";
+        blur-opacity = "opacity";
+      },
+
+      # tiles glide to their new place. "geometry" never fires in this fork
       {
         triggers = [ "size", "position" ];
-        scale-x = {
-          curve = "${bounce}";
-          duration = ${geometryDuration};
-          start = "window-width-before / window-width";
-          end = 1;
-        };
-        scale-y = {
-          curve = "${bounce}";
-          duration = ${geometryDuration};
-          start = "window-height-before / window-height";
-          end = 1;
-        };
-        offset-x = {
-          curve = "${bounce}";
-          duration = ${geometryDuration};
-          start = "window-x-before - window-x";
-          end = 0;
-        };
-        offset-y = {
-          curve = "${bounce}";
-          duration = ${geometryDuration};
-          start = "window-y-before - window-y";
-          end = 0;
-        };
-        saved-image-blend = {
-          duration = ${geometryDuration};
-          start = 1;
-          end = 0;
-        };
+        scale-x = { curve = "cubic-bezier(0.33, 1, 0.68, 1)"; duration = ${d 0.25}; start = "window-width-before / window-width"; end = 1; };
+        scale-y = { curve = "cubic-bezier(0.33, 1, 0.68, 1)"; duration = ${d 0.25}; start = "window-height-before / window-height"; end = 1; };
+        offset-x = { curve = "cubic-bezier(0.33, 1, 0.68, 1)"; duration = ${d 0.25}; start = "window-x-before - window-x"; end = 0; };
+        offset-y = { curve = "cubic-bezier(0.33, 1, 0.68, 1)"; duration = ${d 0.25}; start = "window-y-before - window-y"; end = 0; };
+        saved-image-blend = { duration = ${d 0.25}; start = 1; end = 0; };
         shadow-scale-x = "scale-x";
         shadow-scale-y = "scale-y";
         shadow-offset-x = "offset-x";
@@ -158,15 +142,116 @@ in
     );
 
     rules = (
+
+      # bar and desktop: no animations
       {
-        match = "class_g = 'mpv' || class_g = 'librewolf'";
-        unredir = false;
+        match = "window_type = 'dock' || window_type = 'desktop'";
+        animations = (
+          { triggers = [ "open", "show", "close", "hide" ]; offset-x = 0; }
+        );
       },
+
+      # menus and tooltips: short fade
+      {
+        match = "window_type = 'menu' || window_type = 'dropdown_menu' || window_type = 'popup_menu' || window_type = 'tooltip' || window_type = 'combo'";
+        animations = (
+          {
+            triggers = [ "open", "show" ];
+            opacity = { duration = ${d 0.08}; start = 0; end = "window-raw-opacity"; };
+          },
+          {
+            triggers = [ "close", "hide" ];
+            opacity = { duration = ${d 0.06}; start = "window-raw-opacity-before"; end = 0; };
+          }
+        );
+      },
+
+      # i3 windows lose their content before picom sees the close, so no anim.
+      # i3-sp kill fades them first
+      {
+        match = "!override_redirect";
+        animations = (
+          { triggers = [ "close" ]; offset-x = 0; }
+        );
+      },
+
+      # floating: no size/position anim, dragging stays snappy
       {
         match = "I3_FLOATING_WINDOW@";
         animations = (
+          { triggers = [ "size", "position" ]; offset-x = 0; }
+        );
+      },
+
+      # i3-ws-anim tags both workspaces before a switch: 1 going up, 2 going down.
+      # covers empty tags too, where the fork only sends hide/show
+      {
+        match = "_WS_SWITCH@ = 1";
+        animations = (
           {
-            triggers = [ "size", "position" ];
+            triggers = [ "hide", "workspace-out", "workspace-out-inverse" ];
+            offset-x = { curve = "cubic-bezier(0.33, 1, 0.68, 1)"; duration = ${d 0.25}; start = 0; end = "0 - window-monitor-width * 0.06"; };
+            shadow-offset-x = "offset-x";
+            opacity = { curve = "linear"; duration = ${d 0.15}; start = "window-raw-opacity-before"; end = 0; };
+            shadow-opacity = "opacity";
+            blur-opacity = "opacity";
+            crop-x = "window-monitor-x";
+            crop-y = "window-monitor-y";
+            crop-width = "window-monitor-width";
+            crop-height = "window-monitor-height";
+          },
+          {
+            triggers = [ "open", "show", "workspace-in", "workspace-in-inverse" ];
+            offset-x = { curve = "cubic-bezier(0.33, 1, 0.68, 1)"; duration = ${d 0.25}; start = "window-monitor-width * 0.06"; end = 0; };
+            shadow-offset-x = "offset-x";
+            opacity = { curve = "cubic-bezier(0.4, 0, 0.2, 1)"; duration = ${d 0.25}; start = 0; end = "window-raw-opacity"; };
+            shadow-opacity = "opacity";
+            blur-opacity = "opacity";
+            crop-x = "window-monitor-x";
+            crop-y = "window-monitor-y";
+            crop-width = "window-monitor-width";
+            crop-height = "window-monitor-height";
+          }
+        );
+      },
+      {
+        match = "_WS_SWITCH@ = 2";
+        animations = (
+          {
+            triggers = [ "hide", "workspace-out", "workspace-out-inverse" ];
+            offset-x = { curve = "cubic-bezier(0.33, 1, 0.68, 1)"; duration = ${d 0.25}; start = 0; end = "window-monitor-width * 0.06"; };
+            shadow-offset-x = "offset-x";
+            opacity = { curve = "linear"; duration = ${d 0.15}; start = "window-raw-opacity-before"; end = 0; };
+            shadow-opacity = "opacity";
+            blur-opacity = "opacity";
+            crop-x = "window-monitor-x";
+            crop-y = "window-monitor-y";
+            crop-width = "window-monitor-width";
+            crop-height = "window-monitor-height";
+          },
+          {
+            triggers = [ "open", "show", "workspace-in", "workspace-in-inverse" ];
+            offset-x = { curve = "cubic-bezier(0.33, 1, 0.68, 1)"; duration = ${d 0.25}; start = "0 - window-monitor-width * 0.06"; end = 0; };
+            shadow-offset-x = "offset-x";
+            opacity = { curve = "cubic-bezier(0.4, 0, 0.2, 1)"; duration = ${d 0.25}; start = 0; end = "window-raw-opacity"; };
+            shadow-opacity = "opacity";
+            blur-opacity = "opacity";
+            crop-x = "window-monitor-x";
+            crop-y = "window-monitor-y";
+            crop-width = "window-monitor-width";
+            crop-height = "window-monitor-height";
+          }
+        );
+      },
+      # flameshot: no animations, the overlay appears and vanishes instantly
+      {
+        match = "class_g = 'flameshot'";
+        animations = (
+          {
+            triggers = [ "open", "show", "close", "hide", "size", "position",
+                         "increase-opacity", "decrease-opacity",
+                         "workspace-in", "workspace-in-inverse",
+                         "workspace-out", "workspace-out-inverse" ];
             offset-x = 0;
           }
         );

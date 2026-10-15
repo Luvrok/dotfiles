@@ -1,0 +1,165 @@
+# dwm tile on top of i3: master on the left, the rest stacked on the right.
+# only plain workspaces are touched (splith, windows at most one split deep),
+# tabbed tags and hand-made nested splits stay as they are.
+#
+# usage:
+#   i3-tile daemon       keep workspaces in shape, started from i3 config
+#   i3-tile fix          one pass over all workspaces
+#   i3-tile focus <next|prev>   focus around the tag, wraps
+#   i3-tile move <next|prev>    swap with the neighbor around the tag, wraps
+#   i3-tile monocle             all windows of the tag into one tabbed container
+#
+# the ring is master, then the stack top to bottom (clockwise), tabs in tab
+# order. focus also visits floating windows at the end, move skips them
+
+# i3 makes a new socket on restart, the env still has the old one
+unset I3SOCK
+
+# shared jq helpers
+lib='
+def leaf: (.nodes | length) == 0;
+# split container with plain windows only
+def flat: (leaf | not) and (.layout == "splith" or .layout == "splitv")
+  and all(.nodes[]; leaf);
+def cmd($id; $c): "[con_id=\($id)] \($c)";
+
+# commands that bring a workspace to [master, stack]
+def plan:
+  .nodes as $c
+  | if .layout != "splith" or ($c | length) == 0 then empty
+    elif ($c | length) == 1 then
+      # master is gone, one column left: first window becomes master
+      $c[0] | select(flat and (.nodes | length) > 1)
+      | cmd(.nodes[0].id; "move left"), cmd(.nodes[1].id; "layout splitv")
+    elif ($c[0] | leaf | not) or any($c[1:][]; leaf or flat | not) then empty
+    else
+      $c[1:] as $r
+      | [$r[] | select(leaf | not)] as $st
+      | select(($st | length) < 2)
+      | ($st[0] // $r[0]) as $s
+      | (if $s | leaf then cmd($s.id; "split v")
+         elif $s.layout != "splitv" then cmd($s.nodes[0].id; "layout splitv")
+         else empty end),
+        # windows next to master go to the bottom of the stack
+        ([$r[] | select(.id != $s.id) | .id] | select(length > 0)
+         | cmd(if $s | leaf then $s.id else $s.nodes[-1].id end; "mark --add _tile"),
+           (.[] | cmd(.; "move container to mark _tile"), cmd(.; "mark --add _tile")),
+           "unmark _tile")
+    end;
+
+def tleaves: if leaf then . else .nodes[] | tleaves end;
+def focused_ws:
+  first(.. | objects | select(.type == "workspace" and any(.. | objects; .focused)));
+# position in the ring: [ring, index of the focused window or null, step]
+def ring($l; $d):
+  first(focused_ws | .. | objects | select(.focused)).id as $f
+  | [$l, ($l | map(.id) | index($f)), (if $d == "next" then 1 else -1 end)];
+def neighbor($l; $i; $s): $l[($i + $s + ($l | length)) % ($l | length)];
+'
+
+guard_sec=0
+guard_n=0
+
+fix() {
+  local cmds
+  cmds=$(i3-msg -t get_tree | jq -r "$lib"'
+    [.. | objects | select(.type == "workspace" and (.name | startswith("__") | not))
+     | plan] | join("; ")')
+  [[ -n $cmds ]] || return 0
+  # a plan that never settles would move windows forever, cap it
+  if [[ $EPOCHSECONDS != "$guard_sec" ]]; then guard_sec=$EPOCHSECONDS guard_n=0; fi
+  guard_n=$((guard_n + 1))
+  if ((guard_n > 20)); then return 0; fi
+  i3-msg -q "$cmds" || true
+}
+
+focus() {
+  local cmd
+  cmd=$(i3-msg -t get_tree | jq -r --arg d "$1" "$lib"'
+    ring([focused_ws | (.nodes[], .floating_nodes[]) | tleaves]; $d) as [$l, $i, $s]
+    | if ($l | length) == 0 then ""
+      elif $i == null then cmd($l[0].id; "focus") # focus on a split con: start at master
+      else cmd(neighbor($l; $i; $s).id; "focus") end')
+  [[ -n $cmd ]] || return 0
+  i3-msg -q "$cmd" || true
+}
+
+# swapping with the ring neighbor moves one step around the circle and keeps
+# everyone else in order, wrap included
+move() {
+  local cmd
+  cmd=$(i3-msg -t get_tree | jq -r --arg d "$1" "$lib"'
+    ring([focused_ws | .nodes[] | tleaves]; $d) as [$l, $i, $s]
+    | if $i == null or ($l | length) < 2 then ""
+      else
+        neighbor($l; $i; $s).id as $n | $l[$i].id as $f
+        | cmd($f; "swap container with con_id \($n)") + "; " + cmd($f; "focus")
+      end')
+  [[ -n $cmd ]] || return 0
+  i3-msg -q "$cmd" || true
+}
+
+monocle() {
+  local cmd
+  # pull every window up next to the first one, then tab them
+  cmd=$(i3-msg -t get_tree | jq -r "$lib"'
+    [focused_ws | .nodes[] | tleaves] as $l
+    | if ($l | length) == 0 then "layout tabbed"
+      else
+        [cmd($l[0].id; "mark --add _tile"),
+         ($l[1:][] | cmd(.id; "move container to mark _tile"), cmd(.id; "mark --add _tile")),
+         "unmark _tile", cmd($l[0].id; "layout tabbed")] | join("; ")
+      end')
+  i3-msg -q "$cmd" || true
+}
+
+daemon() {
+  local pidfile=${XDG_RUNTIME_DIR:-/tmp}/i3-tile.pid old fd ev
+  local re='^\{"change":"(new|close|move|floating)"'
+  # exec_always runs this on every reload, the new one replaces the old
+  old=$(cat "$pidfile" 2>/dev/null || true)
+  if [[ -n $old && $old != "$$" &&
+    $(tr '\0' ' ' 2>/dev/null <"/proc/$old/cmdline") == *i3-tile* ]]; then
+    kill "$old" 2>/dev/null || true
+  fi
+  echo "$$" >"$pidfile"
+
+  sub=
+  stop() {
+    if [[ -n $sub ]]; then kill "$sub" 2>/dev/null || true; fi
+    exit 0
+  }
+  trap stop TERM INT HUP
+
+  while :; do
+    exec {fd}< <(exec i3-msg -t subscribe -m '["window"]')
+    sub=$!
+    fix
+    while read -r -u "$fd" ev; do
+      # focus and title spam doesn't change the layout
+      [[ $ev =~ $re ]] || continue
+      # one pass for a whole burst
+      while read -r -t 0 -u "$fd"; do read -r -u "$fd" _; done
+      fix
+    done
+    exec {fd}<&-
+    # i3 restarted or quit: wait for the new socket, else we're done
+    for _ in {1..20}; do
+      sleep 0.25
+      if i3-msg -t get_version >/dev/null 2>&1; then continue 2; fi
+    done
+    exit 0
+  done
+}
+
+case ${1:-} in
+  daemon) daemon ;;
+  fix) fix ;;
+  focus) focus "${2:?next or prev}" ;;
+  move) move "${2:?next or prev}" ;;
+  monocle) monocle ;;
+  *)
+    echo "usage: i3-tile daemon | fix | focus <next|prev> | move <next|prev> | monocle" >&2
+    exit 1
+    ;;
+esac

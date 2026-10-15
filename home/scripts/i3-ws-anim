@@ -1,0 +1,56 @@
+# switch workspace with a direction hint for picom.
+# i3 numbers ewmh desktops by position, so when empty workspaces come and go
+# the index often stays the same and picom plays show/hide instead of the
+# workspace drift. so we tag windows on both workspaces with _WS_SWITCH
+# (1 = going up, 2 = going down) and picom rules pick the drift for them.
+#
+# usage:
+#   i3-ws-anim <target>              same as: i3-msg workspace number <target>
+#   i3-ws-anim <target> <i3 cmd>     run your own command, e.g. move + switch
+
+# picom.nix sets it from the slow factor
+untag_delay=$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/picom/ws-untag" 2>/dev/null || echo 0.3)
+target=$1
+shift
+cmd=${*:-"workspace number $target"}
+
+# focused workspace name + windows on it and on the target, one i3 call
+read -r cur ids < <(i3-msg -t get_tree | jq -r --arg t "$target" '
+  [.. | objects | select(.type == "workspace")] as $ws
+  | (first($ws[] | select(any(.. | objects; .focused == true))) | .name) as $cur
+  | [$ws[] | select(.name == $cur or .name == $t)
+     | .. | objects | select(.window) | .window | tostring] as $ids
+  | "\($cur) \($ids | join(" "))"')
+
+# not numbers or same workspace: no hint, just run it
+if [[ ! $cur =~ ^[0-9]+$ || ! $target =~ ^[0-9]+$ || $cur == "$target" ]]; then
+  exec i3-msg -q "$cmd"
+fi
+
+if ((target > cur)); then dir=1; else dir=2; fi
+
+state=${XDG_RUNTIME_DIR:-/tmp}/i3-ws-anim
+gen=$(date +%s%N)
+echo "$gen" >"$state.gen"
+for id in $ids; do echo "$id"; done >>"$state.ids"
+
+# tag in parallel, it's on the hot path
+for id in $ids; do
+  xprop -id "$id" -f _WS_SWITCH 32c -set _WS_SWITCH "$dir" &
+done
+wait
+# picom re-reads rules only for mapped windows, on its next frame.
+# give it one before i3 unmaps the current workspace
+sleep 0.02
+
+i3-msg -q "$cmd"
+
+# untag after the anim, only if no newer switch happened meanwhile
+(
+  sleep "$untag_delay"
+  [[ $(cat "$state.gen" 2>/dev/null) == "$gen" ]] || exit 0
+  sort -u "$state.ids" | while read -r id; do
+    xprop -id "$id" -remove _WS_SWITCH 2>/dev/null || true
+  done
+  : >"$state.ids"
+) &

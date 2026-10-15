@@ -1,0 +1,164 @@
+# fade a window out on top before i3 hides or kills it.
+# i3 drops a window under the tiles right before unmapping it (scratchpad),
+# and on close the app takes its content away before picom sees anything,
+# so picom alone can't animate either. we drop _NET_WM_WINDOW_OPACITY to 0
+# first (picom plays decrease-opacity while the window is intact and on
+# top), then let i3 do its thing.
+#
+# i3 can only hide a window by putting it in the scratchpad, so marks tell
+# apart what's in there (i3 doesn't draw marks that start with _):
+#   _sp_<name>               scratchpad <name>, for_window in i3 config sets it
+#   _hide_<tag>_<t|f>_<id>   hidden from <tag>, was tiled or floating
+#
+# usage:
+#   i3-sp toggle <name> <cmd...>   show/hide scratchpad <name>, launch if missing
+#   i3-sp set <name>               focused window becomes scratchpad <name>
+#   i3-sp hide                     hide focused window
+#   i3-sp showall                  bring back what was hidden on this tag
+#   i3-sp kill                     fade, hide, then close focused window
+
+# picom.nix writes the decrease-opacity duration here, slow mode included
+fade=$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/picom/fade" 2>/dev/null || echo 0.15)
+# same as the scratchpad for_window rule in i3 config
+size="1280 910"
+
+# one at a time: a second keypress during the fade waits for the first to
+# finish instead of racing it (it used to re-show a window mid-hide)
+exec 9>"${XDG_RUNTIME_DIR:-/tmp}/i3-sp.lock"
+flock 9
+
+set_opacity() { xprop -id "$1" -f _NET_WM_WINDOW_OPACITY 32c -set _NET_WM_WINDOW_OPACITY "$2"; }
+clear_opacity() { xprop -id "$1" -remove _NET_WM_WINDOW_OPACITY 2>/dev/null || true; }
+fade_out() { set_opacity "$1" 0; sleep "$fade"; }
+
+# "<window id> <floating> <workspace> <marks,comma,separated>" of the focused
+# con, id 0 if it has no window
+focused() {
+  i3-msg -t get_tree | jq -r 'first(.. | objects | select(.type == "workspace")
+    | .name as $ws | .. | objects | select(.focused == true)
+    | "\(.window // 0) \(.floating) \($ws) \(.marks // [] | join(","))") // empty'
+}
+
+# "<window id> <floating> <workspace>" of the con with mark $1
+by_mark() {
+  i3-msg -t get_tree | jq -r --arg m "$1" 'first(.. | objects | select(.type == "workspace")
+    | .name as $ws | .. | objects | select(any(.marks[]?; . == $m))
+    | "\(.window) \(.floating) \($ws)") // empty'
+}
+
+# mark that brings a hidden window back to its tag. scratchpads get none,
+# their own key brings them back
+# args: floating workspace marks window
+hide_mark() {
+  if [[ ,$3, == *,_sp_* ]]; then return 0; fi
+  if [[ $1 == *_on ]]; then echo "_hide_${2}_f_$4"; else echo "_hide_${2}_t_$4"; fi
+}
+
+alive() {
+  i3-msg -t get_tree | jq -e --argjson w "$1" 'any(.. | objects; .window? == $w)' >/dev/null
+}
+
+# i3 marks scratchpad windows as on all desktops (_NET_WM_DESKTOP 0xffffffff).
+# browsers save that with the session and on restore i3 makes them floating
+# and sticky, so put the real desktop back right after hiding.
+# args: window, i3 commands that hide it
+to_scratch() {
+  local out desk=
+  out=$(xprop -id "$1" -notype _NET_WM_DESKTOP 2>/dev/null || true)
+  if [[ $out =~ =\ ([0-9]+)$ ]]; then desk=${BASH_REMATCH[1]}; fi
+  i3-msg -q "[id=$1] $2"
+  if [[ -n $desk ]]; then xprop -id "$1" -f _NET_WM_DESKTOP 32c -set _NET_WM_DESKTOP "$desk"; fi
+}
+
+case "${1:-}" in
+  toggle)
+    m=_sp_$2
+    shift 2
+    read -r wid fl ws <<<"$(by_mark "$m")"
+    cur=$(i3-msg -t get_workspaces | jq -r '.[] | select(.focused) | .name')
+
+    if [[ -z $wid ]]; then
+      exec 9>&- # don't hand the lock to the app
+      exec "$@" # not running, launch it
+    elif [[ $fl != *_on ]]; then
+      i3-msg -q "[id=$wid] focus" # got tiled, just focus it
+    elif [[ $ws == "$cur" ]]; then
+      fade_out "$wid"
+      to_scratch "$wid" "scratchpad show" # visible here, so this hides it
+      clear_opacity "$wid"
+    else
+      i3-msg -q "[id=$wid] scratchpad show" # hidden or elsewhere, bring it here
+    fi
+    ;;
+  set)
+    m=_sp_$2
+    read -r wid _ <<<"$(focused)"
+    [[ -n $wid && $wid != 0 ]] || exit 0
+    read -r old _ ows <<<"$(by_mark "$m")"
+    fade_out "$wid"
+    # marks are unique, so this also takes it off the old one
+    to_scratch "$wid" "mark --add $m, floating enable, resize set $size, move position center, move scratchpad"
+    clear_opacity "$wid"
+    # old one would sit in the scratchpad with no key, bring it here as a tile
+    if [[ -n $old && $old != "$wid" && $ows == __i3_scratch ]]; then
+      i3-msg -q "[id=$old] scratchpad show, floating disable"
+    fi
+    ;;
+  hide)
+    read -r wid fl ws marks <<<"$(focused)"
+    [[ -n $wid && $wid != 0 ]] || exit 0
+    m=$(hide_mark "$fl" "$ws" "$marks" "$wid")
+    fade_out "$wid"
+    to_scratch "$wid" "${m:+mark --add $m, }floating enable, move scratchpad"
+    clear_opacity "$wid"
+    ;;
+  showall)
+    # hidden from this tag, plus strays with no mark at all (hidden by
+    # something else, or before marks existed): those come here as tiles
+    read -r _ _ ws _ <<<"$(focused)"
+    cmds=$(i3-msg -t get_tree | jq -r --arg p "_hide_${ws}_" '
+      [.. | objects | select(.type == "workspace" and .name == "__i3_scratch")
+       | .. | objects | select(.window) | .id as $id | (.marks // []) as $m
+       | if ($m | length) == 0 then
+           "[con_id=\($id)] scratchpad show, floating disable"
+         else
+           $m[] | select(startswith($p))
+           | "[con_id=\($id)] scratchpad show, "
+             + (if startswith($p + "t_") then "floating disable, " else "" end)
+             + "unmark \(.)"
+         end]
+      | join("; ")')
+    if [[ -n $cmds ]]; then i3-msg -q "$cmds"; fi
+    ;;
+  kill)
+    read -r wid fl ws marks <<<"$(focused)"
+    if [[ -z $wid || $wid == 0 ]]; then
+      i3-msg -q kill
+      exit 0
+    fi
+    m=$(hide_mark "$fl" "$ws" "$marks" "$wid")
+    fade_out "$wid"
+    # hide first: the tiles close the gap right away, and whenever the app
+    # actually exits nobody sees it. the app saves its desktop on close, so
+    # kill only after to_scratch fixed it
+    to_scratch "$wid" "${m:+mark --add $m, }floating enable, move scratchpad"
+    i3-msg -q "[id=$wid] kill"
+    flock -u 9
+    # app might refuse to close (unsaved stuff): wait a bit, then bring it back
+    for _ in {1..20}; do
+      sleep 0.1
+      if ! alive "$wid"; then
+        clear_opacity "$wid" # tray apps keep the window, don't leave it invisible
+        exit 0
+      fi
+    done
+    clear_opacity "$wid"
+    if [[ -z $m ]]; then
+      i3-msg -q "[id=$wid] scratchpad show"
+    elif [[ $m == *_t_* ]]; then
+      i3-msg -q "[id=$wid] scratchpad show, move container to workspace \"$ws\", floating disable, unmark $m"
+    else
+      i3-msg -q "[id=$wid] scratchpad show, move container to workspace \"$ws\", unmark $m"
+    fi
+    ;;
+esac

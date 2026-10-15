@@ -151,6 +151,7 @@
       xwallpaper
       libxrandr
       xsel
+      remontoire # i3 keybinds viewer
 
       # --- xdg ---
       xdg-desktop-portal

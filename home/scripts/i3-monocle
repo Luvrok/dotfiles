@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+GAP_IN=10
+GAP_OUT=5
+
+# layout контейнера, в котором лежит окно в фокусе
+parent=$(i3-msg -t get_tree | jq -r 'recurse(.nodes[]?) | select(any(.nodes[]?; .focused)) | .layout')
+
+if [ "$parent" = tabbed ]; then
+  i3-msg -q "gaps inner current set $GAP_IN; gaps outer current set $GAP_OUT; layout default"
+else
+  i3-msg -q "gaps inner current set 0; gaps outer current set 0; layout tabbed"
+fi
