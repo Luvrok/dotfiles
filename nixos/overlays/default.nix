@@ -11,12 +11,12 @@ in
   nixpkgs.overlays = [
     (final: prev: {
       stable-diffusion-cpp = prev.stable-diffusion-cpp.overrideAttrs (_: {
-        version = "master-920-2f88688";
+        version = "master-968-8cd731e";
         src = prev.fetchFromGitHub {
           owner = "leejet";
           repo = "stable-diffusion.cpp";
-          tag = "master-920-2f88688";
-          hash = "sha256-TkPBSL0DBIYP4fSFXGaV/zHsswic4LbniK/Ug+fl7Hw=";
+          tag = "master-968-8cd731e";
+          hash = "sha256-NZUNtYNSDhAEpm+4Ja/RD/0ynZAGynczBcrjxo234+Y=";
           fetchSubmodules = true;
         };
       });
