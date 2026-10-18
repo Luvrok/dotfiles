@@ -16,6 +16,7 @@
     ./env.nix
     ./packages.nix
     ./network.nix
+    ./xdg
   ];
 
   time.timeZone = "Europe/Moscow";
@@ -106,21 +107,6 @@
           "render"
           "video"
           "dialout"
-        ];
-      };
-    };
-  };
-
-  xdg.portal = {
-    enable = true;
-    wlr.enable = true;
-    extraPortals = [
-      pkgs.xdg-desktop-portal-gtk
-    ];
-    config = {
-      common = {
-        default = [
-          "gtk"
         ];
       };
     };

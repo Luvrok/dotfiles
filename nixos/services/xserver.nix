@@ -19,52 +19,57 @@ let
       "";
 in
 {
-  enable = true;
-  upscaleDefaultCursor = true;
-  logFile = null;
-
-  videoDrivers = config.videoDrivers;
-  dpi = config.dpi;
-
-  xkb = {
-    variant = "";
-    options = "";
-    layout = "us,ru";
-  };
-
-  windowManager.i3 = {
+  services.xserver = {
     enable = true;
-    configFile = ./i3/config;
-    extraPackages = [ ];
-  };
+    upscaleDefaultCursor = true;
+    logFile = null;
 
-  windowManager.dwm = {
-    enable = true;
-    package = pkgs.dwm;
-    extraSessionCommands = ''
-      dwmblocks &
+    videoDrivers = config.videoDrivers;
+    dpi = config.dpi;
+
+    xkb = {
+      variant = "";
+      options = "";
+      layout = "us,ru";
+    };
+
+    windowManager.dwm = {
+      enable = true;
+      package = pkgs.dwm;
+      extraSessionCommands = ''
+        dwmblocks &
+      '';
+    };
+
+    displayManager = {
+      startx.enable = false;
+      sessionCommands = ''
+        ${monitorLayout}
+
+        W="$HOME/HOME/wizzard/wallpaper/art/nature/Church_Heart_of_the_Andes.jpg"
+        [ -f "$W" ] && ${pkgs.xwallpaper}/bin/xwallpaper --zoom "$W" || true
+
+        ${pkgs.xidlehook}/bin/xidlehook \
+          --not-when-fullscreen --not-when-audio \
+          --timer 300 "${pkgs.xset}/bin/xset dpms force off" \
+                      "${pkgs.xset}/bin/xset dpms force on" &
+      '';
+    };
+
+    serverFlagsSection = ''
+      Option "BlankTime" "0"
+      Option "StandbyTime" "0"
+      Option "SuspendTime" "0"
+      Option "OffTime" "0"
     '';
   };
 
-  displayManager = {
-    startx.enable = false;
-    sessionCommands = ''
-      ${monitorLayout}
-
-      W="$HOME/HOME/wizzard/wallpaper/art/nature/Church_Heart_of_the_Andes.jpg"
-      [ -f "$W" ] && ${pkgs.xwallpaper}/bin/xwallpaper --zoom "$W" || true
-
-      ${pkgs.xidlehook}/bin/xidlehook \
-        --not-when-fullscreen --not-when-audio \
-        --timer 300 "${pkgs.xset}/bin/xset dpms force off" \
-                    "${pkgs.xset}/bin/xset dpms force on" &
-    '';
-  };
-
-  serverFlagsSection = ''
-    Option "BlankTime" "0"
-    Option "StandbyTime" "0"
-    Option "SuspendTime" "0"
-    Option "OffTime" "0"
+  environment.etc."X11/xorg.conf.d/00-keyboard.conf".text = ''
+    Section "InputClass"
+      Identifier "system-keyboard"
+      MatchIsKeyboard "on"
+      Option "XkbLayout" "us,ru"
+      Option "XkbOptions" "grp:win_space_toggle"
+    EndSection
   '';
 }

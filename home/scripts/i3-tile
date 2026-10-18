@@ -1,16 +1,21 @@
 # dwm tile on top of i3: master on the left, the rest stacked on the right.
-# only plain workspaces are touched (splith, windows at most one split deep),
+# only plain tags are touched (splith, windows at most one split deep),
 # tabbed tags and hand-made nested splits stay as they are.
 #
 # usage:
-#   i3-tile daemon       keep workspaces in shape, started from i3 config
-#   i3-tile fix          one pass over all workspaces
+#   i3-tile daemon              keep tags in shape, started from i3 config
+#   i3-tile fix                 one pass over all tags
 #   i3-tile focus <next|prev>   focus around the tag, wraps
 #   i3-tile move <next|prev>    swap with the neighbor around the tag, wraps
 #   i3-tile monocle             all windows of the tag into one tabbed container
 #
-# the ring is master, then the stack top to bottom (clockwise), tabs in tab
-# order. focus also visits floating windows at the end, move skips them
+# the ring is master, then the stack top to bottom, tabs in tab order.
+# focus also visits floating windows at the end, move skips them.
+#
+# the daemon also floats fullscreen windows that would take a tile: ones that
+# open fullscreen (media viewers, flameshot) and these when they go
+# fullscreen. tiles stay put, nothing glides once it closes
+fs_float='^(mpv)$'
 
 # i3 makes a new socket on restart, the env still has the old one
 unset I3SOCK
@@ -57,65 +62,74 @@ def ring($l; $d):
 def neighbor($l; $i; $s): $l[($i + $s + ($l | length)) % ($l | length)];
 '
 
+# run i3 commands if there are any
+send() { if [[ -n $1 ]]; then i3-msg -q "$1" || true; fi; }
+
 guard_sec=0
 guard_n=0
 
 fix() {
-  local cmds
-  cmds=$(i3-msg -t get_tree | jq -r "$lib"'
-    [.. | objects | select(.type == "workspace" and (.name | startswith("__") | not))
-     | plan] | join("; ")')
-  [[ -n $cmds ]] || return 0
   # a plan that never settles would move windows forever, cap it
   if [[ $EPOCHSECONDS != "$guard_sec" ]]; then guard_sec=$EPOCHSECONDS guard_n=0; fi
-  guard_n=$((guard_n + 1))
-  if ((guard_n > 20)); then return 0; fi
-  i3-msg -q "$cmds" || true
+  ((++guard_n <= 20)) || return 0
+  send "$(i3-msg -t get_tree | jq -r "$lib"'
+    [.. | objects | select(.type == "workspace" and (.name | startswith("__") | not))
+     | plan] | join("; ")')"
 }
 
 focus() {
-  local cmd
-  cmd=$(i3-msg -t get_tree | jq -r --arg d "$1" "$lib"'
+  send "$(i3-msg -t get_tree | jq -r --arg d "$1" "$lib"'
     ring([focused_ws | (.nodes[], .floating_nodes[]) | tleaves]; $d) as [$l, $i, $s]
     | if ($l | length) == 0 then ""
-      elif $i == null then cmd($l[0].id; "focus") # focus on a split con: start at master
-      else cmd(neighbor($l; $i; $s).id; "focus") end')
-  [[ -n $cmd ]] || return 0
-  i3-msg -q "$cmd" || true
+      elif $i == null then cmd($l[0].id; "focus") # a split con is focused, start at master
+      else cmd(neighbor($l; $i; $s).id; "focus") end')"
 }
 
-# swapping with the ring neighbor moves one step around the circle and keeps
-# everyone else in order, wrap included
+# a swap with the ring neighbor is one step around, everyone else keeps order
 move() {
-  local cmd
-  cmd=$(i3-msg -t get_tree | jq -r --arg d "$1" "$lib"'
+  send "$(i3-msg -t get_tree | jq -r --arg d "$1" "$lib"'
     ring([focused_ws | .nodes[] | tleaves]; $d) as [$l, $i, $s]
     | if $i == null or ($l | length) < 2 then ""
       else
         neighbor($l; $i; $s).id as $n | $l[$i].id as $f
         | cmd($f; "swap container with con_id \($n)") + "; " + cmd($f; "focus")
-      end')
-  [[ -n $cmd ]] || return 0
-  i3-msg -q "$cmd" || true
+      end')"
 }
 
+# pull every window up next to the first one, then tab them
 monocle() {
-  local cmd
-  # pull every window up next to the first one, then tab them
-  cmd=$(i3-msg -t get_tree | jq -r "$lib"'
+  send "$(i3-msg -t get_tree | jq -r "$lib"'
     [focused_ws | .nodes[] | tleaves] as $l
     | if ($l | length) == 0 then "layout tabbed"
       else
         [cmd($l[0].id; "mark --add _tile"),
          ($l[1:][] | cmd(.id; "move container to mark _tile"), cmd(.id; "mark --add _tile")),
          "unmark _tile", cmd($l[0].id; "layout tabbed")] | join("; ")
-      end')
-  i3-msg -q "$cmd" || true
+      end')"
+}
+
+# float commands for a burst of window events (one json per line). apps often
+# ask for fullscreen right after mapping, that counts as opening fullscreen
+declare -A born=()
+float_fullscreen() {
+  local change id fsm fl cls now=${EPOCHREALTIME//[!0-9]/} cmds=
+  while IFS=$'\t' read -r change id fsm fl cls; do
+    case $change in
+      new) born[$id]=$now ;;
+      close) unset "born[$id]" ;;
+    esac
+    [[ $fsm == 1 && $fl == *_off ]] || continue
+    if [[ $change == new || $cls =~ $fs_float ]] || ((now - ${born[$id]:-0} < 1500000)); then
+      cmds+="[con_id=$id] floating enable; "
+    fi
+  done < <(jq -r '[.change, .container.id, .container.fullscreen_mode,
+    (.container.floating // "-"), (.container.window_properties.class // "-")] | @tsv' || true)
+  send "$cmds"
 }
 
 daemon() {
-  local pidfile=${XDG_RUNTIME_DIR:-/tmp}/i3-tile.pid old fd ev
-  local re='^\{"change":"(new|close|move|floating)"'
+  local pidfile=${XDG_RUNTIME_DIR:-/tmp}/i3-tile.pid old fd ev burst
+  local re='^\{"change":"(new|close|move|floating|fullscreen_mode)"'
   # exec_always runs this on every reload, the new one replaces the old
   old=$(cat "$pidfile" 2>/dev/null || true)
   if [[ -n $old && $old != "$$" &&
@@ -139,7 +153,12 @@ daemon() {
       # focus and title spam doesn't change the layout
       [[ $ev =~ $re ]] || continue
       # one pass for a whole burst
-      while read -r -t 0 -u "$fd"; do read -r -u "$fd" _; done
+      burst=$ev
+      while read -r -t 0 -u "$fd"; do
+        read -r -u "$fd" ev
+        burst+=$'\n'$ev
+      done
+      float_fullscreen <<<"$burst"
       fix
     done
     exec {fd}<&-

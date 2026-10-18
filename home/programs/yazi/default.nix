@@ -118,6 +118,14 @@ in
           }
           {
             on = [
+              "f"
+              "h"
+            ];
+            run = ''shell --block -- p=$(${getExe pkgs.fd} --hidden --exclude .git . ~ | ${getExe pkgs.fzf}) && { [ -d "$p" ] && ya emit cd "$p" || ya emit reveal "$p"; }'';
+            desc = "fuzzy find in home";
+          }
+          {
+            on = [
               "u"
               "u"
             ];
@@ -156,18 +164,18 @@ in
           }
           {
             on = [ "<Enter>" ];
-            run = "plugin --sync smart-enter";
-            desc = "Enter directory";
+            run = "plugin smart-enter";
+            desc = "Enter directory or open selected";
           }
           {
             on = [ "<Right>" ];
-            run = "plugin --sync smart-enter";
-            desc = "Enter directory";
+            run = "plugin smart-enter";
+            desc = "Enter directory or open selected";
           }
           {
             on = [ "l" ];
-            run = "plugin --sync smart-enter";
-            desc = "Enter directory";
+            run = "plugin smart-enter";
+            desc = "Enter directory or open selected";
           }
           {
             on = [

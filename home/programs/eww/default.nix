@@ -11,6 +11,7 @@ in
 {
   imports = [
     ./wifi-menu
+    ./keys-menu
   ];
 
   programs.eww = {
@@ -20,6 +21,7 @@ in
   };
 
   xdg.configFile."eww/wifi-menu".source = ./wifi-menu/config;
+  xdg.configFile."eww/keys-menu".source = ./keys-menu/config;
 
   home.packages = with pkgs; [
     (script "eww-i3-workspaces" [ i3 jq ])

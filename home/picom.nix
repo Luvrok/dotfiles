@@ -7,7 +7,7 @@
 }:
 let
   # 1 normal, 8 slow motion with debug logs
-  slow = 8;
+  slow = 1;
   d = x: toString (x * slow);
 in
 {
@@ -15,19 +15,24 @@ in
     enable = true;
     package = pkgs.picom.overrideAttrs (old: {
       src = inputs.picom-pijulius;
-      # no carousel on big jumps: lower index -> inverse, higher -> normal
+      # win.c: no carousel on big jumps, lower index -> inverse, higher -> normal.
+      # layout.c: a borderless window (tabbed tags) shown again mid-anim was
+      # skipped until the app drew, it blinked out. now it shows its old image
       postPatch = (old.postPatch or "") + ''
         substituteInPlace src/wm/win.c \
           --replace-fail 'ps->root_desktop_switch_direction >= -1' '1' \
           --replace-fail 'ps->root_desktop_switch_direction > 1' '0'
+        substituteInPlace src/renderer/layout.c \
+          --replace-fail 'if (!w->ever_damaged || !w_opts.paint) {' \
+                         'if ((!w->ever_damaged && !w->saved_win_image) || !w_opts.paint) {' \
+          --replace-fail '(float)win_animatable_get(w, WIN_SCRIPT_SAVED_IMAGE_BLEND);' \
+                         'w->ever_damaged ? (float)win_animatable_get(w, WIN_SCRIPT_SAVED_IMAGE_BLEND) : 1;'
       '';
     });
   };
 
-  # i3-sp reads its fade time from here
+  # read by i3-sp and i3-ws-anim, slow mode included
   xdg.configFile."picom/fade".text = d 0.15;
-
-  # i3-ws-anim keeps its _WS_SWITCH tags this long, slow mode included
   xdg.configFile."picom/ws-untag".text = d 0.3;
 
   # mkForce: the hm module writes this file too and adds keys that clash with rules
@@ -44,9 +49,12 @@ in
     shadow = false;
     corner-radius = 0;
 
+    # saved-image-blend on fade-ins: a window shown again mid-anim starts from
+    # its old image and fades into the new one, the app may not have drawn
+    # yet (i3 paints the frame, the inside is black). fresh windows have none
     animations = (
 
-      # workspace switch by ewmh index, i3-ws-anim rules below override it
+      # workspace switch by ewmh index, i3-ws-anim tags override it
       {
         triggers = [ "workspace-out" ];
         offset-x = { curve = "cubic-bezier(0.33, 1, 0.68, 1)"; duration = ${d 0.25}; start = 0; end = "0 - window-monitor-width * 0.06"; };
@@ -78,6 +86,7 @@ in
         opacity = { curve = "cubic-bezier(0.4, 0, 0.2, 1)"; duration = ${d 0.25}; start = 0; end = "window-raw-opacity"; };
         shadow-opacity = "opacity";
         blur-opacity = "opacity";
+        saved-image-blend = { curve = "cubic-bezier(0.32, 0, 0.67, 0)"; duration = ${d 0.25}; start = 1; end = 0; };
         crop-x = "window-monitor-x";
         crop-y = "window-monitor-y";
         crop-width = "window-monitor-width";
@@ -90,15 +99,16 @@ in
         opacity = { curve = "cubic-bezier(0.4, 0, 0.2, 1)"; duration = ${d 0.25}; start = 0; end = "window-raw-opacity"; };
         shadow-opacity = "opacity";
         blur-opacity = "opacity";
+        saved-image-blend = { curve = "cubic-bezier(0.32, 0, 0.67, 0)"; duration = ${d 0.25}; start = 1; end = 0; };
         crop-x = "window-monitor-x";
         crop-y = "window-monitor-y";
         crop-width = "window-monitor-width";
         crop-height = "window-monitor-height";
       },
 
-      # slide down from above. reset: never start from below after a quick re-show
+      # new window slides down from above. reset: never start from below after a quick re-show
       {
-        triggers = [ "open", "show" ];
+        triggers = [ "open" ];
         offset-y = { curve = "cubic-bezier(0.33, 1, 0.68, 1)"; duration = ${d 0.25}; start = "0 - window-monitor-height * 0.06"; end = 0; reset = true; };
         shadow-offset-y = "offset-y";
         opacity = { curve = "cubic-bezier(0.4, 0, 0.2, 1)"; duration = ${d 0.25}; start = 0; end = "window-raw-opacity"; };
@@ -108,10 +118,26 @@ in
 
       # sink down. close of i3 windows is instant, see rules
       {
-        triggers = [ "close", "hide" ];
+        triggers = [ "close" ];
         offset-y = { curve = "cubic-bezier(0.33, 1, 0.68, 1)"; duration = ${d 0.25}; start = 0; end = "window-monitor-height * 0.06"; };
         shadow-offset-y = "offset-y";
         opacity = { curve = "linear"; duration = ${d 0.15}; start = "window-raw-opacity-before"; end = 0; };
+        shadow-opacity = "opacity";
+        blur-opacity = "opacity";
+      },
+
+      # plain show/hide is i3 doing it on its own, like hiding everything under
+      # a fullscreen window. just a quick fade, nothing moves
+      {
+        triggers = [ "show" ];
+        opacity = { curve = "cubic-bezier(0.4, 0, 0.2, 1)"; duration = ${d 0.1}; start = 0; end = "window-raw-opacity"; };
+        shadow-opacity = "opacity";
+        blur-opacity = "opacity";
+        saved-image-blend = { curve = "cubic-bezier(0.32, 0, 0.67, 0)"; duration = ${d 0.1}; start = 1; end = 0; };
+      },
+      {
+        triggers = [ "hide" ];
+        opacity = { curve = "linear"; duration = ${d 0.1}; start = "window-raw-opacity-before"; end = 0; };
         shadow-opacity = "opacity";
         blur-opacity = "opacity";
       },
@@ -141,13 +167,28 @@ in
       }
     );
 
+    # later rules win
     rules = (
 
-      # bar and desktop: no animations
+      # bar: fades when i3 hides it for a fullscreen window, no drift.
+      # nothing on open/close, eww restarts on every i3 reload
       {
         match = "window_type = 'dock' || window_type = 'desktop'";
         animations = (
-          { triggers = [ "open", "show", "close", "hide" ]; offset-x = 0; }
+          { triggers = [ "open", "close" ]; offset-x = 0; },
+          {
+            triggers = [ "show", "workspace-in", "workspace-in-inverse" ];
+            opacity = { curve = "cubic-bezier(0.4, 0, 0.2, 1)"; duration = ${d 0.25}; start = 0; end = "window-raw-opacity"; };
+            shadow-opacity = "opacity";
+            blur-opacity = "opacity";
+            saved-image-blend = { curve = "cubic-bezier(0.32, 0, 0.67, 0)"; duration = ${d 0.25}; start = 1; end = 0; };
+          },
+          {
+            triggers = [ "hide", "workspace-out", "workspace-out-inverse" ];
+            opacity = { curve = "linear"; duration = ${d 0.15}; start = "window-raw-opacity-before"; end = 0; };
+            shadow-opacity = "opacity";
+            blur-opacity = "opacity";
+          }
         );
       },
 
@@ -166,8 +207,8 @@ in
         );
       },
 
-      # i3 windows lose their content before picom sees the close, so no anim.
-      # i3-sp kill fades them first
+      # an i3 window loses its content before picom sees the close, so no anim.
+      # i3-sp kill fades it first
       {
         match = "!override_redirect";
         animations = (
@@ -175,7 +216,7 @@ in
         );
       },
 
-      # floating: no size/position anim, dragging stays snappy
+      # floating: dragging stays snappy
       {
         match = "I3_FLOATING_WINDOW@";
         animations = (
@@ -183,7 +224,31 @@ in
         );
       },
 
-      # i3-ws-anim tags both workspaces before a switch: 1 going up, 2 going down.
+      # fullscreen window takes the screen at once
+      {
+        match = "_NET_WM_STATE@[*] = '_NET_WM_STATE_FULLSCREEN'";
+        animations = (
+          { triggers = [ "open", "show", "size", "position" ]; offset-x = 0; }
+        );
+      },
+
+      # i3-sp tags a scratchpad before bringing it, it slides down like a new window
+      {
+        match = "_SP_SHOW@";
+        animations = (
+          {
+            triggers = [ "show" ];
+            offset-y = { curve = "cubic-bezier(0.33, 1, 0.68, 1)"; duration = ${d 0.25}; start = "0 - window-monitor-height * 0.06"; end = 0; reset = true; };
+            shadow-offset-y = "offset-y";
+            opacity = { curve = "cubic-bezier(0.4, 0, 0.2, 1)"; duration = ${d 0.25}; start = 0; end = "window-raw-opacity"; };
+            shadow-opacity = "opacity";
+            blur-opacity = "opacity";
+            saved-image-blend = { curve = "cubic-bezier(0.32, 0, 0.67, 0)"; duration = ${d 0.25}; start = 1; end = 0; };
+          }
+        );
+      },
+
+      # i3-ws-anim tags both tags of a switch: 1 going up, 2 going down.
       # covers empty tags too, where the fork only sends hide/show
       {
         match = "_WS_SWITCH@ = 1";
@@ -207,6 +272,7 @@ in
             opacity = { curve = "cubic-bezier(0.4, 0, 0.2, 1)"; duration = ${d 0.25}; start = 0; end = "window-raw-opacity"; };
             shadow-opacity = "opacity";
             blur-opacity = "opacity";
+            saved-image-blend = { curve = "cubic-bezier(0.32, 0, 0.67, 0)"; duration = ${d 0.25}; start = 1; end = 0; };
             crop-x = "window-monitor-x";
             crop-y = "window-monitor-y";
             crop-width = "window-monitor-width";
@@ -236,6 +302,7 @@ in
             opacity = { curve = "cubic-bezier(0.4, 0, 0.2, 1)"; duration = ${d 0.25}; start = 0; end = "window-raw-opacity"; };
             shadow-opacity = "opacity";
             blur-opacity = "opacity";
+            saved-image-blend = { curve = "cubic-bezier(0.32, 0, 0.67, 0)"; duration = ${d 0.25}; start = 1; end = 0; };
             crop-x = "window-monitor-x";
             crop-y = "window-monitor-y";
             crop-width = "window-monitor-width";
@@ -243,7 +310,17 @@ in
           }
         );
       },
-      # flameshot: no animations, the overlay appears and vanishes instantly
+
+      # i3-sp tags what's under a closing fullscreen window: it's there at once,
+      # the closing window fades on top of it
+      {
+        match = "_SP_NOW@";
+        animations = (
+          { triggers = [ "show" ]; offset-x = 0; }
+        );
+      },
+
+      # flameshot: no animations, its overlay appears and vanishes at once
       {
         match = "class_g = 'flameshot'";
         animations = (

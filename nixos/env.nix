@@ -14,20 +14,4 @@
   };
 
   environment.localBinInPath = true;
-
-  environment.etc."X11/xorg.conf.d/00-keyboard.conf".text = ''
-    Section "InputClass"
-      Identifier "system-keyboard"
-      MatchIsKeyboard "on"
-      Option "XkbLayout" "us,ru"
-      Option "XkbOptions" "grp:win_space_toggle"
-    EndSection
-  '';
-
-  environment.etc."proxychains.conf".text = ''
-    strict_chain
-    proxy_dns
-    [ProxyList]
-    socks5 127.0.0.1 10808
-  '';
 }

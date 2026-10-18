@@ -75,7 +75,6 @@
       nmap
       openssl
       shadowsocks-rust
-      proxychains-ng
       tcpdump
       tor
       v2rayn
@@ -111,6 +110,8 @@
       sops
       sshfs
       pciutils
+      nsxiv
+      zathura
 
       # --- archives ---
       p7zip

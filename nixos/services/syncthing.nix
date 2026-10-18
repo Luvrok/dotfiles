@@ -1,10 +1,14 @@
 { username, ... }:
 
 {
-  enable = true;
-  user = "${username}";
-  openDefaultPorts = true;
+  systemd.services.syncthing.environment.STNODEFAULTFOLDER = "true";
 
-  dataDir = "/home/${username}/.config/syncthing";
-  configDir = "/home/${username}/.config/syncthing";
+  services.syncthing = {
+    enable = true;
+    user = "${username}";
+    openDefaultPorts = true;
+
+    dataDir = "/home/${username}/.config/syncthing";
+    configDir = "/home/${username}/.config/syncthing";
+  };
 }

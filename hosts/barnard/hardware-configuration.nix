@@ -49,7 +49,8 @@
       "noatime"
       "nofail"
       "x-systemd.automount"
-      "x-systemd.device-timeout=3s"
+      "x-systemd.idle-timeout=600"
+      "x-systemd.device-timeout=10s"
     ];
   };
 

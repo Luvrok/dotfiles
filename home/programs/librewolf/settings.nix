@@ -271,6 +271,7 @@ let
     "sidebar.revamp" = false; # old sidebar, Sidebery needs it
     "svg.context-properties.content.enabled" = true;
     "widget.gtk.ignore-bogus-leave-notify" = 1;
+    "widget.use-xdg-desktop-portal.file-picker" = 1;
     "widget.gtk.rounded-bottom-corners.enabled" = false;
 
     # Hardware decoding for VP8 and VP9 in video calls

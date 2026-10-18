@@ -1,14 +1,25 @@
-# fade a window out on top before i3 hides or kills it.
-# i3 drops a window under the tiles right before unmapping it (scratchpad),
-# and on close the app takes its content away before picom sees anything,
-# so picom alone can't animate either. we drop _NET_WM_WINDOW_OPACITY to 0
-# first (picom plays decrease-opacity while the window is intact and on
-# top), then let i3 do its thing.
+# fade a window out on top before i3 hides or kills it. picom alone can't:
+# i3 drops a window under the tiles right before the scratchpad unmaps it,
+# and a closing app takes its content away first. so opacity goes to 0
+# (picom plays decrease-opacity), then i3 does the rest.
 #
-# i3 can only hide a window by putting it in the scratchpad, so marks tell
-# apart what's in there (i3 doesn't draw marks that start with _):
-#   _sp_<name>               scratchpad <name>, for_window in i3 config sets it
+# a tiled window gets floated in place first: same spot, no border, on top,
+# out of the layout. so the tiles glide into the gap while it fades, not after.
+# a fullscreen one too, so i3 maps what's under it. that's there at once
+# (_SP_NOW), the app is frozen meanwhile or it would react to leaving
+# fullscreen (mpv jumps to its windowed size on another monitor).
+#
+# focus moves on as soon as the fade starts, so quick keypresses close the
+# next windows at the same time instead of waiting in line.
+#
+# i3 hides windows only in the scratchpad, marks tell them apart there
+# (i3 doesn't draw marks that start with _):
+#   _sp_<name>               scratchpad <name>, set in i3 config
 #   _hide_<tag>_<t|f>_<id>   hidden from <tag>, was tiled or floating
+#   _closing_<id>            fading out right now, keypresses skip it
+#
+# nothing comes out of the scratchpad while the tag has a fullscreen window,
+# i3 would kick it out of fullscreen.
 #
 # usage:
 #   i3-sp toggle <name> <cmd...>   show/hide scratchpad <name>, launch if missing
@@ -17,37 +28,147 @@
 #   i3-sp showall                  bring back what was hidden on this tag
 #   i3-sp kill                     fade, hide, then close focused window
 
-# picom.nix writes the decrease-opacity duration here, slow mode included
+# picom.nix writes it, slow mode included
 fade=$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/picom/fade" 2>/dev/null || echo 0.15)
-# same as the scratchpad for_window rule in i3 config
+# same as the scratchpad rule in i3 config
 size="1280 910"
 
-# one at a time: a second keypress during the fade waits for the first to
-# finish instead of racing it (it used to re-show a window mid-hide)
+# one at a time. hide/kill hold it only to pick the window and move focus on,
+# so quick keypresses close a few windows at once
 exec 9>"${XDG_RUNTIME_DIR:-/tmp}/i3-sp.lock"
 flock 9
+
+# app frozen while its window leaves fullscreen, woken up whatever happens
+frozen=
+trap 'if [[ -n $frozen ]]; then kill -CONT "$frozen" 2>/dev/null || true; fi' EXIT
 
 set_opacity() { xprop -id "$1" -f _NET_WM_WINDOW_OPACITY 32c -set _NET_WM_WINDOW_OPACITY "$2"; }
 clear_opacity() { xprop -id "$1" -remove _NET_WM_WINDOW_OPACITY 2>/dev/null || true; }
 fade_out() { set_opacity "$1" 0; sleep "$fade"; }
 
-# "<window id> <floating> <workspace> <marks,comma,separated>" of the focused
-# con, id 0 if it has no window
+# pid of the app behind a window, only if it's one of ours
+app_pid() {
+  local p
+  p=$(xprop -id "$1" -notype _NET_WM_PID 2>/dev/null || true)
+  p=${p##* }
+  if [[ $p =~ ^[0-9]+$ && -O /proc/$p ]]; then echo "$p"; fi
+}
+
+thaw() {
+  if [[ -n $frozen ]]; then
+    kill -CONT "$frozen" 2>/dev/null || true
+    frozen=
+  fi
+}
+
+# windows under a fullscreen one: the rest of its tag and the bar of its output
+under='
+.nodes[] | select(.type == "output" and any(.. | objects; .window? == $w))
+| (.nodes[] | select(.type == "dockarea") | .nodes[].window),
+  (.. | objects | select(.type == "workspace" and any(.. | objects; .window? == $w))
+   | .. | objects | select(.window? and .window != $w) | .window)'
+
+# they show up at once when i3 maps them, the closing window fades on top
+revealed=
+reveal() {
+  local id
+  revealed=$(i3-msg -t get_tree | jq -r --argjson w "$1" "$under")
+  for id in $revealed; do xprop -id "$id" -f _SP_NOW 32c -set _SP_NOW 1 & done
+  wait
+}
+
+# tags come off once picom has seen the windows map
+unreveal_later() {
+  [[ -n $revealed ]] || return 0
+  (
+    exec 9>&-
+    sleep 0.3
+    for id in $revealed; do xprop -id "$id" -remove _SP_NOW 2>/dev/null || true; done
+  ) &
+}
+
+# tiled window leaves the layout but keeps its spot, floating stays on top.
+# same frame rect with no border: the content takes the border's pixel and
+# picom sees no size change, which would eat the fade if it came in the
+# same frame as the opacity change.
+# a fullscreen one leaves fullscreen the same way, its app frozen till it's
+# in the scratchpad, where i3 ignores its resize requests. no pid to freeze:
+# it fades fullscreen and what's under shows up after.
+float_in_place() {
+  local g fs x y w h unfs=
+  g=$(i3-msg -t get_tree | jq -r --argjson w "$1" 'first(.. | objects | select(.window? == $w)
+    | select((.floating | endswith("_off")) or .fullscreen_mode > 0)
+    | "\(.fullscreen_mode) \(.rect.x) \(.rect.y) \(.rect.width) \(.rect.height)") // empty')
+  [[ -n $g ]] || return 0
+  read -r fs x y w h <<<"$g"
+  if ((fs > 0)); then
+    reveal "$1"
+    frozen=$(app_pid "$1")
+    [[ -n $frozen ]] || return 0
+    kill -STOP "$frozen"
+    unfs="fullscreen disable, "
+  fi
+  i3-msg -q "[id=$1] ${unfs}floating enable, border none, resize set $w $h, move absolute position $x $y"
+}
+
+# already on its way out, an earlier keypress took it. args: marks
+closing() { [[ ,$1, == *,_closing_* ]]; }
+
+# where focus goes once $w is gone: the last focused window on its tag that
+# isn't closing too. none while $w is still fullscreen, focus would end that
+next_focus='
+def pick:
+  if .window then select(any(.marks[]?; startswith("_closing_")) | not)
+  else (.nodes + .floating_nodes) as $c
+    | first(.focus[] as $id | $c[] | select(.id == $id) | pick) end;
+first(.. | objects | select(.type == "workspace" and any(.. | objects; .window? == $w)))
+| select(any(.. | objects; .window? == $w and .fullscreen_mode == 0))
+| pick | .id'
+
+# out of the layout, fading, focus on the next window, then the lock goes:
+# the next keypress takes that one while this one fades
+start_fade() {
+  local next
+  unhide_next
+  float_in_place "$1"
+  i3-msg -q "[id=$1] mark --add _closing_$1"
+  set_opacity "$1" 0
+  next=$(i3-msg -t get_tree | jq -r --argjson w "$1" "$next_focus")
+  if [[ -n $next ]]; then i3-msg -q "[con_id=$next] focus"; fi
+  flock -u 9
+  sleep "$fade"
+  flock 9
+}
+
+# faded out, into the scratchpad. args: window, i3 commands that hide it
+end_fade() {
+  to_scratch "$1" "unmark _closing_$1, $2"
+  thaw
+  unreveal_later
+}
+
+# "<window> <floating> <workspace> <marks,...>" of the focused con, window 0 if none
 focused() {
   i3-msg -t get_tree | jq -r 'first(.. | objects | select(.type == "workspace")
     | .name as $ws | .. | objects | select(.focused == true)
     | "\(.window // 0) \(.floating) \($ws) \(.marks // [] | join(","))") // empty'
 }
 
-# "<window id> <floating> <workspace>" of the con with mark $1
+# "<window> <floating> <workspace>" of the con with mark $1
 by_mark() {
   i3-msg -t get_tree | jq -r --arg m "$1" 'first(.. | objects | select(.type == "workspace")
     | .name as $ws | .. | objects | select(any(.marks[]?; . == $m))
     | "\(.window) \(.floating) \($ws)") // empty'
 }
 
-# mark that brings a hidden window back to its tag. scratchpads get none,
-# their own key brings them back
+# true if the focused tag has a fullscreen window (i3 counts the workspace itself)
+fullscreen_here() {
+  i3-msg -t get_tree | jq -e 'first(.. | objects | select(.type == "workspace"
+    and any(.. | objects; .focused == true)))
+    | any(.. | objects; .type != "workspace" and .fullscreen_mode? > 0)' >/dev/null
+}
+
+# mark that brings a hidden window back to its tag, none for scratchpads
 # args: floating workspace marks window
 hide_mark() {
   if [[ ,$3, == *,_sp_* ]]; then return 0; fi
@@ -58,9 +179,8 @@ alive() {
   i3-msg -t get_tree | jq -e --argjson w "$1" 'any(.. | objects; .window? == $w)' >/dev/null
 }
 
-# i3 marks scratchpad windows as on all desktops (_NET_WM_DESKTOP 0xffffffff).
-# browsers save that with the session and on restore i3 makes them floating
-# and sticky, so put the real desktop back right after hiding.
+# i3 puts scratchpad windows on all desktops (_NET_WM_DESKTOP 0xffffffff).
+# browsers save that and come back floating and sticky, so restore it
 # args: window, i3 commands that hide it
 to_scratch() {
   local out desk=
@@ -70,6 +190,47 @@ to_scratch() {
   if [[ -n $desk ]]; then xprop -id "$1" -f _NET_WM_DESKTOP 32c -set _NET_WM_DESKTOP "$desk"; fi
 }
 
+# show with the slide-down from picom.nix, picom reads the tag on map
+bring() {
+  xprop -id "$1" -f _SP_SHOW 32c -set _SP_SHOW 1
+  i3-msg -q "[id=$1] scratchpad show"
+  (
+    exec 9>&-
+    sleep "$fade"
+    xprop -id "$1" -remove _SP_SHOW 2>/dev/null || true
+  ) &
+}
+
+# hidden tabs don't paint (_NET_WM_STATE_HIDDEN) and come back empty after a
+# tag switch, so the desktop shows under the tab we fade out. unhide the tab
+# that comes up next (2nd in focus order) so it paints during the fade,
+# i3 sets the flag again when it needs to
+next_tab='
+def leaves: if (.nodes | length) == 0 then . else .nodes[] | leaves end;
+first(.. | objects | select(.type == "workspace" and any(.. | objects; .focused == true)))
+| .. | objects | select((.layout == "tabbed" or .layout == "stacked") and (.focus | length) > 1)
+| . as $t
+| select([$t.nodes[] | select(.id == $t.focus[0]) | leaves] | length == 1 and .[0].focused)
+| $t.nodes[] | select(.id == $t.focus[1]) | leaves | .window // empty'
+
+unhide_next() {
+  local id st a keep
+  for id in $(i3-msg -t get_tree | jq -r "$next_tab"); do
+    st=$(xprop -id "$id" -notype _NET_WM_STATE 2>/dev/null) || continue
+    [[ $st == *_NET_WM_STATE_HIDDEN* ]] || continue
+    keep=()
+    for a in ${st#*= }; do
+      a=${a%,}
+      if [[ $a != _NET_WM_STATE_HIDDEN ]]; then keep+=("$a"); fi
+    done
+    if ((${#keep[@]})); then
+      xprop -id "$id" -f _NET_WM_STATE 32a -set _NET_WM_STATE "$(IFS=,; echo "${keep[*]}")"
+    else
+      xprop -id "$id" -remove _NET_WM_STATE
+    fi
+  done
+}
+
 case "${1:-}" in
   toggle)
     m=_sp_$2
@@ -77,29 +238,33 @@ case "${1:-}" in
     read -r wid fl ws <<<"$(by_mark "$m")"
     cur=$(i3-msg -t get_workspaces | jq -r '.[] | select(.focused) | .name')
 
-    if [[ -z $wid ]]; then
-      exec 9>&- # don't hand the lock to the app
-      exec "$@" # not running, launch it
-    elif [[ $fl != *_on ]]; then
-      i3-msg -q "[id=$wid] focus" # got tiled, just focus it
-    elif [[ $ws == "$cur" ]]; then
+    if [[ -n $wid && $fl == *_on && $ws == "$cur" ]]; then
       fade_out "$wid"
-      to_scratch "$wid" "scratchpad show" # visible here, so this hides it
+      to_scratch "$wid" "move scratchpad"
       clear_opacity "$wid"
+    elif fullscreen_here; then
+      exit 0
+    elif [[ -n $wid && $fl != *_on ]]; then
+      i3-msg -q "[id=$wid] focus" # got tiled, just focus it
+    elif [[ -n $wid ]]; then
+      bring "$wid" # hidden or on another tag
     else
-      i3-msg -q "[id=$wid] scratchpad show" # hidden or elsewhere, bring it here
+      exec 9>&- # don't hand the lock to the app
+      exec "$@"
     fi
     ;;
   set)
     m=_sp_$2
-    read -r wid _ <<<"$(focused)"
+    read -r wid _ _ marks <<<"$(focused)"
     [[ -n $wid && $wid != 0 ]] || exit 0
+    if closing "$marks"; then exit 0; fi
+    start_fade "$wid"
     read -r old _ ows <<<"$(by_mark "$m")"
-    fade_out "$wid"
-    # marks are unique, so this also takes it off the old one
-    to_scratch "$wid" "mark --add $m, floating enable, resize set $size, move position center, move scratchpad"
+    # marks are unique, this takes it off the old one too
+    # border pixel 1 is default_border in i3 config
+    end_fade "$wid" "mark --add $m, floating enable, border pixel 1, resize set $size, move position center, move scratchpad"
     clear_opacity "$wid"
-    # old one would sit in the scratchpad with no key, bring it here as a tile
+    # the old one would be stuck with no key, it comes back as a tile
     if [[ -n $old && $old != "$wid" && $ows == __i3_scratch ]]; then
       i3-msg -q "[id=$old] scratchpad show, floating disable"
     fi
@@ -107,23 +272,24 @@ case "${1:-}" in
   hide)
     read -r wid fl ws marks <<<"$(focused)"
     [[ -n $wid && $wid != 0 ]] || exit 0
+    if closing "$marks"; then exit 0; fi
     m=$(hide_mark "$fl" "$ws" "$marks" "$wid")
-    fade_out "$wid"
-    to_scratch "$wid" "${m:+mark --add $m, }floating enable, move scratchpad"
+    start_fade "$wid"
+    end_fade "$wid" "${m:+mark --add $m, }floating enable, move scratchpad"
     clear_opacity "$wid"
     ;;
   showall)
-    # hidden from this tag, plus strays with no mark at all (hidden by
-    # something else, or before marks existed): those come here as tiles
+    if fullscreen_here; then exit 0; fi
+    # hidden from this tag, plus unmarked strays (they come back as tiles)
     read -r _ _ ws _ <<<"$(focused)"
     cmds=$(i3-msg -t get_tree | jq -r --arg p "_hide_${ws}_" '
       [.. | objects | select(.type == "workspace" and .name == "__i3_scratch")
        | .. | objects | select(.window) | .id as $id | (.marks // []) as $m
        | if ($m | length) == 0 then
-           "[con_id=\($id)] scratchpad show, floating disable"
+           "[con_id=\($id)] scratchpad show, border pixel 1, floating disable"
          else
            $m[] | select(startswith($p))
-           | "[con_id=\($id)] scratchpad show, "
+           | "[con_id=\($id)] scratchpad show, border pixel 1, "
              + (if startswith($p + "t_") then "floating disable, " else "" end)
              + "unmark \(.)"
          end]
@@ -136,29 +302,28 @@ case "${1:-}" in
       i3-msg -q kill
       exit 0
     fi
+    if closing "$marks"; then exit 0; fi
     m=$(hide_mark "$fl" "$ws" "$marks" "$wid")
-    fade_out "$wid"
-    # hide first: the tiles close the gap right away, and whenever the app
-    # actually exits nobody sees it. the app saves its desktop on close, so
-    # kill only after to_scratch fixed it
-    to_scratch "$wid" "${m:+mark --add $m, }floating enable, move scratchpad"
+    start_fade "$wid"
+    # kill after to_scratch, the app saves its desktop on close
+    end_fade "$wid" "${m:+mark --add $m, }floating enable, move scratchpad"
     i3-msg -q "[id=$wid] kill"
     flock -u 9
-    # app might refuse to close (unsaved stuff): wait a bit, then bring it back
+    # it may refuse to close (unsaved stuff), bring it back after 2 s
     for _ in {1..20}; do
       sleep 0.1
       if ! alive "$wid"; then
-        clear_opacity "$wid" # tray apps keep the window, don't leave it invisible
+        clear_opacity "$wid" # tray apps keep the window
         exit 0
       fi
     done
     clear_opacity "$wid"
     if [[ -z $m ]]; then
-      i3-msg -q "[id=$wid] scratchpad show"
+      i3-msg -q "[id=$wid] scratchpad show, border pixel 1"
     elif [[ $m == *_t_* ]]; then
-      i3-msg -q "[id=$wid] scratchpad show, move container to workspace \"$ws\", floating disable, unmark $m"
+      i3-msg -q "[id=$wid] scratchpad show, border pixel 1, move container to workspace \"$ws\", floating disable, unmark $m"
     else
-      i3-msg -q "[id=$wid] scratchpad show, move container to workspace \"$ws\", unmark $m"
+      i3-msg -q "[id=$wid] scratchpad show, border pixel 1, move container to workspace \"$ws\", unmark $m"
     fi
     ;;
 esac

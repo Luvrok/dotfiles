@@ -1,0 +1,90 @@
+// keybind cheat sheet, same look as the wifi menu
+// uses $bg $fg $sel-bg $sel-fg from eww.scss
+
+$keys-line: #3c3836;
+$keys-dim: rgba($fg, 0.45);
+
+// orange border like a focused i3 window
+.keys {
+  background-color: $bg;
+  color: $fg;
+  border: 1px solid $sel-bg;
+  padding: 8px 0;
+}
+
+.keys-head {
+  padding: 0 12px 2px;
+}
+
+.keys-title {
+  color: $sel-bg;
+  font-weight: bold;
+}
+
+// page tabs, the open one like a selected tag in the bar
+.keys-tab {
+  padding: 0 8px;
+  color: $keys-dim;
+}
+
+.keys-tab.sel {
+  background-color: $sel-bg;
+  color: $sel-fg;
+}
+
+.keys-col {
+  min-width: 290px;
+  padding: 0 12px;
+}
+
+// thin line between columns
+.keys-col + .keys-col {
+  border-left: 1px solid $keys-line;
+}
+
+.keys-sec {
+  padding-top: 8px;
+}
+
+.keys-sec-title {
+  color: $sel-bg;
+  margin-bottom: 2px;
+}
+
+.keys-row {
+  min-height: 21px;
+}
+
+.keys-what {
+  margin-right: 18px;
+}
+
+// keycaps: modifiers dim, the key itself bright
+.keys-mod,
+.keys-key {
+  padding: 0 5px;
+  margin-left: 3px;
+  border: 1px solid $keys-line;
+  font-size: 9pt;
+}
+
+.keys-mod {
+  color: $keys-dim;
+}
+
+.keys-key {
+  background-color: $keys-line;
+  color: $sel-fg;
+}
+
+.keys-sep {
+  margin-left: 3px;
+  color: $keys-dim;
+  font-size: 9pt;
+}
+
+.keys-hint {
+  padding: 6px 12px 0;
+  color: $keys-dim;
+  font-size: 8pt;
+}

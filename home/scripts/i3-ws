@@ -1,16 +1,15 @@
-# Теги как в dwm: у каждого монитора свои 1..9. Воркспейсы между мониторами
-# не переезжают, переезжают только окна.
-# Основной монитор — воркспейсы 1..9, следующие слева направо — 11..19, 21..29.
-# Порядок мониторов тот же, что в eww-i3-workspaces.
-#   i3-ws N         показать тег N на текущем мониторе
-#   i3-ws move N    перенести окно на тег N текущего монитора
-#   i3-ws follow N  перенести окно и перейти за ним
-#   i3-ws back      вернуться на предыдущий тег этого монитора
+# dwm-like tags: every monitor has its own 1..9, windows move between
+# monitors, workspaces don't. primary is 1..9, the next ones left to right
+# 11..19, 21..29, same order as eww-i3-workspaces.
+#   i3-ws N         show tag N on this monitor
+#   i3-ws move N    move the window to tag N of this monitor
+#   i3-ws follow N  move the window and go with it
+#   i3-ws back      previous tag of this monitor
 
-# i3 при рестарте создаёт новый сокет, а I3SOCK в окружении остаётся старым.
+# i3 makes a new socket on restart, the env still has the old one
 unset I3SOCK
 
-# Монитор в фокусе, текущий воркспейс и смещение тегов этого монитора
+# focused monitor, current workspace and the tag offset of this monitor
 read -r out cur off < <(jq -rn \
   --argjson ws "$(i3-msg -t get_workspaces)" \
   --argjson outs "$(i3-msg -t get_outputs)" '
@@ -18,11 +17,11 @@ read -r out cur off < <(jq -rn \
   | [ $outs[] | select(.active) ] | sort_by([(.primary | not), .rect.x]) | map(.name)
   | "\($f.output) \($f.num) \(index($f.output) * 10)"')
 
-# Предыдущий тег — свой у каждого монитора (workspace back_and_forth в i3 общий)
+# per monitor, i3's back_and_forth is global
 prev_file=${XDG_RUNTIME_DIR:-/tmp}/i3-ws-$out
 
-# i3-ws-anim tags windows so picom drifts them the right way, the 2nd arg
-# is an i3 command to run instead of the plain switch
+# i3-ws-anim tags windows so picom drifts them the right way.
+# $2 is an i3 command to run instead of the plain switch
 view() {
   if [ "$1" != "$cur" ]; then
     printf '%s\n' "$cur" >"$prev_file"
@@ -32,16 +31,18 @@ view() {
 
 case ${1:-} in
   move)
-    i3-msg -q "move container to workspace number $((off + $2))"
+    # through i3-ws-anim too, the window drifts toward its new tag
+    t=$((off + $2))
+    i3-ws-anim "$t" "move container to workspace number $t"
     ;;
   follow)
-    # move and switch in one call, so the window doesn't hide in between
+    # one call, so the window doesn't hide in between
     t=$((off + $2))
     view "$t" "move container to workspace number $t, workspace number $t"
     ;;
   back)
     prev=$(cat "$prev_file" 2>/dev/null) || exit 0
-    # Тег мог остаться от другой раскладки мониторов
+    # may be left from another monitor layout
     if [ "$prev" -gt "$off" ] && [ "$prev" -le "$((off + 9))" ]; then
       view "$prev"
     fi

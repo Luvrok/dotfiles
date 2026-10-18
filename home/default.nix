@@ -2,6 +2,7 @@
   pkgs,
   username,
   fontSize,
+  config,
   ...
 }:
 
@@ -18,17 +19,6 @@
   home.stateVersion = "26.05";
   home.username = "${username}";
   home.homeDirectory = "/home/${username}";
-
-  xdg.mimeApps = {
-    enable = true;
-    defaultApplications = {
-      "application/pdf" = "zathura.desktop";
-      "inode/directory" = [ "thunar.desktop" ];
-      "text/html" = "librewolf.desktop";
-      "x-scheme-handler/http" = "librewolf.desktop";
-      "x-scheme-handler/https" = "librewolf.desktop";
-    };
-  };
 
   xdg.configFile."greenclip.toml".text = ''
     [greenclip]

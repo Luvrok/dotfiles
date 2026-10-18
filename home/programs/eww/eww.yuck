@@ -19,14 +19,15 @@
 ;; tags 1-9 of this monitor
 ;; orange: open here, square: has windows, filled square: focused
 ;; left click: go there, right click: move window there
+;; both via i3-ws-anim, so windows drift the right way
 (defwidget tags [monitor]
   (box :class "tags" :space-evenly false
     (for ws in workspaces
       (eventbox :visible {ws.output == monitor}
                 :cursor "pointer"
                 :timeout "1s"
-                :onclick "i3-msg -q 'focus output ${monitor}; workspace number ${ws.num}'"
-                :onrightclick "i3-msg -q 'move container to workspace number ${ws.num}'"
+                :onclick "i3-msg -q 'focus output ${monitor}' && i3-ws-anim ${ws.num}"
+                :onrightclick "i3-ws-anim ${ws.num} 'move container to workspace number ${ws.num}'"
         (overlay
           (label :class "tag ${ws.visible ? 'selected' : ''} ${ws.urgent ? 'urgent' : ''}"
                  :text "${ws.label}")
@@ -108,3 +109,6 @@
 
 ;; wifi menu, everything else lives in wifi-menu/
 (include "./wifi-menu/wifi-menu.yuck")
+
+;; keybind cheat sheet, everything else lives in keys-menu/
+(include "./keys-menu/keys-menu.yuck")

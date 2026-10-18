@@ -8,6 +8,9 @@ if ! eww ping >/dev/null 2>&1; then
     eww ping >/dev/null 2>&1 && break
     sleep 0.1
   done
+else
+  # the daemon keeps the old config after a rebuild
+  eww reload
 fi
 
 if [ "${1:-}" = toggle ] && [ -n "$(eww active-windows)" ]; then

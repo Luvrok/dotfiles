@@ -1,5 +1,7 @@
 local gruvbox_theme = require("yatline-gruvbox"):setup("dark")
 
+require("smart-enter"):setup { open_multi = true }
+
 require("bunny"):setup({
   hops = {
     { key = "/",          path = "/",                                    },

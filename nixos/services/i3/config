@@ -1,6 +1,7 @@
 set $mod Mod4
 
 include ~/.config/eww/wifi-menu/i3-wifi.conf
+include ~/.config/eww/keys-menu/i3-keys.conf
 
 font pango:JetBrainsMonoNL NFP 10
 
@@ -32,12 +33,9 @@ mouse_warping output
 focus_on_window_activation smart
 focus_wrapping workspace
 
-# workspaces
-# Теги как в dwm: у каждого монитора свои 1..9, переключение и перенос окон
-# идут через i3-ws. Основной монитор — воркспейсы 1..9, второй — 11..19,
-# в баре на обоих видно 1..9.
-# Привязка к мониторам: i3 создаёт эти воркспейсы только на своём мониторе
-# и возвращает их туда, когда монитор снова подключается.
+# dwm-like tags: every monitor has its own 1..9 (see i3-ws). primary is
+# 1..9, the second one 11..19, both bars show 1..9. pinned workspaces are
+# created on their monitor only and go back there when it's plugged in
 workspace 1 output primary
 workspace 2 output primary
 workspace 3 output primary
@@ -48,7 +46,7 @@ workspace 7 output primary
 workspace 8 output primary
 workspace 9 output primary
 
-# Второй монитор. Подключишь другой — допиши его имя через пробел.
+# second monitor, add other names after a space
 workspace 11 output DisplayPort-0
 workspace 12 output DisplayPort-0
 workspace 13 output DisplayPort-0
@@ -74,15 +72,15 @@ assign [class="^qBittorrent$"] number 9
 assign [class="^v2rayN$"]      number 9
 
 for_window [title="^Picture-in-Picture$"] floating enable, sticky enable, resize set 720 400
-
+for_window [title="termfilechooser"] floating enable, resize set 1000 700, move position center
 for_window [class="^Dragon-drop$"] floating enable, move position center
 for_window [class="^ffplay$" title="^android-webcam$"] floating enable
 
-# i3-sp finds scratchpads by these marks. size is duplicated in i3-sp
+# i3-sp finds scratchpads by these marks, the size is in i3-sp too
 for_window [class="^spterm$"]     mark --add _sp_spterm
 for_window [class="^spdotfiles$"] mark --add _sp_spdotfiles
 for_window [class="^rangerterm$"] mark --add _sp_rangerterm
-for_window [class="^(spterm|spdotfiles|rangerterm)$"] floating enable, resize set 1280 910, move scratchpad, scratchpad show, move position center
+for_window [class="^(spterm|spdotfiles|rangerterm)$"] floating enable, resize set 1280 910, move position center
 
 # mouse
 floating_modifier $mod
@@ -92,10 +90,11 @@ bindsym --whole-window $mod+button2 floating toggle
 
 # programs
 
+# us for typing in rofi, then back to what it was
 bindsym $mod+p exec --no-startup-id "xkb-switch -s us; rofi-menu"
 
 bindsym $mod+c         exec --no-startup-id rofi-greenclip
-bindsym $mod+Shift+t   exec kitty
+bindsym $mod+Shift+t   exec --no-startup-id "xkb-switch -s us; kitty"
 bindsym $mod+Shift+f   exec --no-startup-id rofi-librewolf
 bindsym $mod+w         exec --no-startup-id rofi-powermenu
 bindsym $mod+b         exec --no-startup-id rofi-bluetooth
@@ -151,10 +150,10 @@ bindsym $mod+Shift+j exec --no-startup-id i3-tile move next
 bindsym $mod+Shift+k exec --no-startup-id i3-tile move prev
 
 # setmfact, setcfact
-bindsym $mod+h      resize shrink width 5 px or 5 ppt
-bindsym $mod+l      resize grow width 5 px or 5 ppt
-bindsym $mod+Mod1+h resize grow height 5 px or 5 ppt
-bindsym $mod+Mod1+l resize shrink height 5 px or 5 ppt
+bindsym $mod+l      resize shrink width 5 px or 5 ppt
+bindsym $mod+h      resize grow width 5 px or 5 ppt
+bindsym $mod+Shift+h resize grow height 5 px or 5 ppt
+bindsym $mod+Shift+l resize shrink height 5 px or 5 ppt
 
 # like master window
 bindsym $mod+i split h
@@ -163,7 +162,7 @@ bindsym $mod+d split v
 # any window fades out and hides, then gets closed. if it refuses (unsaved
 # stuff), it's back on its tag in 2 s
 bindsym $mod+Shift+c exec --no-startup-id i3-sp kill
-# предыдущий тег этого монитора (workspace back_and_forth общий на все мониторы)
+# previous tag of this monitor, i3's back_and_forth is global
 bindsym $mod+Tab     exec --no-startup-id i3-ws back
 
 # setlayout: tile / monocle. monocle flattens master/stack first, else
@@ -175,8 +174,8 @@ bindsym $mod+Shift+space floating toggle
 bindsym $mod+f           move position center
 bindsym $mod+s           sticky toggle
 
-# focusmon / tagmon / tagmonstay
-# Окно уходит на открытый тег соседнего монитора, воркспейсы остаются на месте.
+# focusmon / tagmon / tagmonstay: the window goes to the open tag of the
+# next monitor, workspaces stay
 bindsym $mod+comma        focus output left
 bindsym $mod+period       focus output right
 bindsym $mod+Shift+comma  move container to output left, focus output left
@@ -191,7 +190,7 @@ bindsym $mod+F5 exec --no-startup-id "xrdb -merge ~/.Xresources && i3-msg reload
 bindsym $mod+Ctrl+Shift+q restart
 bindsym $mod+Shift+BackSpace exit
 
-# view / tag / tagswitch — в пределах текущего монитора
+# view / tag / tagswitch, on this monitor
 
 bindsym $mod+1 exec --no-startup-id i3-ws 1
 bindsym $mod+2 exec --no-startup-id i3-ws 2
@@ -224,5 +223,6 @@ bindsym $mod+Mod1+8 exec --no-startup-id i3-ws follow 8
 bindsym $mod+Mod1+9 exec --no-startup-id i3-ws follow 9
 
 exec_always --no-startup-id eww-launch
-# master/stack like dwm tile. i3 restart starts a fresh one, it kills the old
+# master/stack like dwm tile, floats fullscreen windows (see i3-tile).
+# a restart starts a fresh one, it kills the old
 exec_always --no-startup-id i3-tile daemon
