@@ -1,36 +1,39 @@
-# Теги всех мониторов для eww (deflisten). У каждого монитора свои 1..9:
-# основной — воркспейсы 1..9, следующие слева направо — 11..19, 21..29 (см. i3-ws).
-# Печатает одну строку JSON на каждое изменение в i3:
-#   [{"output":"DisplayPort-1","num":1,"label":"1","focused":true,"visible":true,
+# tags of all monitors for eww (deflisten). every monitor has its own 1..9:
+# primary is workspaces 1..9, the next ones left to right 11..19, 21..29 (see i3-ws).
+# one json line per i3 change:
+#   [{"output":"DisplayPort-1","num":1,"label":"a","focused":true,"visible":true,
 #     "urgent":false,"occupied":true}, ...]
-# output   — монитор, в чьём баре показывать тег.
-# visible  — тег открыт на этом мониторе, focused — и монитор в фокусе.
-# occupied — на воркспейсе есть хотя бы одно окно (как квадратик у тега в dwm).
-# Чужие воркспейсы, оказавшиеся на мониторе (второй монитор отключили),
-# идут после тегов с меткой-номером, чтобы их окна не терялись.
+# output: the monitor whose bar shows the tag
+# visible: tag is open on that monitor, focused: and the monitor has focus
+# occupied: the workspace has at least one window (dwm's tag square)
+# foreign workspaces that ended up here (second monitor unplugged) come after
+# the tags, labeled with their name, so their windows don't get lost
 
-# i3 при рестарте создаёт новый сокет, а I3SOCK в окружении остаётся старым.
-# Без него i3-msg каждый раз находит актуальный сокет через свойство X.
+# tag labels for 1..9, space separated, missing ones fall back to the number
+LABELS='"scl", "obs", "sh1", "sh2", "smth", "virt", "med", "smth", "vpn"'
+
+# i3 makes a new socket on restart, the env still has the old one
 unset I3SOCK
 
 last='[]'
 
-# Печатает состояние; если i3 не ответил — повторяет последнее известное.
-# Печать нужна в любом случае: когда eww закрыт, запись в закрытый канал
-# завершает скрипт, и он не остаётся висеть сиротой.
+# print the state, the last one if i3 didn't answer. always print: once eww
+# is gone the write fails and the script exits instead of hanging around
 emit() {
   local ws tree outs out
   if ws=$(i3-msg -t get_workspaces) &&
     tree=$(i3-msg -t get_tree) &&
     outs=$(i3-msg -t get_outputs) &&
-    out=$(jq -cn --argjson ws "$ws" --argjson tree "$tree" --argjson outs "$outs" '
-      ( [ $tree | .. | objects | select(.type? == "workspace")
+    out=$(jq -cn --argjson ws "$ws" --argjson tree "$tree" --argjson outs "$outs" \
+      --argjson labels "[$LABELS]" '
+      $labels as $l
+      | ( [ $tree | .. | objects | select(.type? == "workspace")
           | { key: .name, value: ([ .. | objects | select(.window? != null) ] | length) } ]
         | from_entries ) as $count
       | [ [ $outs[] | select(.active) ] | sort_by([(.primary | not), .rect.x]) | to_entries[]
           | (.key * 10) as $off
           | .value.name as $o
-          | ( [ range(1; 10) | { num: ($off + .), label: tostring } ]
+          | ( [ range(1; 10) | { num: ($off + .), label: ($l[. - 1] // tostring) } ]
               + [ $ws[] | select(.output == $o and (.num <= $off or .num > $off + 9))
                   | { num, label: .name } ] )[]
           | .num as $n
@@ -45,20 +48,19 @@ emit() {
   printf '%s\n' "$last"
 }
 
-# Слушатель не должен умирать от одной неудачной команды i3-msg или jq.
+# one failed i3-msg or jq must not kill the listener
 set +o errexit
 
 while true; do
   emit
-  # События окон title/focus/mark на теги не влияют — их пропускаем,
-  # чтобы не дёргать i3 на каждую смену вкладки в браузере.
-  # События воркспейсов (включая focus) и мониторов обрабатываем все.
+  # window title/focus/mark events don't change tags, skip them so a browser
+  # tab switch doesn't poke i3. all workspace (focus too) and output events count
   i3-msg -t subscribe -m '["workspace","window","output"]' | while read -r event; do
     case "$(jq -r 'if has("container") then "window-" + .change else "other" end' <<<"$event")" in
       window-title | window-focus | window-mark) ;;
       *) emit ;;
     esac
   done
-  # Подписка оборвалась (i3 перезапускался) — ждём и подписываемся заново
+  # subscription dropped (i3 restarted), wait and subscribe again
   sleep 1
 done

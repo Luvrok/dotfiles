@@ -18,7 +18,7 @@ $urgent: #cc241d;
 // tags
 
 .tag {
-  padding: 0 12px;
+  padding: 0 9px;
   color: $fg;
   transition: background-color 150ms ease-out, color 150ms ease-out;
 }
@@ -60,12 +60,12 @@ $urgent: #cc241d;
 
 // opens windows in current ws
 .ltsymbol {
-  padding: 0 8px;
+  padding: 0 6px;
 }
 
 // title of opens windows in current ws
 .win {
-  padding: 0 8px;
+  padding: 0 6px;
   color: $fg;
   transition: background-color 150ms ease-out, color 150ms ease-out;
 }
@@ -82,7 +82,7 @@ $urgent: #cc241d;
 // status
 
 .status {
-  padding: 0 8px;
+  padding: 0 6px;
 }
 
 // DELIMITER
