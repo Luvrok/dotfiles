@@ -1,7 +1,8 @@
 return {
 	"stevearc/conform.nvim",
 	opts = {
-		notify_on_error = false,
+		-- say why a format didn't happen (syntax error and the like)
+		notify_on_error = true,
 		formatters_by_ft = {
 			c = { "clang-format" },
 			cpp = { "clang-format" },
@@ -31,8 +32,10 @@ return {
 		{
 			"<leader>fm",
 			function()
+				-- async: no timeout. with a 500 ms one a cold prettierd never made it
+				-- and the format was dropped without a word
 				require("conform").format({
-					timeout_ms = 500,
+					async = true,
 					lsp_format = "fallback",
 				})
 			end,

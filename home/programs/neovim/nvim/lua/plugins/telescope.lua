@@ -5,7 +5,7 @@ return {
 		"nvim-lua/plenary.nvim",
 		{ "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
 		{ "nvim-telescope/telescope-ui-select.nvim" },
-		{ "ahmedkhalf/project.nvim" },
+		{ "DrKJeff16/project.nvim" },
 	},
 	keys = {
 		{

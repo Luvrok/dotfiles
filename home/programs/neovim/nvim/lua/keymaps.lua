@@ -65,6 +65,11 @@ end, opts)
 map("v", ">", ">gv")
 map("v", "<", "<gv")
 
+-- toggle comment with the built-in gc. gcc and gc are mappings themselves, so remap
+map("n", "<C-/>", "gcc", { remap = true, silent = true, desc = "Toggle comment" })
+map("x", "<C-/>", "gcgv", { remap = true, silent = true, desc = "Toggle comment" })
+map("i", "<C-/>", "<Esc>gccgi", { remap = true, silent = true, desc = "Toggle comment" })
+
 -- shift scroll
 -- map({ "n", "i", "v" }, "<S-ScrollWheelUp>", "zh", { noremap = true, silent = true })
 -- map({ "n", "i", "v" }, "<S-ScrollWheelDown>", "zl", { noremap = true, silent = true })

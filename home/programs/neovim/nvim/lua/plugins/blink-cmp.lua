@@ -17,7 +17,8 @@ return {
 			preset = "none",
 			["<Tab>"] = { "accept", "snippet_forward", "fallback" },
 			["<S-Tab>"] = { "snippet_backward", "fallback" },
-			["<C-space>"] = { "show", "show_documentation", "hide_documentation" },
+			-- opens the menu, again closes it. docs open by themselves next to it
+			["<C-space>"] = { "show", "hide" },
 			["<C-e>"] = { "hide", "fallback" },
 			["<C-n>"] = { "select_next", "fallback" },
 			["<C-p>"] = { "select_prev", "fallback" },
@@ -32,8 +33,8 @@ return {
 			list = {
 				selection = { preselect = true, auto_insert = false },
 			},
-			-- the menu stays hidden, the first item shows inline and
-			-- <C-n>/<C-p> cycle it. <C-space> opens the menu
+			-- no menu while typing: the first item shows inline and
+			-- <C-n>/<C-p> cycle it. <C-space> toggles the menu
 			ghost_text = {
 				enabled = true,
 				show_with_menu = true,

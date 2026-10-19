@@ -56,6 +56,15 @@ vim.lsp.config("gopls", {
 				unusedparams = true,
 				shadow = true,
 			},
+			-- inlay hints, gopls has them all off by default
+			hints = {
+				assignVariableTypes = true,
+				compositeLiteralFields = true,
+				constantValues = true,
+				functionTypeParameters = true,
+				parameterNames = true,
+				rangeVariableTypes = true,
+			},
 		},
 	},
 })
@@ -98,6 +107,9 @@ vim.lsp.enable({
 	"jsonls",
 	"yamlls",
 })
+
+-- inlay hints in every buffer whose server has them (gopls, lua_ls, clangd, ...)
+vim.lsp.inlay_hint.enable()
 
 vim.diagnostic.config({
 	severity_sort = true,

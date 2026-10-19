@@ -109,9 +109,5 @@ return {
 		vim.api.nvim_set_hl(0, "CommandMode", { fg = "#282828" })
 		vim.api.nvim_set_hl(0, "ReplaceMode", { fg = "#cc241d" })
 		vim.api.nvim_set_hl(0, "SelectMode", { fg = "#458588" })
-
-		-- nvim-ufo (i dont use fold)
-		-- vim.api.nvim_set_hl(0, "Folded", { bg = "NONE", fg = "#928374" })
-		-- vim.api.nvim_set_hl(0, "FoldColumn", { bg = "NONE", fg = "#928374" })
 	end,
 }
