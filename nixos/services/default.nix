@@ -13,6 +13,7 @@
     ./i3
     ./llama-swap
     ./llama-swap/searxng.nix
+    ./rgb-off.nix
   ];
 
   services = {
@@ -23,6 +24,7 @@
     journald.console = "/dev/tty4";
     earlyoom.enable = true;
     thermald.enable = true;
+    rgb-off.enable = true;
 
     logind.settings.Login = {
       HandlePowerKey = "ignore";

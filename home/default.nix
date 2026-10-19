@@ -85,26 +85,11 @@
     '';
   };
 
-  gtk = {
-    enable = true;
-    theme.package = pkgs.gruvbox-dark-gtk;
-    theme.name = "gruvbox-dark";
-    iconTheme = {
-      package = pkgs.gruvbox-dark-icons-gtk;
-      name = "gruvbox-dark";
-    };
-  };
-
   home.pointerCursor = {
     enable = true;
     name = "Vanilla-DMZ";
     package = pkgs.vanilla-dmz;
     size = 32;
-  };
-
-  qt = {
-    enable = true;
-    platformTheme.name = "gtk3";
   };
 
   home.file.".local/bin" = {

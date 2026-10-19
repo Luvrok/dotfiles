@@ -21,7 +21,7 @@
 # Фоновый процесс после выхода:
 #   1. ждёт своей очереди — одна генерация за раз;
 #   2. ждёт, пока LLM в llama-swap договорит ответ (смотрит /slots у llama-server);
-#   3. выгружает модели llama-swap: sd-cli идёт мимо llama-swap, сам он VRAM не освободит;
+#   3. выгружает модели llama-swap (кроме KEEP): sd-cli идёт мимо llama-swap, сам он VRAM не освободит;
 #   4. запускает qwen-batch <слот>. Всё пишется в run.log в папке картинок, в конце notify-send, если он есть.
 set -uo pipefail
 
@@ -37,6 +37,8 @@ GRACE=${QWEN_GRACE:-3}           # сек: пауза перед первой п
 IDLE_NEED=${QWEN_IDLE:-4}        # сек подряд без генерации → считаем, что LLM закончила
 IDLE_MAX=${QWEN_IDLE_MAX:-900}   # сек: дольше не ждём, запускаем как есть
 DELAY=${QWEN_DELAY:-20}          # сек: простая пауза, если занятость LLM узнать нельзя (нет curl, нет /slots)
+# llama-swap models that hold no vram (cpu only): not waited for, not unloaded. space separated
+KEEP=${QWEN_KEEP:-embed}
 
 SELF=$(readlink -f -- "${BASH_SOURCE[0]}")
 
@@ -55,38 +57,81 @@ api() {
   curl "${a[@]}" "$SWAP$2" 2>/dev/null
 }
 
+# drop { } inside json strings: cmd in /running can hold json (--chat-template-kwargs '{...}'),
+# and then the flat {...} match below misses that model
+flat_json() {
+  awk 'BEGIN { RS = "\001" } {
+    out = ""; s = 0; e = 0
+    for (i = 1; i <= length($0); i++) {
+      c = substr($0, i, 1)
+      if (s) {
+        if (e) e = 0
+        else if (c == "\\") e = 1
+        else if (c == "\"") s = 0
+        else if (c == "{" || c == "}") continue
+      } else if (c == "\"") s = 1
+      out = out c
+    }
+    printf "%s", out
+  }'
+}
+
+# loaded llama-swap models as "model state" lines, KEEP left out.
+# exit 1: llama-swap is down; exit 2: something is loaded but the json didn't parse
+running_models() {
+  local run obj m st objs=()
+  run=$(api GET /running) || return 1
+  run=$(flat_json <<<"$run")
+  mapfile -t objs < <(grep -oE '\{[^{}]*"model"[^{}]*\}' <<<"$run")
+  if ((!${#objs[@]})) && grep -qE '"state"[[:space:]]*:[[:space:]]*"(ready|starting|stopping)"' <<<"$run"; then
+    return 2
+  fi
+  for obj in "${objs[@]}"; do
+    m=$(sed -nE 's/.*"model"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/p' <<<"$obj")
+    st=$(sed -nE 's/.*"state"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/p' <<<"$obj")
+    [[ -z $m || $st == stopped || $st == shutdown || " $KEEP " == *" $m "* ]] && continue
+    printf '%s %s\n' "$m" "${st:-ready}"
+  done
+  return 0
+}
+
 # состояние моделей в llama-swap:
 #   down — не отвечает | none — ничего не загружено | busy — идёт генерация или модель грузится
 #   idle — загружено и молчит | blind — загружено, но /slots не отдаёт (занятость неизвестна)
 llm_state() {
-  local run obj m st body seen=0
-  run=$(api GET /running) || { echo down; return; }
-  local objs=()
-  mapfile -t objs < <(grep -oE '\{[^{}]*"model"[^{}]*\}' <<<"$run")
-  local loaded=0
-  for obj in "${objs[@]}"; do
-    m=$(sed -nE 's/.*"model"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/p' <<<"$obj")
-    st=$(sed -nE 's/.*"state"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/p' <<<"$obj")
-    [[ -z $m || $st == stopped || $st == shutdown ]] && continue
+  local out rc m st body seen=0 loaded=0
+  out=$(running_models)
+  rc=$?
+  ((rc == 1)) && { echo down; return; }
+  ((rc == 2)) && { echo blind; return; }
+  while read -r m st; do
+    [[ -n $m ]] || continue
     loaded=1
-    [[ -n $st && $st != ready ]] && { echo busy; return; } # starting / stopping
-    body=$(api GET "/upstream/$m/slots") || continue        # sd-server и т.п.: слотов нет
+    [[ $st != ready ]] && { echo busy; return; }      # starting / stopping
+    body=$(api GET "/upstream/$m/slots") || continue # sd-server и т.п.: слотов нет
     grep -q '"is_processing"' <<<"$body" || continue
     seen=1
     grep -qE '"is_processing"[[:space:]]*:[[:space:]]*true' <<<"$body" && { echo busy; return; }
-  done
+  done <<<"$out"
   if ((!loaded)); then echo none; elif ((seen)); then echo idle; else echo blind; fi
 }
 
 unload_models() {
-  if ! api POST /api/models/unload 60 >/dev/null && ! api GET /unload 60 >/dev/null; then
-    wlog "llama-swap не выгрузил модели — запускаю как есть"
-    return
+  local out m st each=1
+  out=$(running_models) || each=0
+  while read -r m st; do
+    [[ -n $m ]] || continue
+    api POST "/api/models/unload/$m" 60 >/dev/null || { each=0; break; }
+  done <<<"$out"
+  if ((!each)); then # older llama-swap has no per-model unload, or the list is unknown: unload all
+    if ! api POST /api/models/unload 60 >/dev/null && ! api GET /unload 60 >/dev/null; then
+      wlog "llama-swap не выгрузил модели — запускаю как есть"
+      return
+    fi
   fi
-  local run
   for _ in {1..30}; do # ждём, пока процессы реально завершатся и отдадут VRAM
-    run=$(api GET /running) || break
-    grep -qE '"state"[[:space:]]*:[[:space:]]*"(ready|starting|stopping)"' <<<"$run" || break
+    out=$(running_models) || break
+    [[ -z $out ]] && break
     sleep 1
   done
   sleep 1
@@ -226,8 +271,10 @@ ref=${ref:-${REF:-}}
 ref=${ref#REF=}
 low=" ${prompt,,} "
 if [[ -z $ref ]]; then
-  # промпт ссылается на картинку, которой модель не получит
-  points='[^a-z](references?|the original|(source|input|given|attached|provided|uploaded) (image|picture|photo|file)|from the (image|picture|photo))[^a-z]'
+  # промпт ссылается на картинку, которой модель не получит.
+  # no bare "reference" / "the original": they hit text like a sign that reads "REFERENCE".
+  # the last two catch the reference template of the skill written without --ref
+  points='[^a-z](reference (image|picture|photo|file)|the original (image|picture|photo|drawing|painting)|(source|input|given|attached|provided|uploaded) (image|picture|photo|file)|from the (image|picture|photo)|the image into|as (it is|they are) in the image)[^a-z]'
   if [[ $low =~ $points ]]; then
     die "the prompt points at an existing picture with the words \"${BASH_REMATCH[1]}\", but --ref is missing, so the image model would get no picture. If the user gave an image file, add --ref with its path and rewrite the prompt as a short instruction about the image. You do not need to see the file. If there is no image file, remove these words: without --ref the prompt must describe the whole picture by itself"
   fi

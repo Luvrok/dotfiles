@@ -5,14 +5,11 @@ logLevel: info
 logToStdout: "both"
 
 healthCheckTimeout: 300
-# Выгрузка сбрасывает KV-кэш: после неё pi заново прогоняет весь промпт
-globalTTL: 120
+globalTTL: 60
 includeAliasesInList: true
 
 macros:
   "models": "/var/lib/models"
-  # 8 = физические ядра Ryzen 7 7700. SMT-потоки обычно замедляют слои на CPU.
-  # --jinja и --fit-target 1024 убраны: это дефолты llama-server.
   "llama": >
     llama-server --port ${PORT} --threads 8
   "sd": >
@@ -22,7 +19,7 @@ macros:
   # MTP-голова лежит внутри GGUF. KV драфта оставлен f16 намеренно: его
   # квантование память не экономит, а acceptance и скорость режет.
   # --parallel 1: параллельные слоты с MTP пока не оптимизированы.
-  "mtp": "--spec-type draft-mtp --spec-draft-n-max 2 --parallel 1"
+  "mtp": "--spec-type draft-mtp --spec-draft-n-max 2 -np 1"
   # RentedNoodle GSQ-RCO квант + шаблон froggeric (обязателен для этой модели)
   "qwen-uc": >
     -m ${models}/qwen3.8-27b-UC/Qwen3.8-27B-GSQ-RCO-IQ3_XXS-Uncensored-v1.1.gguf
@@ -129,10 +126,14 @@ models:
     cmd: |
       ${llama}
       ${qwen-uc}
-      --ctx-size 98304
+      --jinja
+      --ctx-size 65536
       --gpu-layers all
+      -fa on
+      -b 1024 -ub 1024
       --fit off
-      ${kv-q4}
+      --spec-draft-backend-sampling
+      ${kv-q8}
       ${mtp}
     <<: *qwen-gsq-params
 
@@ -197,28 +198,19 @@ models:
     cmd: |
       ${llama}
       -m ${models}/Qwen3.8-27B-UD-Q3_K_XL.gguf
-      --ctx-size 32768
-      ${kv-q8}
+      --ctx-size 65536
+      ${kv-q4}
+      ${mtp}
     <<: *qwen-params
 
-  # ~17.6 GB, несколько GB в RAM. Основная для кода, слабая в поиске.
   "qwen-code":
     description: "Qwen3.8 27B UD-Q4_K_XL, partly on CPU. Coding with long context."
     cmd: |
       ${llama}
       -m ${models}/Qwen3.8-27B-UD-Q4_K_XL.gguf
-      --ctx-size 131072
-      ${kv-q8}
-    <<: *qwen-params
-
-  # ~22 GB, ~8 GB в RAM. Самая умная, медленная (~5-7 t/s). Только сложные вопросы.
-  "qwen-smart":
-    description: "Qwen3.8 27B UD-Q6_K, heavily on CPU. Smartest, slow."
-    cmd: |
-      ${llama}
-      -m ${models}/Qwen3.8-27B-UD-Q6_K.gguf
       --ctx-size 65536
-      ${kv-q8}
+      ${kv-q4}
+      ${mtp}
     <<: *qwen-params
 
   # ---- Картинки: stable-diffusion.cpp (sd-server), API /v1/images/generations ----
@@ -284,6 +276,7 @@ models:
       --llm ${models}/qwen-image-2.1/Qwen3-VL-8B-Instruct-UD-Q4_K_XL.gguf
       --vae ${models}/qwen-image-2.1/qwen_image_2.1_vae_bf16.safetensors
       --cfg-scale 3.0
+      --clip-on-cpu
       --sampling-method euler
       --steps 25
       -W 1024
@@ -296,16 +289,33 @@ models:
   # n_ubatch = min(n_batch, n_ubatch), а n_batch по умолчанию 2048,
   # так что без него --ubatch-size 8192 молча превращался в 2048.
   "embed":
-    description: "Qwen3-Embedding-0.6B Q8_0, CPU. For Open WebUI RAG and pi-memory."
+    description: "EmbeddingGemma 2 BF16, CPU. For Open WebUI RAG and pi-memory."
     cmd: |
       llama-server --port ${PORT} --threads 8
-      -m ${models}/Qwen3-Embedding-0.6B-Q8_0.gguf
-      --embeddings --pooling last
+      -m ${models}/embeddinggemma-2/embeddinggemma-2-BF16.gguf
+      --embeddings --pooling mean
       --gpu-layers 0
       --ctx-size 8192
       --batch-size 8192
       --ubatch-size 8192
     ttl: 0
+
+  # Та же EmbeddingGemma 2 + энкодеры картинок/видео/аудио (mmproj).
+  # Пространство векторов общее с embed: текст из embed можно
+  # сравнивать с картинками отсюда. Грузится по запросу.
+  # Медиа только через нативный /embeddings, /v1 пока текст.
+  "embed-vision":
+    description: "EmbeddingGemma 2 BF16 + mmproj, CPU. Image/audio/video embeddings."
+    cmd: |
+      llama-server --port ${PORT} --threads 8
+      -m ${models}/embeddinggemma-2-BF16.gguf
+      --mmproj ${models}/embeddinggemma-2/mmproj-BF16.gguf
+      --embeddings --pooling mean
+      --gpu-layers 0
+      --ctx-size 8192
+      --batch-size 8192
+      --ubatch-size 8192
+    ttl: 600
 
 # Без этого embed грузится только при первом запросе
 hooks:
@@ -329,7 +339,6 @@ groups:
       - gemma-26b
       - qwen-fast
       - qwen-code
-      - qwen-smart
       - z-image
       - flux2-klein
       - qwen-image
@@ -340,3 +349,4 @@ groups:
     persistent: true
     members:
       - embed
+      - embed-vision

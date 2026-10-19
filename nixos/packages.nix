@@ -26,10 +26,6 @@
       clang-tools
       cmake
       gcc
-      go
-      golangci-lint
-      goimports-reviser
-      gotools
       jq
       nodejs
       rustc
@@ -39,9 +35,17 @@
       typst
       python3
 
+      # --- go ---
+      delve
+      go
+      golangci-lint
+      goimports-reviser
+      gotools
+      gopls
+      gofumpt
+
       # --- formatters ---
       beautysh
-      gofumpt
       nixfmt
       prettierd
       sql-formatter
@@ -50,7 +54,6 @@
 
       # --- lsp ---
       bash-language-server
-      gopls
       lua-language-server
       marksman
       nil
@@ -152,11 +155,6 @@
       xwallpaper
       libxrandr
       xsel
-      remontoire # i3 keybinds viewer
-
-      # --- xdg ---
-      xdg-desktop-portal
-      xdg-desktop-portal-gtk
 
       # --- apps ---
       aseprite
@@ -164,8 +162,6 @@
       discord
       feh
       libreoffice
-      monero-cli
-      monero-gui
       obsidian
       pavucontrol
       qbittorrent
@@ -183,19 +179,14 @@
       anki
 
       # --- games ---
-      gamescope
       prismlauncher
 
       # --- android ---
-      adbfs-rootless
-      android-tools
+      adbfs-rootless # mount android phone as a folder
+      android-tools # connect phone/camera
 
       # --- live-usb ---
-      unetbootin
       woeusb
-
-      # --- hardware ---
-      # openrgb-with-all-plugins
 
       # --- testing ---
       evtest
@@ -208,12 +199,8 @@
       xev
 
       # --- management ---
-      dualsensectl
       home-manager
       nh
-
-      # --- debug ---
-      delve
     ])
     ++ (with pkgs-pinned; [
     ]);

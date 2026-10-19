@@ -69,18 +69,6 @@ let
   models =
     map mkPiModel [
       {
-        id = "qwen-code";
-        name = "Qwen 27B Q4 code";
-        ctx = 131072;
-        family = "qwen";
-      }
-      {
-        id = "qwen-smart";
-        name = "Qwen 27B Q6 smart";
-        ctx = 65536;
-        family = "qwen";
-      }
-      {
         id = "qwen-fast";
         name = "Qwen 27B Q3 fast";
         ctx = 32768;
@@ -89,7 +77,7 @@ let
       {
         id = "qwen-uncensored";
         name = "Qwen 27B IQ3 uncensored";
-        ctx = 98304;
+        ctx = 65536;
         family = "qwen";
       }
       {
@@ -145,7 +133,7 @@ let
 
   piSettings = {
     defaultProvider = "llama-swap";
-    defaultModel = "qwen-code:pi";
+    defaultModel = "qwen-fast:pi";
     defaultThinkingLevel = "low";
     packages = [
       "npm:pi-web-access"

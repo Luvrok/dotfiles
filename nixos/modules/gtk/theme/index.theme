@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=X-GNOME-Metatheme
+Name=gruvbox-flat
+Comment=flat gruvbox theme, same colors as the eww bar
+
+[X-GNOME-Metatheme]
+GtkTheme=gruvbox-flat

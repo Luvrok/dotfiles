@@ -1,0 +1,632 @@
+/* gruvbox-flat: standalone gtk3 theme, no adwaita underneath.
+   same colors as the eww bar and the qt theme:
+   bg #171717, bg1 #1f1f1f views and inputs, bg2 #262626 buttons and popups,
+   bg3 #3a3a3a scrollbar and separators, fg #ebdbb2, sel #d65d0e,
+   sel fg #fbf1c7, hover is sel at 25%, disabled #665c54 */
+
+/* named colors for apps that use them */
+@define-color theme_bg_color #171717;
+@define-color theme_fg_color #ebdbb2;
+@define-color theme_base_color #1f1f1f;
+@define-color theme_text_color #ebdbb2;
+@define-color theme_selected_bg_color #d65d0e;
+@define-color theme_selected_fg_color #fbf1c7;
+@define-color theme_unfocused_bg_color #171717;
+@define-color theme_unfocused_fg_color #ebdbb2;
+@define-color theme_unfocused_base_color #1f1f1f;
+@define-color theme_unfocused_text_color #ebdbb2;
+@define-color theme_unfocused_selected_bg_color #d65d0e;
+@define-color theme_unfocused_selected_fg_color #fbf1c7;
+@define-color insensitive_bg_color #171717;
+@define-color insensitive_fg_color #665c54;
+@define-color insensitive_base_color #1f1f1f;
+@define-color borders #3a3a3a;
+@define-color unfocused_borders #3a3a3a;
+@define-color warning_color #d79921;
+@define-color error_color #cc241d;
+@define-color success_color #98971a;
+
+/* base: flat, no borders, no shadows */
+* {
+  color: #ebdbb2;
+  background-clip: padding-box;
+  border-width: 0;
+  border-radius: 0;
+  box-shadow: none;
+  text-shadow: none;
+  -gtk-icon-shadow: none;
+  outline-width: 0;
+  -gtk-outline-radius: 0;
+  -GtkScrolledWindow-scrollbar-spacing: 0;
+  -GtkToolItemGroup-expander-size: 11;
+  -GtkTreeView-expander-size: 11;
+  -GtkTreeView-horizontal-separator: 4;
+  -GtkPaned-handle-size: 1;
+}
+
+*:disabled {
+  color: #665c54;
+}
+
+*:link, button.link {
+  color: #fe8019;
+}
+
+*:visited {
+  color: #d3869b;
+}
+
+window, .background, dialog, messagedialog, assistant,
+decoration, headerbar, .titlebar, menubar, toolbar, statusbar,
+actionbar, searchbar, infobar, notebook > header, notebook > stack,
+stack, frame, calendar.header {
+  background-color: #171717;
+  background-image: none;
+}
+
+decoration {
+  margin: 0;
+}
+
+tooltip, tooltip.background {
+  background-color: #262626;
+  padding: 2px;
+}
+
+tooltip label {
+  padding: 2px 4px;
+}
+
+/* selection everywhere */
+*:selected, selection, *:selected label,
+entry selection, textview text selection, label selection,
+.view:selected, .view text:selected, iconview:selected,
+treeview.view:selected, row:selected, flowboxchild:selected,
+calendar:selected, .rubberband, rubberband {
+  background-color: #d65d0e;
+  color: #fbf1c7;
+}
+
+.rubberband, rubberband {
+  background-color: rgba(214, 93, 14, 0.25);
+}
+
+/* views and inputs a bit lighter, like qt */
+.view, view, treeview.view, iconview, textview text, list,
+entry, spinbutton, calendar, scrolledwindow > viewport.frame {
+  background-color: #1f1f1f;
+}
+
+.view:hover:not(:selected), row:hover:not(:selected),
+treeview.view:hover:not(:selected) {
+  background-color: rgba(214, 93, 14, 0.25);
+}
+
+row {
+  padding: 2px 4px;
+}
+
+/* side panes keep the window color */
+.sidebar, .sidebar .view, .sidebar list, placessidebar,
+placessidebar list, stacksidebar list {
+  background-color: #171717;
+}
+
+placessidebar row {
+  padding: 3px 9px;
+}
+
+/* labels */
+label {
+  background-color: transparent;
+}
+
+label.dim-label, .dim-label {
+  color: #a89984;
+}
+
+/* buttons */
+button {
+  background-color: #262626;
+  background-image: none;
+  padding: 4px 10px;
+  min-height: 18px;
+}
+
+button.image-button {
+  padding: 4px;
+}
+
+button.flat, toolbar button, headerbar button, .path-bar button,
+.linked.path-bar button, button.titlebutton, button.link,
+popover button.flat, menubar > menuitem, notebook > header tab,
+modelbutton {
+  background-color: transparent;
+}
+
+/* hover, same as eww */
+button:hover, menubar > menuitem:hover, notebook > header tab:hover,
+modelbutton:hover, button.titlebutton:hover {
+  background-color: rgba(214, 93, 14, 0.25);
+}
+
+/* pressed and selected, same as eww */
+button:active, button:checked, menubar > menuitem:active,
+notebook > header tab:checked, modelbutton:active {
+  background-color: #d65d0e;
+  color: #fbf1c7;
+}
+
+button:active label, button:checked label,
+notebook > header tab:checked label {
+  color: #fbf1c7;
+}
+
+button:disabled {
+  background-color: #1f1f1f;
+}
+
+button.flat:disabled, toolbar button:disabled, headerbar button:disabled,
+.path-bar button:disabled {
+  background-color: transparent;
+}
+
+button.suggested-action {
+  background-color: #d65d0e;
+  color: #fbf1c7;
+}
+
+button.destructive-action {
+  background-color: #cc241d;
+  color: #fbf1c7;
+}
+
+/* entries */
+entry {
+  padding: 4px 6px;
+  min-height: 18px;
+  caret-color: #ebdbb2;
+}
+
+entry:focus {
+  background-color: #262626;
+}
+
+entry.flat {
+  background-color: transparent;
+}
+
+entry progress {
+  background-color: #d65d0e;
+  min-height: 2px;
+}
+
+entry image {
+  color: #a89984;
+}
+
+entry.error, entry.warning {
+  color: #cc241d;
+}
+
+/* spin buttons */
+spinbutton button {
+  background-color: transparent;
+  padding: 4px 6px;
+}
+
+spinbutton button:hover {
+  background-color: rgba(214, 93, 14, 0.25);
+}
+
+spinbutton:focus {
+  background-color: #262626;
+}
+
+/* combo boxes */
+combobox button.combo {
+  padding: 4px 10px;
+}
+
+combobox arrow, button arrow {
+  -gtk-icon-source: -gtk-icontheme("pan-down-symbolic");
+  min-width: 14px;
+  min-height: 14px;
+}
+
+combobox window menu, combobox window {
+  background-color: #262626;
+}
+
+/* check and radio boxes, flat like the qt ones */
+check, radio {
+  background-color: #262626;
+  background-image: none;
+  min-width: 14px;
+  min-height: 14px;
+  margin: 0 6px 0 0;
+  -gtk-icon-source: none;
+}
+
+check:checked {
+  background-color: #d65d0e;
+  -gtk-icon-source: -gtk-scaled(url("assets/check.png"), url("assets/check@2.png"));
+}
+
+check:indeterminate {
+  background-color: #d65d0e;
+  -gtk-icon-source: -gtk-icontheme("list-remove-symbolic");
+  color: #fbf1c7;
+}
+
+radio {
+  border-radius: 100%;
+}
+
+radio:checked {
+  background-color: #d65d0e;
+  background-image: radial-gradient(circle, #fbf1c7 30%, transparent 35%);
+}
+
+radio:indeterminate {
+  background-color: #d65d0e;
+}
+
+check:hover, radio:hover {
+  background-color: #3a3a3a;
+}
+
+check:checked:hover, radio:checked:hover {
+  background-color: #fe8019;
+}
+
+check:disabled, radio:disabled {
+  background-color: #1f1f1f;
+}
+
+menuitem check, menuitem radio, treeview check, treeview radio {
+  margin: 0 6px 0 0;
+}
+
+/* switches */
+switch {
+  background-color: #262626;
+  min-width: 36px;
+  font-size: 0;
+  color: transparent;
+}
+
+switch:checked {
+  background-color: #d65d0e;
+}
+
+switch slider {
+  background-color: #ebdbb2;
+  min-width: 18px;
+  min-height: 18px;
+}
+
+switch image {
+  color: transparent;
+}
+
+/* scales */
+scale {
+  min-height: 12px;
+  min-width: 12px;
+  padding: 6px;
+}
+
+scale trough {
+  background-color: #262626;
+  min-height: 4px;
+  min-width: 4px;
+}
+
+scale highlight {
+  background-color: #d65d0e;
+}
+
+scale slider {
+  background-color: #ebdbb2;
+  min-width: 12px;
+  min-height: 12px;
+  margin: -4px;
+}
+
+scale slider:hover {
+  background-color: #fbf1c7;
+}
+
+scale marks, scale value {
+  color: #a89984;
+}
+
+/* progress and level bars */
+progressbar trough {
+  background-color: #262626;
+  min-height: 6px;
+  min-width: 6px;
+}
+
+progressbar progress {
+  background-color: #d65d0e;
+  min-height: 6px;
+  min-width: 6px;
+}
+
+progressbar text {
+  color: #a89984;
+}
+
+levelbar trough {
+  background-color: #262626;
+  min-height: 4px;
+  padding: 0;
+}
+
+levelbar block {
+  min-height: 4px;
+  min-width: 24px;
+}
+
+levelbar block.filled, levelbar block.high, levelbar block.full {
+  background-color: #d65d0e;
+}
+
+levelbar block.low {
+  background-color: #d79921;
+}
+
+levelbar block.empty {
+  background-color: #262626;
+}
+
+/* thin flat scrollbars */
+scrollbar {
+  background-color: transparent;
+  -GtkScrollbar-has-backward-stepper: false;
+  -GtkScrollbar-has-forward-stepper: false;
+}
+
+scrollbar slider {
+  background-color: #3a3a3a;
+  min-width: 8px;
+  min-height: 8px;
+}
+
+scrollbar slider:hover, scrollbar slider:active {
+  background-color: #d65d0e;
+}
+
+scrollbar button {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  -gtk-icon-source: none;
+}
+
+scrollbar.overlay-indicator:not(.dragging):not(.hovering) slider {
+  min-width: 3px;
+  min-height: 3px;
+}
+
+/* tabs look like eww tags */
+notebook > header tab {
+  padding: 4px 9px;
+  min-height: 18px;
+}
+
+notebook > header tab button.flat {
+  padding: 0;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* menus */
+menu, .menu, .context-menu, popover, popover.background {
+  background-color: #262626;
+  padding: 2px 0;
+}
+
+menuitem, modelbutton {
+  padding: 4px 12px;
+  min-height: 18px;
+}
+
+menu menuitem:hover, .menu menuitem:hover, .context-menu menuitem:hover,
+popover modelbutton:hover {
+  background-color: #d65d0e;
+  color: #fbf1c7;
+}
+
+menu menuitem:hover label, .menu menuitem:hover label,
+menu menuitem:hover accelerator, menu menuitem:hover arrow {
+  color: #fbf1c7;
+}
+
+menuitem accelerator {
+  color: #a89984;
+}
+
+menuitem arrow {
+  -gtk-icon-source: -gtk-icontheme("pan-end-symbolic");
+  min-width: 14px;
+  min-height: 14px;
+}
+
+menubar > menuitem {
+  padding: 4px 9px;
+}
+
+menubar > menuitem:hover {
+  color: #ebdbb2;
+}
+
+menu separator, .menu separator, popover separator {
+  background-color: #3a3a3a;
+  min-height: 1px;
+  margin: 3px 6px;
+}
+
+popover {
+  padding: 4px;
+}
+
+/* tree views */
+treeview.view header button {
+  background-color: #171717;
+  padding: 3px 6px;
+}
+
+treeview.view header button:hover {
+  background-color: rgba(214, 93, 14, 0.25);
+}
+
+treeview.view.expander, expander arrow {
+  -gtk-icon-source: -gtk-icontheme("pan-end-symbolic");
+  min-width: 14px;
+  min-height: 14px;
+  color: #a89984;
+}
+
+treeview.view.expander:checked, expander arrow:checked {
+  -gtk-icon-source: -gtk-icontheme("pan-down-symbolic");
+}
+
+treeview.view.expander:selected {
+  color: #fbf1c7;
+}
+
+treeview.view.progressbar {
+  background-color: #d65d0e;
+}
+
+treeview.view.trough {
+  background-color: #262626;
+}
+
+treeview.view.dnd {
+  background-color: rgba(214, 93, 14, 0.25);
+}
+
+/* separators and pane handles */
+separator {
+  background-color: #262626;
+  min-width: 1px;
+  min-height: 1px;
+}
+
+paned > separator {
+  background-color: #262626;
+  min-width: 1px;
+  min-height: 1px;
+}
+
+toolbar separator, statusbar separator, headerbar separator,
+.path-bar separator {
+  background-color: transparent;
+}
+
+/* toolbars and header bars */
+toolbar {
+  padding: 2px;
+}
+
+headerbar {
+  padding: 2px 6px;
+  min-height: 28px;
+}
+
+headerbar .title {
+  font-weight: bold;
+}
+
+headerbar .subtitle {
+  color: #a89984;
+}
+
+statusbar {
+  padding: 2px 6px;
+}
+
+infobar {
+  background-color: #262626;
+}
+
+infobar.error {
+  background-color: #cc241d;
+}
+
+infobar.warning {
+  background-color: #b57614;
+}
+
+/* frames get a faint line only where gtk asks for one */
+frame > border, frame border {
+  border-style: none;
+  border-width: 0;
+}
+
+frame > label {
+  color: #a89984;
+}
+
+textview border {
+  background-color: #1f1f1f;
+}
+
+/* calendar */
+calendar {
+  padding: 2px;
+}
+
+calendar:indeterminate {
+  color: #665c54;
+}
+
+calendar.highlight {
+  color: #d65d0e;
+}
+
+/* spinner */
+spinner {
+  -gtk-icon-source: -gtk-icontheme("process-working-symbolic");
+  min-width: 16px;
+  min-height: 16px;
+  opacity: 0;
+}
+
+spinner:checked {
+  opacity: 1;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { -gtk-icon-transform: rotate(1turn); }
+}
+
+/* file chooser path bar */
+.path-bar button {
+  padding: 4px 8px;
+}
+
+.path-bar button:checked {
+  background-color: transparent;
+  color: #d65d0e;
+  font-weight: bold;
+}
+
+.path-bar button:checked label {
+  color: #d65d0e;
+}
+
+/* stack switchers and linked buttons stay apart only by color */
+.linked > button {
+  margin: 0;
+}
+
+/* toolbars use 24px icons, scale them to 16 so they match the text */
+toolbar image {
+  -gtk-icon-transform: scale(0.67);
+}

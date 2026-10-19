@@ -1,0 +1,221 @@
+/* same colors as the eww bar
+   bg #171717, bg1 #1f1f1f inputs, bg2 #262626 buttons and popups,
+   bg3 #3a3a3a scrollbar, fg #ebdbb2, sel #d65d0e, sel fg #fbf1c7,
+   hover is sel at 25%, disabled #665c54 */
+
+/* no borders anywhere */
+QFrame, QAbstractScrollArea, QLineEdit, QTextEdit, QPlainTextEdit,
+QAbstractSpinBox, QComboBox, QPushButton, QToolButton, QGroupBox,
+QMenu, QMenuBar, QToolBar, QStatusBar, QProgressBar, QToolTip,
+QTabWidget::pane, QTabBar::tab, QHeaderView::section {
+  border: 0;
+}
+
+QStatusBar::item {
+  border: 0;
+}
+
+/* small icons: 16px like the text, toolbars too.
+   a toolbar in a main window takes the window's size, so set both */
+QMainWindow, QToolBar {
+  icon-size: 16px;
+}
+
+/* buttons */
+QPushButton, QComboBox {
+  background-color: #262626;
+  padding: 4px 12px;
+}
+
+QToolButton {
+  background-color: transparent;
+  padding: 3px;
+}
+
+QToolButton[popupMode="1"] {
+  padding-right: 16px;
+}
+
+QToolButton::menu-button {
+  border: 0;
+  width: 14px;
+}
+
+/* inputs, a bit lighter on focus since there is no border */
+QLineEdit, QAbstractSpinBox, QComboBox:editable {
+  background-color: #1f1f1f;
+  padding: 3px 6px;
+}
+
+QLineEdit:focus, QAbstractSpinBox:focus, QComboBox:editable:focus {
+  background-color: #262626;
+}
+
+/* line edits inside spin and combo boxes */
+QAbstractSpinBox QLineEdit, QComboBox QLineEdit {
+  background-color: transparent;
+  padding: 0;
+}
+
+QComboBox QAbstractItemView {
+  background-color: #262626;
+  outline: 0;
+}
+
+/* flat arrows */
+QComboBox::drop-down, QAbstractSpinBox::up-button,
+QAbstractSpinBox::down-button {
+  border: 0;
+  background-color: transparent;
+  width: 16px;
+}
+
+QComboBox::down-arrow, QAbstractSpinBox::down-arrow {
+  image: url(/etc/xdg/qt6ct/qss/arrow-down.xpm);
+}
+
+QAbstractSpinBox::up-arrow {
+  image: url(/etc/xdg/qt6ct/qss/arrow-up.xpm);
+}
+
+QComboBox::down-arrow:disabled, QAbstractSpinBox::down-arrow:disabled {
+  image: url(/etc/xdg/qt6ct/qss/arrow-down-off.xpm);
+}
+
+QAbstractSpinBox::up-arrow:disabled {
+  image: url(/etc/xdg/qt6ct/qss/arrow-up-off.xpm);
+}
+
+/* lists, trees, tables */
+QAbstractItemView {
+  outline: 0;
+}
+
+/* selection covers the tree indent too */
+QTreeView {
+  show-decoration-selected: 1;
+}
+
+QHeaderView::section {
+  background-color: #171717;
+  padding: 3px 6px;
+}
+
+/* tabs look like eww tags */
+QTabBar::tab {
+  background-color: transparent;
+  padding: 4px 9px;
+}
+
+/* menus */
+QMenu {
+  background-color: #262626;
+  padding: 2px 0;
+}
+
+QMenu::item {
+  background-color: transparent;
+  padding: 4px 20px 4px 10px;
+}
+
+QMenu::separator {
+  height: 1px;
+  background-color: #3a3a3a;
+  margin: 3px 6px;
+}
+
+QMenuBar {
+  background-color: #171717;
+}
+
+QMenuBar::item {
+  background-color: transparent;
+  padding: 3px 9px;
+}
+
+QToolTip {
+  background-color: #262626;
+  color: #ebdbb2;
+  padding: 3px 6px;
+}
+
+/* hover, same as eww */
+QPushButton:hover, QToolButton:hover, QComboBox:hover,
+QTabBar::tab:hover, QHeaderView::section:hover,
+QAbstractItemView::item:hover, QMenuBar::item:selected {
+  background-color: rgba(214, 93, 14, 0.25);
+}
+
+/* selected, same as eww */
+QPushButton:pressed, QPushButton:checked,
+QToolButton:pressed, QToolButton:checked,
+QTabBar::tab:selected, QAbstractItemView::item:selected,
+QMenu::item:selected, QMenuBar::item:pressed {
+  background-color: #d65d0e;
+  color: #fbf1c7;
+}
+
+QMenu::item:disabled {
+  background-color: transparent;
+}
+
+/* thin flat scrollbars */
+QScrollBar {
+  background-color: transparent;
+}
+
+QScrollBar:vertical {
+  width: 8px;
+}
+
+QScrollBar:horizontal {
+  height: 8px;
+}
+
+QScrollBar::handle {
+  background-color: #3a3a3a;
+}
+
+QScrollBar::handle:vertical {
+  min-height: 24px;
+}
+
+QScrollBar::handle:horizontal {
+  min-width: 24px;
+}
+
+QScrollBar::handle:hover, QScrollBar::handle:pressed {
+  background-color: #d65d0e;
+}
+
+QScrollBar::add-line, QScrollBar::sub-line {
+  width: 0;
+  height: 0;
+}
+
+QScrollBar::add-page, QScrollBar::sub-page {
+  background: none;
+}
+
+QAbstractScrollArea::corner {
+  background-color: transparent;
+}
+
+QProgressBar {
+  background-color: #262626;
+  text-align: center;
+}
+
+QProgressBar::chunk {
+  background-color: #d65d0e;
+}
+
+QGroupBox {
+  margin-top: 1.4em;
+}
+
+QGroupBox::title {
+  subcontrol-origin: margin;
+  subcontrol-position: top left;
+  padding: 0 2px;
+}

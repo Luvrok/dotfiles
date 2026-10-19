@@ -44,6 +44,14 @@ DEF_SIZE=832x1248     # обе стороны кратны 32
 OUT=${OUT:-/var/lib/models/qwen-image-2.1/out}   # папка для картинок и лога
 PROMPTS=${PROMPTS:-$HOME/HOME/scripts/qwen-prompts.sh}   # файл со слотами; туда же пишет qwen-gen.sh
 
+# flags for speed and memory, not the picture, so they stay out of the file name.
+# --vae-tiling: vae decode in 512 px tiles instead of one huge gpu job, so the desktop
+#   doesn't freeze at the end and the vram peak drops. decode gets 1.5-2x slower, a few sec.
+# still freezing: add --clip-on-cpu (text encoder in ram, a few sec per picture).
+# desktop short on vram: add --max-vram -1 (keeps 1 gib free, slower if the model stops fitting).
+# off for one run: SMOOTH= qwen-batch 44
+SMOOTH=${SMOOTH-"--vae-tiling --vae-tile-size 512"}
+
 # что задано при запуске; пусто — не задано, берётся слот или дефолт
 RUN_SIZE=${SIZE:-} RUN_CFG=${CFG:-} RUN_STEPS=${STEPS:-} RUN_SEEDS=${SEEDS:-}
 RUN_REF_SET=${REF+x} RUN_REF=${REF:-}   # REF различает «не задан» и «задан пустым»
@@ -182,6 +190,7 @@ esac
 # EXTRA может менять результат (например --model-args), поэтому помечается в имени и входит в хэш.
 # --offload-to-cpu картинку не меняет и не считается.
 read -ra EXTRA_ARR <<<"${EXTRA:-}"
+read -ra SMOOTH_ARR <<<"$SMOOTH"
 EXTRA_KEY=$(sed -E 's/--offload-to-cpu//g; s/  +/ /g; s/^ //; s/ $//' <<<"${EXTRA:-}")
 EXTRA_TAG=${EXTRA_KEY:+_extra}
 
@@ -242,6 +251,8 @@ if [[ -z ${DRY:-} ]]; then
   for f in "$VAE" "$LLM"; do [[ -f $f ]] || die "нет файла $f"; done
   ((!need_mmproj)) || [[ -f $MMPROJ ]] || die "для референса нужен $MMPROJ — скачай $F_MMPROJ из unsloth/Qwen3-VL-8B-Instruct-GGUF"
   mkdir -p "$OUT" || die "не могу создать $OUT"
+  # lower cpu priority for this script and sd-cli, so the desktop gets the cpu first. costs nothing when idle
+  command -v renice >/dev/null && renice -n 10 -p $$ >/dev/null 2>&1
   # не даём системе уснуть, пока скрипт жив
   if command -v systemd-inhibit >/dev/null; then
     systemd-inhibit --what=idle:sleep --why='image batch' tail --pid=$$ -f /dev/null >/dev/null 2>&1 &
@@ -255,7 +266,7 @@ run_note=''
 [[ -n $RUN_STEPS ]] && run_note+=" STEPS=$RUN_STEPS"
 [[ -n $RUN_SEEDS ]] && run_note+=" SEEDS=\"$RUN_SEEDS\""
 [[ -n $RUN_REF_SET ]] && run_note+=" REF=${RUN_REF:-<без референса>}"
-log "=== к генерации: $total, уже готово: $skipped | слотов: ${#sel[@]} | задано при запуске:${run_note:- ничего, всё из слотов и дефолтов} | $F_MODEL, $F_VAE"
+log "=== к генерации: $total, уже готово: $skipped | слотов: ${#sel[@]} | задано при запуске:${run_note:- ничего, всё из слотов и дефолтов} | $F_MODEL, $F_VAE${SMOOTH:+ | $SMOOTH}"
 
 ok=0 failed=() spent=0
 finish() {
@@ -272,7 +283,7 @@ for ((j = 0; j < total; j++)); do
   neg=${N[$i]:-}
 
   cmd=("$SD" --diffusion-model "$MODEL" --vae "$VAE" --llm "$LLM"
-    "${SAMPLING[@]}" --cfg-scale "$cfg" --steps "$steps"
+    "${SAMPLING[@]}" "${SMOOTH_ARR[@]}" --cfg-scale "$cfg" --steps "$steps"
     -W "${sz%x*}" -H "${sz#*x}" -s "$seed")
   [[ -n $ref ]] && cmd+=(-r "$ref" --llm_vision "$MMPROJ")
   [[ -n $neg ]] && cmd+=(-n "$neg")   # пустой негатив → флаг -n не передаётся вообще

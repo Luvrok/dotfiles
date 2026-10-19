@@ -16,7 +16,6 @@
     ./env.nix
     ./packages.nix
     ./network.nix
-    ./xdg
   ];
 
   time.timeZone = "Europe/Moscow";

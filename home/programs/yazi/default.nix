@@ -10,8 +10,8 @@ let
   yatline-gruvbox = pkgs.fetchFromGitHub {
     owner = "imsi32";
     repo = "yatline-gruvbox.yazi";
-    rev = "1ce46ebe1f48139de30051638d7c6ba71d867220";
-    hash = "sha256-Dsf6FlUmGQTLSM63++Wa9ChQmTqhAp03rIWYtS1rrv8=";
+    rev = "f570b77bf848db8663318cf0fe766c9c2b9d9f26";
+    hash = "sha256-IVdcP4aLlPE6y6tUuHImYSLJOCPdA3pw4lKu42W7flk=";
   };
   bunny = pkgs.fetchFromGitHub {
     owner = "stelcodes";
@@ -35,12 +35,18 @@ in
       inherit (pkgs.yaziPlugins) smart-enter;
       inherit (pkgs.yaziPlugins) jump-to-char;
       inherit (pkgs.yaziPlugins) smart-filter;
-      inherit (pkgs.yaziPlugins) yatline;
       inherit (pkgs.yaziPlugins) githead;
       inherit (pkgs.yaziPlugins) clipboard;
 
       inherit bunny;
       inherit yatline-gruvbox;
+
+      # patch deprecated url api
+      yatline = pkgs.yaziPlugins.yatline.overrideAttrs (old: {
+        postPatch = (old.postPatch or "") + ''
+          sed -i 's/\.is_search/.spec.is_search/g' main.lua
+        '';
+      });
 
       # todo:
       # vcs-files
@@ -78,6 +84,14 @@ in
             ];
             run = "create --dir";
             desc = "Create directory";
+          }
+          {
+            on = [
+              "m"
+              "v"
+            ];
+            run = ''shell --block -- d=$(${getExe pkgs.fd} --type d --hidden --exclude .git . ~ | ${getExe pkgs.fzf}) || exit; d=''${d%/}; set -- %s; mv -i -- "$@" "$d" && ya emit reveal "$d/''${1##*/}"'';
+            desc = "Move to dir (fzf)";
           }
           {
             on = [
