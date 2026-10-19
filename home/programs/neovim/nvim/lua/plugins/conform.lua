@@ -6,7 +6,7 @@ return {
 			c = { "clang-format" },
 			cpp = { "clang-format" },
 
-			go = { "gofumpt" },
+			go = { "goimports", "gofumpt" },
 			lua = { "stylua" },
 			nix = { "nixfmt" },
 			sql = { "sql_formatter" },
@@ -24,6 +24,7 @@ return {
 
 			zsh = { "beautysh" },
 			sh = { "beautysh" },
+			bash = { "beautysh" },
 		},
 	},
 	keys = {
@@ -32,7 +33,7 @@ return {
 			function()
 				require("conform").format({
 					timeout_ms = 500,
-					lsp_fallback = true,
+					lsp_format = "fallback",
 				})
 			end,
 			desc = "Format buffer",

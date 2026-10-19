@@ -3,7 +3,8 @@ return {
 	priority = 1000,
 	lazy = false,
 	opts = {
-		bigfile = { enabled = false },
+		-- over 1.5 MB: no treesitter, lsp, matchparen. regex syntax stays
+		bigfile = { enabled = true },
 		dashboard = {
 			enabled = true,
 			width = 24,

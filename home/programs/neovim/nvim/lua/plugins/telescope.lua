@@ -5,9 +5,7 @@ return {
 		"nvim-lua/plenary.nvim",
 		{ "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
 		{ "nvim-telescope/telescope-ui-select.nvim" },
-		{ "nvim-telescope/telescope-frecency.nvim" },
 		{ "ahmedkhalf/project.nvim" },
-		{ "kkharji/sqlite.lua" },
 	},
 	keys = {
 		{
@@ -214,16 +212,10 @@ return {
 					override_file_sorter = true,
 					case_mode = "smart_case",
 				},
-				frecency = {
-					show_scores = false,
-					show_unindexed = true,
-					ignore_patterns = { "*.git/*", "*/tmp/*" },
-				},
 			},
 		})
 
 		telescope.load_extension("fzf")
-		telescope.load_extension("frecency")
 		telescope.load_extension("projects")
 		telescope.load_extension("ui-select")
 

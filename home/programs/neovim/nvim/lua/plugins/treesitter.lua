@@ -5,21 +5,28 @@ return {
 		lazy = false, -- main не поддерживает lazy-loading
 		build = ":TSUpdate",
 		config = function()
+			-- no-op for the ones already installed
 			require("nvim-treesitter").install({
-				"bash", "c", "diff", "html", "javascript", "jsdoc", "json", "nix",
-				"lua", "luadoc", "luap", "markdown", "markdown_inline", "printf",
-				"query", "regex", "toml", "tsx", "typescript", "vim", "vimdoc",
-				"xml", "yaml", "clojure", "go", "css", "scss", "typst",
+				-- languages
+				"bash", "c", "cpp", "css", "dockerfile", "go", "gomod", "gosum", "gowork",
+				"html", "javascript", "json", "lua", "make", "markdown", "nix", "python",
+				"rasi", "rust", "scss", "sql", "toml", "tsx", "typescript", "typst", "xml",
+				"yaml", "yuck", "zsh",
+				-- git
+				"diff", "git_config", "git_rebase", "gitattributes", "gitcommit", "gitignore",
+				-- injected into other languages
+				"comment", "jsdoc", "luadoc", "luap", "markdown_inline", "printf", "query",
+				"regex", "vim", "vimdoc",
 			})
 
+			-- big files get filetype "bigfile" from snacks, so they're skipped here too
 			vim.api.nvim_create_autocmd("FileType", {
 				callback = function(args)
-					local buf = args.buf
-					local ok, stats = pcall(vim.uv.fs_stat, vim.api.nvim_buf_get_name(buf))
-					if ok and stats and stats.size > 200 * 1024 then
-						return
+					local lang = vim.treesitter.language.get_lang(args.match)
+					-- add() returns nil when there's no parser for it
+					if lang and vim.treesitter.language.add(lang) then
+						vim.treesitter.start(args.buf, lang)
 					end
-					pcall(vim.treesitter.start, buf)
 				end,
 			})
 		end,

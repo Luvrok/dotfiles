@@ -1,104 +1,53 @@
-local capabilities = vim.lsp.protocol.make_client_capabilities()
-local ok, blink = pcall(require, "blink.cmp")
-if ok then
-	capabilities = blink.get_lsp_capabilities(capabilities)
-end
+-- cmd, filetypes and root markers come from nvim-lspconfig (lsp/<name>.lua),
+-- here only what differs. capabilities come from blink, its plugin file
+-- sets them on vim.lsp.config("*"). binaries come from nix, no mason
+
+local flake = vim.env.HOME .. "/HOME/infra/dotfiles"
+-- hostName = username, which is also the nixosConfigurations name
+local host = vim.uv.os_gethostname()
 
 vim.lsp.config("nixd", {
-	cmd = { "nixd" },
-	filetypes = { "nix" },
-	root_markers = { "flake.nix", "default.nix", "shell.nix", ".git" },
-	capabilities = capabilities,
+	-- nixd logs every request to stderr and nvim writes all of it to lsp.log as errors
+	cmd = { "nixd", "--log=error" },
 	settings = {
-		formatting = {
-			command = { "nixfmt" },
-		},
 		nixd = {
 			nixpkgs = {
-				expr = 'import (builtins.getFlake "/home/barnard/HOME/infra/dotfiles").inputs.nixpkgs { }',
+				expr = ('import (builtins.getFlake "%s").inputs.nixpkgs { }'):format(flake),
 			},
 			formatting = {
 				command = { "nixfmt" },
 			},
 			options = {
 				nixos = {
-					expr = '(builtins.getFlake "/home/barnard/HOME/infra/dotfiles").nixosConfigurations."barnard".options',
+					expr = ('(builtins.getFlake "%s").nixosConfigurations."%s".options'):format(flake, host),
 				},
 				home_manager = {
-					expr = '(builtins.getFlake "/home/barnard/HOME/infra/dotfiles").nixosConfigurations."barnard".options.home-manager.users.type.getSubOptions []',
+					expr = ('(builtins.getFlake "%s").nixosConfigurations."%s".options.home-manager.users.type.getSubOptions []'):format(
+						flake,
+						host
+					),
 				},
 			},
 		},
-	},
-})
-
-vim.lsp.config("tinymist", {
-	cmd = { "tinymist" },
-	filetypes = { "typst" },
-	root_markers = { "typst.toml", ".git" },
-	capabilities = capabilities,
-	single_file_support = true,
-	settings = {
-		formatterMode = "typstyle",
-		exportPdf = "onSave",
-		semanticTokens = "enable",
 	},
 })
 
 vim.lsp.config("lua_ls", {
-	cmd = { "lua-language-server" },
-	filetypes = { "lua" },
-	single_file_support = true,
-	root_markers = {
-		".luarc.json",
-		".luarc.jsonc",
-		".luacheckrc",
-		".stylua.toml",
-		"stylua.toml",
-		"selene.toml",
-		"selene.yml",
-		".git",
-		"Makefile",
-	},
-	capabilities = capabilities,
-
 	settings = {
 		Lua = {
-			diagnostics = {
-				enable = true,
-				globals = { "vim", "require" },
-			},
+			runtime = { version = "LuaJIT" },
+			diagnostics = { globals = { "vim" } },
 			workspace = {
 				checkThirdParty = false,
-				library = vim.api.nvim_get_runtime_file("", true),
+				library = { vim.env.VIMRUNTIME },
 			},
 			telemetry = { enable = false },
-			completion = {
-				callSnippet = "Replace",
-			},
-		},
-	},
-})
-
-vim.lsp.config("bash-language-server", {
-	cmd = { "bash-language-server", "start" },
-	filetypes = { "bash", "sh" },
-	root_markers = { ".git" },
-	capabilities = capabilities,
-	settings = {
-		bashIde = {
-			globPattern = vim.env.GLOB_PATTERN or "*@(.sh|.inc|.bash|.command)",
+			completion = { callSnippet = "Replace" },
 		},
 	},
 })
 
 vim.lsp.config("gopls", {
-	cmd = { "gopls" },
-	filetypes = { "go", "gomod" },
-	root_markers = { "go.work", "go.mod", ".git" },
-	cmd_env = {
-		GOOS = "linux",
-	},
 	settings = {
 		gopls = {
 			gofumpt = true,
@@ -107,133 +56,68 @@ vim.lsp.config("gopls", {
 				unusedparams = true,
 				shadow = true,
 			},
-			buildFlags = { "-tags=amd64" },
 		},
 	},
-	capabilities = capabilities,
 })
 
-vim.lsp.config("marksman", {
-	cmd = { "marksman", "server" },
-	filetypes = { "markdown" },
-	root_markers = { ".marksman.toml" },
-	capabilities = capabilities,
-})
-
-vim.lsp.config("taplo", {
-	cmd = { "taplo", "lsp", "stdio" },
-	filetypes = { "toml" },
-	root_markers = { ".git" },
-	capabilities = capabilities,
-})
-
-vim.lsp.config("clangd", {
-	cmd = { "clangd" },
-	root_markers = { ".git", "compile_commands.json", "CMakeLists.txt" },
-	filetypes = { "c", "cpp", "objc", "objcpp" },
-	capabilities = capabilities,
-})
-
-vim.lsp.config("sqls", {
-	cmd = { "sqls" },
-	filetypes = { "sql", "mysql" },
-	root_markers = { "config.yml" },
-	settings = {},
-	capabilities = capabilities,
-})
-
-vim.lsp.config("vscode-langservers-extracted", {
-	cmd = { "vscode-eslint-language-server", "--stdio" },
-	filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact", "graphql" },
-	root_markers = { ".eslintrc", ".eslintrc.js", ".eslintrc.json", "eslint.config.js", "eslint.config.mjs" },
-	capabilities = capabilities,
-})
-
-vim.lsp.config("typescript-language-server", {
-	cmd = { "typescript-language-server", "--stdio" },
-	root_markers = { "project.json", "tsconfig.json", "jsconfig.json", ".git" },
-	filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
-	capabilities = capabilities,
-})
-
-vim.lsp.config("yaml-language-server", {
-	cmd = { "yaml-language-server", "--stdio" },
-	filetypes = { "yaml" },
-	root_markers = {
-		".git",
-	},
-	single_file_support = true,
-	capabilities = capabilities,
-})
-
-vim.lsp.config("vscode-html-language-server", {
-	cmd = { "vscode-html-language-server", "--stdio" },
-	filetypes = { "html" },
-	root_markers = { "package.json", ".git" },
-	single_file_support = true,
-	capabilities = capabilities,
-	settings = {},
-	init_options = {
-		provideFormatter = false, -- you format with prettierd
-		embeddedLanguages = { css = true, javascript = true },
-		configurationSection = { "html", "css", "javascript" },
-	},
-})
-
-vim.lsp.config("vscode-css-language-server", {
-	cmd = { "vscode-css-language-server", "--stdio" },
-	filetypes = { "css", "scss", "less" },
-	root_markers = { "package.json", ".git" },
-	single_file_support = true,
-	capabilities = capabilities,
+vim.lsp.config("bashls", {
 	settings = {
-		css = { validate = true },
-		scss = { validate = true },
-		less = { validate = true },
+		bashIde = {
+			-- same exclude as writeShellApplication in home/packages.nix
+			shellcheckArguments = "--exclude=SC2016",
+		},
 	},
-	init_options = { provideFormatter = false },
 })
 
-vim.lsp.config("vscode-json-language-server", {
-	cmd = { "vscode-json-language-server", "--stdio" },
-	filetypes = { "json", "jsonc" },
-	root_markers = { ".git" },
-	single_file_support = true,
-	capabilities = capabilities,
-	init_options = { provideFormatter = false },
+vim.lsp.config("tinymist", {
+	settings = {
+		formatterMode = "typstyle",
+		exportPdf = "onSave",
+		semanticTokens = "enable",
+	},
 })
+
+-- prettierd formats these, keep the servers out of it
+for _, name in ipairs({ "html", "cssls", "jsonls" }) do
+	vim.lsp.config(name, { init_options = { provideFormatter = false } })
+end
 
 vim.lsp.enable({
 	"nixd",
 	"lua_ls",
 	"gopls",
+	"bashls",
 	"marksman",
 	"taplo",
 	"clangd",
 	"sqls",
 	"tinymist",
-	"vscode-langservers-extracted",
-	"vscode-html-language-server",
-	"vscode-css-language-server",
-	"vscode-json-language-server",
-	"typescript-language-server",
-	"yaml-language-server",
-	"bash-language-server",
+	"ts_ls",
+	"html",
+	"cssls",
+	"jsonls",
+	"yamlls",
+})
+
+vim.diagnostic.config({
+	severity_sort = true,
+	float = {
+		border = "rounded",
+		source = "if_many",
+	},
 })
 
 vim.api.nvim_create_autocmd("CursorHold", {
 	callback = function()
-		vim.diagnostic.open_float(nil, {
+		vim.diagnostic.open_float({
 			focus = false,
+			scope = "cursor",
 			close_events = {
 				"BufLeave",
 				"CursorMoved",
 				"InsertEnter",
 				"FocusLost",
 			},
-			border = "rounded",
-			source = "if_many",
-			scope = "cursor",
 		})
 	end,
 })

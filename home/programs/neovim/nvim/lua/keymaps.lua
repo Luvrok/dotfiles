@@ -1,4 +1,5 @@
 local map = vim.keymap.set
+local opts = { silent = true }
 
 -- disable default undo/redo keys (prevent accidental presses)
 vim.keymap.set("n", "u", "<Nop>", { noremap = true, silent = true })
@@ -39,6 +40,10 @@ map("n", "<A-Left>", ":bprevious<CR>", opts)
 
 -- Search and diagnostics
 map("n", "<Esc>", "<cmd>nohlsearch<CR>", opts)
+
+-- disable search, dont like it
+map("n", "n", "<Nop>", { desc = "Disable next search result" })
+map("n", "N", "<Nop>", { desc = "Disable previous search result" })
 
 -- Delete words with CTRL-Backspace/Alt-Backspace in insert mode
 map("i", "<C-BS>", "<C-w>", { silent = true })
