@@ -54,9 +54,9 @@
 
       # --- lsp ---
       bash-language-server
+      shellcheck # bashls lints with it
       lua-language-server
       marksman
-      nil
       nixd
       sqls
       taplo

@@ -2,7 +2,6 @@ vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
 -- UI and behavior
-vim.g.have_nerd_font = false
 vim.o.number = true
 vim.o.mouse = "a"
 vim.o.showmode = false
@@ -25,7 +24,6 @@ vim.o.list = true
 vim.opt.listchars = { tab = "  ", trail = "·", nbsp = "␣" }
 vim.o.inccommand = "split"
 vim.o.cursorline = true
-vim.opt.cursorline = true
 -- vim.opt.cursorcolumn = true
 vim.o.scrolloff = 10
 vim.o.confirm = true
@@ -46,5 +44,11 @@ vim.wo.relativenumber = true
 -- disable search, dont like it
 vim.opt.hlsearch = false
 vim.opt.incsearch = false
-vim.keymap.set("n", "n", "<Nop>", { desc = "Disable next search result" })
-vim.keymap.set("n", "N", "<Nop>", { desc = "Disable previous search result" })
+
+-- i3 scripts have no shebang (writeShellApplication adds it), without this
+-- they open as conf: no bash highlighting, no bashls, no shellcheck
+vim.filetype.add({
+	pattern = {
+		[".*/dotfiles/home/scripts/.*"] = "bash",
+	},
+})

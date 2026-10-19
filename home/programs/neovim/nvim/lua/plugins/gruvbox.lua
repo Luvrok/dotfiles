@@ -11,13 +11,12 @@ return {
 			["@keyword"] = { fg = "#cc241d", italic = false },
 			["@keyword.function"] = { fg = "#cc241d", italic = false },
 			["@keyword.return"] = { fg = "#cc241d", italic = false },
-			["@conditional"] = { fg = "#cc241d", italic = false },
-			["@repeat"] = { fg = "#cc241d", italic = false },
+			["@keyword.conditional"] = { fg = "#cc241d", italic = false },
+			["@keyword.repeat"] = { fg = "#cc241d", italic = false },
 
 			["@variable"] = { fg = "#ebdbb2" },
 			["@variable.builtin"] = { fg = "#d65d0e" },
 			["@variable.parameter"] = { fg = "#b16286", italic = false },
-			["@parameter"] = { fg = "#b16286", italic = false },
 
 			["@constant"] = { fg = "#b16286" },
 			["@constant.builtin"] = { fg = "#d65d0e" },
@@ -30,8 +29,8 @@ return {
 			["@function"] = { fg = "#689d6a" },
 			["@function.call"] = { fg = "#689d6a" },
 			["@function.builtin"] = { fg = "#d65d0e" },
-			["@method"] = { fg = "#689d6a" },
-			["@method.call"] = { fg = "#689d6a" },
+			["@function.method"] = { fg = "#689d6a" },
+			["@function.method.call"] = { fg = "#689d6a" },
 			["@constructor"] = { fg = "#d79921" },
 
 			["@type"] = { fg = "#d79921", italic = false },
@@ -39,8 +38,7 @@ return {
 			["@type.definition"] = { fg = "#d79921", italic = false },
 
 			["@property"] = { fg = "#458588" },
-			["@field"] = { fg = "#458588" },
-			["@namespace"] = { fg = "#458588" },
+			["@variable.member"] = { fg = "#458588" },
 			["@module"] = { fg = "#458588" },
 
 			["@operator"] = { fg = "#d65d0e" },
@@ -111,9 +109,5 @@ return {
 		vim.api.nvim_set_hl(0, "CommandMode", { fg = "#282828" })
 		vim.api.nvim_set_hl(0, "ReplaceMode", { fg = "#cc241d" })
 		vim.api.nvim_set_hl(0, "SelectMode", { fg = "#458588" })
-
-		-- nvim-ufo (i dont use fold)
-		-- vim.api.nvim_set_hl(0, "Folded", { bg = "NONE", fg = "#928374" })
-		-- vim.api.nvim_set_hl(0, "FoldColumn", { bg = "NONE", fg = "#928374" })
 	end,
 }

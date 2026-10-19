@@ -1,4 +1,5 @@
 local map = vim.keymap.set
+local opts = { silent = true }
 
 -- disable default undo/redo keys (prevent accidental presses)
 vim.keymap.set("n", "u", "<Nop>", { noremap = true, silent = true })
@@ -40,6 +41,10 @@ map("n", "<A-Left>", ":bprevious<CR>", opts)
 -- Search and diagnostics
 map("n", "<Esc>", "<cmd>nohlsearch<CR>", opts)
 
+-- disable search, dont like it
+map("n", "n", "<Nop>", { desc = "Disable next search result" })
+map("n", "N", "<Nop>", { desc = "Disable previous search result" })
+
 -- Delete words with CTRL-Backspace/Alt-Backspace in insert mode
 map("i", "<C-BS>", "<C-w>", { silent = true })
 map("i", "<C-h>", "<C-w>", { silent = true })
@@ -59,6 +64,11 @@ end, opts)
 -- Keep visual selection after indenting
 map("v", ">", ">gv")
 map("v", "<", "<gv")
+
+-- toggle comment with the built-in gc. gcc and gc are mappings themselves, so remap
+map("n", "<C-/>", "gcc", { remap = true, silent = true, desc = "Toggle comment" })
+map("x", "<C-/>", "gcgv", { remap = true, silent = true, desc = "Toggle comment" })
+map("i", "<C-/>", "<Esc>gccgi", { remap = true, silent = true, desc = "Toggle comment" })
 
 -- shift scroll
 -- map({ "n", "i", "v" }, "<S-ScrollWheelUp>", "zh", { noremap = true, silent = true })

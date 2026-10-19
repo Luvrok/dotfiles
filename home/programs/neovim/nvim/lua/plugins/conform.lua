@@ -1,12 +1,13 @@
 return {
 	"stevearc/conform.nvim",
 	opts = {
-		notify_on_error = false,
+		-- say why a format didn't happen (syntax error and the like)
+		notify_on_error = true,
 		formatters_by_ft = {
 			c = { "clang-format" },
 			cpp = { "clang-format" },
 
-			go = { "gofumpt" },
+			go = { "goimports", "gofumpt" },
 			lua = { "stylua" },
 			nix = { "nixfmt" },
 			sql = { "sql_formatter" },
@@ -24,15 +25,18 @@ return {
 
 			zsh = { "beautysh" },
 			sh = { "beautysh" },
+			bash = { "beautysh" },
 		},
 	},
 	keys = {
 		{
 			"<leader>fm",
 			function()
+				-- async: no timeout. with a 500 ms one a cold prettierd never made it
+				-- and the format was dropped without a word
 				require("conform").format({
-					timeout_ms = 500,
-					lsp_fallback = true,
+					async = true,
+					lsp_format = "fallback",
 				})
 			end,
 			desc = "Format buffer",
