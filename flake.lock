@@ -217,6 +217,23 @@
         "type": "github"
       }
     },
+    "llama-cpp": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792453641,
+        "narHash": "sha256-VCVbSsikOTSJ9Gjy8oZnf9bRFgB5g6fW/X76uir8L7w=",
+        "owner": "ggml-org",
+        "repo": "llama.cpp",
+        "rev": "3bb63cbcbfb62056c84fe9e521b0f3d756d29c32",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ggml-org",
+        "repo": "llama.cpp",
+        "rev": "3bb63cbcbfb62056c84fe9e521b0f3d756d29c32",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1695145219,
@@ -403,6 +420,7 @@
         "dwmblocks": "dwmblocks",
         "home-manager": "home-manager",
         "lazygit": "lazygit",
+        "llama-cpp": "llama-cpp",
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-pinned": "nixpkgs-pinned",
         "picom-pijulius": "picom-pijulius",

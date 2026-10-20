@@ -6,6 +6,8 @@ in
 {
   imports = [
     ./extraShell.nix
+    # llama.cpp source pin, shared with jedha
+    ../../modules/llm/llama-cpp.nix
   ];
 
   nixpkgs.overlays = [
