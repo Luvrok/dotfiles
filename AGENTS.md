@@ -301,6 +301,9 @@ home-manager. Same tags, binds, scratchpads and bar, no animations.
   plugged-in output of the `workspace 1 output` line, `sway-ws` and
   `eww-sway-workspaces` read it with `swaymsg -t get_config`.
 - Output names are kernel connectors: X11 `DisplayPort-0` is `DP-1`.
+- sway matches `bindsym` by the keysym of the active layout, so on ru
+  `$mod+j` is `Cyrillic_o` and nothing fires. Every key bind has
+  `--to-code` (key position of the first layout), i3 does that by itself.
 - `layout default` in sway goes back to the last split of that container and
   fails on a fresh tabbed one, `$mod+t` uses `layout splith`.
 - `container_titlebar_height()` patched to 0 hides tab bars, the same path
