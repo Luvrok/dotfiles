@@ -15,7 +15,7 @@
     ./kiss-worker.nix
     ./subtitle-translator
     ./embeddings.nix
-    ./docs-mcp.nix
+    ./docs-mcp
   ];
 
   sops.defaultSopsFile = ../../secrets/barnard.yaml;

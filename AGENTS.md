@@ -131,7 +131,9 @@ mos-eisley, xray) lives elsewhere.
 | `flake.nix` | `llama-cpp` input (`flake = false`), the commit is in the url |
 | `modules/llm/llama-cpp.nix` | overlay: llama-cpp from that input. jedha and barnard (`nixos/overlays`) import it |
 | `hosts/jedha/embeddings.nix` | llama-server, EmbeddingGemma 2, `127.0.0.1:8090` |
-| `hosts/jedha/docs-mcp.nix` | docs-mcp-server container, `127.0.0.1:6280` (web ui, `/api`, `/mcp`) |
+| `hosts/jedha/docs-mcp/default.nix` | docs-mcp-server container, `127.0.0.1:6280` (web ui, `/api`, `/mcp`), `docs-mcp` cli, sync and refresh timers |
+| `hosts/jedha/docs-mcp/sources.nix` | the docs to index: name, url, extra `scrape` flags |
+| `hosts/jedha/docs-mcp/sync.sh` | `docs-mcp-sync`: scrapes new and changed sources, removes dropped ones |
 
 - llama-server runs from the nixpkgs `services.llama-cpp` module
   (`DynamicUser`, hardened). The model is not in the store, it's downloaded
@@ -143,6 +145,17 @@ mos-eisley, xray) lives elsewhere.
   vectors from `http://127.0.0.1:8090/v1`.
 - The first start asks the model for its vector size, so the container waits
   for llama-server's `/health`. After that the size is stored in the db.
+- `docs-mcp` (root, in PATH) is the cli in a throwaway container on the same
+  store, it runs next to the server: `docs-mcp list`,
+  `docs-mcp search nix-dev "flake inputs"`, `docs-mcp scrape --help`.
+- Sources: `docs-mcp-sync.timer` runs a minute after boot or after a
+  `sources.nix` change (`restartTriggers`), then daily. It scrapes what's new
+  or changed (`--replace`) and removes what was dropped.
+  `/var/lib/docs-mcp-sync/state.json` holds what it scraped, so libraries
+  added by hand are never touched, and one that was removed by hand comes
+  back. A failed source isn't saved there, so the next run tries again.
+  `docs-mcp-refresh.timer` refreshes all sources weekly. Both take the same
+  lock.
 
 ### Facts that drove the design
 
@@ -160,19 +173,30 @@ mos-eisley, xray) lives elsewhere.
   `cpuArchDynamicDispatch` builds every CPU variant and picks one at runtime.
 - Quant: Q8_0. F16 gives NaN on CPU (the activations overflow fp16), BF16 has
   no fast path on this CPU. A new quant changes the model name (`alias`).
+- A first scrape takes hours on this CPU. The sync services are oneshot with
+  `restartIfChanged = false` and only timers start them, otherwise switch
+  would wait for the scrape.
 - docs-mcp notices a model change by name, and a server without a terminal
-  refuses to start then. Confirm once by hand: stop `podman-docs-mcp`, run its
-  `podman run` (`systemctl cat podman-docs-mcp`) with `-it` instead of `-d`,
-  answer `y`, then rescrape with `scrape --replace`.
+  refuses to start then, the cli too. Confirm once by hand:
+  `systemctl stop podman-docs-mcp`, `docs-mcp` (no args, starts the server
+  in the terminal), answer `y`, Ctrl+C, start the service again. Vectors are
+  gone then: set `/var/lib/docs-mcp-sync/state.json` to `{}` and start
+  `docs-mcp-sync` to rescrape everything.
 - The image sets `HOST=0.0.0.0` and `PORT`, and alias env vars beat the config
   file, so host and port go in as full names (`DOCS_MCP_SERVER_HOST`,
   `DOCS_MCP_SERVER_PORTS_DEFAULT`).
 - docs-mcp answers 403 to a `Host` header it doesn't know (only IPs,
   `localhost`, single-label names). Behind a proxy with a domain, set
-  `publicUrl` in `docs-mcp.nix`.
+  `publicUrl` in `docs-mcp/default.nix`.
 - Scrape mode `auto` (the default) and `playwright` start Chromium, heavy on
-  4 GB. Pick `fetch` unless the site needs JS. Limits: llama-server
-  `MemoryMax=1G`, the container `--memory=1536m`.
+  4 GB. `sources.nix` uses `fetch` unless an entry sets `scrape-mode`, pick
+  `fetch` in the web ui too. Limits: llama-server `MemoryMax=1G`, the server
+  container `--memory=1536m`, a cli container `--memory=1g`.
+- `scope = "subpages"` (the default) keeps the crawl under the start url's
+  directory, a last segment without a known extension counts as a directory.
+  pkg.go.dev packages sit next to `/std`, hence `scope = "hostname"` plus
+  include/exclude regexes (`/.../`, matched on the path) for go-std.
+- docs-mcp has no proxy setting, some doc sites may be blocked from jedha.
 - ubatch is 8192 (the model max, a whole input must fit one ubatch). The
   compute buffer grows with it, look for `compute buffer size` in the log.
   4096 should be enough for docs-mcp chunks (5000 chars max) if memory is
@@ -195,6 +219,8 @@ curl -s http://127.0.0.1:8090/v1/embeddings -H 'Content-Type: application/json' 
   -d '{"input":"task: search result | query: nix flakes"}' \
   | jq '.data[0].embedding | length, (map(select(. == null)) | length)'
 journalctl -u podman-docs-mcp -f
+journalctl -u docs-mcp-sync -f                       # scraping progress
+docs-mcp list | jq -r '.[] | "\(.name) \(.versions[0].status) \(.versions[0].documentCount)"'
 ```
 
 The second number must be 0, NaN comes out of the JSON encoder as `null`.
