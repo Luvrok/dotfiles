@@ -19,15 +19,27 @@ let
   # every scrape goes out through the xray http inbound, some doc sites are
   # blocked from here. null to go direct
   proxy = "http://127.0.0.1:10808";
-  sources = import ./sources.nix;
+  sources = import ./sources.nix { inherit pkgs config; };
+  # devdocs and local sources are copied here as plain html first
+  filesDir = "/var/lib/docs-mcp-sync/files";
+  filesMount = "/sources";
   llama = config.services.llama-cpp.settings;
+  podman = lib.getExe config.virtualisation.podman.package;
 
-  # an explicit config file is read only, the server never writes it
   configFile = (pkgs.formats.json { }).generate "docs-mcp.json" (
     {
       app = {
         telemetryEnabled = false; # posthog is on by default
         embeddingModel = llama.alias;
+      };
+      # 2 slow cores: one page at a time, small embedding requests, long wait
+      scraper = {
+        maxConcurrency = 1;
+        security.fileAccess.allowedRoots = [ filesMount ];
+      };
+      embeddings = {
+        batchChars = 8000; # ~2k tokens per request instead of a whole page
+        requestTimeoutMs = 600000;
       };
     }
     // lib.optionalAttrs (publicUrl != null) { server = { inherit publicUrl; }; }
@@ -56,6 +68,8 @@ let
   cliArgs = [
     "--network=host"
     "--memory=1g"
+    "-v"
+    "${filesDir}:${filesMount}:ro"
   ]
   ++ lib.concatLists (
     lib.mapAttrsToList (k: v: [
@@ -75,29 +89,59 @@ let
     text = ''
       tty=()
       if [ -t 0 ] && [ -t 1 ]; then tty=(-it); fi
-      exec ${lib.getExe config.virtualisation.podman.package} run --rm "''${tty[@]}" \
+      # the sync units find their container by this label when they stop
+      label=()
+      if [ -n "''${DOCS_MCP_UNIT:-}" ]; then label=(--label "docs-mcp-unit=$DOCS_MCP_UNIT"); fi
+      exec ${podman} run --rm --init "''${tty[@]}" "''${label[@]}" \
         -e LOG_LEVEL="''${LOG_LEVEL:-INFO}" ${lib.escapeShellArgs cliArgs} ${image} "$@"
     '';
   };
 
+  # how each kind is scraped. the args are part of the key, so a change
+  # here scrapes every source of that kind again
+  fileArgs = name: [
+    "file://${filesMount}/${name}"
+    "--scrape-mode=fetch"
+    # folders count as depth
+    "--max-depth=50"
+    "--max-pages=100000"
+  ];
+  entries =
+    lib.mapAttrsToList (name: slug: {
+      kind = "devdocs";
+      inherit name slug;
+      args = fileArgs name;
+    }) sources.devdocs
+    ++ lib.mapAttrsToList (name: path: {
+      kind = "local";
+      inherit name path;
+      args = fileArgs name;
+    }) sources.local
+    ++ lib.mapAttrsToList (name: url: {
+      kind = "github";
+      inherit name;
+      # tree/<branch>/<dir> finds its files as blob/..., outside that dir,
+      # and the default subpages scope would drop every one of them
+      args = [
+        url
+        "--scope=hostname"
+      ];
+    }) sources.github
+    ++ lib.mapAttrsToList (name: url: {
+      kind = "web";
+      inherit name;
+      args = [
+        url
+        "--scrape-mode=fetch"
+        "--max-pages=1"
+      ];
+    }) sources.web;
+
   sourcesJson = pkgs.writeText "docs-mcp-sources.json" (
     builtins.toJSON (
-      map (s: {
-        inherit (s) name url;
-        # any change to the entry means a new scrape
-        key = builtins.hashString "sha256" (builtins.toJSON s);
-        version = lib.optional (s ? version) "--version=${s.version}";
-        flags = lib.cli.toCommandLineGNU { } (
-          {
-            scrape-mode = "fetch";
-          }
-          // removeAttrs s [
-            "name"
-            "url"
-            "version"
-          ]
-        );
-      }) sources
+      # devdocs adds its own mtime to the key at sync time, local changes
+      # with the store path
+      map (e: e // { key = builtins.hashString "sha256" (builtins.toJSON e); }) entries
     )
   );
 
@@ -105,6 +149,9 @@ let
     name = "docs-mcp-sync";
     runtimeInputs = [
       docs-mcp
+      pkgs.curl
+      pkgs.gnutar
+      pkgs.gzip
       pkgs.jq
       pkgs.util-linux
     ];
@@ -124,19 +171,34 @@ let
       Type = "oneshot";
       ExecStart = "${lib.getExe sync} ${sourcesJson} ${mode}";
       StateDirectory = "docs-mcp-sync";
+      # podman can't pass a stop on to the container from inside the unit
+      # (systemd kills its crun too), so kill the script and stop the
+      # container by its label
+      KillMode = "mixed";
+      ExecStopPost = "-${podman} stop --filter label=docs-mcp-unit=docs-mcp-${mode}";
     };
+    environment = {
+      DOCS_MCP_UNIT = "docs-mcp-${mode}";
+      DOCS_MCP_FILES = filesDir;
+    }
+    # devdocs downloads go through xray too
+    // lib.optionalAttrs (proxy != null) { https_proxy = proxy; };
   };
 in
 {
   assertions = [
     {
-      assertion = lib.allUnique (map (s: s.name) sources);
+      assertion = lib.allUnique (map (e: e.name) entries);
       message = "docs-mcp/sources.nix: names must be unique";
     }
   ];
 
   # the image runs as uid 1000
-  systemd.tmpfiles.rules = [ "d ${dataDir} 0750 1000 1000 -" ];
+  systemd.tmpfiles.rules = [
+    "d ${dataDir} 0750 1000 1000 -"
+    # the cli mounts it, so it has to exist before the first sync
+    "d ${filesDir} 0755 root root -"
+  ];
 
   environment.systemPackages = [ docs-mcp ];
 
@@ -151,6 +213,8 @@ in
     extraOptions = [
       "--network=host"
       "--memory=768m"
+      # node is pid 1 in the image and ignores SIGTERM, catatonit passes it on
+      "--init"
     ];
   };
 
