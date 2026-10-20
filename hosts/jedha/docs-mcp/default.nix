@@ -15,7 +15,7 @@ let
   image = "ghcr.io/arabold/docs-mcp-server:3.3.0";
   # set to the external url (e.g. "https://docs.example.com") when a proxy
   # sends another Host header, the server answers 403 to names it doesn't know
-  publicUrl = null;
+  publicUrl = "https://docs.vxrnt.ru";
   # every scrape goes out through the xray http inbound, some doc sites are
   # blocked from here. null to go direct
   proxy = "http://127.0.0.1:10808";
