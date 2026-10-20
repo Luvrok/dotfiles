@@ -16,6 +16,9 @@ let
   # set to the external url (e.g. "https://docs.example.com") when a proxy
   # sends another Host header, the server answers 403 to names it doesn't know
   publicUrl = null;
+  # every scrape goes out through the xray http inbound, some doc sites are
+  # blocked from here. null to go direct
+  proxy = "http://127.0.0.1:10808";
   sources = import ./sources.nix;
   llama = config.services.llama-cpp.settings;
 
@@ -37,6 +40,12 @@ let
     DOCS_MCP_CONFIG = "/etc/docs-mcp/config.json";
     OPENAI_API_BASE = "http://127.0.0.1:${toString llama.port}/v1";
     OPENAI_API_KEY = "none";
+  }
+  // lib.optionalAttrs (proxy != null) {
+    # axios (all page fetches) reads these, llama-server stays direct
+    HTTPS_PROXY = proxy;
+    HTTP_PROXY = proxy;
+    NO_PROXY = "127.0.0.1,localhost";
   };
 
   volumes = [
@@ -104,7 +113,10 @@ let
 
   syncService = mode: {
     wants = [ "podman-docs-mcp.service" ];
-    after = [ "podman-docs-mcp.service" ];
+    after = [
+      "podman-docs-mcp.service"
+      "xray.service"
+    ];
     # a first scrape takes hours, a restart on switch would wait for it.
     # the timers start these instead
     restartIfChanged = false;

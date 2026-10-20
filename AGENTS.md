@@ -196,7 +196,13 @@ mos-eisley, xray) lives elsewhere.
   directory, a last segment without a known extension counts as a directory.
   pkg.go.dev packages sit next to `/std`, hence `scope = "hostname"` plus
   include/exclude regexes (`/.../`, matched on the path) for go-std.
-- docs-mcp has no proxy setting, some doc sites may be blocked from jedha.
+- Some doc sites are blocked from jedha, so every scrape goes through the
+  xray http inbound `127.0.0.1:10808` (`proxy` in `docs-mcp/default.nix`).
+  docs-mcp has no proxy setting of its own, but all page fetches (GitHub too)
+  go through axios 1.18, which reads `HTTPS_PROXY` / `HTTP_PROXY` and
+  tunnels https with CONNECT. An http proxy only, axios has no socks.
+  `NO_PROXY` keeps llama-server direct. Chromium (`playwright` mode) is not
+  covered.
 - ubatch is 8192 (the model max, a whole input must fit one ubatch). The
   compute buffer grows with it, look for `compute buffer size` in the log.
   4096 should be enough for docs-mcp chunks (5000 chars max) if memory is
