@@ -1,8 +1,9 @@
 # AGENTS.md
 
 NixOS + home-manager dotfiles. This file covers the X11 desktop: i3, picom
-(pijulius fork) with animations, and the eww bar. Keep it in sync when you
-change how these parts talk to each other.
+(pijulius fork) with animations, and the eww bar. Also the embeddings and
+docs index on jedha, and the llama.cpp pin it shares with barnard. Keep it
+in sync when you change how these parts talk to each other.
 
 ## Files
 
@@ -118,6 +119,85 @@ journalctl --user -u picom -f -o cat | grep --line-buffered -E 'Mapping \(|Unmap
 
 An unmapped window can only animate again after a real map, so a window that
 "appears" without a `Mapping` line is old pixels in another window's buffer.
+
+## jedha: embeddings and docs index
+
+jedha is a small box: i5-7300U (2 cores, AVX2, no AVX-512), 4 GB RAM, zram
+swap. Both services listen on 127.0.0.1 only, exposing them (nginx on
+mos-eisley, xray) lives elsewhere.
+
+| Path | What |
+| --- | --- |
+| `flake.nix` | `llama-cpp` input (`flake = false`), the commit is in the url |
+| `modules/llm/llama-cpp.nix` | overlay: llama-cpp from that input. jedha and barnard (`nixos/overlays`) import it |
+| `hosts/jedha/embeddings.nix` | llama-server, EmbeddingGemma 2, `127.0.0.1:8090` |
+| `hosts/jedha/docs-mcp.nix` | docs-mcp-server container, `127.0.0.1:6280` (web ui, `/api`, `/mcp`) |
+
+- llama-server runs from the nixpkgs `services.llama-cpp` module
+  (`DynamicUser`, hardened). The model is not in the store, it's downloaded
+  by hand to `/var/lib/models/embeddinggemma-2-Q8_0.gguf`.
+- docs-mcp-server is the upstream image under podman (`--network=host`,
+  pinned tag, no `latest`: a release can migrate the db). Data in
+  `/var/lib/docs-mcp` (the image runs as uid 1000). The config is a read-only
+  JSON from nix. It sends llama-server's `alias` as the model name and gets
+  vectors from `http://127.0.0.1:8090/v1`.
+- The first start asks the model for its vector size, so the container waits
+  for llama-server's `/health`. After that the size is stored in the db.
+
+### Facts that drove the design
+
+- The `gemma-embedding2` arch needs llama.cpp 0.7.0+, nixpkgs has 0.3.0. The
+  source comes from the pinned input, the recipe stays from nixpkgs. The
+  barnard overlay (rocm, vulkan, `GGML_NATIVE`) stacks on top in any order,
+  `.override` keeps an earlier `overrideAttrs`.
+- Bump: change the rev in `flake.nix`, `nix flake update llama-cpp`, set
+  `npmDepsHash` to `lib.fakeHash`, build, copy the "got:" hash. If the new
+  source doesn't build with the old recipe, update `nixpkgs` first.
+- `llama-server --version` shows the pinned commit but the recipe's old
+  build number (a `let` in the recipe). Cosmetic.
+- Never put `GGML_NATIVE=ON` into the jedha build. It's built on barnard
+  (Zen 4, AVX-512) and dies with SIGILL on Kaby Lake. The default
+  `cpuArchDynamicDispatch` builds every CPU variant and picks one at runtime.
+- Quant: Q8_0. F16 gives NaN on CPU (the activations overflow fp16), BF16 has
+  no fast path on this CPU. A new quant changes the model name (`alias`).
+- docs-mcp notices a model change by name, and a server without a terminal
+  refuses to start then. Confirm once by hand: stop `podman-docs-mcp`, run its
+  `podman run` (`systemctl cat podman-docs-mcp`) with `-it` instead of `-d`,
+  answer `y`, then rescrape with `scrape --replace`.
+- The image sets `HOST=0.0.0.0` and `PORT`, and alias env vars beat the config
+  file, so host and port go in as full names (`DOCS_MCP_SERVER_HOST`,
+  `DOCS_MCP_SERVER_PORTS_DEFAULT`).
+- docs-mcp answers 403 to a `Host` header it doesn't know (only IPs,
+  `localhost`, single-label names). Behind a proxy with a domain, set
+  `publicUrl` in `docs-mcp.nix`.
+- Scrape mode `auto` (the default) and `playwright` start Chromium, heavy on
+  4 GB. Pick `fetch` unless the site needs JS. Limits: llama-server
+  `MemoryMax=1G`, the container `--memory=1536m`.
+- ubatch is 8192 (the model max, a whole input must fit one ubatch). The
+  compute buffer grows with it, look for `compute buffer size` in the log.
+  4096 should be enough for docs-mcp chunks (5000 chars max) if memory is
+  tight. `threads` 4 vs 2: hyperthreads often add little for matmul.
+
+### Deploy and check
+
+Build on barnard, an overridden llama.cpp has no cache hit and 2 cores with
+4 GB build it slowly or OOM:
+
+```sh
+nixos-rebuild switch --flake .#jedha --target-host root@jedha --build-host localhost
+```
+
+On jedha:
+
+```sh
+journalctl -u llama-cpp -b | grep -i load_backend   # haswell variant
+curl -s http://127.0.0.1:8090/v1/embeddings -H 'Content-Type: application/json' \
+  -d '{"input":"task: search result | query: nix flakes"}' \
+  | jq '.data[0].embedding | length, (map(select(. == null)) | length)'
+journalctl -u podman-docs-mcp -f
+```
+
+The second number must be 0, NaN comes out of the JSON encoder as `null`.
 
 ## Conventions
 

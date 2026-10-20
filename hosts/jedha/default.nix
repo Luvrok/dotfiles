@@ -14,6 +14,8 @@
     ./libretranslate
     ./kiss-worker.nix
     ./subtitle-translator
+    ./embeddings.nix
+    ./docs-mcp.nix
   ];
 
   sops.defaultSopsFile = ../../secrets/barnard.yaml;
@@ -31,6 +33,9 @@
       };
     };
   };
+
+  # 4 GB and no swap, llama-server and docs-mcp came on top
+  zramSwap.enable = true;
 
   boot.loader.grub = {
     enable = true;
