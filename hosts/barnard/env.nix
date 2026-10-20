@@ -3,6 +3,8 @@
 {
   imports = [
     ../../nixos/config/barnard.nix
+    # wayland session next to i3
+    ../../nixos/services/sway
   ];
 
   services.displayManager.sddm.setupScript = ''

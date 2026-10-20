@@ -137,36 +137,48 @@ An unmapped window can only animate again after a real map, so a window that
 
 ## Sway (wayland)
 
-The same desktop on sway, next to i3. SDDM lists both sessions (its greeter
-stays on X11 and starts Wayland sessions fine), i3 stays the default. All of
-it lives in `nixos/services/sway/`, no home-manager. Same tags, binds,
-scratchpads and bar, no animations: picom is X11 only.
+The same desktop on SwayFX (sway with effects, animations among them) next
+to i3, barnard only (`hosts/barnard/env.nix` imports it). SDDM lists both
+sessions (its greeter stays on X11 and starts Wayland sessions fine), i3
+stays the default. All of it lives in `nixos/services/sway/`, no
+home-manager. Same tags, binds, scratchpads and bar.
 
 | Path | What |
 | --- | --- |
-| `nixos/services/sway/default.nix` | `programs.sway`, the no-tab-bar patch, session env, `/etc/sway/*`, scripts |
-| `nixos/services/sway/config` | sway config, the twin of the i3 one, every host's outputs in one file |
+| `nixos/services/sway/default.nix` | `programs.sway` on swayfx, the no-tab-bar patch, session env, gtk dconf, `/etc/sway/*`, scripts |
+| `nixos/services/sway/config` | sway config, the twin of the i3 one |
 | `nixos/services/sway/scripts/sway-ws`, `sway-tile`, `sway-sp` | `i3-ws`, `i3-tile`, `i3-sp` minus the picom parts |
 | `nixos/services/sway/scripts/sway-clip`, `sway-shot` | `rofi-greenclip` and `flameshot gui` on cliphist, grim, slurp |
 | `nixos/services/sway/scripts/eww-sway-*`, `sway-xkb` | bar listeners and launcher |
 | `nixos/services/sway/eww/` | bar config (`/etc/sway/eww`), its own eww daemon |
 
+- Animations: `animation_duration_ms 250`. New windows pop in (grow from the
+  center and fade in), closed ones pop out, tiles glide to their new place,
+  tags crossfade. Fullscreen windows and floating drags don't animate, like
+  in picom.nix. A window going to the scratchpad goes at once (the tiles
+  glide into the gap), one coming back shows up at once. No per-rule
+  control and no drift direction like picom has.
 - The X11-only user services (picom, redshift, flameshot, greenclip) are
   wanted by `nixos-fake-graphical-session.target`. Only the X session wrapper
-  starts it, sway's `sway-session.target` pulls in `graphical-session.target`
-  only, so they'd start under sway otherwise. dunst runs in both.
+  starts it (i3, dwm), sway's `sway-session.target` pulls in
+  `graphical-session.target` only, so they'd start under sway otherwise.
+  dunst runs in both.
 - sway gets their stand-ins from its config: swayidle +
   sway-audio-idle-inhibit (xidlehook), gammastep (redshift), cliphist
-  (greenclip). The eww wifi and keys menus, rofi-recording (x11grab) and the
-  window fades are i3 only.
+  (greenclip), `xrdb -merge ~/.Xresources` (the X session wrapper does it
+  for i3). The eww wifi and keys menus and rofi-recording (x11grab) are i3
+  only.
 - Session env is in `extraSessionCommands`: `NIXOS_OZONE_WL` (chromium and
-  electron apps run on Wayland), `QT_QPA_PLATFORM=wayland;xcb`, no
-  `QT_SCREEN_SCALE_FACTORS` (sway scales Qt itself). Firefox, GTK, Qt6, mpv
-  and kitty pick Wayland on their own. The rest goes through Xwayland, the
-  GPU works there too.
+  electron apps run on Wayland), `QT_QPA_PLATFORM=wayland;xcb`,
+  `ROFI_PASS_CLIPBOARD_BACKEND=wl-clipboard` (`rofi-pass.nix` reads it).
+  Firefox, GTK, Qt6, mpv and kitty pick Wayland on their own. The rest goes
+  through Xwayland, the GPU works there too.
 
 ### Facts that drove the design
 
+- swayfx 0.6 is sway 1.12 plus effects: same commands and IPC, the tree only
+  has extra fields. Its renderer needs a DRM device, so it doesn't run
+  headless without a GPU, plain sway does (tests below).
 - The sway tree is the i3 one with a few changes: Wayland windows have
   `window: null` but a `pid` and `app_id`, outputs hold workspaces directly
   (`current_workspace`), `floating` is `user_on`/`auto_off` like in i3.
@@ -181,19 +193,23 @@ scratchpads and bar, no animations: picom is X11 only.
 - `container_titlebar_height()` patched to 0 hides tab bars, the same path
   `hide_lone_tab` uses for a lone tab.
 - `scratchpad show` ends fullscreen in sway too, so `sway-sp` keeps the
-  fullscreen guard.
+  fullscreen guard. `floating enable` keeps fullscreen, so `sway-tile`
+  floats fullscreen windows like `i3-tile`, else the tiles glide back once
+  it closes.
 - `input xkb_switch_layout next` kills sway (an assert) while a keyboard
   without layouts is plugged in, wtype makes one. `sway-xkb` sets the index.
+- Lazy Xwayland quits 10 s after the last X client and loses what `xrdb`
+  loaded, so the config has `xwayland force`.
 - GTK3 on Wayland with `GTK_USE_PORTAL=1` reads theme, icons, font and cursor
-  from the settings portal (dconf) and skips `settings.ini`, so the GTK
-  module sets them in dconf too.
+  from the settings portal (dconf) and skips `settings.ini`, so the sway
+  module puts the `settings.ini` values in dconf too. X11 GTK doesn't read
+  them.
 - The sway module turns on `runXdgAutostartIfNone`, which would start XDG
   autostart files in i3. `default.nix` turns it off again.
 - The sway module writes `sway-portals.conf`, it replaces `portals.conf`
   under sway, so the termfilechooser line is repeated there.
-- sway won't start with the nvidia module loaded, `nvidia.nix` adds
-  `--unsupported-gpu`.
 
-Test without hardware: `WLR_BACKENDS=headless WLR_HEADLESS_OUTPUTS=2
+Test without hardware on plain sway (drop `animation_duration_ms`, it's
+swayfx only): `WLR_BACKENDS=headless WLR_HEADLESS_OUTPUTS=2
 WLR_LIBINPUT_NO_DEVICES=1 WLR_RENDERER=pixman sway -c <config>`, keys
 through `wtype -M logo -k 3 -m logo`, pictures through `grim -o HEADLESS-1`.

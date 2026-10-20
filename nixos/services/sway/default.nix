@@ -1,7 +1,9 @@
-# sway: the wayland twin of the i3 session, same tags, binds and bar, no
-# animations. sddm lists it next to i3 (its greeter stays on x11, it starts
-# wayland sessions all the same). i3 stays the default session
-{ pkgs, ... }:
+# swayfx: the wayland twin of the i3 session, same tags, binds and bar.
+# swayfx is sway with effects, animations among them, the rest is plain sway.
+# sddm lists it next to i3 (its greeter stays on x11, it starts wayland
+# sessions all the same). i3 stays the default session. barnard only, its
+# env.nix imports this
+{ lib, pkgs, ... }:
 
 let
   # jq filters use $vars inside single quotes on purpose (SC2016)
@@ -19,8 +21,8 @@ in
 
     # no tab bars, like the i3 patch in nixos/overlays: the bar has the titles.
     # 0 is what hide_lone_tab uses for a lone tab, here it's every tab
-    package = pkgs.sway.override {
-      sway-unwrapped = pkgs.sway-unwrapped.overrideAttrs (old: {
+    package = pkgs.swayfx.override {
+      swayfx-unwrapped = pkgs.swayfx-unwrapped.overrideAttrs (old: {
         postPatch = (old.postPatch or "") + ''
           substituteInPlace sway/tree/container.c \
             --replace-fail 'return config->font_height + config->titlebar_v_padding * 2;' 'return 0;'
@@ -30,16 +32,13 @@ in
 
     # runs before sway starts, everything in the session gets it
     extraSessionCommands = ''
-      # wayland where the app can, xwayland for the rest. gpu works in both,
-      # but xwayland apps get blurry on a scaled output (dash)
+      # wayland where the app can, xwayland for the rest, gpu works in both
 
       # chromium and the electron apps from nixpkgs: discord, obsidian, element...
       export NIXOS_OZONE_WL=1
       # qt5 apps without the wayland plugin fall back to x11
       export QT_QPA_PLATFORM="wayland;xcb"
-      # sway scales qt by itself, the x11 factor from hosts/alderaan/env.nix doubles it
-      unset QT_SCREEN_SCALE_FACTORS
-      # rofi-pass copies with wl-copy, xclip reaches xwayland apps only
+      # rofi-pass copies with wl-copy (rofi-pass.nix reads it)
       export ROFI_PASS_CLIPBOARD_BACKEND=wl-clipboard
     '';
 
@@ -77,6 +76,22 @@ in
   # the module sets the sway portals: gtk, wlr for screen sharing and
   # screenshots. the file picker stays yazi like in i3 (xdg module)
   xdg.portal.config.sway."org.freedesktop.impl.portal.FileChooser" = [ "termfilechooser" ];
+
+  # gtk on wayland takes theme, icons, font and cursor from dconf through the
+  # settings portal and skips settings.ini, so the same as
+  # nixos/modules/gtk/settings.ini goes here. x11 gtk doesn't read these
+  programs.dconf.profiles.user.databases = [
+    {
+      settings."org/gnome/desktop/interface" = {
+        gtk-theme = "gruvbox-flat";
+        icon-theme = "Gruvbox-Plus-Dark";
+        font-name = "JetBrainsMonoNL Nerd Font Propo 10";
+        # home.pointerCursor, x11 gets it from there
+        cursor-theme = "Vanilla-DMZ";
+        cursor-size = lib.gvariant.mkInt32 32;
+      };
+    }
+  ];
 
   # the sway module turns it on, then i3 starts xdg autostart files too
   # (blueman-applet and such). i3 never ran them, sway doesn't either

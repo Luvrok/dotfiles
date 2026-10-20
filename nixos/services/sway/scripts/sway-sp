@@ -1,5 +1,6 @@
-# scratchpads and hide/showall, same as i3-sp minus the fades. sway has no
-# picom, so a window just goes to the scratchpad or closes at once.
+# scratchpads and hide/showall, same as i3-sp minus the picom fades. swayfx
+# can't animate a window into the scratchpad, it goes at once, the tiles
+# glide into the gap. close needs no script, swayfx pops the window out.
 #
 # sway hides windows only in the scratchpad, marks tell them apart there
 # (sway doesn't draw marks that start with _):

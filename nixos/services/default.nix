@@ -11,7 +11,6 @@
     ./syncthing.nix
     ./xserver.nix
     ./i3
-    ./sway
     ./llama-swap
     ./llama-swap/searxng.nix
     ./rgb-off.nix

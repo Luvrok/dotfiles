@@ -1,6 +1,7 @@
-# sway: the wayland twin of nixos/services/i3/config. same tags, binds and
-# scratchpads, the sway-* scripts stand in for the i3-* ones. no animations,
-# picom is x11 only. x11 tools are swapped for wayland ones where i3 used them
+# swayfx: the wayland twin of nixos/services/i3/config. same tags, binds and
+# scratchpads, the sway-* scripts stand in for the i3-* ones. swayfx animates
+# by itself, picom is x11 only. x11 tools are swapped for wayland ones where
+# i3 used them
 set $mod Mod4
 
 # env import and sway-session.target from the nixos sway module
@@ -36,14 +37,20 @@ mouse_warping output
 focus_on_window_activation smart
 focus_wrapping workspace
 
+# new windows pop in, closed ones pop out, tiles glide, tags crossfade.
+# 0.25 s like picom.nix, fullscreen windows don't animate. no blur, shadows
+# or round corners, picom.nix has none either
+animation_duration_ms 250
+
+# x11 apps (st, nsxiv, dmenu) read colors and fonts from ~/.Xresources, see
+# xrdb below. lazy xwayland quits 10 s after the last x app and forgets them
+xwayland force
+
 # monitors. names are kernel connectors, not the x11 ones: DisplayPort-0 is
 # DP-1 here, DisplayPort-1 is DP-2. check with `swaymsg -t get_outputs`.
-# missing outputs are skipped, so one file fits every host
-# barnard: DP-2 is the main one on the right, DP-1 on the left
+# DP-2 is the main one on the right, DP-1 on the left
 output DP-2 mode 2560x1440@120Hz position 2560 0
 output DP-1 mode 2560x1440@120Hz position 0 0
-# dash: hidpi laptop panel, same as dpi 192 in x11
-output eDP-1 scale 2
 
 # no file: plain background, no error
 output * bg ~/HOME/wizzard/wallpaper/art/nature/Church_Heart_of_the_Andes.jpg fill #171717
@@ -54,13 +61,6 @@ input type:keyboard {
     xkb_options grp:win_space_toggle
 }
 
-# dash, same as 50-touchpad.conf in x11
-input type:touchpad {
-    tap enabled
-    pointer_accel 0.7
-    natural_scroll disabled
-}
-
 seat * xcursor_theme Vanilla-DMZ 32
 
 # dwm-like tags: every monitor has its own 1..9 (see sway-ws). the main one
@@ -68,15 +68,15 @@ seat * xcursor_theme Vanilla-DMZ 32
 # output, so the main one is the first plugged in output of the workspace 1
 # line, sway-ws and the bar read it from here. pinned workspaces are created
 # on their monitor only and go back there when it's plugged in
-workspace 1 output DP-2 eDP-1
-workspace 2 output DP-2 eDP-1
-workspace 3 output DP-2 eDP-1
-workspace 4 output DP-2 eDP-1
-workspace 5 output DP-2 eDP-1
-workspace 6 output DP-2 eDP-1
-workspace 7 output DP-2 eDP-1
-workspace 8 output DP-2 eDP-1
-workspace 9 output DP-2 eDP-1
+workspace 1 output DP-2
+workspace 2 output DP-2
+workspace 3 output DP-2
+workspace 4 output DP-2
+workspace 5 output DP-2
+workspace 6 output DP-2
+workspace 7 output DP-2
+workspace 8 output DP-2
+workspace 9 output DP-2
 
 # second monitor, add other names after a space
 workspace 11 output DP-1
@@ -199,7 +199,7 @@ bindsym $mod+Shift+l resize shrink height 5 px or 5 ppt
 bindsym $mod+i split h
 bindsym $mod+d split v
 
-# no fade like i3-sp kill, a window just closes
+# swayfx pops the window out by itself, no i3-sp kill needed
 bindsym $mod+Shift+c kill
 # previous tag of this monitor, sway's back_and_forth is global
 bindsym $mod+Tab     exec sway-ws back
@@ -259,9 +259,10 @@ bindsym $mod+Mod1+7 exec sway-ws follow 7
 bindsym $mod+Mod1+8 exec sway-ws follow 8
 bindsym $mod+Mod1+9 exec sway-ws follow 9
 
-# what i3 gets from xserver.nix and the user services: clipboard history
-# (greenclip), screen off after 5 min unless audio plays (xidlehook), night
-# colors (redshift)
+# what i3 gets from xserver.nix and the user services: x resources (the
+# session wrapper), clipboard history (greenclip), screen off after 5 min
+# unless audio plays (xidlehook), night colors (redshift)
+exec xrdb -merge ~/.Xresources
 exec wl-paste --watch cliphist -max-items 200 store
 exec swayidle -w timeout 300 'swaymsg "output * power off"' resume 'swaymsg "output * power on"'
 exec sway-audio-idle-inhibit

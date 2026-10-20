@@ -12,8 +12,11 @@
 # the ring is master, then the stack top to bottom, tabs in tab order.
 # focus also visits floating windows at the end, move skips them.
 #
-# no floating of fullscreen windows like in i3-tile, that was for picom.
-# without animations a reshuffle under a fullscreen window can't be seen
+# the daemon also floats fullscreen windows that would take a tile, like
+# i3-tile: ones that open fullscreen (media viewers) and these when they go
+# fullscreen. tiles stay put, nothing glides once it closes. app_id for
+# wayland windows, class for xwayland ones
+fs_float='^(mpv)$'
 
 # shared jq helpers
 lib='
@@ -103,10 +106,29 @@ monocle() {
       end')"
 }
 
+# float commands for a burst of window events (one json per line). apps often
+# ask for fullscreen right after mapping, that counts as opening fullscreen
+declare -A born=()
+float_fullscreen() {
+  local change id fsm fl app now=${EPOCHREALTIME//[!0-9]/} cmds=
+  while IFS=$'\t' read -r change id fsm fl app; do
+    case $change in
+      new) born[$id]=$now ;;
+      close) unset "born[$id]" ;;
+    esac
+    [[ $fsm == 1 && $fl == *_off ]] || continue
+    if [[ $change == new || $app =~ $fs_float ]] || ((now - ${born[$id]:-0} < 1500000)); then
+      cmds+="[con_id=$id] floating enable; "
+    fi
+  done < <(jq -r '[.change, .container.id, .container.fullscreen_mode, (.container.floating // "-"),
+    (.container.app_id // .container.window_properties.class // "-")] | @tsv' || true)
+  send "$cmds"
+}
+
 daemon() {
-  local pidfile=${XDG_RUNTIME_DIR:-/tmp}/sway-tile.pid old fd ev
+  local pidfile=${XDG_RUNTIME_DIR:-/tmp}/sway-tile.pid old fd ev burst
   # raw events are one line each, spaces after the colons
-  local re='^\{ "change": "(new|close|move|floating)"'
+  local re='^\{ "change": "(new|close|move|floating|fullscreen_mode)"'
   # exec_always runs this on every reload, the new one replaces the old
   old=$(cat "$pidfile" 2>/dev/null || true)
   if [[ -n $old && $old != "$$" &&
@@ -129,7 +151,12 @@ daemon() {
     # focus and title spam doesn't change the layout
     [[ $ev =~ $re ]] || continue
     # one pass for a whole burst
-    while read -r -t 0 -u "$fd"; do read -r -u "$fd" ev; done
+    burst=$ev
+    while read -r -t 0 -u "$fd"; do
+      read -r -u "$fd" ev
+      burst+=$'\n'$ev
+    done
+    float_fullscreen <<<"$burst"
     fix
   done
   # sway is gone, there's no restart like in i3
