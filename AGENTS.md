@@ -131,7 +131,7 @@ mos-eisley, xray) lives elsewhere.
 | `flake.nix` | `llama-cpp` input (`flake = false`), the commit is in the url |
 | `modules/llm/llama-cpp.nix` | overlay: llama-cpp from that input. jedha and barnard (`nixos/overlays`) import it |
 | `hosts/jedha/embeddings.nix` | llama-server, EmbeddingGemma 2, `127.0.0.1:8090` |
-| `hosts/jedha/docs-mcp/default.nix` | docs-mcp-server container, `127.0.0.1:6280` (web ui, `/api`, `/mcp`), `docs-mcp` cli, sync and refresh timers |
+| `hosts/jedha/docs-mcp/default.nix` | docs-mcp-server container, read-only MCP on `127.0.0.1:6280/mcp`, `docs-mcp` cli, sync and refresh timers |
 | `hosts/jedha/docs-mcp/sources.nix` | the docs to index: name, url, extra `scrape` flags |
 | `hosts/jedha/docs-mcp/sync.sh` | `docs-mcp-sync`: scrapes new and changed sources, removes dropped ones |
 
@@ -139,7 +139,9 @@ mos-eisley, xray) lives elsewhere.
   (`DynamicUser`, hardened). The model is not in the store, it's downloaded
   by hand to `/var/lib/models/embeddinggemma-2-Q8_0.gguf`.
 - docs-mcp-server is the upstream image under podman (`--network=host`,
-  pinned tag, no `latest`: a release can migrate the db). Data in
+  pinned tag, no `latest`: a release can migrate the db). It runs the `mcp`
+  command with `--read-only`: no web ui, no `/api`, search tools only, no
+  jobs. Everything that writes the index goes through the cli. Data in
   `/var/lib/docs-mcp` (the image runs as uid 1000). The config is a read-only
   JSON from nix. It sends llama-server's `alias` as the model name and gets
   vectors from `http://127.0.0.1:8090/v1`.
@@ -152,7 +154,7 @@ mos-eisley, xray) lives elsewhere.
   `sources.nix` change (`restartTriggers`), then daily. It scrapes what's new
   or changed (`--replace`) and removes what was dropped.
   `/var/lib/docs-mcp-sync/state.json` holds what it scraped, so libraries
-  added by hand are never touched, and one that was removed by hand comes
+  added by hand (`docs-mcp scrape`) are never touched, and one that was removed by hand comes
   back. A failed source isn't saved there, so the next run tries again.
   `docs-mcp-refresh.timer` refreshes all sources weekly. Both take the same
   lock.
@@ -178,20 +180,21 @@ mos-eisley, xray) lives elsewhere.
   would wait for the scrape.
 - docs-mcp notices a model change by name, and a server without a terminal
   refuses to start then, the cli too. Confirm once by hand:
-  `systemctl stop podman-docs-mcp`, `docs-mcp` (no args, starts the server
-  in the terminal), answer `y`, Ctrl+C, start the service again. Vectors are
+  `systemctl stop podman-docs-mcp`, `docs-mcp mcp` (starts the server in
+  the terminal), answer `y`, Ctrl+C, start the service again. Vectors are
   gone then: set `/var/lib/docs-mcp-sync/state.json` to `{}` and start
   `docs-mcp-sync` to rescrape everything.
 - The image sets `HOST=0.0.0.0` and `PORT`, and alias env vars beat the config
   file, so host and port go in as full names (`DOCS_MCP_SERVER_HOST`,
-  `DOCS_MCP_SERVER_PORTS_DEFAULT`).
+  `DOCS_MCP_SERVER_PORTS_MCP`).
 - docs-mcp answers 403 to a `Host` header it doesn't know (only IPs,
   `localhost`, single-label names). Behind a proxy with a domain, set
   `publicUrl` in `docs-mcp/default.nix`.
 - Scrape mode `auto` (the default) and `playwright` start Chromium, heavy on
-  4 GB. `sources.nix` uses `fetch` unless an entry sets `scrape-mode`, pick
-  `fetch` in the web ui too. Limits: llama-server `MemoryMax=1G`, the server
-  container `--memory=1536m`, a cli container `--memory=1g`.
+  4 GB. `sources.nix` uses `fetch` unless an entry sets `scrape-mode`, a
+  hand-made `docs-mcp scrape` needs `--scrape-mode fetch`. Limits: llama-server
+  `MemoryMax=1G`, the server container `--memory=768m` (it scrapes nothing),
+  a cli container `--memory=1g`.
 - `scope = "subpages"` (the default) keeps the crawl under the start url's
   directory, a last segment without a known extension counts as a directory.
   pkg.go.dev packages sit next to `/std`, hence `scope = "hostname"` plus

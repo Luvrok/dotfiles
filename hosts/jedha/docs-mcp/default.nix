@@ -1,6 +1,6 @@
-# docs-mcp-server: scrapes docs into a sqlite index, serves search over MCP,
-# web ui and api on one port. vectors come from llama-server (embeddings.nix),
-# the docs it keeps are in sources.nix
+# docs-mcp-server: docs in a sqlite index, read-only search over MCP. the docs
+# are in sources.nix, the sync timers scrape them with the cli. vectors come
+# from llama-server (embeddings.nix)
 {
   config,
   lib,
@@ -36,7 +36,7 @@ let
   environment = {
     # full names: the image sets HOST=0.0.0.0 and PORT, aliases beat the config file
     DOCS_MCP_SERVER_HOST = "127.0.0.1";
-    DOCS_MCP_SERVER_PORTS_DEFAULT = toString port;
+    DOCS_MCP_SERVER_PORTS_MCP = toString port;
     DOCS_MCP_CONFIG = "/etc/docs-mcp/config.json";
     OPENAI_API_BASE = "http://127.0.0.1:${toString llama.port}/v1";
     OPENAI_API_KEY = "none";
@@ -142,9 +142,15 @@ in
 
   virtualisation.oci-containers.containers.docs-mcp = {
     inherit image environment volumes;
+    # only /mcp, no web ui or api. read-only: search tools only, an agent
+    # can't start a scrape, and the server runs no jobs
+    cmd = [
+      "mcp"
+      "--read-only"
+    ];
     extraOptions = [
       "--network=host"
-      "--memory=1536m"
+      "--memory=768m"
     ];
   };
 
