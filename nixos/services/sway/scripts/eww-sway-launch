@@ -1,0 +1,35 @@
+# starts the eww daemon with the sway bar config and opens the bar on every
+# active monitor. a daemon of its own: the x11 bar lives in ~/.config/eww
+#   eww-sway-launch         (re)open the bar on all monitors
+#   eww-sway-launch toggle  hide the bar if it's open, else open it
+
+# the sway module puts it there, see nixos/services/sway
+cfg=/etc/sway/eww
+e() { eww --config "$cfg" "$@"; }
+
+if ! e ping >/dev/null 2>&1; then
+  e daemon
+  for _ in $(seq 50); do
+    e ping >/dev/null 2>&1 && break
+    sleep 0.1
+  done
+else
+  # the daemon keeps the old config after a rebuild
+  e reload
+fi
+
+if [ "${1:-}" = toggle ] && [ -n "$(e active-windows)" ]; then
+  e close-all
+  exit 0
+fi
+
+e close-all
+
+windows=()
+args=()
+while read -r monitor; do
+  windows+=("bar:bar-$monitor")
+  args+=(--arg "bar-$monitor:monitor=$monitor")
+done < <(swaymsg -t get_outputs | jq -r '.[] | select(.active) | .name')
+
+e open-many "${windows[@]}" "${args[@]}"

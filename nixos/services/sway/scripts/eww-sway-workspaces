@@ -1,0 +1,65 @@
+# tags of all monitors for eww (deflisten), same as eww-i3-workspaces. every
+# monitor has its own 1..9: the main one is workspaces 1..9, the next ones left
+# to right 11..19, 21..29 (see sway-ws). one json line per sway change:
+#   [{"output":"DP-2","num":1,"label":"scl","focused":true,"visible":true,
+#     "urgent":false,"occupied":true}, ...]
+# output: the monitor whose bar shows the tag
+# visible: tag is open on that monitor, focused: and the monitor has focus
+# occupied: the workspace has at least one window (dwm's tag square)
+# foreign workspaces that ended up here (second monitor unplugged) come after
+# the tags, labeled with their name, so their windows don't get lost
+
+# tag labels for 1..9, missing ones fall back to the number
+LABELS='"scl", "obs", "sh1", "sh2", "smth", "virt", "med", "smth", "vpn"'
+
+last='[]'
+
+# print the state, the last one if sway didn't answer. always print: once eww
+# is gone the write fails and the script exits instead of hanging around
+emit() {
+  local ws tree outs cfg out
+  if ws=$(swaymsg -t get_workspaces) &&
+    tree=$(swaymsg -t get_tree) &&
+    outs=$(swaymsg -t get_outputs) &&
+    cfg=$(swaymsg -t get_config) &&
+    out=$(jq -cn --argjson ws "$ws" --argjson tree "$tree" --argjson outs "$outs" \
+      --argjson cfg "$cfg" --argjson labels "[$LABELS]" '
+      $labels as $l
+      | ( [ $tree | .. | objects | select(.type? == "workspace")
+          | { key: .name, value: ([ .. | objects | select(.pid? != null) ] | length) } ]
+        | from_entries ) as $count
+      | [ $outs[] | select(.active) ] as $act
+      # main monitor: the first plugged in one of `workspace 1 output`
+      | [ $cfg.config | split("\n")[] | select(startswith("workspace 1 output "))
+          | ltrimstr("workspace 1 output ") | split(" ")[] ] as $pins
+      | (first($pins[] | select(IN($act[].name))) // "") as $main
+      | [ $act | sort_by([.name != $main, .rect.x]) | to_entries[]
+          | (.key * 10) as $off
+          | .value.name as $o
+          | ( [ range(1; 10) | { num: ($off + .), label: ($l[. - 1] // tostring) } ]
+              + [ $ws[] | select(.output == $o and (.num <= $off or .num > $off + 9))
+                  | { num, label: .name } ] )[]
+          | .num as $n
+          | ($ws | map(select(.num == $n and .output == $o)) | first) as $w
+          | { output: $o, num, label,
+              focused:  ($w.focused // false),
+              visible:  ($w.visible // false),
+              urgent:   ($w.urgent // false),
+              occupied: (($count[$w.name // ""] // 0) > 0) } ]'); then
+    last=$out
+  fi
+  printf '%s\n' "$last"
+}
+
+# one failed swaymsg or jq must not kill the listener
+set +o errexit
+
+emit
+# window title/focus/mark events don't change tags, skip them so a browser
+# tab switch doesn't poke sway. all workspace (focus too) and output events count
+swaymsg -t subscribe -m -r '["workspace","window","output"]' | while read -r event; do
+  case "$(jq -r 'if has("container") then "window-" + .change else "other" end' <<<"$event")" in
+    window-title | window-focus | window-mark) ;;
+    *) emit ;;
+  esac
+done

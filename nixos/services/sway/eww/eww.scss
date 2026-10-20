@@ -1,0 +1,93 @@
+// same as home/programs/eww/eww.scss, without the menus
+
+$bg: #171717;
+$fg: #ebdbb2;
+$sel-bg: #d65d0e;
+$sel-fg: #fbf1c7;
+$urgent: #cc241d;
+
+* {
+  all: unset;
+  font-family: "JetBrainsMonoNL NFP", "Font Awesome 6 Free";
+  font-size: 10pt;
+}
+
+.bar {
+  background-color: $bg;
+  color: $fg;
+}
+
+// tags
+
+.tag {
+  padding: 0 9px;
+  color: $fg;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+
+.tag:hover {
+  background-color: rgba($sel-bg, 0.25);
+}
+
+.tag.selected {
+  background-color: $sel-bg;
+  color: $sel-fg;
+}
+
+.tag.urgent {
+  background-color: $urgent;
+  color: $sel-fg;
+}
+
+// status dot in tag
+.dot {
+  min-width: 3px;
+  min-height: 3px;
+  margin: 2px 0 0 2px;
+}
+
+.dot.occupied {
+  border: 1px solid $fg;
+}
+
+// dot is bright!
+.dot.occupied.selected {
+  border-color: $sel-fg;
+}
+
+.dot.occupied.focused {
+  background-color: $sel-fg;
+  border-color: $sel-fg;
+}
+
+// opens windows in current ws
+.ltsymbol {
+  padding: 0 6px;
+}
+
+// title of opens windows in current ws
+.win {
+  padding: 0 6px;
+  color: $fg;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+
+.win:hover {
+  background-color: rgba($sel-bg, 0.25);
+}
+
+.win.selected {
+  background-color: $sel-bg;
+  color: $sel-fg;
+}
+
+// status
+
+.status {
+  padding: 0 6px;
+}
+
+// DELIMITER
+.sep {
+  padding: 0 6px;
+}

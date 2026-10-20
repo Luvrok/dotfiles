@@ -11,6 +11,8 @@ chosen=$(printf '%s\n' "$lock" "$suspend" "$logout" "$reboot" "$shutdown" | "${r
 
 _clear() {
   rm -f ~/.cache/greenclip.history
+  # sway's clipboard history
+  cliphist wipe 2>/dev/null || true
 }
 
 case "$chosen" in

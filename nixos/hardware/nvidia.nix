@@ -22,6 +22,10 @@
     (btop.override { cudaSupport = true; })
   ];
 
+  # sway won't start while the nvidia module is loaded. the intel gpu drives
+  # the panel, nvidia only renders what nvidia-offload starts
+  programs.sway.extraOptions = [ "--unsupported-gpu" ];
+
   hardware = {
     graphics = {
       enable = true;

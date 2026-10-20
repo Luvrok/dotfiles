@@ -31,6 +31,11 @@ in
     });
   };
 
+  # x11 only: the x session wrapper starts this target, sway doesn't
+  systemd.user.services.picom.Install.WantedBy = lib.mkForce [
+    "nixos-fake-graphical-session.target"
+  ];
+
   # read by i3-sp and i3-ws-anim, slow mode included
   xdg.configFile."picom/fade".text = d 0.15;
   xdg.configFile."picom/ws-untag".text = d 0.3;
