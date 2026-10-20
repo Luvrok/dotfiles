@@ -1,9 +1,10 @@
 # AGENTS.md
 
 NixOS + home-manager dotfiles. This file covers the X11 desktop: i3, picom
-(pijulius fork) with animations, and the eww bar. Also the embeddings and
-docs index on jedha, and the llama.cpp pin it shares with barnard. Keep it
-in sync when you change how these parts talk to each other.
+(pijulius fork) with animations, and the eww bar, plus its Wayland twin on
+swayfx. Also the embeddings and docs index on jedha, and the llama.cpp pin
+it shares with barnard. Keep it in sync when you change how these parts
+talk to each other.
 
 ## Files
 
