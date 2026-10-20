@@ -1,0 +1,52 @@
+# dwm-like tags, same as i3-ws: every monitor has its own 1..9, windows move
+# between monitors, workspaces don't. the main monitor (the first one of
+# `workspace 1 output` in sway config that's plugged in) is 1..9, the next
+# ones left to right 11..19, 21..29, same order as eww-sway-workspaces.
+#   sway-ws N         show tag N on this monitor
+#   sway-ws move N    move the window to tag N of this monitor
+#   sway-ws follow N  move the window and go with it
+#   sway-ws back      previous tag of this monitor
+
+# focused monitor, current workspace and the tag offset of this monitor
+read -r out cur off < <(jq -rn \
+  --argjson ws "$(swaymsg -t get_workspaces)" \
+  --argjson outs "$(swaymsg -t get_outputs)" \
+  --argjson cfg "$(swaymsg -t get_config)" '
+  ($ws[] | select(.focused)) as $f
+  | [ $outs[] | select(.active) ] as $act
+  | [ $cfg.config | split("\n")[] | select(startswith("workspace 1 output "))
+      | ltrimstr("workspace 1 output ") | split(" ")[] ] as $pins
+  | (first($pins[] | select(IN($act[].name))) // "") as $main
+  | $act | sort_by([.name != $main, .rect.x]) | map(.name)
+  | "\($f.output) \($f.num) \(index($f.output) * 10)"')
+
+# per monitor, sway's back_and_forth is global
+prev_file=${XDG_RUNTIME_DIR:-/tmp}/sway-ws-$out
+
+# $2 is a sway command to run instead of the plain switch
+view() {
+  if [ "$1" != "$cur" ]; then
+    printf '%s\n' "$cur" >"$prev_file"
+    swaymsg -q "${2:-workspace number $1}"
+  fi
+}
+
+case ${1:-} in
+  move)
+    swaymsg -q "move container to workspace number $((off + $2))"
+    ;;
+  follow)
+    t=$((off + $2))
+    view "$t" "move container to workspace number $t, workspace number $t"
+    ;;
+  back)
+    prev=$(cat "$prev_file" 2>/dev/null) || exit 0
+    # may be left from another monitor layout
+    if [ "$prev" -gt "$off" ] && [ "$prev" -le "$((off + 9))" ]; then
+      view "$prev"
+    fi
+    ;;
+  *)
+    view "$((off + $1))"
+    ;;
+esac

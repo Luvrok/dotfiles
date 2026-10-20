@@ -1,9 +1,10 @@
 # AGENTS.md
 
 NixOS + home-manager dotfiles. This file covers the X11 desktop: i3, picom
-(pijulius fork) with animations, and the eww bar. Also the embeddings and
-docs index on jedha, and the llama.cpp pin it shares with barnard. Keep it
-in sync when you change how these parts talk to each other.
+(pijulius fork) with animations, and the eww bar, plus its Wayland twin on
+sway. Also the embeddings and docs index on jedha, and the llama.cpp pin
+it shares with barnard. Keep it in sync when you change how these parts
+talk to each other.
 
 ## Files
 
@@ -249,3 +250,81 @@ The second number must be 0, NaN comes out of the JSON encoder as `null`.
 - keys menu closes on Esc, any key that mode "keys" doesn't bind, and any
   click (xinput raw events), so the next bind after mod still runs. Keep the
   mode keys in `i3-keys.conf` and `menu_keys` in the script in sync.
+
+## Sway (wayland)
+
+The same desktop on sway next to i3, barnard only (`hosts/barnard/env.nix` imports it). SDDM lists both
+sessions (its greeter stays on X11 and starts Wayland sessions fine), i3
+stays the default. All of it lives in `nixos/services/sway/`, no
+home-manager. Same tags, binds, scratchpads and bar, no animations.
+
+| Path | What |
+| --- | --- |
+| `nixos/services/sway/default.nix` | `programs.sway`, the no-tab-bar patch, session env, gtk dconf, `/etc/sway/*`, scripts |
+| `nixos/services/sway/config` | sway config, the twin of the i3 one |
+| `nixos/services/sway/scripts/sway-ws`, `sway-tile`, `sway-sp` | `i3-ws`, `i3-tile`, `i3-sp` minus the picom parts |
+| `nixos/services/sway/scripts/sway-clip`, `sway-shot` | `rofi-greenclip` and `flameshot gui` on cliphist, grim, slurp |
+| `nixos/services/sway/scripts/eww-sway-*`, `sway-xkb` | bar listeners and launcher |
+| `nixos/services/sway/eww/` | bar config (`/etc/sway/eww`), its own eww daemon |
+
+- No animations: swayfx has them (pop in/out, gliding tiles, tag
+  crossfade), but its renderer keeps 5 output-sized effect buffers per
+  monitor even with blur off, ~150 MB of VRAM on two 1440p monitors. To go
+  back: `swayfx`/`swayfx-unwrapped` in `default.nix`, `animation_duration_ms`
+  in the config.
+- `$mod+Shift+F7` turns the second monitor off and the main one to 240 Hz,
+  `$mod+F7` back to both at 120 Hz.
+- The X11-only user services (picom, redshift, flameshot, greenclip) are
+  wanted by `nixos-fake-graphical-session.target`. Only the X session wrapper
+  starts it (i3, dwm), sway's `sway-session.target` pulls in
+  `graphical-session.target` only, so they'd start under sway otherwise.
+  dunst runs in both.
+- sway gets their stand-ins from its config: swayidle +
+  sway-audio-idle-inhibit (xidlehook), gammastep (redshift), cliphist
+  (greenclip), `xrdb -merge ~/.Xresources` (the X session wrapper does it
+  for i3). The eww wifi and keys menus and rofi-recording (x11grab) are i3
+  only.
+- Session env is in `extraSessionCommands`: `NIXOS_OZONE_WL` (chromium and
+  electron apps run on Wayland), `QT_QPA_PLATFORM=wayland;xcb`,
+  `ROFI_PASS_CLIPBOARD_BACKEND=wl-clipboard` (`rofi-pass.nix` reads it).
+  Firefox, GTK, Qt6, mpv and kitty pick Wayland on their own. The rest goes
+  through Xwayland, the GPU works there too.
+
+### Facts that drove the design
+
+- The sway tree is the i3 one with a few changes: Wayland windows have
+  `window: null` but a `pid` and `app_id`, outputs hold workspaces directly
+  (`current_workspace`), `floating` is `user_on`/`auto_off` like in i3.
+  `swaymsg -t subscribe -m -r` prints one event per line as
+  `{ "change": "new", ...`, spaces included.
+- No primary output in sway. The main monitor (tags 1..9) is the first
+  plugged-in output of the `workspace 1 output` line, `sway-ws` and
+  `eww-sway-workspaces` read it with `swaymsg -t get_config`.
+- Output names are kernel connectors: X11 `DisplayPort-0` is `DP-1`.
+- sway matches `bindsym` by the keysym of the active layout, so on ru
+  `$mod+j` is `Cyrillic_o` and nothing fires. Every key bind has
+  `--to-code` (key position of the first layout), i3 does that by itself.
+- `layout default` in sway goes back to the last split of that container and
+  fails on a fresh tabbed one, `$mod+t` uses `layout splith`.
+- `container_titlebar_height()` patched to 0 hides tab bars, the same path
+  `hide_lone_tab` uses for a lone tab.
+- `scratchpad show` ends fullscreen in sway too, so `sway-sp` keeps the
+  fullscreen guard. `floating enable` keeps fullscreen, so `sway-tile`
+  floats fullscreen windows like `i3-tile`, else the tiles glide back once
+  it closes.
+- `input xkb_switch_layout next` kills sway (an assert) while a keyboard
+  without layouts is plugged in, wtype makes one. `sway-xkb` sets the index.
+- Lazy Xwayland quits 10 s after the last X client and loses what `xrdb`
+  loaded, so the config has `xwayland force`.
+- GTK3 on Wayland with `GTK_USE_PORTAL=1` reads theme, icons, font and cursor
+  from the settings portal (dconf) and skips `settings.ini`, so the sway
+  module puts the `settings.ini` values in dconf too. X11 GTK doesn't read
+  them.
+- The sway module turns on `runXdgAutostartIfNone`, which would start XDG
+  autostart files in i3. `default.nix` turns it off again.
+- The sway module writes `sway-portals.conf`, it replaces `portals.conf`
+  under sway, so the termfilechooser line is repeated there.
+
+Test without hardware: `WLR_BACKENDS=headless WLR_HEADLESS_OUTPUTS=2
+WLR_LIBINPUT_NO_DEVICES=1 WLR_RENDERER=pixman sway -c <config>`, keys
+through `wtype -M logo -k 3 -m logo`, pictures through `grim -o HEADLESS-1`.

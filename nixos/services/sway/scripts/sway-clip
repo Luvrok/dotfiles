@@ -1,0 +1,6 @@
+# clipboard history in rofi, the wayland twin of rofi-greenclip. sway config
+# runs `wl-paste --watch cliphist store`, that fills it. esc keeps the
+# clipboard as it is
+sel=$(cliphist list | rofi -dmenu -p search -display-columns 2 \
+  -theme "$HOME/.config/rofi/greenclip.rasi") || exit 0
+printf '%s\n' "$sel" | cliphist decode | wl-copy

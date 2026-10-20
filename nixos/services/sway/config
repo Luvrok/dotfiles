@@ -1,0 +1,270 @@
+# sway: the wayland twin of nixos/services/i3/config. same tags, binds and
+# scratchpads, the sway-* scripts stand in for the i3-* ones. no animations,
+# picom is x11 only. x11 tools are swapped for wayland ones where i3 used them
+set $mod Mod4
+
+# env import and sway-session.target from the nixos sway module
+include /etc/sway/config.d/*
+
+font pango:JetBrainsMonoNL NFP 10
+
+# same colors as ~/.Xresources gives i3
+set $normbg     #171717
+set $normborder #3c3836
+set $normfg     #ebdbb2
+set $selborder  #d65d0e
+set $selbg      #d65d0e
+set $selfg      #fbf1c7
+set $urgent     #cc241d
+
+# class                 border      bground     text     indicator   child_border
+client.focused          $selborder  $selborder  $selfg   $selborder  $selborder
+client.focused_inactive $normborder $normbg     $normfg  $normborder $normborder
+client.unfocused        $normborder $normbg     $normfg  $normborder $normborder
+client.urgent           $urgent     $urgent     $normfg  $urgent     $urgent
+
+default_border pixel 1
+default_floating_border pixel 1
+hide_edge_borders smart_no_gaps
+
+gaps inner 10
+gaps outer 0
+smart_gaps off
+
+focus_follows_mouse yes
+mouse_warping output
+focus_on_window_activation smart
+focus_wrapping workspace
+
+# x11 apps (st, nsxiv, dmenu) read colors and fonts from ~/.Xresources, see
+# xrdb below. lazy xwayland quits 10 s after the last x app and forgets them
+xwayland force
+
+# monitors. names are kernel connectors, not the x11 ones: DisplayPort-0 is
+# DP-1 here, DisplayPort-1 is DP-2. check with `swaymsg -t get_outputs`.
+# DP-2 is the main one on the right, DP-1 on the left
+output DP-2 mode 2560x1440@120Hz position 2560 0
+output DP-1 mode 2560x1440@120Hz position 0 0
+
+# no file: plain background, no error
+output * bg ~/HOME/wizzard/wallpaper/art/nature/Church_Heart_of_the_Andes.jpg fill #171717
+
+input type:keyboard {
+    xkb_layout us,ru
+    # win+space switches the layout, so $mod+space binds are dead like in i3
+    xkb_options grp:win_space_toggle
+}
+
+seat * xcursor_theme Vanilla-DMZ 32
+
+# dwm-like tags: every monitor has its own 1..9 (see sway-ws). the main one
+# is 1..9, the second one 11..19, both bars show 1..9. sway has no primary
+# output, so the main one is the first plugged in output of the workspace 1
+# line, sway-ws and the bar read it from here. pinned workspaces are created
+# on their monitor only and go back there when it's plugged in
+workspace 1 output DP-2
+workspace 2 output DP-2
+workspace 3 output DP-2
+workspace 4 output DP-2
+workspace 5 output DP-2
+workspace 6 output DP-2
+workspace 7 output DP-2
+workspace 8 output DP-2
+workspace 9 output DP-2
+
+# second monitor, add other names after a space
+workspace 11 output DP-1
+workspace 12 output DP-1
+workspace 13 output DP-1
+workspace 14 output DP-1
+workspace 15 output DP-1
+workspace 16 output DP-1
+workspace 17 output DP-1
+workspace 18 output DP-1
+workspace 19 output DP-1
+
+# tabbed: tags 1, 2, 9 on both monitors (11, 12, 19 on the second one).
+# no tab bar, sway is patched like i3 (see default.nix), the bar has titles
+workspace 1 gaps inner 0
+workspace 2 gaps inner 0
+workspace 9 gaps inner 0
+workspace 11 gaps inner 0
+workspace 12 gaps inner 0
+workspace 19 gaps inner 0
+for_window [workspace="^(1|2|9|11|12|19)$"] layout tabbed
+
+# app_id for wayland windows, class for xwayland ones
+assign [app_id="^librewolf$"]  workspace number 1
+assign [app_id="^obsidian$"]   workspace number 2
+assign [app_id="qBittorrent$"] workspace number 9
+assign [class="^v2rayN$"]      workspace number 9
+
+for_window [title="^Picture-in-Picture$"] floating enable, sticky enable, resize set 720 400
+for_window [title="termfilechooser"] floating enable, resize set 1000 700, move position center
+for_window [app_id="^dragon-drop$"] floating enable, move position center
+for_window [app_id="^ffplay$" title="^android-webcam$"] floating enable
+for_window [class="^ffplay$" title="^android-webcam$"] floating enable
+
+# sway-sp finds scratchpads by these marks, the size is in sway-sp too.
+# kitty --class sets the app_id on wayland
+for_window [app_id="^spterm$"]     mark --add _sp_spterm
+for_window [app_id="^spdotfiles$"] mark --add _sp_spdotfiles
+for_window [app_id="^rangerterm$"] mark --add _sp_rangerterm
+for_window [app_id="^(spterm|spdotfiles|rangerterm)$"] floating enable, resize set 1280 910, move position center
+
+# no screen blanking under a fullscreen window, like xidlehook --not-when-fullscreen
+for_window [all] inhibit_idle fullscreen
+
+# mouse
+floating_modifier $mod normal
+# drag tiles with $mod, like tiling_drag modifier in i3
+tiling_drag enable
+# middle mouse
+bindsym --whole-window $mod+button2 floating toggle
+
+# programs. --to-code: binds go by key position of the first layout (us), so
+# they work on ru too, like i3. without it sway looks for the ru keysym
+
+# us for typing in rofi, then back to what it was
+bindsym --to-code $mod+p input type:keyboard xkb_switch_layout 0; exec rofi-menu
+
+bindsym --to-code $mod+c         exec sway-clip
+bindsym --to-code $mod+Shift+t   input type:keyboard xkb_switch_layout 0; exec kitty
+bindsym --to-code $mod+Shift+f   exec rofi-librewolf
+bindsym --to-code $mod+w         exec rofi-powermenu
+bindsym --to-code $mod+b         exec rofi-bluetooth
+bindsym --to-code $mod+Shift+w   exec webcam
+bindsym --to-code $mod+u         exec rofi-pass
+bindsym --to-code $mod+Ctrl+k    exec rofi-killer
+bindsym --to-code $mod+Shift+u   exec nixos_menu
+bindsym --to-code $mod+Shift+d   exec rofi-audio
+bindsym --to-code $mod+Shift+y   exec rofi-translate
+bindsym --to-code $mod+o         exec kitty --class movies -e yazi /media/outer-1
+bindsym --to-code $mod+Print     exec sway-shot ocr
+# the eww wifi menu is i3 only
+bindsym --to-code $mod+Ctrl+w    exec rofi-wifi
+
+# XF86
+bindsym --to-code XF86AudioMute         exec dwm-volume mute
+bindsym --to-code XF86AudioLowerVolume  exec dwm-volume down
+bindsym --to-code XF86AudioRaiseVolume  exec dwm-volume up
+bindsym --to-code XF86MonBrightnessUp   exec dwm-brightness up
+bindsym --to-code XF86MonBrightnessDown exec dwm-brightness down
+bindsym --to-code Print                 exec sway-shot
+
+# monitors, position comes from the output lines above. the main one runs
+# at 120 Hz next to the second one and at 240 Hz alone
+bindsym --to-code $mod+F7       output DP-1 enable; output DP-2 mode 2560x1440@120Hz
+bindsym --to-code $mod+Shift+F7 output DP-1 disable; output DP-2 mode 2560x1440@240Hz
+
+# scratchpads
+bindsym --to-code $mod+g exec sway-sp toggle spterm kitty --class spterm --name spterm --title scratchpad
+bindsym --to-code $mod+v exec sway-sp toggle spdotfiles kitty --class spdotfiles --name spdotfiles --title dotfiles -e sh -c 'cd ~/HOME/infra/dotfiles && nvim'
+bindsym --to-code $mod+e exec sway-sp toggle rangerterm kitty --class rangerterm --name rangerterm --title ranger -e sh -c 'cd && yazi'
+
+# setscratch: focused window becomes the $mod+g scratchpad
+bindsym --to-code $mod+Ctrl+g  exec sway-sp set spterm
+# removescratch: $mod+g scratchpad becomes a normal tile, $mod+g opens a new one
+bindsym --to-code $mod+Shift+g [con_id="__focused__" con_mark="^_sp_spterm$"] unmark _sp_spterm; floating disable
+
+# hide / showall: per tag, windows come back tiled or floating as they were
+bindsym --to-code $mod+Ctrl+h  exec sway-sp hide
+bindsym --to-code $mod+Ctrl+s  exec sway-sp showall
+
+# tiling <-> floating
+bindsym --to-code $mod+semicolon        focus mode_toggle
+
+# windows
+bindsym --to-code $mod+Shift+b exec eww-sway-launch toggle
+bindsym --to-code $mod+y       fullscreen toggle
+
+# focusstack / pushstack: one ring per tag, master then the stack top to
+# bottom (clockwise), tabs in tab order. j goes clockwise, k back, both wrap
+bindsym --to-code $mod+j       exec sway-tile focus next
+bindsym --to-code $mod+k       exec sway-tile focus prev
+bindsym --to-code $mod+Shift+j exec sway-tile move next
+bindsym --to-code $mod+Shift+k exec sway-tile move prev
+
+# setmfact, setcfact
+bindsym --to-code $mod+l      resize shrink width 5 px or 5 ppt
+bindsym --to-code $mod+h      resize grow width 5 px or 5 ppt
+bindsym --to-code $mod+Shift+h resize grow height 5 px or 5 ppt
+bindsym --to-code $mod+Shift+l resize shrink height 5 px or 5 ppt
+
+# like master window
+bindsym --to-code $mod+i split h
+bindsym --to-code $mod+d split v
+
+# no fade like i3-sp kill, a window just closes
+bindsym --to-code $mod+Shift+c kill
+# previous tag of this monitor, sway's back_and_forth is global
+bindsym --to-code $mod+Tab     exec sway-ws back
+
+# setlayout: tile / monocle. monocle flattens master/stack first, else
+# it'd tab only the stack. splith, not default: sway's default is the last
+# split of that container and fails on a fresh tabbed one
+bindsym --to-code $mod+t gaps inner current set 10; gaps outer current set 0; layout splith; exec sway-tile fix
+bindsym --to-code $mod+m gaps inner current set 0;  gaps outer current set 0; exec sway-tile monocle
+
+bindsym --to-code $mod+f           move position center
+bindsym --to-code $mod+s           sticky toggle
+
+# focusmon / tagmon / tagmonstay: the window goes to the open tag of the
+# next monitor, workspaces stay
+bindsym --to-code $mod+comma        focus output left
+bindsym --to-code $mod+period       focus output right
+bindsym --to-code $mod+Shift+comma  move container to output left, focus output left
+bindsym --to-code $mod+Shift+period move container to output right, focus output right
+bindsym --to-code $mod+Ctrl+comma   move container to output left
+bindsym --to-code $mod+Ctrl+period  move container to output right
+
+# reload / quit. no restart in sway, reload takes its place
+bindsym --to-code $mod+F5              reload
+bindsym --to-code $mod+Ctrl+Shift+q    reload
+bindsym --to-code $mod+Shift+BackSpace exit
+
+# view / tag / tagswitch, on this monitor
+
+bindsym --to-code $mod+1 exec sway-ws 1
+bindsym --to-code $mod+2 exec sway-ws 2
+bindsym --to-code $mod+3 exec sway-ws 3
+bindsym --to-code $mod+4 exec sway-ws 4
+bindsym --to-code $mod+5 exec sway-ws 5
+bindsym --to-code $mod+6 exec sway-ws 6
+bindsym --to-code $mod+7 exec sway-ws 7
+bindsym --to-code $mod+8 exec sway-ws 8
+bindsym --to-code $mod+9 exec sway-ws 9
+
+bindsym --to-code $mod+Shift+1 exec sway-ws move 1
+bindsym --to-code $mod+Shift+2 exec sway-ws move 2
+bindsym --to-code $mod+Shift+3 exec sway-ws move 3
+bindsym --to-code $mod+Shift+4 exec sway-ws move 4
+bindsym --to-code $mod+Shift+5 exec sway-ws move 5
+bindsym --to-code $mod+Shift+6 exec sway-ws move 6
+bindsym --to-code $mod+Shift+7 exec sway-ws move 7
+bindsym --to-code $mod+Shift+8 exec sway-ws move 8
+bindsym --to-code $mod+Shift+9 exec sway-ws move 9
+
+bindsym --to-code $mod+Mod1+1 exec sway-ws follow 1
+bindsym --to-code $mod+Mod1+2 exec sway-ws follow 2
+bindsym --to-code $mod+Mod1+3 exec sway-ws follow 3
+bindsym --to-code $mod+Mod1+4 exec sway-ws follow 4
+bindsym --to-code $mod+Mod1+5 exec sway-ws follow 5
+bindsym --to-code $mod+Mod1+6 exec sway-ws follow 6
+bindsym --to-code $mod+Mod1+7 exec sway-ws follow 7
+bindsym --to-code $mod+Mod1+8 exec sway-ws follow 8
+bindsym --to-code $mod+Mod1+9 exec sway-ws follow 9
+
+# what i3 gets from xserver.nix and the user services: x resources (the
+# session wrapper), clipboard history (greenclip), screen off after 5 min
+# unless audio plays (xidlehook), night colors (redshift)
+exec xrdb -merge ~/.Xresources
+exec wl-paste --watch cliphist -max-items 200 store
+exec swayidle -w timeout 300 'swaymsg "output * power off"' resume 'swaymsg "output * power on"'
+exec sway-audio-idle-inhibit
+exec gammastep -m wayland -l 59.9343:30.3351 -t 5000:4000
+
+exec_always eww-sway-launch
+# master/stack like dwm tile (see sway-tile). a reload starts a fresh one,
+# it kills the old
+exec_always sway-tile daemon

@@ -1,0 +1,15 @@
+# region screenshot to the clipboard, the wayland twin of flameshot gui
+# --clipboard --accept-on-select. esc in slurp does nothing
+#   sway-shot      copy the picture
+#   sway-shot ocr  copy the text on it, like ocr in i3
+g=$(slurp) || exit 0
+case ${1:-} in
+  ocr)
+    # tesseract with eng+rus comes from nixos/packages.nix
+    grim -g "$g" - | tesseract -l eng+rus stdin stdout 2>/dev/null | wl-copy
+    notify-send "OCR" "Text copied"
+    ;;
+  *)
+    grim -g "$g" - | wl-copy --type image/png
+    ;;
+esac

@@ -1,0 +1,108 @@
+;; dwm-like bar for sway, same as the i3 one in home/programs/eww: tags,
+;; layout, window titles, status. the wifi and keys menus are i3 only
+
+;; tags for all monitors
+(deflisten workspaces :initial "[]" "eww-sway-workspaces")
+
+;; windows and layout symbol, separate so title changes don't redraw tags
+(deflisten windows :initial "[]" "eww-sway-windows")
+
+;; keyboard layout, updates on its own
+(deflisten xkb :initial "" "sway-xkb listen")
+
+;; status blocks, every 10s (volume also updates right after a click)
+(defpoll volume :interval "10s" "i3-volume")
+(defpoll memory :interval "10s" "i3-memory")
+(defpoll wifi   :interval "10s" "i3-wifi")
+(defpoll date   :interval "15s" "i3-date")
+
+;; tags 1-9 of this monitor
+;; orange: open here, square: has windows, filled square: focused
+;; left click: go there, right click: move window there
+(defwidget tags [monitor]
+  (box :class "tags" :space-evenly false
+    (for ws in workspaces
+      (eventbox :visible {ws.output == monitor}
+                :cursor "pointer"
+                :timeout "1s"
+                :onclick "swaymsg -q 'focus output ${monitor}; workspace number ${ws.num}'"
+                :onrightclick "swaymsg -q 'move container to workspace number ${ws.num}'"
+        (overlay
+          (label :class "tag ${ws.visible ? 'selected' : ''} ${ws.urgent ? 'urgent' : ''}"
+                 :text "${ws.label}")
+          (box :class "dot ${ws.occupied ? 'occupied' : ''} ${ws.focused ? 'focused' : ''} ${ws.visible ? 'selected' : ''}"
+               :halign "start"
+               :valign "start"))))))
+
+;; 󰓒 tiling, [n] monocle with n windows
+(defwidget ltsymbol [monitor]
+  (box :space-evenly false
+    (for w in windows
+      (label :class "ltsymbol"
+             :visible {w.kind == "layout" && w.output == monitor}
+             :text {w.text}))))
+
+;; windows on the open tag, equal width, orange is the selected one
+;; left click: focus
+(defwidget titles [monitor]
+  (box :class "titles" :space-evenly true :hexpand true
+    (for w in windows
+      (eventbox :visible {w.kind == "win" && w.output == monitor}
+                :cursor "pointer"
+                :timeout "1s"
+                :onclick "swaymsg -q '[con_id=${w.id}] focus'"
+        ;; == true: layout entries have no selected, null can't be a bool
+        (label :class "win ${w.selected == true ? 'selected' : ''}"
+               :xalign 0
+               :truncate true
+               :text {w.title})))))
+
+(defwidget sep [] (label :class "sep" :text "|"))
+
+;; status on the right
+;; end commands with & or eww kills the window on timeout
+(defwidget status []
+  (box :class "status" :space-evenly false :halign "end"
+    ;; keyboard: left click toggles
+    (eventbox :timeout "1s" :onclick "sway-xkb toggle"
+      (label :class "block" :text xkb))
+    (sep)
+
+    ;; volume: scroll ±2%, middle click mutes. i3-volume refreshes the
+    ;; i3 bar only, this one is a daemon of its own
+    (eventbox :timeout "1s"
+              :onscroll "i3-volume {} >/dev/null; ${EWW_CMD} poll volume"
+              :onmiddleclick "i3-volume mute >/dev/null; ${EWW_CMD} poll volume"
+      (label :class "block" :text volume))
+    (sep)
+
+    ;; memory: left click opens btop
+    (eventbox :timeout "1s" :onclick "kitty -e btop &"
+      (label :class "block" :text memory))
+    (sep)
+
+    ;; wifi: hidden when offline
+    (box :visible {wifi != ""} :space-evenly false
+      (label :class "block" :text wifi)
+      (sep))
+
+    ;; date: right click shows calendar
+    (eventbox :timeout "1s" :onrightclick "kitty --hold -e cal -3 &"
+      (label :class "block" :text date))))
+
+(defwidget bar [monitor]
+  (box :class "bar" :space-evenly false
+    (tags :monitor monitor)
+    (ltsymbol :monitor monitor)
+    (titles :monitor monitor)
+    (status)))
+
+;; layer shell: top layer, sway hides it under fullscreen windows.
+;; exclusive keeps tiles out of its 24px
+(defwindow bar [monitor]
+  :monitor monitor
+  :geometry (geometry :x "0%" :y "0%" :width "100%" :height "24px" :anchor "top center")
+  :stacking "fg"
+  :exclusive true
+  :focusable false
+  (bar :monitor monitor))

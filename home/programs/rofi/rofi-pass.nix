@@ -61,7 +61,8 @@ with config.programs.rofi.extraConfig;
   password_length=16
   fix_layout=true
 
-  clipboard_backend=xclip
+  # sway sets wl-clipboard
+  clipboard_backend=''${ROFI_PASS_CLIPBOARD_BACKEND:-xclip}
   backend=xdotool
 
   # Custom Keybindings

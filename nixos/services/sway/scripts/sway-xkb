@@ -1,0 +1,46 @@
+# keyboard layout for the sway bar, same as i3-xkb with swaymsg instead of
+# xkb-switch. layouts are us,ru from sway config, index 1 is ru
+#   sway-xkb          print [EN] or [RU]
+#   sway-xkb toggle   next layout
+#   sway-xkb listen   print on every change, for eww deflisten
+
+PIDFILE="/tmp/recpid"
+
+# "<active index> <layout count>" of the first real keyboard. virtual ones
+# (wtype) have no layouts
+layout() {
+  swaymsg -t get_inputs | jq -r 'first(.[] | select(.type == "keyboard" and (.xkb_layout_names | length) > 0)
+    | "\(.xkb_active_layout_index) \(.xkb_layout_names | length)") // "0 1"'
+}
+
+status() {
+  # while recording there's no space before [EN]/[RU], the rec block has it
+  local prefix=" " cur
+  if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+    prefix=""
+  fi
+
+  read -r cur _ < <(layout)
+  case "$cur" in
+    1) printf '%s[RU]\n' "$prefix" ;;
+    *) printf '%s[EN]\n' "$prefix" ;;
+  esac
+}
+
+case "${1:-}" in
+  toggle)
+    # by index: xkb_switch_layout next kills sway (an assert) when a
+    # keyboard without layouts is plugged in, like the one wtype makes
+    read -r cur n < <(layout)
+    swaymsg -q input type:keyboard xkb_switch_layout "$(((cur + 1) % n))"
+    ;;
+  listen)
+    # the listener must not die from one failed command
+    set +o errexit
+    status
+    swaymsg -t subscribe -m -r '["input"]' | while read -r _; do status; done
+    ;;
+  *)
+    status
+    ;;
+esac

@@ -1,0 +1,110 @@
+# scratchpads and hide/showall, same as i3-sp minus the fades. sway has no
+# picom, so a window just goes to the scratchpad or closes at once.
+#
+# sway hides windows only in the scratchpad, marks tell them apart there
+# (sway doesn't draw marks that start with _):
+#   _sp_<name>               scratchpad <name>, set in sway config
+#   _hide_<tag>_<t|f>_<id>   hidden from <tag>, was tiled or floating
+#
+# nothing comes out of the scratchpad while the tag has a fullscreen window,
+# sway would kick it out of fullscreen like i3 does.
+#
+# usage:
+#   sway-sp toggle <name> <cmd...>   show/hide scratchpad <name>, launch if missing
+#   sway-sp set <name>               focused window becomes scratchpad <name>
+#   sway-sp hide                     hide focused window
+#   sway-sp showall                  bring back what was hidden on this tag
+
+# same as the scratchpad rule in sway config
+size="1280 910"
+
+# one at a time
+exec 9>"${XDG_RUNTIME_DIR:-/tmp}/sway-sp.lock"
+flock 9
+
+# "<con> <floating> <workspace> <marks,...>" of the focused con, con 0 if it's
+# not a window (an empty tag)
+focused() {
+  swaymsg -t get_tree | jq -r 'first(.. | objects | select(.type == "workspace")
+    | .name as $ws | .. | objects | select(.focused == true)
+    | "\(if .pid then .id else 0 end) \(.floating) \($ws) \(.marks | join(","))") // empty'
+}
+
+# "<con> <floating> <workspace>" of the window with mark $1
+by_mark() {
+  swaymsg -t get_tree | jq -r --arg m "$1" 'first(.. | objects | select(.type == "workspace")
+    | .name as $ws | .. | objects | select(any(.marks[]?; . == $m))
+    | "\(.id) \(.floating) \($ws)") // empty'
+}
+
+# true if the focused tag has a fullscreen window
+fullscreen_here() {
+  swaymsg -t get_tree | jq -e 'first(.. | objects | select(.type == "workspace"
+    and any(.. | objects; .focused == true)))
+    | any(.. | objects; .type != "workspace" and .fullscreen_mode? > 0)' >/dev/null
+}
+
+# mark that brings a hidden window back to its tag, none for scratchpads
+# args: floating workspace marks con
+hide_mark() {
+  if [[ ,$3, == *,_sp_* ]]; then return 0; fi
+  if [[ $1 == *_on ]]; then echo "_hide_${2}_f_$4"; else echo "_hide_${2}_t_$4"; fi
+}
+
+case "${1:-}" in
+  toggle)
+    m=_sp_$2
+    shift 2
+    read -r id fl ws <<<"$(by_mark "$m")"
+    cur=$(swaymsg -t get_workspaces | jq -r '.[] | select(.focused) | .name')
+
+    if [[ -n $id && $fl == *_on && $ws == "$cur" ]]; then
+      swaymsg -q "[con_id=$id] move scratchpad"
+    elif fullscreen_here; then
+      exit 0
+    elif [[ -n $id && $fl != *_on ]]; then
+      swaymsg -q "[con_id=$id] focus" # got tiled, just focus it
+    elif [[ -n $id ]]; then
+      swaymsg -q "[con_id=$id] scratchpad show" # hidden or on another tag
+    else
+      exec 9>&- # don't hand the lock to the app
+      exec "$@"
+    fi
+    ;;
+  set)
+    m=_sp_$2
+    read -r id _ _ _ <<<"$(focused)"
+    [[ -n $id && $id != 0 ]] || exit 0
+    read -r old _ ows <<<"$(by_mark "$m")"
+    # marks are unique, this takes it off the old one too
+    swaymsg -q "[con_id=$id] mark --add $m, floating enable, resize set $size, move position center, move scratchpad"
+    # the old one would be stuck with no key, it comes back as a tile
+    if [[ -n $old && $old != "$id" && $ows == __i3_scratch ]]; then
+      swaymsg -q "[con_id=$old] scratchpad show, floating disable"
+    fi
+    ;;
+  hide)
+    read -r id fl ws marks <<<"$(focused)"
+    [[ -n $id && $id != 0 ]] || exit 0
+    m=$(hide_mark "$fl" "$ws" "$marks" "$id")
+    swaymsg -q "[con_id=$id] ${m:+mark --add $m, }move scratchpad"
+    ;;
+  showall)
+    if fullscreen_here; then exit 0; fi
+    # hidden from this tag, plus unmarked strays (they come back as tiles)
+    read -r _ _ ws _ <<<"$(focused)"
+    cmds=$(swaymsg -t get_tree | jq -r --arg p "_hide_${ws}_" '
+      [.. | objects | select(.type == "workspace" and .name == "__i3_scratch")
+       | .. | objects | select(.pid != null) | .id as $id | .marks as $m
+       | if ($m | length) == 0 then
+           "[con_id=\($id)] scratchpad show, floating disable"
+         else
+           $m[] | select(startswith($p))
+           | "[con_id=\($id)] scratchpad show, "
+             + (if startswith($p + "t_") then "floating disable, " else "" end)
+             + "unmark \(.)"
+         end]
+      | join("; ")')
+    if [[ -n $cmds ]]; then swaymsg -q "$cmds"; fi
+    ;;
+esac
