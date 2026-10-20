@@ -1,0 +1,339 @@
+-- hyprland: the twin of nixos/services/sway/config. same tags, binds,
+-- scratchpads and look, done with hyprland's own layouts and dispatchers.
+-- no animations, like sway. the bar, the wallpaper and the menus (the rofi
+-- scripts in i3 and sway) are quickshell, its config is `qs -c hyprland`
+
+local mod = "SUPER"
+
+-- quickshell ipc, see quickshell/shell.qml
+local function qs(call)
+    return hl.dsp.exec_cmd("qs -c hyprland ipc call " .. call)
+end
+
+---------------
+---- look -----
+---------------
+
+hl.config({
+    general = {
+        border_size = 1,
+        -- sway: gaps inner 10, outer 0. hyprland puts gaps_in on each side
+        -- of a window and doesn't add it at the screen edge
+        gaps_in = 5,
+        gaps_out = 10,
+        col = {
+            active_border = "rgb(d65d0e)",
+            inactive_border = "rgb(3c3836)",
+        },
+        -- dwm tile: master on the left, the stack on the right
+        layout = "master",
+    },
+
+    decoration = {
+        rounding = 0,
+        shadow = { enabled = false },
+        blur = { enabled = false },
+        -- scratchpads don't dim what's under them
+        dim_special = 0,
+    },
+
+    animations = { enabled = false },
+
+    master = {
+        mfact = 0.5,
+        -- new windows go to the bottom of the stack
+        new_status = "slave",
+    },
+
+    misc = {
+        -- the wallpaper is quickshell, this shows when the file is missing
+        background_color = "rgb(171717)",
+        disable_hyprland_logo = true,
+        disable_splash_rendering = true,
+        force_default_wallpaper = 0,
+    },
+
+    binds = {
+        -- a shown scratchpad hides when the tag changes, like in sway
+        hide_special_on_workspace_change = true,
+    },
+
+    input = {
+        kb_layout = "us,ru",
+        -- win+space switches the layout, so $mod+space binds are dead like in sway
+        kb_options = "grp:win_space_toggle",
+        follow_mouse = 1,
+    },
+})
+
+-- x11 apps (st, nsxiv, dmenu) read colors and fonts from ~/.Xresources, xrdb
+-- below. xwayland starts with hyprland and stays
+hl.env("XCURSOR_THEME", "Vanilla-DMZ")
+hl.env("XCURSOR_SIZE", "32")
+-- chromium and electron apps on wayland (nixos wrappers read it)
+hl.env("NIXOS_OZONE_WL", "1")
+-- qt5 apps without the wayland plugin fall back to x11
+hl.env("QT_QPA_PLATFORM", "wayland;xcb")
+
+------------------
+---- monitors ----
+------------------
+
+-- DP-2 is the main one on the right, DP-1 on the left
+hl.monitor({ output = "DP-2", mode = "2560x1440@120", position = "2560x0", scale = 1 })
+hl.monitor({ output = "DP-1", mode = "2560x1440@120", position = "0x0", scale = 1 })
+hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
+
+------------------
+---- tags --------
+------------------
+
+-- dwm-like tags: every monitor has its own 1..9. the main one is 1..9, the
+-- second one 11..19, the bar shows 1..9 on both. $mod+N goes to `r~N`, the
+-- Nth workspace that this monitor may hold, so these pins do the mapping.
+-- 10 is pinned too, so the second monitor starts at 11. when a monitor is
+-- unplugged its pins don't count and the other one gets 1..9
+for i = 1, 10 do
+    hl.workspace_rule({ workspace = tostring(i), monitor = "DP-2" })
+end
+for i = 11, 19 do
+    hl.workspace_rule({ workspace = tostring(i), monitor = "DP-1" })
+end
+hl.workspace_rule({ workspace = "1", default = true })
+hl.workspace_rule({ workspace = "11", default = true })
+
+-- monocle (sway's tabbed without tab bars, the bar has the titles): tags 1,
+-- 2, 9 on both monitors. no gaps and no border, like smart_no_gaps
+for _, ws in ipairs({ "1", "2", "9", "11", "12", "19" }) do
+    hl.workspace_rule({ workspace = ws, layout = "monocle", gaps_in = 0, gaps_out = 0, border_size = 0 })
+end
+
+-- floating windows keep their border on monocle tags
+hl.window_rule({ match = { float = true }, border_size = 1 })
+
+-------------------
+---- windows ------
+-------------------
+
+hl.window_rule({ match = { class = "^librewolf$" }, workspace = "1 silent" })
+hl.window_rule({ match = { class = "^obsidian$" }, workspace = "2 silent" })
+hl.window_rule({ match = { class = "qBittorrent$" }, workspace = "9 silent" })
+hl.window_rule({ match = { class = "^v2rayN$" }, workspace = "9 silent" })
+
+hl.window_rule({ match = { title = "^Picture-in-Picture$" }, float = true, pin = true, size = { 720, 400 } })
+hl.window_rule({ match = { title = "termfilechooser" }, float = true, size = { 1000, 700 }, center = true })
+hl.window_rule({ match = { class = "^dragon-drop$" }, float = true, center = true })
+hl.window_rule({ match = { class = "^ffplay$", title = "^android-webcam$" }, float = true })
+
+-- no screen blanking under a fullscreen window
+hl.window_rule({ match = { class = ".*" }, idle_inhibit = "fullscreen" })
+
+-- scratchpads are special workspaces, a toggle on an empty one starts its
+-- app. kitty --class sets the app_id
+local scratchpads = {
+    spterm = "kitty --class spterm --name spterm --title scratchpad",
+    spdotfiles = "kitty --class spdotfiles --name spdotfiles --title dotfiles -e sh -c 'cd ~/HOME/infra/dotfiles && nvim'",
+    rangerterm = "kitty --class rangerterm --name rangerterm --title ranger -e sh -c 'cd && yazi'",
+}
+for name, cmd in pairs(scratchpads) do
+    hl.workspace_rule({ workspace = "special:" .. name, on_created_empty = cmd })
+    hl.window_rule({ match = { class = "^" .. name .. "$" }, workspace = "special:" .. name })
+end
+hl.window_rule({
+    match = { class = "^(spterm|spdotfiles|rangerterm)$" },
+    float = true,
+    size = { 1280, 910 },
+    center = true,
+})
+
+-------------------
+---- binds --------
+-------------------
+
+-- binds go by the key of the first layout (us), so they work on ru too
+
+-- programs. us for typing, then back to what it was
+hl.bind(mod .. " + p", function()
+    hl.dispatch(hl.dsp.exec_cmd("hyprctl switchxkblayout all 0"))
+    hl.dispatch(qs("menu open run"))
+end)
+hl.bind(mod .. " + SHIFT + t", hl.dsp.exec_cmd("hyprctl switchxkblayout all 0; kitty"))
+
+hl.bind(mod .. " + c", qs("menu open clip"))
+hl.bind(mod .. " + SHIFT + f", qs("menu open librewolf"))
+hl.bind(mod .. " + w", qs("menu open power"))
+hl.bind(mod .. " + b", qs("menu open bluetooth"))
+hl.bind(mod .. " + SHIFT + w", hl.dsp.exec_cmd("webcam"))
+hl.bind(mod .. " + r", qs("menu open record"))
+hl.bind(mod .. " + SHIFT + r", qs("record stop"))
+hl.bind(mod .. " + u", qs("menu open pass"))
+hl.bind(mod .. " + CTRL + k", qs("menu open kill"))
+hl.bind(mod .. " + SHIFT + u", hl.dsp.exec_cmd("nixos_menu"))
+hl.bind(mod .. " + SHIFT + d", qs("menu open audio"))
+hl.bind(mod .. " + SHIFT + y", qs("menu open translate"))
+hl.bind(mod .. " + CTRL + w", qs("menu open wifi"))
+hl.bind(mod .. " + o", hl.dsp.exec_cmd("kitty --class movies -e yazi /media/outer-1"))
+
+-- region to the clipboard, the picture or the text on it. esc in slurp does nothing
+hl.bind("Print", hl.dsp.exec_cmd([[g=$(slurp) && grim -g "$g" - | wl-copy --type image/png]]))
+hl.bind(mod .. " + Print", hl.dsp.exec_cmd(
+    [[g=$(slurp) && grim -g "$g" - | tesseract -l eng+rus stdin stdout 2>/dev/null | wl-copy && notify-send OCR "Text copied"]]))
+
+-- XF86
+hl.bind("XF86AudioMute", hl.dsp.exec_cmd("dwm-volume mute"))
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("dwm-volume down"))
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("dwm-volume up"))
+hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("dwm-brightness up"))
+hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("dwm-brightness down"))
+
+-- monitors: the main one runs at 120 Hz next to the second one and at 240 Hz alone
+hl.bind(mod .. " + F7", function()
+    hl.monitor({ output = "DP-1", disabled = false })
+    hl.monitor({ output = "DP-2", mode = "2560x1440@120" })
+end)
+hl.bind(mod .. " + SHIFT + F7", function()
+    hl.monitor({ output = "DP-1", disabled = true })
+    hl.monitor({ output = "DP-2", mode = "2560x1440@240" })
+end)
+
+-- scratchpads: show/hide, start the app if it's not there
+hl.bind(mod .. " + g", hl.dsp.workspace.toggle_special("spterm"))
+hl.bind(mod .. " + v", hl.dsp.workspace.toggle_special("spdotfiles"))
+hl.bind(mod .. " + e", hl.dsp.workspace.toggle_special("rangerterm"))
+
+-- setscratch: focused window goes to the $mod+g scratchpad
+hl.bind(mod .. " + CTRL + g", function()
+    hl.dispatch(hl.dsp.window.float({ action = "enable" }))
+    hl.dispatch(hl.dsp.window.resize({ x = 1280, y = 910 }))
+    hl.dispatch(hl.dsp.window.center())
+    hl.dispatch(hl.dsp.window.move({ workspace = "special:spterm", follow = false }))
+end)
+-- removescratch: a $mod+g window becomes a tile on this tag, $mod+g opens a new one
+hl.bind(mod .. " + SHIFT + g", function()
+    local w = hl.get_active_window()
+    local ws = hl.get_active_workspace()
+    if w and ws and w.workspace and w.workspace.name == "special:spterm" then
+        hl.dispatch(hl.dsp.window.move({ workspace = ws.id }))
+        hl.dispatch(hl.dsp.window.float({ action = "disable" }))
+    end
+end)
+
+-- hide / showall: per tag, a hidden window waits in special:hide_<tag> and
+-- comes back tiled or floating as it was
+hl.bind(mod .. " + CTRL + h", function()
+    local ws = hl.get_active_workspace()
+    if ws and hl.get_active_window() then
+        hl.dispatch(hl.dsp.window.move({ workspace = "special:hide_" .. ws.id, follow = false }))
+    end
+end)
+hl.bind(mod .. " + CTRL + s", function()
+    local ws = hl.get_active_workspace()
+    local hidden = ws and hl.get_workspace("special:hide_" .. ws.id)
+    if not hidden then
+        return
+    end
+    for _, w in ipairs(hl.get_workspace_windows(hidden)) do
+        hl.dispatch(hl.dsp.window.move({ window = w, workspace = ws.id, follow = false }))
+    end
+end)
+
+-- tiling <-> floating focus
+hl.bind(mod .. " + semicolon", function()
+    local w = hl.get_active_window()
+    local floating = w ~= nil and w.floating
+    hl.dispatch(hl.dsp.window.cycle_next({ tiled = floating, floating = not floating }))
+end)
+
+-- windows
+hl.bind(mod .. " + SHIFT + b", qs("bar toggle"))
+hl.bind(mod .. " + y", hl.dsp.window.fullscreen())
+
+-- focusstack / pushstack: master, then the stack top to bottom, both wrap
+hl.bind(mod .. " + j", hl.dsp.layout("cyclenext"))
+hl.bind(mod .. " + k", hl.dsp.layout("cycleprev"))
+hl.bind(mod .. " + SHIFT + j", hl.dsp.layout("swapnext"))
+hl.bind(mod .. " + SHIFT + k", hl.dsp.layout("swapprev"))
+
+-- setmfact, setcfact: 5% of a 2560x1440 monitor, on the focused window like sway
+hl.bind(mod .. " + l", hl.dsp.window.resize({ x = -128, y = 0, relative = true }))
+hl.bind(mod .. " + h", hl.dsp.window.resize({ x = 128, y = 0, relative = true }))
+hl.bind(mod .. " + SHIFT + h", hl.dsp.window.resize({ x = 0, y = 72, relative = true }))
+hl.bind(mod .. " + SHIFT + l", hl.dsp.window.resize({ x = 0, y = -72, relative = true }))
+
+-- incnmaster / decnmaster
+hl.bind(mod .. " + i", hl.dsp.layout("addmaster"))
+hl.bind(mod .. " + d", hl.dsp.layout("removemaster"))
+
+hl.bind(mod .. " + SHIFT + c", hl.dsp.window.close())
+-- previous tag of this monitor
+hl.bind(mod .. " + Tab", hl.dsp.focus({ workspace = "previous_per_monitor" }))
+
+-- setlayout: tile / monocle for this tag, until a reload. the event tells
+-- the bar to redraw its layout symbol
+local function set_layout(layout, gaps_in, gaps_out, border)
+    return function()
+        local ws = hl.get_active_workspace()
+        if not ws then
+            return
+        end
+        hl.workspace_rule({
+            workspace = tostring(ws.id),
+            layout = layout,
+            gaps_in = gaps_in,
+            gaps_out = gaps_out,
+            border_size = border,
+        })
+        hl.dispatch(hl.dsp.event("layout"))
+    end
+end
+hl.bind(mod .. " + t", set_layout("master", 5, 10, 1))
+hl.bind(mod .. " + m", set_layout("monocle", 0, 0, 0))
+
+hl.bind(mod .. " + f", hl.dsp.window.center())
+hl.bind(mod .. " + s", hl.dsp.window.pin())
+
+-- focusmon / tagmon / tagmonstay: the window goes to the open tag of the next monitor
+hl.bind(mod .. " + comma", hl.dsp.focus({ monitor = "l" }))
+hl.bind(mod .. " + period", hl.dsp.focus({ monitor = "r" }))
+hl.bind(mod .. " + SHIFT + comma", hl.dsp.window.move({ monitor = "l" }))
+hl.bind(mod .. " + SHIFT + period", hl.dsp.window.move({ monitor = "r" }))
+hl.bind(mod .. " + CTRL + comma", hl.dsp.window.move({ monitor = "l", follow = false }))
+hl.bind(mod .. " + CTRL + period", hl.dsp.window.move({ monitor = "r", follow = false }))
+
+-- reload / quit
+hl.bind(mod .. " + F5", hl.dsp.exec_cmd("hyprctl reload"))
+hl.bind(mod .. " + CTRL + SHIFT + q", hl.dsp.exec_cmd("hyprctl reload"))
+hl.bind(mod .. " + SHIFT + BackSpace", hl.dsp.exit())
+
+-- view / tag / tagswitch, on this monitor
+for i = 1, 9 do
+    hl.bind(mod .. " + " .. i, hl.dsp.focus({ workspace = "r~" .. i }))
+    hl.bind(mod .. " + SHIFT + " .. i, hl.dsp.window.move({ workspace = "r~" .. i, follow = false }))
+    hl.bind(mod .. " + ALT + " .. i, hl.dsp.window.move({ workspace = "r~" .. i }))
+end
+
+-- mouse: move and resize with $mod, tiles too. middle click floats
+hl.bind(mod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
+hl.bind(mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+hl.bind(mod .. " + mouse:274", hl.dsp.window.float())
+
+-------------------
+---- autostart ----
+-------------------
+
+-- what i3 gets from xserver.nix and the user services: x resources,
+-- clipboard history, screen off after 5 min unless audio plays, night colors.
+-- hyprland-session.target pulls in graphical-session.target, see default.nix
+hl.on("hyprland.start", function()
+    hl.exec_cmd("systemctl --user start hyprland-session.target")
+    hl.exec_cmd("xrdb -merge ~/.Xresources")
+    hl.exec_cmd("wl-paste --watch cliphist -max-items 200 store")
+    hl.exec_cmd([[swayidle -w timeout 300 "hyprctl dispatch \"hl.dsp.dpms({ action = 'disable' })\"" resume "hyprctl dispatch \"hl.dsp.dpms({ action = 'enable' })\""]])
+    hl.exec_cmd("sway-audio-idle-inhibit")
+    hl.exec_cmd("gammastep -m wayland -l 59.9343:30.3351 -t 5000:4000")
+    hl.exec_cmd("qs -c hyprland")
+end)
+
+hl.on("hyprland.shutdown", function()
+    hl.exec_cmd("systemctl --user stop hyprland-session.target")
+end)

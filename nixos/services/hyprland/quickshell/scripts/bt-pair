@@ -1,0 +1,84 @@
+#!/usr/bin/env expect
+# pair, trust and connect a device with bluetoothctl as the agent, the part
+# of rofi-bluetooth that needs a terminal. codes to confirm or type on the
+# device come as notifications. one the device asks for is read from stdin
+# after "pin" or "passkey" on stdout, Bluetooth.qml shows the prompt
+#   expect -f bt-pair <mac>
+
+set mac [lindex $argv 0]
+
+proc notify {text timeout {urgency normal}} {
+    catch {exec notify-send Bluetooth $text -h string:x-dunst-stack-tag:rofi-bluetooth -t $timeout -u $urgency}
+}
+
+proc ask {kind} {
+    puts $kind
+    flush stdout
+    expect_user -timeout -1 -re "(.*)\n"
+    return $expect_out(1,string)
+}
+
+log_user 0
+set timeout 45
+spawn bluetoothctl
+expect -re {Agent registered|#}
+send "agent on\r"
+send "default-agent\r"
+send "pair $mac\r"
+set result "timeout"
+expect {
+    -re {Confirm passkey (\d+)} {
+        notify "Подтвердите код на устройстве: $expect_out(1,string)" 20000 critical
+        send "yes\r"
+        exp_continue
+    }
+    -re {\[agent\] Passkey: (\d+)} {
+        notify "Введите этот passkey на устройстве и нажмите Enter: $expect_out(1,string)" 30000 critical
+        exp_continue
+    }
+    -re {\[agent\] PIN code: (\S+)} {
+        notify "Введите этот PIN на устройстве: $expect_out(1,string)" 30000 critical
+        exp_continue
+    }
+    -re {Enter passkey} {
+        send "[ask passkey]\r"
+        exp_continue
+    }
+    -re {Enter PIN code:} {
+        send "[ask pin]\r"
+        exp_continue
+    }
+    -re {Authorize service} {
+        send "yes\r"
+        exp_continue
+    }
+    -re {\(yes/no\)} {
+        send "yes\r"
+        exp_continue
+    }
+    -re {Pairing successful} { set result "success" }
+    -re {Failed to pair}     { set result "failed" }
+    -re {not available}      { set result "notfound" }
+    timeout                  { set result "timeout" }
+}
+if {$result eq "success"} {
+    send "trust $mac\r"
+    expect -re {trust succeeded|Trusted: yes|#}
+    send "connect $mac\r"
+    expect {
+        -re {Authorize service} { send "yes\r"; exp_continue }
+        -re {\(yes/no\)}        { send "yes\r"; exp_continue }
+        -re {Connection successful} {}
+        -re {Failed to connect}     {}
+        timeout {}
+    }
+    notify "Сопряжение и подключение выполнены" 5000
+} elseif {$result eq "failed"} {
+    notify "Сопряжение не удалось" 5000 critical
+} elseif {$result eq "notfound"} {
+    notify "Устройство не найдено (сделайте Scan)" 5000 critical
+} else {
+    notify "Таймаут сопряжения" 5000 critical
+}
+send "quit\r"
+expect eof
