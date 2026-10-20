@@ -1,7 +1,6 @@
-# swayfx: the wayland twin of nixos/services/i3/config. same tags, binds and
-# scratchpads, the sway-* scripts stand in for the i3-* ones. swayfx animates
-# by itself, picom is x11 only. x11 tools are swapped for wayland ones where
-# i3 used them
+# sway: the wayland twin of nixos/services/i3/config. same tags, binds and
+# scratchpads, the sway-* scripts stand in for the i3-* ones. no animations,
+# picom is x11 only. x11 tools are swapped for wayland ones where i3 used them
 set $mod Mod4
 
 # env import and sway-session.target from the nixos sway module
@@ -36,11 +35,6 @@ focus_follows_mouse yes
 mouse_warping output
 focus_on_window_activation smart
 focus_wrapping workspace
-
-# new windows pop in, closed ones pop out, tiles glide, tags crossfade.
-# 0.25 s like picom.nix, fullscreen windows don't animate. no blur, shadows
-# or round corners, picom.nix has none either
-animation_duration_ms 250
 
 # x11 apps (st, nsxiv, dmenu) read colors and fonts from ~/.Xresources, see
 # xrdb below. lazy xwayland quits 10 s after the last x app and forgets them
@@ -157,9 +151,10 @@ bindsym XF86MonBrightnessUp   exec dwm-brightness up
 bindsym XF86MonBrightnessDown exec dwm-brightness down
 bindsym Print                 exec sway-shot
 
-# monitors, mode and position come from the output lines above
-bindsym $mod+F7       output DP-1 enable
-bindsym $mod+Shift+F7 output DP-1 disable
+# monitors, position comes from the output lines above. the main one runs
+# at 120 Hz next to the second one and at 240 Hz alone
+bindsym $mod+F7       output DP-1 enable; output DP-2 mode 2560x1440@120Hz
+bindsym $mod+Shift+F7 output DP-1 disable; output DP-2 mode 2560x1440@240Hz
 
 # scratchpads
 bindsym $mod+g exec sway-sp toggle spterm kitty --class spterm --name spterm --title scratchpad
@@ -199,7 +194,7 @@ bindsym $mod+Shift+l resize shrink height 5 px or 5 ppt
 bindsym $mod+i split h
 bindsym $mod+d split v
 
-# swayfx pops the window out by itself, no i3-sp kill needed
+# no fade like i3-sp kill, a window just closes
 bindsym $mod+Shift+c kill
 # previous tag of this monitor, sway's back_and_forth is global
 bindsym $mod+Tab     exec sway-ws back

@@ -2,7 +2,7 @@
 
 NixOS + home-manager dotfiles. This file covers the X11 desktop: i3, picom
 (pijulius fork) with animations, and the eww bar, plus its Wayland twin on
-swayfx. Also the embeddings and docs index on jedha, and the llama.cpp pin
+sway. Also the embeddings and docs index on jedha, and the llama.cpp pin
 it shares with barnard. Keep it in sync when you change how these parts
 talk to each other.
 
@@ -253,27 +253,27 @@ The second number must be 0, NaN comes out of the JSON encoder as `null`.
 
 ## Sway (wayland)
 
-The same desktop on SwayFX (sway with effects, animations among them) next
-to i3, barnard only (`hosts/barnard/env.nix` imports it). SDDM lists both
+The same desktop on sway next to i3, barnard only (`hosts/barnard/env.nix` imports it). SDDM lists both
 sessions (its greeter stays on X11 and starts Wayland sessions fine), i3
 stays the default. All of it lives in `nixos/services/sway/`, no
-home-manager. Same tags, binds, scratchpads and bar.
+home-manager. Same tags, binds, scratchpads and bar, no animations.
 
 | Path | What |
 | --- | --- |
-| `nixos/services/sway/default.nix` | `programs.sway` on swayfx, the no-tab-bar patch, session env, gtk dconf, `/etc/sway/*`, scripts |
+| `nixos/services/sway/default.nix` | `programs.sway`, the no-tab-bar patch, session env, gtk dconf, `/etc/sway/*`, scripts |
 | `nixos/services/sway/config` | sway config, the twin of the i3 one |
 | `nixos/services/sway/scripts/sway-ws`, `sway-tile`, `sway-sp` | `i3-ws`, `i3-tile`, `i3-sp` minus the picom parts |
 | `nixos/services/sway/scripts/sway-clip`, `sway-shot` | `rofi-greenclip` and `flameshot gui` on cliphist, grim, slurp |
 | `nixos/services/sway/scripts/eww-sway-*`, `sway-xkb` | bar listeners and launcher |
 | `nixos/services/sway/eww/` | bar config (`/etc/sway/eww`), its own eww daemon |
 
-- Animations: `animation_duration_ms 250`. New windows pop in (grow from the
-  center and fade in), closed ones pop out, tiles glide to their new place,
-  tags crossfade. Fullscreen windows and floating drags don't animate, like
-  in picom.nix. A window going to the scratchpad goes at once (the tiles
-  glide into the gap), one coming back shows up at once. No per-rule
-  control and no drift direction like picom has.
+- No animations: swayfx has them (pop in/out, gliding tiles, tag
+  crossfade), but its renderer keeps 5 output-sized effect buffers per
+  monitor even with blur off, ~150 MB of VRAM on two 1440p monitors. To go
+  back: `swayfx`/`swayfx-unwrapped` in `default.nix`, `animation_duration_ms`
+  in the config.
+- `$mod+Shift+F7` turns the second monitor off and the main one to 240 Hz,
+  `$mod+F7` back to both at 120 Hz.
 - The X11-only user services (picom, redshift, flameshot, greenclip) are
   wanted by `nixos-fake-graphical-session.target`. Only the X session wrapper
   starts it (i3, dwm), sway's `sway-session.target` pulls in
@@ -292,9 +292,6 @@ home-manager. Same tags, binds, scratchpads and bar.
 
 ### Facts that drove the design
 
-- swayfx 0.6 is sway 1.12 plus effects: same commands and IPC, the tree only
-  has extra fields. Its renderer needs a DRM device, so it doesn't run
-  headless without a GPU, plain sway does (tests below).
 - The sway tree is the i3 one with a few changes: Wayland windows have
   `window: null` but a `pid` and `app_id`, outputs hold workspaces directly
   (`current_workspace`), `floating` is `user_on`/`auto_off` like in i3.
@@ -325,7 +322,6 @@ home-manager. Same tags, binds, scratchpads and bar.
 - The sway module writes `sway-portals.conf`, it replaces `portals.conf`
   under sway, so the termfilechooser line is repeated there.
 
-Test without hardware on plain sway (drop `animation_duration_ms`, it's
-swayfx only): `WLR_BACKENDS=headless WLR_HEADLESS_OUTPUTS=2
+Test without hardware: `WLR_BACKENDS=headless WLR_HEADLESS_OUTPUTS=2
 WLR_LIBINPUT_NO_DEVICES=1 WLR_RENDERER=pixman sway -c <config>`, keys
 through `wtype -M logo -k 3 -m logo`, pictures through `grim -o HEADLESS-1`.

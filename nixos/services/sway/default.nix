@@ -1,6 +1,6 @@
-# swayfx: the wayland twin of the i3 session, same tags, binds and bar.
-# swayfx is sway with effects, animations among them, the rest is plain sway.
-# sddm lists it next to i3 (its greeter stays on x11, it starts wayland
+# sway: the wayland twin of the i3 session, same tags, binds and bar, no
+# animations (swayfx has them, but its effect buffers take ~150 mb of vram
+# on two 1440p monitors). sddm lists it next to i3 (its greeter stays on x11, it starts wayland
 # sessions all the same). i3 stays the default session. barnard only, its
 # env.nix imports this
 { lib, pkgs, ... }:
@@ -21,8 +21,8 @@ in
 
     # no tab bars, like the i3 patch in nixos/overlays: the bar has the titles.
     # 0 is what hide_lone_tab uses for a lone tab, here it's every tab
-    package = pkgs.swayfx.override {
-      swayfx-unwrapped = pkgs.swayfx-unwrapped.overrideAttrs (old: {
+    package = pkgs.sway.override {
+      sway-unwrapped = pkgs.sway-unwrapped.overrideAttrs (old: {
         postPatch = (old.postPatch or "") + ''
           substituteInPlace sway/tree/container.c \
             --replace-fail 'return config->font_height + config->titlebar_v_padding * 2;' 'return 0;'

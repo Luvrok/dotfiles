@@ -14,7 +14,7 @@
 #
 # the daemon also floats fullscreen windows that would take a tile, like
 # i3-tile: ones that open fullscreen (media viewers) and these when they go
-# fullscreen. tiles stay put, nothing glides once it closes. app_id for
+# fullscreen. tiles stay put, nothing jumps once it closes. app_id for
 # wayland windows, class for xwayland ones
 fs_float='^(mpv)$'
 
