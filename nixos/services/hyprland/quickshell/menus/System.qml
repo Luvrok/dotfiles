@@ -6,10 +6,8 @@ import qs.widgets
 
 // btop, smaller, every second (scripts/sysmon): the cpu and its threads,
 // load, memory, cache, swap and disks on the left, every gpu with its
-// vram, the network and vnstat's day, month and year on the right. p shows the processes by cpu under
-// them (top -c, kernel threads left out), with no cursor until j/k, the
-// list sorts itself. / searches, x ends the process under the cursor
-// (SIGTERM, SIGKILL if it still lives after 2 s), s sorts by memory or cpu
+// vram, the network and vnstat's day, month and year on the right. p goes
+// to the processes
 Menu {
     id: menu
 
@@ -18,19 +16,6 @@ Menu {
     // vnstat in bytes: today, yesterday, month, est (the month at this
     // pace), year, all. null without vnstat
     property var traffic: null
-    property bool showProcs: false
-    // {pid, user, cpu, mem, name} by row
-    property var procs: []
-    property bool byMem: false
-    // what x did, in the head for a moment
-    property string flash: ""
-
-    // top's frame being read: its process lines, how many it has, how many
-    // came, the frames so far. the first one's cpu isn't the last second
-    property var frame: []
-    property int frameTotal: 0
-    property int frameSeen: 0
-    property int frames: 0
 
     // kB
     function size(kb) {
@@ -45,71 +30,6 @@ Menu {
     function uptime(s) {
         const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
         return d > 0 ? `${d}d ${h}h` : h > 0 ? `${h}h ${m}m` : `${m}m`;
-    }
-
-    // a process's name: the file it runs, without nix's wrapper dots. top
-    // -c gives the command line, the kernel cuts names at 15 characters
-    function base(cmd) {
-        return cmd.split(" ")[0].split("/").pop().replace(/^\.+/, "").replace(/(-wrapped)+$/, "");
-    }
-
-    // top's RES with -e m: 278.0m, or 1.2g when it doesn't fit
-    function kb(res) {
-        const n = parseFloat(res);
-        const unit = res.slice(-1);
-        return Math.round(n * (unit === "g" ? 1048576 : unit === "t" ? 1073741824 : unit === "k" ? 1 : 1024));
-    }
-
-    // the frame as rows, the cursor stays on its process
-    function publish() {
-        const keep = current >= 0 ? procs[current]?.pid : undefined;
-        // a total order, sort() isn't stable here
-        const list = frame.slice().sort((a, b) => (byMem ? b.mem - a.mem : b.cpu - a.cpu) || a.pid - b.pid);
-        procs = list;
-        const rows = list.map(p => `${p.name}\t${p.user}  ${p.cpu.toFixed(1).padStart(5)}%  ${size(p.mem).padStart(5)}  ${String(p.pid).padStart(7)}`);
-        if (frames === 2 && menu.rows.length === 0)
-            show(rows);
-        else
-            update(rows, list.findIndex(p => p.pid === keep));
-    }
-
-    // a blank line comes glued to the next one: "\ntop - ..."
-    function parse(line) {
-        if (/^\s*top - /.test(line)) {
-            frame = [];
-            frameSeen = 0;
-            frames++;
-            return;
-        }
-        const tasks = line.match(/^\s*Tasks:\s+(\d+)/);
-        if (tasks) {
-            frameTotal = parseInt(tasks[1]);
-            return;
-        }
-        // PID USER PR NI VIRT RES SHR S %CPU %MEM TIME+ COMMAND
-        const m = line.match(/^\s*(\d+)\s+(\S+)\s+\S+\s+\S+\s+(\S+)\s+(\S+)\s+\S+\s+\S\s+([\d.]+)\s+[\d.]+\s+\S+\s+(.*)$/);
-        if (!m)
-            return;
-        frameSeen++;
-        // a kernel thread has no memory of its own
-        if (parseFloat(m[3]) > 0)
-            frame.push({
-                pid: parseInt(m[1]),
-                user: m[2],
-                mem: kb(m[4]),
-                cpu: parseFloat(m[5]),
-                name: base(m[6])
-            });
-        if (frameSeen === frameTotal && frames >= 2)
-            publish();
-    }
-
-    function end(p) {
-        if (!p || p.pid === Quickshell.processId)
-            return;
-        Quickshell.execDetached(["sh", "-c", 'kill -TERM "$1" 2>/dev/null; sleep 2; kill -0 "$1" 2>/dev/null && kill -KILL "$1"', "sh", String(p.pid)]);
-        flash = `ended ${p.name}`;
-        flashEnd.restart();
     }
 
     // vnstat's days, months and years, a json line each, for the
@@ -181,15 +101,11 @@ Menu {
 
     title: "system"
     icon: "\u{f035b}"
-    status: flash !== "" ? flash : stats ? `${stats.host} · up ${uptime(stats.uptime)}` : ""
-    statusAccent: flash !== ""
+    status: stats ? `${stats.host} · up ${uptime(stats.uptime)}` : ""
     note: stats ? `${stats.model} · ${stats.cores} cores · ${stats.threads} threads · linux ${stats.kernel}` : ""
-    searchable: true
-    startOnFirst: false
-    empty: "reading processes…"
     menuWidth: ch(104)
-    lines: showProcs ? 14 : 0
-    hints: input ? [["enter", "list"], ["↑↓", "move"], ["q", "back"], ["esc", "close"]] : showProcs ? [["j/k", "move"], ["x", "end"], ["s", byMem ? "by cpu" : "by memory"], ["/", "search"], ["p", "hide"], ["esc", "close"]] : [["p", "processes"], ["/", "search"], ["esc", "close"]]
+    lines: 0
+    hints: [["p", "processes"], ["esc", "close"]]
 
     body: Component {
         Item {
@@ -360,30 +276,10 @@ Menu {
     }
 
     keys: e => {
-        if (key(e, "p")) {
-            showProcs = !showProcs;
-            return true;
-        }
-        // the search needs the list
-        if (key(e, "/"))
-            showProcs = true;
-        if (!showProcs)
+        if (!key(e, "p"))
             return false;
-        if (key(e, "x"))
-            end(procs[current]);
-        else if (key(e, "s")) {
-            byMem = !byMem;
-            if (frame.length > 0)
-                publish();
-        } else
-            return false;
+        goTo("processes");
         return true;
-    }
-
-    // enter in the search goes back to the list, the filter stays
-    onAccepted: {
-        if (input)
-            closeSearch(true);
     }
 
     // vnstatd writes its db every few minutes, a look every 30 s is plenty
@@ -403,12 +299,6 @@ Menu {
         }
     }
 
-    Timer {
-        id: flashEnd
-        interval: 3000
-        onTriggered: menu.flash = ""
-    }
-
     Process {
         running: true
         command: ["bash", Quickshell.shellPath("scripts/sysmon")]
@@ -418,26 +308,6 @@ Menu {
                     menu.stats = JSON.parse(line);
                 } catch (e) {}
             }
-        }
-    }
-
-    // only while the list is out. a toprc would change the columns, so
-    // none: HOME and XDG_CONFIG_HOME point at an empty dir. the C locale
-    // for dots in the numbers
-    Process {
-        running: menu.showProcs
-        command: ["top", "-b", "-c", "-d", "1", "-w", "512", "-e", "m"]
-        environment: ({
-                LC_ALL: "C",
-                HOME: "/var/empty",
-                XDG_CONFIG_HOME: "/var/empty"
-            })
-        stdout: SplitParser {
-            onRead: line => menu.parse(line)
-        }
-        onRunningChanged: {
-            menu.frames = 0;
-            menu.frame = [];
         }
     }
 

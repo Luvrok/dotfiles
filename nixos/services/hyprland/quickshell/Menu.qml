@@ -87,6 +87,8 @@ PanelWindow {
     signal cancelled
     // the shell unloads the menu
     signal done
+    // the shell opens another menu instead: kill and processes, system
+    signal goTo(string name)
 
     // a new page
     function show(newRows, selected) {

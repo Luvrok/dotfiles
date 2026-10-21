@@ -49,6 +49,14 @@ ShellRoot {
         menu = name;
     }
 
+    // another menu on the same monitor, later: the one asking is unloaded
+    function swap(name) {
+        Qt.callLater(() => {
+            menu = "";
+            menu = name;
+        });
+    }
+
     // later: a menu may give up while it's being created
     function close(name) {
         Qt.callLater(() => {
@@ -162,6 +170,15 @@ ShellRoot {
         Kill {
             screen: shell.menuScreen
             onDone: shell.close("kill")
+            onGoTo: name => shell.swap(name)
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "processes"
+        Processes {
+            screen: shell.menuScreen
+            onDone: shell.close("processes")
+            onGoTo: name => shell.swap(name)
         }
     }
     LazyLoader {
@@ -190,6 +207,7 @@ ShellRoot {
         System {
             screen: shell.menuScreen
             onDone: shell.close("system")
+            onGoTo: name => shell.swap(name)
         }
     }
     LazyLoader {

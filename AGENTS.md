@@ -347,7 +347,7 @@ Hyprland Lua, QML and shell, no nix in them.
 | `nixos/services/hyprland/quickshell/{Bar,Wallpaper,Hypr,Theme}.qml` | the bar (tags, the open tag's windows as squares, status), `output * bg`, the bar's Hyprland state, gruvbox colors |
 | `nixos/services/hyprland/quickshell/Menu.qml` | rofi -dmenu: the menu window, filter, list, keys, built from `widgets/` |
 | `nixos/services/hyprland/quickshell/widgets/` | the menu parts: `MenuHead` (icon, title, status, pulse), `SearchField` (the text line), `MenuRow`, `KeyHints`, `Meter` and `Threads` (the system menu's bars) |
-| `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass. And System (a small btop) and Calendar |
+| `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass. And System (a small btop), Processes and Calendar |
 | `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `wifi` (iwd over d-bus), `apps` (the kill menu's apps), `sysmon` (the system menu's numbers), `askpass` and `pinentry` (`hypr-askpass`, `hypr-pinentry` in PATH) |
 
 - Both configs sit in `/etc/xdg` and are found through `XDG_CONFIG_DIRS`,
@@ -412,8 +412,10 @@ Hyprland Lua, QML and shell, no nix in them.
   ends), folded into its topmost such process, with its windows from
   `hyprctl clients`. One without a window is "background", like an app that
   lives on after its window closes (no tray here). Enter TERMs the app and
-  everything it started, KILL after 2 s. alt+p lists all processes like
-  rofi-killer.
+  everything it started, KILL after 2 s. alt+p goes to Processes.
+- A menu's `goTo(name)` asks shell.qml for another menu in its place
+  (`swap`, a call later, the asking one is unloaded): kill alt+p and
+  processes alt+a, system p.
 - System ($mod+Escape, a click on the bar's memory) is a small btop, from
   `scripts/sysmon` (a json line a second, /proc, sysfs, hwmon, df, ip,
   integers only so the ru decimal comma can't get in). The cpu model,
@@ -425,13 +427,14 @@ Hyprland Lua, QML and shell, no nix in them.
   interface and address), then vnstat for that interface every 30 s
   (`vnstat --json d 2`, `m 1`, `y 1`, bytes since jsonversion 2): today
   and yesterday, the month and its estimate at this pace, the year and
-  all of it. `p` shows the
-  processes from `top -b -c` (the last second's cpu, kernel threads left
-  out), top runs only then. The list sorts itself every second, so it has
-  no cursor until j/k (`startOnFirst: false`), then the cursor stays on its
-  process. `/` searches, `x` ends one (TERM, KILL after 2 s), `s` sorts by
-  memory. top runs with `LC_ALL=C` and an empty HOME, a toprc would change
-  its columns.
+  all of it. `p` goes to Processes.
+- Processes ($mod+Shift+Escape) is every process from `top -b -c` (the
+  last second's cpu, kernel threads left out), a search like Kill's. The
+  list sorts itself every second, so it has no cursor until ↑↓
+  (`startOnFirst: false`), then the cursor stays on its process. Enter
+  ends the one under it or the first match of what's typed (TERM, KILL
+  after 2 s), alt+s sorts by memory, alt+a goes to Kill. top runs with
+  `LC_ALL=C` and an empty HOME, a toprc would change its columns.
 - Calendar ($mod+Ctrl+c, a click on the bar's date): the month with iso
   weeks, mondays first, or the year (`y`). h/j/k/l move the cursor, n/p a
   month (a year), t today, the wheel too. It slides 6% like a tag switch.
