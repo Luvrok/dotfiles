@@ -15,7 +15,8 @@ Menu {
     title: "kill"
     icon: "\u{f068c}"
     prompt: "process"
-    hint: "enter kill  esc close"
+    searchable: true
+    enterHint: "kill"
     menuWidth: ch(100)
     lines: 12
 

@@ -29,7 +29,8 @@ Menu {
     title: "run"
     icon: "\u{f018d}"
     prompt: "command"
-    hint: "enter run  esc close"
+    input: true
+    enterHint: "run"
     lines: 10
 
     onAccepted: (index, text) => {

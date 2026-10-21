@@ -4,16 +4,19 @@ import Quickshell.Io
 import Quickshell.Bluetooth
 import qs
 
-// rofi-bluetooth on one page: the rows are the devices, connected ones
-// orange. keys do the rest, on the device under the cursor (enter connects
-// or disconnects, p pairs or forgets, t trusts) or on the adapter (o power,
-// s scan, a pairable, v discoverable). the menu pulses while an action runs.
-// connect and pair go through bluetoothctl, it says if they worked and is
-// the agent for pin codes (scripts/bt-pair)
+// rofi-bluetooth on one page: the head says on (orange) or off and pulses
+// while it scans, the rows are the devices, connected ones orange, and the
+// list follows bluez live: the adapter can show up after the menu opens,
+// devices come in during a scan. keys act on the device under the cursor
+// (enter connects or disconnects, p pairs or forgets, t trusts) or on the
+// adapter (o power, s scan, a pairable, v discoverable). connect and pair go
+// through bluetoothctl, it says if they worked and is the agent for pin
+// codes (scripts/bt-pair)
 Menu {
     id: menu
 
     readonly property BluetoothAdapter adapter: Bluetooth.defaultAdapter
+    readonly property bool powered: adapter?.enabled ?? false
     // the rows' devices
     property var devices: []
     // the device an action runs on, the cursor stays on it
@@ -37,26 +40,34 @@ Menu {
         return d.trusted ? `${state}  trusted` : state;
     }
 
+    // the device rows, devices and active follow
+    function build() {
+        // the mac is always there, the name may not be yet after a scan
+        devices = powered ? adapter.devices.values.slice() : [];
+        active = devices.map((d, i) => d.connected ? i : -1).filter(i => i >= 0);
+        lines = Math.max(1, Math.min(devices.length, 10));
+        return devices.map(d => {
+            const unnamed = !d.name || d.name === d.address || d.name === d.address.replace(/:/g, "-");
+            return `${unnamed ? "(без имени)" : d.name}\t${info(d)}`;
+        });
+    }
+
     function refresh() {
         asking = false;
         input = false;
         prompt = "";
-        if (!adapter?.enabled) {
-            devices = [];
-            active = [];
-            lines = 0;
-            show([]);
-            return;
-        }
-        // the mac is always there, the name may not be yet after a scan
-        devices = adapter.devices.values.slice();
-        const rows = devices.map(d => {
-            const unnamed = !d.name || d.name === d.address || d.name === d.address.replace(/:/g, "-");
-            return `${unnamed ? "(без имени)" : d.name}\t${info(d)}`;
-        });
-        active = devices.map((d, i) => d.connected ? i : -1).filter(i => i >= 0);
-        lines = Math.min(rows.length, 10);
+        const rows = build();
         show(rows, Math.max(0, devices.indexOf(device)));
+    }
+
+    // fresh rows on the same page, the cursor stays on its device
+    function relist() {
+        if (asking || busy !== "")
+            return;
+        const keep = current >= 0 ? devices[current] : null;
+        const rows = build();
+        if (JSON.stringify(rows) !== JSON.stringify(menu.rows))
+            update(rows, devices.indexOf(keep));
     }
 
     // the menu pulses while it waits
@@ -93,24 +104,18 @@ Menu {
             powerOn();
     }
 
+    // the keys keep working while it scans, devices show up as they come
     function toggleScan() {
         if (adapter.discovering) {
             adapter.discovering = false;
             scanning = false;
-            waitFor(() => !adapter.discovering, () => {
-                notify("Поиск устройств остановлен");
-                refresh();
-            }, 5000, "stopping");
+            scanEnd.stop();
+            notify("Поиск устройств остановлен");
         } else {
             notify("Поиск устройств... (12 сек)");
             adapter.discovering = true;
             scanning = true;
-            waitFor(() => false, () => {
-                adapter.discovering = false;
-                scanning = false;
-                notify("Поиск завершён");
-                refresh();
-            }, 12000, "scanning");
+            scanEnd.restart();
         }
     }
 
@@ -170,11 +175,15 @@ Menu {
         show([]);
     }
 
-    input: false
     title: "bluetooth"
     icon: "\u{f00af}"
-    status: !adapter ? "no adapter" : !adapter.enabled ? "off" : [adapter.pairable ? "pairable" : "", adapter.discoverable ? "discoverable" : ""].filter(s => s !== "").join("  ") || "on"
-    hint: asking ? "enter send  esc cancel" : adapter?.enabled ? "enter connect  p pair  t trust  s scan  o power  a pairable  v discoverable  esc" : "o power on  esc"
+    status: !adapter ? "" : !powered ? "off" : ["on", adapter.pairable ? "pairable" : "", adapter.discoverable ? "visible" : ""].filter(s => s !== "").join(" · ")
+    statusAccent: powered
+    activity: powered && adapter.discovering ? "scanning" : ""
+    empty: !adapter ? "looking for the adapter…" : !powered ? "bluetooth is off" : adapter.discovering ? "looking for devices…" : "no devices, s to scan"
+    searchable: powered && !asking
+    enterHint: asking ? "send" : "connect"
+    actions: powered ? [["s", adapter.discovering ? "stop scan" : "scan"], ["p", "pair"], ["t", "trust"], ["o", "off"], ["a", "pairable"], ["v", "visible"]] : [["o", "turn on"]]
     menuWidth: ch(52)
 
     keys: e => {
@@ -183,7 +192,7 @@ Menu {
         const d = current >= 0 ? devices[current] : null;
         if (key(e, "o"))
             togglePower();
-        else if (!adapter.enabled)
+        else if (!powered)
             return false;
         else if (key(e, "s"))
             toggleScan();
@@ -212,6 +221,40 @@ Menu {
             pair.write(text + "\n");
         } else if (index >= 0)
             toggleConnection(devices[index]);
+    }
+
+    // the adapter shows up a moment after bluez is first asked
+    onAdapterChanged: {
+        if (!asking && busy === "")
+            refresh();
+    }
+
+    Connections {
+        target: menu.adapter
+        function onEnabledChanged() {
+            menu.relist();
+        }
+        function onDiscoveringChanged() {
+            menu.relist();
+        }
+    }
+
+    // names, connections and new devices
+    Timer {
+        interval: 1000
+        repeat: true
+        running: menu.visible
+        onTriggered: menu.relist()
+    }
+
+    Timer {
+        id: scanEnd
+        interval: 12000
+        onTriggered: {
+            menu.adapter.discovering = false;
+            menu.scanning = false;
+            menu.notify("Поиск завершён");
+        }
     }
 
     Timer {

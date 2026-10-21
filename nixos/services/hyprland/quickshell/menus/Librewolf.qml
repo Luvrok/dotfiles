@@ -10,7 +10,7 @@ Menu {
     input: false
     title: "librewolf"
     icon: "\u{f0239}"
-    hint: "enter open  esc"
+    enterHint: "open"
     menuWidth: ch(26)
     padV: 6
     align: Text.AlignHCenter

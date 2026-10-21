@@ -11,7 +11,8 @@ Menu {
     icon: "\u{f033e}"
     password: true
     lines: 0
-    hint: "enter send  esc cancel"
+    input: true
+    enterHint: "send"
 
     onAccepted: (index, text) => {
         hide();

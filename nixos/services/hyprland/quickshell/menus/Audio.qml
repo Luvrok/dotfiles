@@ -14,7 +14,7 @@ Menu {
     input: false
     title: "audio"
     icon: "\u{f057e}"
-    hint: "enter use  esc"
+    enterHint: "use"
     active: [sinks.indexOf(Pipewire.defaultAudioSink)]
     menuWidth: ch(64)
 

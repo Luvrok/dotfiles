@@ -87,7 +87,9 @@ Menu {
     title: asking ? "enter password" : "wi-fi"
     icon: "\u{f05a9}"
     status: asking ? target : connected !== "" ? connected : scanned ? "offline" : ""
-    hint: asking ? "enter connect  esc cancel" : "j/k move  enter join  r rescan  d disconnect  esc"
+    searchable: !asking
+    enterHint: asking ? "connect" : "join"
+    actions: [["r", "rescan"], ["d", "disconnect"]]
     menuWidth: ch(48)
 
     keys: e => {

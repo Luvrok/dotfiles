@@ -29,7 +29,6 @@ Menu {
     icon: "\u{f044a}"
     // the question of this page
     status: ["sound", "quality", "fps", "what", "monitor"][picks.length] ?? ""
-    hint: "enter pick  esc"
     menuWidth: 280
     align: Text.AlignHCenter
 

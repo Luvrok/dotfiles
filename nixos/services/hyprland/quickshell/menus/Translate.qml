@@ -158,8 +158,7 @@ Menu {
             const rows = [...new Set([body.translatedText, ...(body.alternatives ?? [])].filter(r => r))];
             page = "verbose";
             status = "variants";
-            hint = "enter copy  esc close";
-            input = true;
+            input = false;
             menuWidth = screen.width * 0.6;
             lines = 10;
             show(rows);
@@ -205,7 +204,7 @@ Menu {
         page = "prompt";
         status = label;
         prompt = "text";
-        hint = "enter translate  esc close";
+        input = true;
         lines = 0;
         next = then;
         show([]);
@@ -216,7 +215,7 @@ Menu {
         page = "target";
         status = "target";
         prompt = "language";
-        hint = "enter pick  esc close";
+        input = true;
         lines = 8;
         next = then;
         const langs = languages.length > 0 ? languages.map(l => [l.code, l.name]) : fallback;
@@ -228,7 +227,10 @@ Menu {
     icon: "\u{f05ca}"
     status: `${primary} ↔ ${foreign}`
     prompt: "text or :es text"
-    hint: "enter translate  alt+p selection  alt+c clipboard  alt+t target  alt+v variants  alt+s speak  esc"
+    input: true
+    enterHint: page === "verbose" ? "copy" : page === "target" ? "pick" : "translate"
+    // the main page's actions are alt keys
+    hints: page === "menu" ? [["enter", "translate"], ["alt+p", "selection"], ["alt+c", "clipboard"], ["alt+t", "target"], ["alt+v", "variants"], ["alt+s", "speak"], ["esc", "close"]] : input ? [["enter", enterHint], ...(lines > 0 ? [["↑↓", "move"]] : []), ["esc", "close"]] : [["j/k", "move"], ["enter", enterHint], ["esc", "close"]]
     menuWidth: ch(56)
     lines: 0
 

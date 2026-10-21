@@ -14,7 +14,8 @@ Menu {
     title: "clipboard"
     icon: "\u{f014c}"
     prompt: "search"
-    hint: "enter copy  esc keep"
+    input: true
+    enterHint: "copy"
     lines: 15
 
     onAccepted: (index, text) => {

@@ -345,7 +345,8 @@ Hyprland Lua, QML and shell, no nix in them.
 | `nixos/services/hyprland/hyprland.lua` | Hyprland config, the twin of the sway one |
 | `nixos/services/hyprland/quickshell/shell.qml` | bar and wallpaper per monitor, the menus, the ipc targets |
 | `nixos/services/hyprland/quickshell/{Bar,Wallpaper,Hypr,Theme}.qml` | the eww sway bar, `output * bg`, the bar's Hyprland state, gruvbox colors |
-| `nixos/services/hyprland/quickshell/Menu.qml` | rofi -dmenu: entry, filter, list, keys, drawn like the eww wifi menu |
+| `nixos/services/hyprland/quickshell/Menu.qml` | rofi -dmenu: the menu window, filter, list, keys, built from `widgets/` |
+| `nixos/services/hyprland/quickshell/widgets/` | the menu parts: `MenuHead` (icon, title, status, pulse), `SearchField` (the text line), `MenuRow`, `KeyHints` |
 | `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass |
 | `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `askpass` (`hypr-askpass` in PATH) |
 
@@ -361,17 +362,34 @@ Hyprland Lua, QML and shell, no nix in them.
   script. Every page is a `show(rows)` call. While a command runs the menu
   stays and pulses (`wait("scanning")`, the next `show` ends it), only pass
   hides for pinentry.
-- The look is the eww wifi menu (`home/programs/eww/wifi-menu`): a head
-  with an icon, title, status and the busy pulse, the entry as a dark strip
-  with an orange line, a hint at the bottom. A row is `"name\tinfo"` (info
-  dim on the right) or `""` (a divider the cursor skips), `active` rows are
-  orange. Rows are things to pick, actions are keys (wifi `r`/`d`,
-  bluetooth `o`/`s`/`p`/`t`, translate `alt+p`..., backspace in an empty
-  entry goes back in pass). Every menu sits under the bar on the right,
+- The look is the eww wifi menu (`home/programs/eww/wifi-menu`), the
+  parts live in `widgets/` so a change there is a change in every menu: a
+  head with an icon, title, status (`statusAccent` for an "on") and a pulse
+  (`busy` blocks the keys, `activity` doesn't), the text line (an icon,
+  the text, the count, a hairline that turns orange from the left while it
+  has the keys, it folds away when closed), the rows, and the keys at the
+  bottom (`[[key, what], ...]`, a dot after each). A row is `"name\tinfo"`
+  (info dim on the right) or `""` (a divider the cursor skips), `active`
+  rows are orange, `empty` fills a list with no rows. Rows are things to
+  pick, actions are keys (`actions` in the hints: wifi `r`/`d`, bluetooth
+  `o`/`s`/`p`/`t`/`a`/`v`, translate `alt+p`..., backspace or `h` goes back
+  in pass). Every menu sits 10px under the bar and 10px from the right,
   Hyprland slides it in from the right edge, fades it and dims the screen
   around it (layer rule for `menu`: `animation = "slide right"`,
   `dim_around`, `decoration.dim_around` as strong as `dim_special`). Inside,
   new rows come in one after another and the cursor glides.
+- Search: `input` gives the text line the keys. Run, clipboard, the pass
+  entries, translate's pages and the prompts open with it, q types there.
+  A `searchable` menu (wifi, bluetooth, kill) opens on its list, `/` opens
+  the search, q in an empty search goes back to the list, tab too but
+  keeps the filter, q in the list drops the filter. Esc always closes.
+- The bluetooth adapter shows up a moment after Quickshell first asks
+  BlueZ, so the menu follows it live (`onAdapterChanged`, the adapter's
+  signals, a 1 s relist) instead of reading it once. A scan doesn't block
+  the keys, devices come in as they're found.
+- Run lists every executable in PATH plus the history, like `dmenu_path`
+  in rofi-menu. On NixOS that's a few thousand (coreutils and the like),
+  not only apps.
 - Menu keys go through `key(e, "j")`: the Qt key or the xkb keycode of the
   us letter, so j/k/r... work on the ru layout too without switching it
   (translate and clipboard search still take russian). A key fires only

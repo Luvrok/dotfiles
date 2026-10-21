@@ -16,8 +16,10 @@ Menu {
     property var fieldNames: []
     property string entry: ""
 
-    // a page no taller than its rows
+    // a page no taller than its rows, the entries are a search, the
+    // fields a list
     function page(rows) {
+        input = entry === "";
         lines = Math.max(1, Math.min(rows.length, 15));
         show(rows);
     }
@@ -35,7 +37,9 @@ Clearing in 45 seconds"
     title: entry === "" ? "pass" : entry
     icon: "\u{f0306}"
     prompt: "search"
-    hint: entry === "" ? "enter open  esc close" : "enter copy  ⌫ back  esc close"
+    input: true
+    enterHint: entry === "" ? "open" : "copy"
+    actions: entry === "" ? [] : [["⌫", "back"]]
     lines: 15
 
     onAccepted: (index, text) => {
