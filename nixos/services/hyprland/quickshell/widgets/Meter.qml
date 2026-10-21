@@ -59,10 +59,13 @@ Item {
         font: meter.font
     }
 
+    // a long one (a mount path) loses its start rather than covering the value
     Text {
         anchors.right: parent.right
         anchors.rightMargin: 12
         anchors.verticalCenter: parent.verticalCenter
+        width: Math.max(0, Math.min(implicitWidth, meter.width - 24 - valueText.x - valueText.implicitWidth))
+        elide: Text.ElideLeft
         text: meter.info
         textFormat: Text.PlainText
         color: Theme.dim

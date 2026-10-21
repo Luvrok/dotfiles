@@ -39,6 +39,9 @@ PanelWindow {
     // more under the head, above the text line: the system menu's meters,
     // the calendar
     property Component body: null
+    // the cursor starts on the first row. false: on none until j/k, for a
+    // list that sorts itself every second
+    property bool startOnFirst: true
     property string busy: ""
     property string activity: ""
     // what enter does, the menu's own keys (in the list, or with ctrl or alt
@@ -91,8 +94,9 @@ PanelWindow {
         busy = "";
         field.input.text = "";
         filter();
-        jump(Math.max(0, Math.min(selected ?? 0, shown.length - 1)), 1);
-        list.positionViewAtIndex(list.currentIndex, ListView.Contain);
+        if (startOnFirst || selected !== undefined)
+            jump(Math.max(0, Math.min(selected ?? 0, shown.length - 1)), 1);
+        list.positionViewAtIndex(Math.max(0, list.currentIndex), ListView.Contain);
         cascading = true;
         cascadeEnd.restart();
         visible = true;
@@ -106,7 +110,8 @@ PanelWindow {
         rows = newRows;
         filter();
         const pos = row !== undefined ? shown.indexOf(row) : -1;
-        jump(Math.max(0, Math.min(pos >= 0 ? pos : at, shown.length - 1)), 1);
+        if (startOnFirst || at >= 0)
+            jump(Math.max(0, Math.min(pos >= 0 ? pos : at, shown.length - 1)), 1);
     }
 
     function hide() {
@@ -159,7 +164,7 @@ PanelWindow {
                 out.push(i);
         }
         shown = out;
-        list.currentIndex = 0;
+        list.currentIndex = startOnFirst ? 0 : -1;
     }
 
     function divider(i) {
@@ -171,6 +176,11 @@ PanelWindow {
         const n = shown.length;
         if (n === 0)
             return;
+        // no cursor yet: the first key puts it on top
+        if (list.currentIndex < 0) {
+            jump(0, 1);
+            return;
+        }
         const dir = step < 0 ? -1 : 1;
         let i = list.currentIndex + step;
         for (let k = 0; k <= n; k++) {
@@ -192,7 +202,7 @@ PanelWindow {
     function accept() {
         if (busy !== "" || !visible)
             return;
-        if (shown.length > 0) {
+        if (shown.length > 0 && list.currentIndex >= 0) {
             if (!divider(list.currentIndex))
                 accepted(shown[list.currentIndex], rows[shown[list.currentIndex]]);
         } else if (input)

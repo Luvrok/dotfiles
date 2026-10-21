@@ -4,16 +4,18 @@ import Quickshell.Io
 import qs
 import qs.widgets
 
-// btop, smaller: cpu, memory, the gpu and the network on top
-// (scripts/sysmon), the processes by cpu under them (top -c, kernel
-// threads left out), all of it every second. / searches, x ends the process under
-// the cursor (SIGTERM, SIGKILL if it still lives after 2 s), s sorts by
-// memory or cpu
+// btop, smaller, every second (scripts/sysmon): the cpu and its threads,
+// load, memory, swap and disks on the left, every gpu with its vram, the
+// network and disk io on the right. p shows the processes by cpu under
+// them (top -c, kernel threads left out), with no cursor until j/k, the
+// list sorts itself. / searches, x ends the process under the cursor
+// (SIGTERM, SIGKILL if it still lives after 2 s), s sorts by memory or cpu
 Menu {
     id: menu
 
     // the last line of scripts/sysmon
     property var stats: null
+    property bool showProcs: false
     // {pid, user, cpu, mem, name} by row
     property var procs: []
     property bool byMem: false
@@ -29,7 +31,7 @@ Menu {
 
     // kB
     function size(kb) {
-        return kb >= 1048576 ? `${(kb / 1048576).toFixed(1)}G` : `${Math.round(kb / 1024)}M`;
+        return kb >= 1073741824 ? `${(kb / 1073741824).toFixed(1)}T` : kb >= 1048576 ? `${(kb / 1048576).toFixed(1)}G` : `${Math.round(kb / 1024)}M`;
     }
 
     // bytes a second
@@ -107,78 +109,185 @@ Menu {
         flashEnd.restart();
     }
 
+    // gpu, or igpu for a small one next to a big one, gpu2... for more
+    function gpuName(i) {
+        const gs = stats?.gpus ?? [];
+        if (gs.length < 2)
+            return "gpu";
+        if (gs[i].vramtotal < 4194304)
+            return "igpu";
+        const big = gs.filter(g => g.vramtotal >= 4194304).length;
+        return big > 1 ? `gpu${gs.slice(0, i + 1).filter(g => g.vramtotal >= 4194304).length}` : "gpu";
+    }
+
     title: "system"
     icon: "\u{f035b}"
-    status: flash !== "" ? flash : stats ? `up ${uptime(stats.uptime)} · load ${stats.load}` : ""
+    status: flash !== "" ? flash : stats ? `${stats.host} · up ${uptime(stats.uptime)}` : ""
     statusAccent: flash !== ""
+    note: stats ? `${stats.model} · ${stats.cores} cores · ${stats.threads} threads · linux ${stats.kernel}` : ""
     searchable: true
+    startOnFirst: false
     empty: "reading processes…"
-    menuWidth: ch(76)
-    lines: 14
-    hints: input ? [["enter", "list"], ["↑↓", "move"], ["q", "back"], ["esc", "close"]] : [["j/k", "move"], ["x", "end"], ["s", byMem ? "by cpu" : "by memory"], ["/", "search"], ["esc", "close"]]
+    menuWidth: ch(104)
+    lines: showProcs ? 14 : 0
+    hints: input ? [["enter", "list"], ["↑↓", "move"], ["q", "back"], ["esc", "close"]] : showProcs ? [["j/k", "move"], ["x", "end"], ["s", byMem ? "by cpu" : "by memory"], ["/", "search"], ["p", "hide"], ["esc", "close"]] : [["p", "processes"], ["/", "search"], ["esc", "close"]]
 
     body: Component {
-        Column {
-            readonly property real labelWidth: menu.ch(5)
-            readonly property real barWidth: menu.ch(26)
+        Item {
+            id: page
+
             readonly property var s: menu.stats
-            readonly property var gpu: s?.gpu ?? null
+            readonly property real half: Math.floor(width / 2)
+            readonly property real labelWidth: menu.ch(5)
+            readonly property real barWidth: menu.ch(14)
 
             width: parent?.width ?? 0
-            bottomPadding: 6
+            implicitHeight: Math.max(left.implicitHeight, right.implicitHeight) + 6
 
-            Meter {
-                width: parent.width
-                font: menu.rowFont
-                labelWidth: parent.labelWidth
-                barWidth: parent.barWidth
-                label: "cpu"
-                value: parent.s ? parent.s.cpu / 1000 : 0
-                text: parent.s ? `${Math.round(parent.s.cpu / 10)}%` : ""
-                info: parent.s?.cputemp ? `${Math.round(parent.s.cputemp / 1000)}°` : ""
+            // cpu, threads, load, memory, swap, disks
+            Column {
+                id: left
+                width: page.half
+
+                Meter {
+                    width: parent.width
+                    font: menu.rowFont
+                    labelWidth: page.labelWidth
+                    barWidth: page.barWidth
+                    label: "cpu"
+                    value: page.s ? page.s.cpu / 1000 : 0
+                    text: page.s ? `${Math.round(page.s.cpu / 10)}%` : ""
+                    info: !page.s ? "" : [page.s.freq > 0 ? `${(page.s.freq / 1000).toFixed(1)} GHz` : "", page.s.cputemp !== null ? `${Math.round(page.s.cputemp / 1000)}°` : ""].filter(t => t !== "").join(" · ")
+                }
+                Threads {
+                    width: parent.width
+                    start: 12 + page.labelWidth
+                    use: page.s?.use ?? []
+                }
+                Meter {
+                    width: parent.width
+                    font: menu.rowFont
+                    labelWidth: page.labelWidth
+                    label: "load"
+                    text: page.s?.load ?? ""
+                    info: page.s ? `${page.s.procs} procs` : ""
+                }
+                Meter {
+                    width: parent.width
+                    font: menu.rowFont
+                    labelWidth: page.labelWidth
+                    barWidth: page.barWidth
+                    label: "mem"
+                    value: page.s ? page.s.mem / page.s.memtotal : 0
+                    text: page.s ? `${menu.size(page.s.mem)} / ${menu.size(page.s.memtotal)}` : ""
+                    info: page.s ? `cache ${menu.size(page.s.cache)}` : ""
+                }
+                Meter {
+                    visible: (page.s?.swaptotal ?? 0) > 0
+                    width: parent.width
+                    font: menu.rowFont
+                    labelWidth: page.labelWidth
+                    barWidth: page.barWidth
+                    label: "swap"
+                    value: page.s ? page.s.swap / page.s.swaptotal : 0
+                    text: page.s ? `${menu.size(page.s.swap)} / ${menu.size(page.s.swaptotal)}` : ""
+                }
+                // a count, not the array: the bars stay and glide
+                Repeater {
+                    model: Math.min(page.s?.disks.length ?? 0, 4)
+
+                    delegate: Meter {
+                        required property int index
+                        readonly property var disk: page.s.disks[index] ?? ["", 1, 0]
+
+                        width: parent.width
+                        font: menu.rowFont
+                        labelWidth: page.labelWidth
+                        barWidth: page.barWidth
+                        label: "disk"
+                        value: disk[2] / disk[1]
+                        text: `${menu.size(disk[2])} / ${menu.size(disk[1])}`
+                        info: disk[0]
+                    }
+                }
             }
-            Meter {
-                width: parent.width
-                font: menu.rowFont
-                labelWidth: parent.labelWidth
-                barWidth: parent.barWidth
-                label: "mem"
-                value: parent.s ? parent.s.mem / parent.s.memtotal : 0
-                text: parent.s ? `${menu.size(parent.s.mem)} / ${menu.size(parent.s.memtotal)}` : ""
-                info: parent.s?.swaptotal > 0 ? `swap ${menu.size(parent.s.swap)}` : ""
-            }
-            Meter {
-                visible: parent.gpu !== null
-                width: parent.width
-                font: menu.rowFont
-                labelWidth: parent.labelWidth
-                barWidth: parent.barWidth
-                label: "gpu"
-                value: parent.gpu ? parent.gpu.busy / 100 : 0
-                text: parent.gpu ? `${parent.gpu.busy}%` : ""
-                info: parent.gpu ? `${Math.round(parent.gpu.power / 1000)} W · ${Math.round(parent.gpu.temp / 1000)}°` : ""
-            }
-            Meter {
-                visible: parent.gpu !== null
-                width: parent.width
-                font: menu.rowFont
-                labelWidth: parent.labelWidth
-                barWidth: parent.barWidth
-                label: "vram"
-                value: parent.gpu ? parent.gpu.vram / parent.gpu.vramtotal : 0
-                text: parent.gpu ? `${menu.size(parent.gpu.vram)} / ${menu.size(parent.gpu.vramtotal)}` : ""
-            }
-            Meter {
-                width: parent.width
-                font: menu.rowFont
-                labelWidth: parent.labelWidth
-                label: "net"
-                text: parent.s ? `↓ ${menu.rate(parent.s.rx)}   ↑ ${menu.rate(parent.s.tx)}` : ""
+
+            // every gpu, the network, disk io
+            Column {
+                id: right
+                x: page.half
+                width: page.width - page.half
+
+                Repeater {
+                    model: page.s?.gpus.length ?? 0
+
+                    delegate: Column {
+                        id: gpu
+
+                        required property int index
+                        readonly property var g: page.s.gpus[index] ?? ({})
+
+                        width: parent.width
+
+                        Meter {
+                            width: parent.width
+                            font: menu.rowFont
+                            labelWidth: page.labelWidth
+                            barWidth: page.barWidth
+                            label: menu.gpuName(gpu.index)
+                            value: (gpu.g.busy ?? 0) / 100
+                            text: `${gpu.g.busy ?? 0}%`
+                            info: [`${Math.round((gpu.g.power ?? 0) / 1000)} W`, `${Math.round((gpu.g.temp ?? 0) / 1000)}°`, gpu.g.sclk > 0 ? `${(gpu.g.sclk / 1000).toFixed(1)} GHz` : ""].filter(t => t !== "").join(" · ")
+                        }
+                        Meter {
+                            width: parent.width
+                            font: menu.rowFont
+                            labelWidth: page.labelWidth
+                            barWidth: page.barWidth
+                            label: "vram"
+                            value: gpu.g.vramtotal > 0 ? gpu.g.vram / gpu.g.vramtotal : 0
+                            text: `${menu.size(gpu.g.vram ?? 0)} / ${menu.size(gpu.g.vramtotal ?? 0)}`
+                            info: `gtt ${menu.size(gpu.g.gtt ?? 0)}`
+                        }
+                    }
+                }
+                Meter {
+                    width: parent.width
+                    font: menu.rowFont
+                    labelWidth: page.labelWidth
+                    label: "net"
+                    text: page.s ? `↓ ${menu.rate(page.s.rates[0])}   ↑ ${menu.rate(page.s.rates[1])}` : ""
+                    info: page.s?.iface ?? ""
+                }
+                Meter {
+                    visible: (page.s?.iface ?? "") !== ""
+                    width: parent.width
+                    font: menu.rowFont
+                    labelWidth: page.labelWidth
+                    text: page.s?.ip ?? ""
+                    info: page.s ? `↓ ${menu.size(page.s.rxtotal / 1024)}   ↑ ${menu.size(page.s.txtotal / 1024)}` : ""
+                }
+                Meter {
+                    width: parent.width
+                    font: menu.rowFont
+                    labelWidth: page.labelWidth
+                    label: "io"
+                    text: page.s ? `r ${menu.rate(page.s.rates[2])}   w ${menu.rate(page.s.rates[3])}` : ""
+                }
             }
         }
     }
 
     keys: e => {
+        if (key(e, "p")) {
+            showProcs = !showProcs;
+            return true;
+        }
+        // the search needs the list
+        if (key(e, "/"))
+            showProcs = true;
+        if (!showProcs)
+            return false;
         if (key(e, "x"))
             end(procs[current]);
         else if (key(e, "s")) {
@@ -214,10 +323,11 @@ Menu {
         }
     }
 
-    // a toprc would change the columns, so none: HOME and XDG_CONFIG_HOME
-    // point at an empty dir. the C locale for dots in the numbers
+    // only while the list is out. a toprc would change the columns, so
+    // none: HOME and XDG_CONFIG_HOME point at an empty dir. the C locale
+    // for dots in the numbers
     Process {
-        running: true
+        running: menu.showProcs
         command: ["top", "-b", "-c", "-d", "1", "-w", "512", "-e", "m"]
         environment: ({
                 LC_ALL: "C",
@@ -226,6 +336,10 @@ Menu {
             })
         stdout: SplitParser {
             onRead: line => menu.parse(line)
+        }
+        onRunningChanged: {
+            menu.frames = 0;
+            menu.frame = [];
         }
     }
 

@@ -346,7 +346,7 @@ Hyprland Lua, QML and shell, no nix in them.
 | `nixos/services/hyprland/quickshell/shell.qml` | bar and wallpaper per monitor, the menus, the ipc targets |
 | `nixos/services/hyprland/quickshell/{Bar,Wallpaper,Hypr,Theme}.qml` | the bar (tags, the open tag's windows as squares, status), `output * bg`, the bar's Hyprland state, gruvbox colors |
 | `nixos/services/hyprland/quickshell/Menu.qml` | rofi -dmenu: the menu window, filter, list, keys, built from `widgets/` |
-| `nixos/services/hyprland/quickshell/widgets/` | the menu parts: `MenuHead` (icon, title, status, pulse), `SearchField` (the text line), `MenuRow`, `KeyHints`, `Meter` (the system menu's bars) |
+| `nixos/services/hyprland/quickshell/widgets/` | the menu parts: `MenuHead` (icon, title, status, pulse), `SearchField` (the text line), `MenuRow`, `KeyHints`, `Meter` and `Threads` (the system menu's bars) |
 | `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass. And System (a small btop) and Calendar |
 | `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `wifi` (iwd over d-bus), `apps` (the kill menu's apps), `sysmon` (the system menu's numbers), `askpass` and `pinentry` (`hypr-askpass`, `hypr-pinentry` in PATH) |
 
@@ -414,14 +414,20 @@ Hyprland Lua, QML and shell, no nix in them.
   lives on after its window closes (no tray here). Enter TERMs the app and
   everything it started, KILL after 2 s. alt+p lists all processes like
   rofi-killer.
-- System ($mod+Escape, a click on the bar's memory) is a small btop:
-  cpu, memory, the gpu, vram and the network as bars on top, from
-  `scripts/sysmon` (a json line a second, /proc, sysfs, hwmon, integers
-  only so the ru decimal comma can't get in), the processes under them
-  from `top -b -c` (the last second's cpu, kernel threads left out, every
-  second, the cursor stays on its process). `/` searches, `x` ends one
-  (TERM, KILL after 2 s), `s` sorts by memory. top runs with `LC_ALL=C`
-  and an empty HOME, a toprc would change its columns.
+- System ($mod+Escape, a click on the bar's memory) is a small btop, from
+  `scripts/sysmon` (a json line a second, /proc, sysfs, hwmon, df, ip,
+  integers only so the ru decimal comma can't get in). The cpu model,
+  cores and threads under the head. Left: cpu (clock, temperature), a
+  bar for every thread, load, memory (cache), swap, disks. Right: every
+  amdgpu (load, W, temperature, clock, then vram and gtt, a small one
+  next to a big one is "igpu"), the network (the default route's
+  interface, its address, bytes since boot), disk io. `p` shows the
+  processes from `top -b -c` (the last second's cpu, kernel threads left
+  out), top runs only then. The list sorts itself every second, so it has
+  no cursor until j/k (`startOnFirst: false`), then the cursor stays on its
+  process. `/` searches, `x` ends one (TERM, KILL after 2 s), `s` sorts by
+  memory. top runs with `LC_ALL=C` and an empty HOME, a toprc would change
+  its columns.
 - Calendar ($mod+Ctrl+c, a click on the bar's date): the month with iso
   weeks, mondays first, or the year (`y`). h/j/k/l move the cursor, n/p a
   month (a year), t today, the wheel too. It slides 6% like a tag switch.
