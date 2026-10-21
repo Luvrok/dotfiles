@@ -59,6 +59,8 @@ hl.config({
     binds = {
         -- a shown scratchpad hides when the tag changes, like in sway
         hide_special_on_workspace_change = true,
+        -- $mod + wheel goes through the windows, 300 ms a step is slow
+        scroll_event_delay = 150,
     },
 
     input = {
@@ -305,6 +307,12 @@ hl.bind(mod .. " + y", hl.dsp.window.fullscreen())
 -- focusstack / pushstack: master, then the stack top to bottom, both wrap
 hl.bind(mod .. " + j", hl.dsp.layout("cyclenext"))
 hl.bind(mod .. " + k", hl.dsp.layout("cycleprev"))
+-- the same with the mouse: $mod + wheel, $mod + the side buttons. up and
+-- forward go like k
+hl.bind(mod .. " + mouse_down", hl.dsp.layout("cyclenext"))
+hl.bind(mod .. " + mouse_up", hl.dsp.layout("cycleprev"))
+hl.bind(mod .. " + mouse:275", hl.dsp.layout("cyclenext"))
+hl.bind(mod .. " + mouse:276", hl.dsp.layout("cycleprev"))
 hl.bind(mod .. " + SHIFT + j", hl.dsp.layout("swapnext"))
 hl.bind(mod .. " + SHIFT + k", hl.dsp.layout("swapprev"))
 
