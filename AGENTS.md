@@ -410,6 +410,10 @@ Hyprland Lua, QML and shell, no nix in them.
   connect and disconnect go through bluetoothctl for its result, pairing
   through `scripts/bt-pair` (expect, bluetoothctl as the agent) like
   rofi-bluetooth. A PIN the device asks for comes from the menu over stdin.
+- Hyprland and its portal come from nixpkgs without the overlays
+  (`import pkgs.path`): the dmenu fork in `nixos/overlays` changes uwsm,
+  hyprland's uwsm session file points to it, and that hyprland misses the
+  binary cache and builds from source.
 - Hyprland ships `hyprland-portals.conf`, it replaces portals.conf under
   Hyprland, so `default.nix` writes it with the termfilechooser line.
 - The Hyprland module turns on `runXdgAutostartIfNone` like the sway one,

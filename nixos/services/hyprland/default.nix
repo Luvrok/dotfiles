@@ -9,8 +9,18 @@
   ...
 }:
 
+let
+  # nixpkgs without the overlays: the dmenu fork in nixos/overlays changes
+  # uwsm, hyprland's uwsm session file points to it, so that hyprland isn't
+  # in the binary cache and builds from source
+  stock = import pkgs.path { inherit (pkgs.stdenv.hostPlatform) system; };
+in
 {
-  programs.hyprland.enable = true;
+  programs.hyprland = {
+    enable = true;
+    package = stock.hyprland;
+    portalPackage = stock.xdg-desktop-portal-hyprland;
+  };
 
   # both look in XDG_CONFIG_DIRS (/etc/xdg) after ~/.config: hyprland for
   # hypr/hyprland.lua, quickshell for quickshell/<name> (qs -c hyprland)
