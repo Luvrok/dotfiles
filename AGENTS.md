@@ -387,7 +387,9 @@ Hyprland Lua, QML and shell, no nix in them.
   and numbers the others by x, like sway-ws.
 - master is dwm tile: `layoutmsg cyclenext/swapnext` wrap like i3-tile,
   `addmaster/removemaster` are dwm's incnmaster/decnmaster ($mod+i/d).
-  monocle is sway's tabbed tag without tab bars. A workspace rule sets the
+  monocle is sway's tabbed tag without tab bars, it hides the windows
+  behind the focused one with alpha 0 through the `fadeSwitch` animation,
+  which is off, so a switch is instant. A workspace rule sets the
   layout per workspace, $mod+t/$mod+m add one at runtime
   (`hl.workspace_rule` merges into the rule of the same workspace and
   re-layouts) and send `hl.dsp.event("layout")`, the bar refetches on
