@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+# pinentry for gpg-agent on hyprland: speaks assuan with gpg-agent, the
+# quickshell askpass menu asks (Askpass.qml), like pinentry-rofi but with
+# the menu's dim. home/programs/gpg.nix picks it while the session's
+# quickshell runs, pinentry-rofi otherwise. default.nix installs it as
+# hypr-pinentry
+#   hypr-pinentry          the pinentry
+#   hypr-pinentry --check  fails when quickshell doesn't run
+
+# it answers gpg-agent whatever qs says
+set +o errexit
+
+if [ "${1:-}" = --check ]; then
+  exec qs -c hyprland ipc show >/dev/null 2>&1
+fi
+
+desc="" prompt="" error=""
+
+# assuan sends %, cr and lf as %XX
+unescape() {
+  local s=${1//\\/\\\\}
+  printf '%b' "${s//%/\\x}"
+}
+
+escape() {
+  local s=${1//%/%25}
+  s=${s//$'\r'/%0D}
+  printf '%s' "${s//$'\n'/%0A}"
+}
+
+# kind: pin, confirm or message. prints the answer, "" for esc. the wait
+# is up before the menu can answer
+ask() {
+  {
+    sleep 0.2
+    qs -c hyprland ipc call askpass query "$1" "$prompt" "$desc" "$error"
+  } >/dev/null &
+  qs -c hyprland ipc wait askpass answered
+}
+
+echo "OK Pleased to meet you"
+while IFS= read -r line; do
+  cmd=${line%% *}
+  arg=""
+  [ "$cmd" = "$line" ] || arg=${line#* }
+  case $cmd in
+    SETDESC) desc=$(unescape "$arg") ;;
+    SETPROMPT) prompt=$(unescape "$arg") ;;
+    SETERROR) error=$(unescape "$arg") ;;
+    RESET) desc="" prompt="" error="" ;;
+    GETPIN)
+      pin=$(ask pin)
+      error=""
+      if [ -n "$pin" ]; then
+        printf 'D %s\n' "$(escape "$pin")"
+      else
+        echo "ERR 83886179 Operation cancelled <Pinentry>"
+        continue
+      fi
+      ;;
+    CONFIRM)
+      if [ "$arg" = --one-button ]; then
+        ask message >/dev/null
+      elif [ -z "$(ask confirm)" ]; then
+        echo "ERR 83886194 Not confirmed <Pinentry>"
+        continue
+      fi
+      ;;
+    MESSAGE) ask message >/dev/null ;;
+    GETINFO)
+      case $arg in
+        pid) echo "D $$" ;;
+        flavor) echo "D quickshell" ;;
+        version) echo "D 1.0.0" ;;
+      esac
+      ;;
+    BYE)
+      echo "OK closing connection"
+      exit 0
+      ;;
+  esac
+  # the rest (OPTION, SETTITLE, SETOK, ...) needs nothing
+  echo OK
+done

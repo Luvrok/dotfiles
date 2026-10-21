@@ -34,13 +34,16 @@ PanelWindow {
     property string icon: ""
     property string status: ""
     property bool statusAccent: false
+    // dim text under the head, like what pinentry asks for
+    property string note: ""
     property string busy: ""
     property string activity: ""
-    // what enter does, the menu's own keys in the list, and all the keys at
-    // the bottom: [[key, what], ...], [] hides them
+    // what enter does, the menu's own keys (in the list, or with ctrl or alt
+    // in a prompt), and all the keys at the bottom: [[key, what], ...], []
+    // hides them
     property string enterHint: "pick"
     property var actions: []
-    property var hints: input && !searchable ? [["enter", enterHint], ...(lines > 0 ? [["↑↓", "move"]] : []), ["esc", "close"]] : input ? [["enter", enterHint], ["↑↓", "move"], ["tab", "list"], ["q", "back"], ["esc", "close"]] : [["j/k", "move"], ["enter", enterHint], ...actions, ...(searchable ? [["/", "search"]] : []), ["esc", "close"]]
+    property var hints: input && !searchable ? [["enter", enterHint], ...(lines > 0 ? [["↑↓", "move"]] : []), ...actions, ["esc", "close"]] : input ? [["enter", enterHint], ["↑↓", "move"], ["tab", "list"], ["q", "back"], ["esc", "close"]] : [["j/k", "move"], ["enter", enterHint], ...actions, ...(searchable ? [["/", "search"]] : []), ["esc", "close"]]
     // rows in the accent color: the connected network, the default sink
     property var active: []
     // in the list when there are no rows
@@ -56,7 +59,7 @@ PanelWindow {
     property string fontFamily: Theme.font
     property int fontSize: Theme.fontSize
     // a menu's own keys, returns true if it took the key. it gets the list's
-    // keys and every ctrl, alt or super key
+    // keys, tab and every ctrl, alt or super key
     property var keys: null
 
     property var rows: []
@@ -216,7 +219,8 @@ PanelWindow {
         if (busy !== "")
             return;
         const mods = e.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier);
-        if (keys && (!input || mods) && keys(e))
+        // tab types nothing, a prompt's menu may take it
+        if (keys && (!input || mods || k === Qt.Key_Tab) && keys(e))
             return;
         const ctrl = Qt.ControlModifier;
         const enter = k === Qt.Key_Return || k === Qt.Key_Enter;
@@ -345,11 +349,22 @@ PanelWindow {
                 font: metrics.font
             }
 
+            Text {
+                visible: root.note !== ""
+                x: 12
+                width: parent.width - 24
+                bottomPadding: 6
+                text: root.note
+                textFormat: Text.PlainText
+                wrapMode: Text.Wrap
+                color: Theme.dim
+                font: metrics.font
+            }
+
             SearchField {
                 id: field
                 width: parent.width
                 open: root.input
-                icon: root.password ? "" : root.lines > 0 ? "" : ""
                 placeholder: root.prompt
                 count: root.lines > 0 && root.rows.length > 0 ? `${root.shown.length}/${root.rows.length}` : ""
                 password: root.password

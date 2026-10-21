@@ -1,14 +1,14 @@
 import QtQuick
 import qs
 
-// the text line of a menu, for a search or a prompt: an icon, the text, a
+// the text line of a menu, for a search or a prompt: a >, the text, a
 // count on the right and a hairline under it that turns orange from the
 // left while it has the keys. it folds away when it's closed
 Item {
     id: field
 
     property bool open: true
-    property string icon: ""
+    property string icon: ""
     property string placeholder: ""
     property string count: ""
     property bool password: false

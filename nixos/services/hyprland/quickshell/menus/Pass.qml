@@ -3,9 +3,11 @@ import Quickshell
 import Quickshell.Io
 import qs
 
-// rofi-pass, simpler: pick an entry, then a field (pass, or a "key: value"
-// line), it goes to the clipboard and is cleared after 45 s. backspace in
-// an empty entry goes back to the entries
+// rofi-pass, simpler. enter on an entry types the login, tab and the
+// password into the window under the menu, like rofi-pass's autotype (an
+// "autotype:" line like "user :tab pass :enter" wins). tab opens the
+// fields (pass, or "key: value" lines): enter copies one, cleared after
+// 45 s, t types it, backspace goes back to the entries
 Menu {
     id: menu
 
@@ -15,6 +17,8 @@ Menu {
     property var fields: ({})
     property var fieldNames: []
     property string entry: ""
+    // after pass show: "type" the login, or open the "fields"
+    property string after: ""
 
     // a page no taller than its rows, the entries are a search, the
     // fields a list
@@ -34,24 +38,63 @@ Clearing in 45 seconds"
             wl-copy --primary --clear`, "sh", value]);
     }
 
+    // a field by name, any case
+    function field(name) {
+        const key = Object.keys(fields).find(k => k.toLowerCase() === name);
+        return key !== undefined ? fields[key] : undefined;
+    }
+
+    // the autotype line as steps: "=text" or a key like ":tab". user is
+    // the login, whatever the entry calls it
+    function steps() {
+        const login = ["user", "login", "username", "email", "mail"].map(k => field(k)).find(v => v !== undefined);
+        const spec = field("autotype") ?? (login !== undefined ? "user :tab pass" : "pass");
+        return spec.split(/\s+/).filter(t => t !== "").map(t => t.startsWith(":") ? t : "=" + ((t === "user" ? login : field(t)) ?? ""));
+    }
+
+    // wtype into the window that gets focus back, the secrets go over
+    // stdin. the menu stays loaded until it's done
+    function type(list) {
+        hide();
+        typer.running = true;
+        typer.write(list.join("\n") + "\n");
+        typer.stdinEnabled = false;
+    }
+
+    // pinentry needs the keyboard, so out of the way while pass runs
+    function open(name, next) {
+        hide();
+        entry = name;
+        after = next;
+        show_.running = true;
+    }
+
     title: entry === "" ? "pass" : entry
     icon: "\u{f0306}"
     prompt: "search"
     input: true
-    enterHint: entry === "" ? "open" : "copy"
-    actions: entry === "" ? [] : [["⌫", "back"]]
+    enterHint: entry === "" ? "type" : "copy"
+    actions: entry === "" ? [["tab", "fields"]] : [["t", "type"], ["⌫", "back"]]
     lines: 15
+
+    keys: e => {
+        const pick = current >= 0 ? rows[current] : "";
+        if (entry === "" && e.key === Qt.Key_Tab && pick !== "")
+            open(pick, "fields");
+        else if (entry !== "" && key(e, "t") && current >= 0)
+            type(["=" + fields[fieldNames[current]]]);
+        else
+            return false;
+        return true;
+    }
 
     onAccepted: (index, text) => {
         if (index < 0) {
             hide();
             done();
-        } else if (entry === "") {
-            // pinentry needs the keyboard, so out of the way while pass runs
-            hide();
-            entry = text;
-            show_.running = true;
-        } else {
+        } else if (entry === "")
+            open(text, "type");
+        else {
             hide();
             copy(fields[fieldNames[index]]);
             done();
@@ -98,7 +141,28 @@ Clearing in 45 seconds"
             fields.pass = lines[0];
             menu.fields = fields;
             menu.fieldNames = Object.keys(fields).sort();
-            menu.page(menu.fieldNames);
+            if (menu.after === "type")
+                menu.type(menu.steps());
+            else
+                menu.page(menu.fieldNames);
         }
+    }
+
+    // one step a line, :tab :enter :space :delay or =text
+    Process {
+        id: typer
+        stdinEnabled: true
+        command: ["sh", "-c", `
+            sleep 0.4
+            while IFS= read -r s; do
+                case $s in
+                    :tab) wtype -k Tab ;;
+                    :enter) wtype -k Return ;;
+                    :space) wtype -k space ;;
+                    :delay) sleep 1 ;;
+                    =?*) printf '%s' "\${s#=}" | wtype -d 12 - ;;
+                esac
+            done`]
+        onExited: menu.done()
     }
 }

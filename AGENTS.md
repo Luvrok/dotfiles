@@ -348,15 +348,18 @@ Hyprland Lua, QML and shell, no nix in them.
 | `nixos/services/hyprland/quickshell/Menu.qml` | rofi -dmenu: the menu window, filter, list, keys, built from `widgets/` |
 | `nixos/services/hyprland/quickshell/widgets/` | the menu parts: `MenuHead` (icon, title, status, pulse), `SearchField` (the text line), `MenuRow`, `KeyHints` |
 | `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass |
-| `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `askpass` (`hypr-askpass` in PATH) |
+| `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `wifi` (iwd over d-bus), `apps` (the kill menu's apps), `askpass` and `pinentry` (`hypr-askpass`, `hypr-pinentry` in PATH) |
 
 - Both configs sit in `/etc/xdg` and are found through `XDG_CONFIG_DIRS`,
   `~/.config/hypr/hyprland.lua` or `~/.config/quickshell/hyprland` would win.
   On another distro copy them there.
 - hyprland.lua starts `qs -c hyprland` and talks to it over Quickshell ipc:
   `qs -c hyprland ipc call menu open <name>` (a second press closes it),
-  `bar toggle`, `record stop`. `hypr-askpass` calls `askpass ask <prompt>`
-  and prints what `qs ipc wait askpass answered` gets.
+  `bar toggle`, `record stop`. `hypr-askpass` calls `askpass ask <prompt>`,
+  `hypr-pinentry` `askpass query <kind> <prompt> <desc> <error>`, both print
+  what `qs ipc wait askpass answered` gets. The askpass menu has its own
+  loader (`asking`), not `menu`, so it opens over a hidden menu that waits
+  for it (pass runs gpg, gpg asks).
 - A menu is a layer-shell window with exclusive keyboard focus and a
   `HyprlandFocusGrab`: esc or a click outside closes it, like rofi exiting the
   script. Every page is a `show(rows)` call. While a command runs the menu
@@ -365,36 +368,61 @@ Hyprland Lua, QML and shell, no nix in them.
 - The look is the eww wifi menu (`home/programs/eww/wifi-menu`), the
   parts live in `widgets/` so a change there is a change in every menu: a
   head with an icon, title, status (`statusAccent` for an "on") and a pulse
-  (`busy` blocks the keys, `activity` doesn't), the text line (an icon,
-  the text, the count, a hairline that turns orange from the left while it
-  has the keys, it folds away when closed), the rows, and the keys at the
+  (`busy` blocks the keys, `activity` doesn't), a dim `note` (what gpg
+  says about the key), the text line (a `>`, the text, the count, a
+  hairline that turns orange from the left while it has the keys, it folds
+  away when closed), the rows, and the keys at the
   bottom (`[[key, what], ...]`, a dot after each). A row is `"name\tinfo"`
   (info dim on the right) or `""` (a divider the cursor skips), `active`
   rows are orange, `empty` fills a list with no rows. Rows are things to
   pick, actions are keys (`actions` in the hints: wifi `r`/`d`, bluetooth
-  `o`/`s`/`p`/`t`/`a`/`v`, translate `alt+p`..., backspace or `h` goes back
-  in pass). Every menu sits 10px under the bar and 10px from the right,
+  `o`/`s`/`p`/`t`/`a`/`v`, translate `alt+p`..., kill `alt+p`, pass `tab`
+  and `t`, backspace or `h` goes back in pass). Every menu sits 10px under the bar and 10px from the right,
   Hyprland slides it in from the right edge, fades it and dims the screen
   around it (layer rule for `menu`: `animation = "slide right"`,
   `dim_around`, `decoration.dim_around` as strong as `dim_special`). Inside,
   new rows come in one after another and the cursor glides.
-- Search: `input` gives the text line the keys. Run, clipboard, the pass
-  entries, translate's pages and the prompts open with it, q types there.
-  A `searchable` menu (wifi, bluetooth, kill) opens on its list, `/` opens
+- Search: `input` gives the text line the keys. Run, clipboard, kill, the
+  pass entries, translate's pages and the prompts open with it, q types
+  there. A `searchable` menu (wifi, bluetooth) opens on its list, `/` opens
   the search, q in an empty search goes back to the list, tab too but
   keeps the filter, q in the list drops the filter. Esc always closes.
 - The bluetooth adapter shows up a moment after Quickshell first asks
   BlueZ, so the menu follows it live (`onAdapterChanged`, the adapter's
   signals, a 1 s relist) instead of reading it once. A scan doesn't block
   the keys, devices come in as they're found.
-- Run lists every executable in PATH plus the history, like `dmenu_path`
-  in rofi-menu. On NixOS that's a few thousand (coreutils and the like),
-  not only apps.
+- Wifi reads iwd over d-bus like the eww wifi menu (`scripts/wifi`):
+  `GetOrderedNetworks` gives the signal in dBm * 100, strongest first. The
+  list is there at once, a scan fills it in every 0.5 s and doesn't block
+  the keys. iwctl prints 4 stars for every network and greys the weak
+  ones out with color codes, so counting stars gave full bars everywhere.
+- Run lists the apps from their desktop entries (`DesktopEntries`,
+  shell.qml reads them at start, it's slow the first time), most used first
+  (`~/.local/share/hypr-run`, "count<tab>id"). Typed text with no match runs
+  as a command (`;` at the end: in a terminal). Every executable in PATH,
+  like rofi-menu's `dmenu_path`, is thousands on NixOS.
+- Kill lists apps (`scripts/apps`): every process with a wayland or x11
+  connection, found through `ss -xp` (the peers of the sockets' server
+  ends), folded into its topmost such process, with its windows from
+  `hyprctl clients`. One without a window is "background", like an app that
+  lives on after its window closes (no tray here). Enter TERMs the app and
+  everything it started, KILL after 2 s. alt+p lists all processes like
+  rofi-killer.
+- Pass: enter types the login, tab and the password with wtype into the
+  window under the menu, like rofi-pass's autotype (`autotype:` in the
+  entry wins, the login is `user`, `login`, `username` or `email`). The
+  secrets go to wtype over stdin, not argv. Tab opens the fields, enter
+  copies one, `t` types it.
+- gpg-agent's pinentry (`home/programs/gpg.nix`) is `hypr-pinentry` while
+  `qs -c hyprland ipc show` finds quickshell, pinentry-rofi otherwise. It
+  speaks assuan itself and asks through the askpass menu (pin, confirm,
+  message), so it dims like the other menus.
 - Menu keys go through `key(e, "j")`: the Qt key or the xkb keycode of the
   us letter, so j/k/r... work on the ru layout too without switching it
   (translate and clipboard search still take russian). A key fires only
   with the ctrl, alt and super it asks for (`key(e, "p", Qt.AltModifier)`),
-  ctrl+r is not r. Sizes are whole pixels, a fractional height cut off the
+  ctrl+r is not r. A menu's `keys` gets the list's keys, and in a prompt
+  tab and the keys with ctrl, alt or super. Sizes are whole pixels, a fractional height cut off the
   bottom border.
 - Animations follow picom in i3 (`home/picom.nix`): the same speeds and
   curves, a 6% `slidefade` on a tag switch, the scratchpad slides down. No
@@ -488,8 +516,9 @@ Hyprland Lua, QML and shell, no nix in them.
   Hyprland, so `default.nix` writes it with the termfilechooser line.
 - The Hyprland module turns on `runXdgAutostartIfNone` like the sway one,
   `default.nix` turns it off again.
-- gpg-agent's pinentry-rofi and the librewolf tab switcher still use rofi,
-  they are not scripts here.
+- Quickshell's JS `Array.sort` isn't stable: sorting the connected network
+  on top shuffled iwd's order. Menus use a filter or a total order.
+- The librewolf tab switcher still uses rofi, it's not a script here.
 
 Test without hardware: Hyprland needs a DRM device and doesn't start in a
 container. Quickshell runs on headless sway (see Sway) with
