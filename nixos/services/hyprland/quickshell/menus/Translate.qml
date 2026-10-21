@@ -6,8 +6,10 @@ import qs
 // rofi-translate on LibreTranslate: translate the selection, the clipboard
 // or typed text, the result goes to the clipboard and a notification.
 // russian text goes to english, the rest to russian, ":es text" picks the
-// language. enter on no row translates what's typed, so does ctrl+enter.
-// the menu pulses while the server answers
+// language. enter translates what's typed, alt+p the selection, alt+c the
+// clipboard. alt+t picks the target, alt+v shows the alternatives, alt+s
+// speaks, each for the typed text or asks for one. the menu pulses while
+// the server answers
 Menu {
     id: menu
 
@@ -20,7 +22,6 @@ Menu {
     property var languages: []
     readonly property var fallback: [["en", "English"], ["ru", "Russian"], ["es", "Spanish"], ["de", "German"], ["fr", "French"], ["ja", "Japanese"], ["zh", "Chinese"], ["ko", "Korean"], ["uk", "Ukrainian"], ["it", "Italian"]]
 
-    readonly property var actions: ["selection — перевести выделение\talt+p", "clipboard — перевести буфер\talt+c", "target — выбрать целевой язык\talt+t", "verbose — перевод + альтернативы\talt+v", "speak — озвучить\talt+s"]
 
     // menu, target, prompt or verbose. next runs on enter in target and prompt
     property string page: "menu"
@@ -227,55 +228,39 @@ Menu {
     icon: "\u{f05ca}"
     status: `${primary} ↔ ${foreign}`
     prompt: "text or :es text"
-    hint: "enter translate  alt+key action  esc"
-    location: "top-right"
+    hint: "enter translate  alt+p selection  alt+c clipboard  alt+t target  alt+v variants  alt+s speak  esc"
     menuWidth: ch(56)
-    lines: 5
+    lines: 0
 
     keys: e => {
         if (page !== "menu" || !(e.modifiers & Qt.AltModifier))
             return false;
-        const typed = menu.text;
-        switch (e.key) {
-        case Qt.Key_P:
+        const typed = menu.text.trim() !== "" ? menu.text : "";
+        if (key(e, "p"))
             paste(true);
-            break;
-        case Qt.Key_C:
+        else if (key(e, "c"))
             paste(false);
-            break;
-        case Qt.Key_T:
-            if (typed.trim() === "")
-                finish();
-            else
-                pickTarget(code => run(typed, code));
-            break;
-        case Qt.Key_V:
+        else if (key(e, "t") && typed !== "")
+            pickTarget(code => run(typed, code));
+        else if (key(e, "t"))
+            pickTarget(code => ask(`→ ${code}`, t => run(t, code)));
+        else if (key(e, "v") && typed !== "")
             verbose(typed);
-            break;
-        case Qt.Key_S:
+        else if (key(e, "v"))
+            ask("variants", verbose);
+        else if (key(e, "s") && typed !== "")
             speak(typed);
-            break;
-        default:
+        else if (key(e, "s"))
+            ask("speak", speak);
+        else
             return false;
-        }
         return true;
     }
 
     onAccepted: (index, text) => {
-        if (page === "menu") {
-            if (index === 0)
-                paste(true);
-            else if (index === 1)
-                paste(false);
-            else if (index === 2)
-                pickTarget(code => ask(`→ ${code}`, t => run(t, code)));
-            else if (index === 3)
-                ask("verbose", verbose);
-            else if (index === 4)
-                ask("speak", speak);
-            else
-                run(text);
-        } else if (page === "target") {
+        if (page === "menu")
+            run(text);
+        else if (page === "target") {
             if (index < 0)
                 finish();
             else
@@ -341,6 +326,6 @@ Menu {
             } catch (e) {}
         };
         xhr.send();
-        show(actions);
+        show([]);
     }
 }

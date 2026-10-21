@@ -365,9 +365,16 @@ Hyprland Lua, QML and shell, no nix in them.
   with an icon, title, status and the busy pulse, the entry as a dark strip
   with an orange line, a hint at the bottom. A row is `"name\tinfo"` (info
   dim on the right) or `""` (a divider the cursor skips), `active` rows are
-  orange. It slides down on open, new rows come in one after another, the
-  cursor glides. Hyprland's layer animation is off for `menu` and the shell
-  unloads a menu 150 ms after `done`, so the slide out plays.
+  orange. Rows are things to pick, actions are keys (wifi `r`/`d`,
+  bluetooth `o`/`s`/`p`/`t`, translate `alt+p`..., backspace in an empty
+  entry goes back in pass). Every menu drops from under the bar on the
+  right, new rows come in one after another, the cursor glides. Hyprland's
+  layer animation is off for `menu` and the shell unloads a menu 150 ms
+  after `done`, so the slide out plays.
+- Menu keys go through `key(e, "j")`: the Qt key or the xkb keycode of the
+  us letter, so j/k/r... work on the ru layout too without switching it
+  (translate and clipboard search still take russian). Sizes are whole
+  pixels, a fractional height cut off the bottom border.
 - Animations follow picom in i3 (`home/picom.nix`): the same speeds and
   curves, a 6% `slidefade` on a tag switch, the scratchpad slides down. No
   blur, shadows or rounding.
@@ -410,6 +417,9 @@ Hyprland Lua, QML and shell, no nix in them.
   (`hl.workspace_rule` merges into the rule of the same workspace and
   re-layouts) and send `hl.dsp.event("layout")`, the bar refetches on
   `custom>>layout`. A reload drops those runtime rules.
+- A window rule pattern has to match the whole class or title (RE2
+  FullMatch), sway matches a part: `qBittorrent$` misses
+  `org.qbittorrent.qBittorrent`, hence `.*qBittorrent$`.
 - smart_no_gaps: monocle tags get `border_size = 0`, a window rule gives
   floating windows their 1px back (window rules beat workspace rules).
 - Hyprland windows can only slide in from a screen edge, pop or gnome, not

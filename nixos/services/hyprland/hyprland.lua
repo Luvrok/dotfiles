@@ -152,12 +152,14 @@ hl.window_rule({ match = { float = true }, border_size = 1 })
 ---- windows ------
 -------------------
 
+-- a pattern has to match the whole class or title, not a part like in sway.
+-- qbittorrent's app_id is org.qbittorrent.qBittorrent
 hl.window_rule({ match = { class = "^obsidian$" }, workspace = "2 silent" })
-hl.window_rule({ match = { class = "qBittorrent$" }, workspace = "9 silent" })
+hl.window_rule({ match = { class = ".*qBittorrent$" }, workspace = "9 silent" })
 hl.window_rule({ match = { class = "^v2rayN$" }, workspace = "9 silent" })
 
 hl.window_rule({ match = { title = "^Picture-in-Picture$" }, float = true, pin = true, size = { 720, 400 } })
-hl.window_rule({ match = { title = "termfilechooser" }, float = true, size = { 1000, 700 }, center = true })
+hl.window_rule({ match = { title = ".*termfilechooser.*" }, float = true, size = { 1000, 700 }, center = true })
 hl.window_rule({ match = { class = "^dragon-drop$" }, float = true, center = true })
 hl.window_rule({ match = { class = "^ffplay$", title = "^android-webcam$" }, float = true })
 

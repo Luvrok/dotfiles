@@ -4,7 +4,8 @@ import Quickshell.Io
 import qs
 
 // rofi-pass, simpler: pick an entry, then a field (pass, or a "key: value"
-// line), it goes to the clipboard and is cleared after 45 s
+// line), it goes to the clipboard and is cleared after 45 s. backspace in
+// an empty entry goes back to the entries
 Menu {
     id: menu
 
@@ -34,7 +35,7 @@ Clearing in 45 seconds"
     title: entry === "" ? "pass" : entry
     icon: "\u{f0306}"
     prompt: "search"
-    hint: entry === "" ? "enter open  esc close" : "enter copy  esc close"
+    hint: entry === "" ? "enter open  esc close" : "enter copy  ⌫ back  esc close"
     lines: 15
 
     onAccepted: (index, text) => {
@@ -46,13 +47,17 @@ Clearing in 45 seconds"
             hide();
             entry = text;
             show_.running = true;
-        } else if (index === 0) {
-            entry = "";
-            page(entries);
         } else {
             hide();
-            copy(fields[fieldNames[index - 1]]);
+            copy(fields[fieldNames[index]]);
             done();
+        }
+    }
+
+    onBack: {
+        if (entry !== "") {
+            entry = "";
+            page(entries);
         }
     }
 
@@ -89,7 +94,7 @@ Clearing in 45 seconds"
             fields.pass = lines[0];
             menu.fields = fields;
             menu.fieldNames = Object.keys(fields).sort();
-            menu.page(["← back", ...menu.fieldNames]);
+            menu.page(menu.fieldNames);
         }
     }
 }

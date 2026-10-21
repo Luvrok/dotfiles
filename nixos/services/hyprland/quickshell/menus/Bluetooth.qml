@@ -4,21 +4,22 @@ import Quickshell.Io
 import Quickshell.Bluetooth
 import qs
 
-// rofi-bluetooth: power, scan, pairable, discoverable and the devices, then a
-// page per device to connect, pair and trust. the menu pulses while an
-// action runs and comes back after it, like the script. connected devices
-// are orange. connect and pair go through bluetoothctl, it says if they
-// worked and is the agent for pin codes (scripts/bt-pair)
+// rofi-bluetooth on one page: the rows are the devices, connected ones
+// orange. keys do the rest, on the device under the cursor (enter connects
+// or disconnects, p pairs or forgets, t trusts) or on the adapter (o power,
+// s scan, a pairable, v discoverable). the menu pulses while an action runs.
+// connect and pair go through bluetoothctl, it says if they worked and is
+// the agent for pin codes (scripts/bt-pair)
 Menu {
     id: menu
 
     readonly property BluetoothAdapter adapter: Bluetooth.defaultAdapter
-    readonly property string divider: ""
-    // main, device or code
-    property string page: "main"
-    // the main page's devices, by row
+    // the rows' devices
     property var devices: []
+    // the device an action runs on, the cursor stays on it
     property BluetoothDevice device: null
+    // a pin or passkey page for bt-pair
+    property bool asking: false
     // a scan the menu started, esc stops it
     property bool scanning: false
 
@@ -26,51 +27,41 @@ Menu {
         Quickshell.execDetached(["notify-send", "Bluetooth", text, "-h", "string:x-dunst-stack-tag:rofi-bluetooth", "-h", "string:x-canonical-private-synchronous:rofi-bluetooth", "-u", urgency ?? "normal", "-t", String(timeout ?? 3000)]);
     }
 
-    function list(rows, accent) {
-        input = false;
-        active = accent ?? [];
-        lines = Math.min(rows.length, 10);
-        show(rows);
-    }
-
-    function onOff(on) {
-        return on ? "on" : "off";
-    }
-
-    function yesNo(on) {
-        return on ? "yes" : "no";
-    }
-
     function alias(d) {
         return d.name || d.address;
     }
 
-    function mainPage() {
-        page = "main";
-        device = null;
+    // the dim column: connected, paired or the mac, and trusted
+    function info(d) {
+        const state = d.connected ? "connected" : d.paired ? "paired" : d.address;
+        return d.trusted ? `${state}  trusted` : state;
+    }
+
+    function refresh() {
+        asking = false;
+        input = false;
+        prompt = "";
         if (!adapter?.enabled) {
-            list(["power\toff", "exit"]);
+            devices = [];
+            active = [];
+            lines = 0;
+            show([]);
             return;
         }
         // the mac is always there, the name may not be yet after a scan
         devices = adapter.devices.values.slice();
-        const names = devices.map(d => {
+        const rows = devices.map(d => {
             const unnamed = !d.name || d.name === d.address || d.name === d.address.replace(/:/g, "-");
-            return `${unnamed ? "(без имени)" : d.name}\t${d.address}`;
+            return `${unnamed ? "(без имени)" : d.name}\t${info(d)}`;
         });
-        const connected = devices.map((d, i) => d.connected ? i + 5 : -1).filter(i => i >= 0);
-        list(["power\ton", `scan\t${onOff(adapter.discovering)}`, `pairable\t${onOff(adapter.pairable)}`, `discoverable\t${onOff(adapter.discoverable)}`, divider, ...names], connected);
-    }
-
-    function devicePage(d) {
-        page = "device";
-        device = d;
-        list([`connected\t${yesNo(d.connected)}`, `paired\t${yesNo(d.paired)}`, `trusted\t${yesNo(d.trusted)}`, divider, "back", "exit"], d.connected ? [0] : []);
+        active = devices.map((d, i) => d.connected ? i : -1).filter(i => i >= 0);
+        lines = Math.min(rows.length, 10);
+        show(rows, Math.max(0, devices.indexOf(device)));
     }
 
     // the menu pulses while it waits
     function waitFor(cond, then, ms, label) {
-        wait(label ?? "wait");
+        wait(label);
         poll.cond = cond;
         poll.then = then;
         poll.left = (ms ?? 5000) / poll.interval;
@@ -82,7 +73,7 @@ Menu {
         adapter.enabled = true;
         waitFor(() => adapter.enabled, () => {
             notify("Bluetooth включён");
-            mainPage();
+            refresh();
         }, 5000, "powering on");
     }
 
@@ -92,7 +83,7 @@ Menu {
             adapter.enabled = false;
             waitFor(() => !adapter.enabled, () => {
                 notify("Bluetooth выключен");
-                mainPage();
+                refresh();
             }, 5000, "powering off");
         } else if (adapter.state === BluetoothAdapterState.Blocked) {
             notify("Снимаю блокировку rfkill...");
@@ -108,7 +99,7 @@ Menu {
             scanning = false;
             waitFor(() => !adapter.discovering, () => {
                 notify("Поиск устройств остановлен");
-                mainPage();
+                refresh();
             }, 5000, "stopping");
         } else {
             notify("Поиск устройств... (12 сек)");
@@ -118,13 +109,23 @@ Menu {
                 adapter.discovering = false;
                 scanning = false;
                 notify("Поиск завершён");
-                mainPage();
+                refresh();
             }, 12000, "scanning");
         }
     }
 
-    function toggleConnection() {
-        const d = device;
+    // pairable or discoverable
+    function toggleAdapter(prop, name) {
+        const on = !adapter[prop];
+        adapter[prop] = on;
+        waitFor(() => adapter[prop] === on, () => {
+            notify(`${name}: ${on ? "включено" : "выключено"}`);
+            refresh();
+        }, 5000, name.toLowerCase());
+    }
+
+    function toggleConnection(d) {
+        device = d;
         const name = alias(d);
         const connect = !d.connected;
         notify(connect ? `Подключаю ${name}...` : `Отключаю ${name}...`);
@@ -135,46 +136,69 @@ Menu {
         bluetoothctl.exec(["bluetoothctl", connect ? "connect" : "disconnect", d.address]);
     }
 
-    function togglePaired() {
-        if (device.paired) {
-            device.forget();
+    function togglePaired(d) {
+        device = d;
+        if (d.paired) {
+            d.forget();
             notify("Сопряжение удалено");
             // the device is gone from bluez now
-            waitFor(() => false, mainPage, 500, "forgetting");
+            waitFor(() => false, refresh, 500, "forgetting");
         } else {
             notify("Начинаю сопряжение...");
             wait("pairing");
-            pair.exec(["expect", "-f", Quickshell.shellPath("scripts/bt-pair"), device.address]);
+            pair.exec(["expect", "-f", Quickshell.shellPath("scripts/bt-pair"), d.address]);
         }
     }
 
-    function toggleTrust() {
-        const d = device;
+    function toggleTrust(d) {
+        device = d;
         const trust = !d.trusted;
         d.trusted = trust;
         waitFor(() => d.trusted === trust, () => {
             notify(trust ? "Устройство добавлено в доверенные" : "Доверие снято");
-            devicePage(d);
+            refresh();
         }, 5000, "trusting");
     }
 
     // a pin or passkey for bt-pair
     function askCode(kind) {
-        page = "code";
+        asking = true;
         input = true;
-        lines = 0;
         active = [];
+        lines = 0;
         prompt = kind === "pin" ? "pin" : "passkey";
         show([]);
     }
 
     input: false
-    title: page === "device" && device ? alias(device) : "bluetooth"
+    title: "bluetooth"
     icon: "\u{f00af}"
-    status: page === "device" && device ? device.address : ""
-    hint: page === "code" ? "enter send  esc cancel" : "j/k move  enter pick  esc close"
-    location: "top-right"
-    menuWidth: ch(48)
+    status: !adapter ? "no adapter" : !adapter.enabled ? "off" : [adapter.pairable ? "pairable" : "", adapter.discoverable ? "discoverable" : ""].filter(s => s !== "").join("  ") || "on"
+    hint: asking ? "enter send  esc cancel" : adapter?.enabled ? "enter connect  p pair  t trust  s scan  o power  a pairable  v discoverable  esc" : "o power on  esc"
+    menuWidth: ch(52)
+
+    keys: e => {
+        if (asking || !adapter)
+            return false;
+        const d = current >= 0 ? devices[current] : null;
+        if (key(e, "o"))
+            togglePower();
+        else if (!adapter.enabled)
+            return false;
+        else if (key(e, "s"))
+            toggleScan();
+        else if (key(e, "a"))
+            toggleAdapter("pairable", "Pairable");
+        else if (key(e, "v"))
+            toggleAdapter("discoverable", "Discoverable");
+        else if (key(e, "p") && d)
+            togglePaired(d);
+        else if (key(e, "t") && d)
+            toggleTrust(d);
+        else
+            return false;
+        return true;
+    }
 
     // the scan would run on with no one to stop it
     onCancelled: {
@@ -183,55 +207,11 @@ Menu {
     }
 
     onAccepted: (index, text) => {
-        if (page === "code") {
+        if (asking) {
             wait("pairing");
-            prompt = "";
             pair.write(text + "\n");
-            return;
-        }
-        if (page === "main" && adapter?.enabled) {
-            if (index === 0)
-                togglePower();
-            else if (index === 1)
-                toggleScan();
-            else if (index === 2) {
-                const on = !adapter.pairable;
-                adapter.pairable = on;
-                waitFor(() => adapter.pairable === on, () => {
-                    notify(`Pairable: ${on ? "включено" : "выключено"}`);
-                    mainPage();
-                });
-            } else if (index === 3) {
-                const on = !adapter.discoverable;
-                adapter.discoverable = on;
-                waitFor(() => adapter.discoverable === on, () => {
-                    notify(`Discoverable: ${on ? "включено" : "выключено"}`);
-                    mainPage();
-                });
-            } else if (index > 4)
-                devicePage(devices[index - 5]);
-            else
-                cancel();
-            return;
-        }
-        if (page === "main" && index === 0 && adapter) {
-            togglePower();
-            return;
-        }
-        if (page === "device") {
-            if (index === 0)
-                toggleConnection();
-            else if (index === 1)
-                togglePaired();
-            else if (index === 2)
-                toggleTrust();
-            else if (index === 4)
-                mainPage();
-            else
-                cancel();
-            return;
-        }
-        cancel();
+        } else if (index >= 0)
+            toggleConnection(devices[index]);
     }
 
     Timer {
@@ -266,7 +246,7 @@ Menu {
                 menu.notify(success);
             else
                 menu.notify(failure, "critical");
-            menu.devicePage(menu.device);
+            menu.refresh();
         }
     }
 
@@ -276,8 +256,8 @@ Menu {
         stdout: SplitParser {
             onRead: line => menu.askCode(line)
         }
-        onExited: menu.devicePage(menu.device)
+        onExited: menu.refresh()
     }
 
-    Component.onCompleted: mainPage()
+    Component.onCompleted: refresh()
 }

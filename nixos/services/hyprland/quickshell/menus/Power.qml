@@ -22,7 +22,6 @@ Menu {
     input: false
     title: names[current] ?? ""
     hint: ""
-    location: "right"
     menuWidth: 100
     lines: 5
     padV: 16

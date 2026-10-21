@@ -5,16 +5,18 @@ import Quickshell.Hyprland
 
 // rofi -dmenu in quickshell, drawn like the eww wifi menu
 // (home/programs/eww/wifi-menu): title and status on top, the rows, a key
-// hint below. it slides down when it opens, the rows come in one after
-// another and the cursor glides. a menu in menus/ sets it up and calls
-// show(rows) for every page, like a rofi call. "name\tinfo" puts info in a
-// dim column on the right, "" is a divider. esc or a click outside closes
-// the whole menu, like rofi exiting the script
+// hint below. it slides down from under the bar on the right, the rows come
+// in one after another and the cursor glides. a menu in menus/ sets it up
+// and calls show(rows) for every page, like a rofi call. rows are things to
+// pick, actions are keys. "name\tinfo" puts info in a dim column on the
+// right, "" is a divider. esc or a click outside closes the whole menu, like
+// rofi exiting the script
 PanelWindow {
     id: root
 
     // with an entry the rows filter as you type (case insensitive, every word
-    // must match). without one j/k/l/q and g/G work too
+    // must match). without one j/k/l/q and g/G work too. letter keys go by
+    // where they are on the keyboard, so they work on the ru layout too
     property bool input: true
     property bool password: false
     // the entry's placeholder
@@ -29,8 +31,8 @@ PanelWindow {
     property string hint: input ? "enter pick  esc close" : "j/k move  enter pick  esc close"
     // rows in the accent color: the connected network, the default sink
     property var active: []
-    // "center", "top" or "top-right" under the bar, "right"
-    property string location: "center"
+    // "top-right" or "top" under the bar, "center", "right"
+    property string location: "top-right"
     property real menuWidth: 520
     // list height in rows, 0 hides the list
     property int lines: 10
@@ -58,6 +60,8 @@ PanelWindow {
 
     // index into rows, -1 for the typed text (enter with no match, ctrl+enter)
     signal accepted(int index, string text)
+    // backspace in an empty entry
+    signal back
     signal cancelled
     // the shell unloads the menu
     signal done
@@ -156,12 +160,20 @@ PanelWindow {
             accepted(-1, entry.text);
     }
 
+    // xkb keycodes of the us letters
+    readonly property var codes: ({ a: 38, c: 54, d: 40, e: 26, g: 42, h: 43, j: 44, k: 45, l: 46, m: 58, n: 57, o: 32, p: 33, q: 24, r: 27, s: 39, t: 28, u: 30, v: 55, w: 25 })
+
+    // a letter key by its us name, on any layout
+    function key(e, letter) {
+        return e.key === Qt["Key_" + letter.toUpperCase()] || e.nativeScanCode === codes[letter];
+    }
+
     function handleKey(e) {
         const k = e.key;
         e.accepted = true;
         if (closing)
             return;
-        if (k === Qt.Key_Escape || (!input && k === Qt.Key_Q)) {
+        if (k === Qt.Key_Escape || (!input && key(e, "q"))) {
             cancel();
             return;
         }
@@ -170,32 +182,35 @@ PanelWindow {
         if (keys && keys(e))
             return;
         const ctrl = (e.modifiers & Qt.ControlModifier) !== 0;
+        const shift = (e.modifiers & Qt.ShiftModifier) !== 0;
         const enter = k === Qt.Key_Return || k === Qt.Key_Enter;
         if (enter && ctrl && input)
             accepted(-1, entry.text);
-        else if (enter || (ctrl && k === Qt.Key_M) || (!input && k === Qt.Key_L))
+        else if (enter || (ctrl && key(e, "m")) || (!input && key(e, "l")))
             accept();
-        else if (k === Qt.Key_Up || (ctrl && (k === Qt.Key_P || k === Qt.Key_K)) || (!input && k === Qt.Key_K))
+        else if (k === Qt.Key_Up || (ctrl && (key(e, "p") || key(e, "k"))) || (!input && key(e, "k")))
             move(-1, true);
-        else if (k === Qt.Key_Down || (ctrl && (k === Qt.Key_N || k === Qt.Key_J)) || (!input && k === Qt.Key_J))
+        else if (k === Qt.Key_Down || (ctrl && (key(e, "n") || key(e, "j"))) || (!input && key(e, "j")))
             move(1, true);
         else if (k === Qt.Key_PageUp)
             move(-lines, false);
         else if (k === Qt.Key_PageDown)
             move(lines, false);
-        else if (k === Qt.Key_Home || (!input && k === Qt.Key_G && !(e.modifiers & Qt.ShiftModifier)))
+        else if (k === Qt.Key_Home || (!input && key(e, "g") && !shift))
             jump(0, 1);
-        else if (k === Qt.Key_End || (!input && k === Qt.Key_G))
+        else if (k === Qt.Key_End || (!input && key(e, "g")))
             jump(shown.length - 1, -1);
-        else if (input && ctrl && k === Qt.Key_A)
+        else if (input && k === Qt.Key_Backspace && entry.text === "")
+            back();
+        else if (input && ctrl && key(e, "a"))
             entry.cursorPosition = 0;
-        else if (input && ctrl && k === Qt.Key_E)
+        else if (input && ctrl && key(e, "e"))
             entry.cursorPosition = entry.text.length;
-        else if (input && ctrl && k === Qt.Key_U)
+        else if (input && ctrl && key(e, "u"))
             entry.remove(0, entry.cursorPosition);
-        else if (input && ctrl && k === Qt.Key_W)
+        else if (input && ctrl && key(e, "w"))
             entry.text = "";
-        else if (input && ctrl && k === Qt.Key_H)
+        else if (input && ctrl && key(e, "h"))
             entry.remove(entry.cursorPosition - 1, entry.cursorPosition);
         else
             e.accepted = false;
@@ -203,7 +218,8 @@ PanelWindow {
 
     visible: false
     color: "transparent"
-    implicitWidth: menuWidth
+    // whole pixels, a fraction would cut off the bottom border
+    implicitWidth: Math.ceil(menuWidth)
     implicitHeight: frame.height
 
     anchors.top: location === "top" || location === "top-right"
@@ -233,7 +249,7 @@ PanelWindow {
         target: root
         property: "reveal"
         to: 1
-        duration: 180
+        duration: 220
         easing.type: Easing.OutCubic
     }
 
@@ -284,7 +300,7 @@ PanelWindow {
             id: frame
             y: parent.height - height
             width: parent.width
-            height: column.implicitHeight + 2
+            height: Math.ceil(column.implicitHeight) + 2
             color: Theme.bg
             border.width: 1
             border.color: Theme.border
@@ -422,7 +438,7 @@ PanelWindow {
                     highlightMoveVelocity: -1
                     highlightResizeDuration: 0
 
-                    readonly property real rowHeight: metrics.height + 2 * root.padV
+                    readonly property real rowHeight: Math.ceil(metrics.height) + 2 * root.padV
 
                     delegate: Item {
                         id: row
@@ -573,6 +589,8 @@ PanelWindow {
                     rightPadding: 12
                     topPadding: 6
                     text: root.hint
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: 2
                     elide: Text.ElideRight
                     color: Theme.dim
                     font.family: root.fontFamily

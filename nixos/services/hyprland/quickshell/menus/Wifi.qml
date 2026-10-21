@@ -3,9 +3,9 @@ import Quickshell
 import Quickshell.Io
 import qs
 
-// rofi-wifi on iwd, drawn like the eww wifi menu: it drops from the bar and
-// pulses while iwd scans. disconnect, rescan or a network, the connected one
-// first and in orange. a network iwd doesn't know asks for the password
+// rofi-wifi on iwd, drawn like the eww wifi menu: it pulses while iwd scans,
+// the rows are the networks, the connected one first and in orange. r
+// rescans, d disconnects. a network iwd doesn't know asks for the password
 Menu {
     id: menu
 
@@ -87,14 +87,19 @@ Menu {
     title: asking ? "enter password" : "wi-fi"
     icon: "\u{f05a9}"
     status: asking ? target : connected !== "" ? connected : scanned ? "offline" : ""
-    hint: asking ? "enter connect  esc cancel" : "j/k move  enter join  r rescan  esc"
-    location: "top"
+    hint: asking ? "enter connect  esc cancel" : "j/k move  enter join  r rescan  d disconnect  esc"
     menuWidth: ch(44)
 
     keys: e => {
-        if (asking || e.key !== Qt.Key_R)
+        if (asking)
             return false;
-        scan();
+        if (key(e, "r"))
+            scan();
+        else if (key(e, "d") && connected !== "") {
+            wait("disconnecting");
+            disconnector.running = true;
+        } else
+            return false;
         return true;
     }
 
@@ -109,14 +114,7 @@ Menu {
             connect(target, text);
             return;
         }
-        const headers = connected !== "" ? 2 : 1;
-        if (connected !== "" && index === 0) {
-            wait("disconnecting");
-            disconnector.running = true;
-        } else if (index === headers - 1)
-            scan();
-        else
-            connect(networks[index - headers]);
+        connect(networks[index]);
     }
     onCancelled: {
         if (asking)
@@ -140,12 +138,11 @@ Menu {
                 const found = menu.parse(text);
                 menu.scanned = true;
                 menu.networks = found.map(n => n[0]);
-                const head = menu.connected !== "" ? [`disconnect\t${menu.connected}`, "rescan"] : ["rescan"];
-                const rows = head.concat(found.map(n => menu.label(n[0], n[1], n[2])));
+                const rows = found.map(n => menu.label(n[0], n[1], n[2]));
                 menu.input = false;
                 menu.password = false;
                 const current = menu.networks.indexOf(menu.connected);
-                menu.active = current >= 0 ? [head.length + current] : [];
+                menu.active = current >= 0 ? [current] : [];
                 menu.lines = Math.min(rows.length, 10);
                 menu.show(rows);
             }

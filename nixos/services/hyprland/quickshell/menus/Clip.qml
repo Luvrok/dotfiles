@@ -15,7 +15,6 @@ Menu {
     icon: "\u{f014c}"
     prompt: "search"
     hint: "enter copy  esc keep"
-    location: "top-right"
     lines: 15
 
     onAccepted: (index, text) => {
