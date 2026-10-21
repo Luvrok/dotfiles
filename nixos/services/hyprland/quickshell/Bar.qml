@@ -6,20 +6,15 @@ import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Services.Pipewire
 
-// dwm-like bar, the twin of nixos/services/sway/eww: tags, layout, window
-// titles, status. top layer, hyprland hides it under fullscreen windows
+// dwm-like bar, the twin of nixos/services/sway/eww: tags, the windows of
+// the open tag as squares, status. hyprland hides it under fullscreen
+// windows
 PanelWindow {
     id: bar
 
     readonly property HyprlandMonitor monitor: Hyprland.monitorFor(screen)
     readonly property HyprlandWorkspace ws: monitor?.activeWorkspace ?? null
     readonly property int offset: Hypr.offset(monitor?.name ?? "")
-
-    // a title without its icons: emoji, dingbats, braille spinners and
-    // nerd font glyphs come from other fonts and sit off the baseline
-    function plain(title) {
-        return title.replace(/[\u2190-\u2bff\u2800-\u28ff\ue000-\uf8ff\ufe00-\ufe0f\u200d]|[\ud83c-\ud83e][\udc00-\udfff]|[\udb80-\udbff][\udc00-\udfff]/g, "").replace(/\s+/g, " ").trim();
-    }
 
     function dispatch(lua) {
         Hyprland.dispatch(lua);
@@ -103,8 +98,8 @@ PanelWindow {
 
                 Label {
                     id: tagLabel
-                    leftPadding: 7
-                    rightPadding: 7
+                    leftPadding: 11
+                    rightPadding: 11
                     text: tag.modelData.label
                     color: tag.selected || tag.urgent ? Theme.sel : Theme.fg
                 }
@@ -137,27 +132,18 @@ PanelWindow {
             }
         }
 
-        // 󰓒 master, [n] monocle with n windows, nothing on an empty monocle tag
-        Label {
-            leftPadding: 6
-            rightPadding: 6
-            text: {
-                const ws = bar.ws;
-                if (!ws)
-                    return "";
-                if (ws.lastIpcObject.tiledLayout !== "monocle")
-                    return "\u{f04d2}";
-                const n = Hyprland.toplevels.values.filter(t => t.workspace === ws && !t.lastIpcObject.floating).length;
-                return n > 0 ? `[${n}]` : "";
-            }
-        }
-
-        // windows on the open tag, master then the stack, floating last.
-        // equal width, orange is the last focused one of this monitor
+        // the windows of the open tag, a square each: master, the stack,
+        // floating last, top to bottom in 3 rows, then the next column, up
+        // to 30. filled is the tag's last focused one. click focuses one,
+        // the wheel goes to the next or the previous one
         Item {
-            id: titles
+            id: windows
 
-            readonly property var windows: {
+            readonly property int size: 4
+            // the same space above, between and under the rows
+            readonly property int gap: Math.floor((bar.height - 3 * size) / 4)
+            readonly property int pad: 8
+            readonly property var list: {
                 const ws = bar.ws;
                 if (!ws)
                     return [];
@@ -165,63 +151,93 @@ PanelWindow {
                     const o = t.lastIpcObject;
                     return [o.floating ? 1 : 0, o.at?.[0] ?? 0, o.at?.[1] ?? 0];
                 };
+                // a total order, sort() isn't stable here
                 return Hyprland.toplevels.values.filter(t => t.workspace === ws).sort((a, b) => {
                     const ka = key(a), kb = key(b);
-                    return ka[0] - kb[0] || ka[1] - kb[1] || ka[2] - kb[2];
-                });
+                    return ka[0] - kb[0] || ka[1] - kb[1] || ka[2] - kb[2] || a.address.localeCompare(b.address);
+                }).slice(0, 30);
             }
             readonly property string last: (bar.ws?.lastIpcObject.lastwindow ?? "").replace(/^0x/, "")
 
-            Layout.fillWidth: true
+            function address(t) {
+                return t.address.replace(/^0x/, "");
+            }
+
+            function focusAt(i) {
+                const n = list.length;
+                if (n > 0)
+                    bar.focus(`hl.dsp.focus({ window = "address:0x${address(list[(i % n + n) % n])}" })`);
+            }
+
             Layout.fillHeight: true
+            implicitWidth: list.length > 0 ? 2 * pad + Math.ceil(list.length / 3) * (size + gap) - gap : 0
 
-            Row {
+            MouseArea {
                 anchors.fill: parent
+                onWheel: w => windows.focusAt(windows.list.findIndex(t => windows.address(t) === windows.last) + (w.angleDelta.y > 0 ? -1 : 1))
+            }
 
-                Repeater {
-                    model: titles.windows
+            Repeater {
+                model: windows.list
 
-                    delegate: Item {
-                        id: win
+                delegate: Rectangle {
+                    id: square
 
-                        required property HyprlandToplevel modelData
-                        readonly property string address: modelData.address.replace(/^0x/, "")
-                        readonly property bool selected: address === titles.last
+                    required property int index
+                    required property HyprlandToplevel modelData
+                    readonly property bool active: windows.address(modelData) === windows.last
 
-                        width: titles.width / titles.windows.length
-                        height: titles.height
+                    x: windows.pad + Math.floor(index / 3) * (windows.size + windows.gap)
+                    y: windows.gap + index % 3 * (windows.size + windows.gap)
+                    width: windows.size
+                    height: windows.size
+                    color: active ? Theme.fg : "transparent"
+                    border.width: 1
+                    border.color: squareMouse.containsMouse ? Theme.selBg : Theme.fg
 
-                        Rectangle {
-                            anchors.fill: parent
-                            color: win.selected ? Theme.selBg : winMouse.containsMouse ? Theme.hover : "transparent"
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: 150
-                                    easing.type: Easing.OutQuad
-                                }
-                            }
+                    // a new one fades in, the rest glide to their new place
+                    opacity: 0
+                    Component.onCompleted: opacity = 1
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 150
                         }
-
-                        Label {
-                            width: parent.width
-                            leftPadding: 6
-                            rightPadding: 6
-                            elide: Text.ElideRight
-                            textFormat: Text.PlainText
-                            text: bar.plain(win.modelData.title)
-                            color: win.selected ? Theme.sel : Theme.fg
+                    }
+                    Behavior on x {
+                        NumberAnimation {
+                            duration: 150
+                            easing.type: Easing.OutQuad
                         }
-
-                        MouseArea {
-                            id: winMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: bar.focus(`hl.dsp.focus({ window = "address:0x${win.address}" })`)
+                    }
+                    Behavior on y {
+                        NumberAnimation {
+                            duration: 150
+                            easing.type: Easing.OutQuad
                         }
+                    }
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 150
+                        }
+                    }
+
+                    // the gap around it counts, a 4px square is a small target
+                    MouseArea {
+                        id: squareMouse
+                        anchors.centerIn: parent
+                        width: windows.size + windows.gap
+                        height: windows.size + windows.gap
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: windows.focusAt(square.index)
                     }
                 }
             }
+        }
+
+        // the free middle
+        Item {
+            Layout.fillWidth: true
         }
 
         // status

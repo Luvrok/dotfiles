@@ -344,7 +344,7 @@ Hyprland Lua, QML and shell, no nix in them.
 | `nixos/services/hyprland/default.nix` | `programs.hyprland`, `/etc/xdg/hypr/hyprland.lua`, `/etc/xdg/quickshell/hyprland`, packages, session target, portal, dconf |
 | `nixos/services/hyprland/hyprland.lua` | Hyprland config, the twin of the sway one |
 | `nixos/services/hyprland/quickshell/shell.qml` | bar and wallpaper per monitor, the menus, the ipc targets |
-| `nixos/services/hyprland/quickshell/{Bar,Wallpaper,Hypr,Theme}.qml` | the eww sway bar, `output * bg`, the bar's Hyprland state, gruvbox colors |
+| `nixos/services/hyprland/quickshell/{Bar,Wallpaper,Hypr,Theme}.qml` | the bar (tags, the open tag's windows as squares, status), `output * bg`, the bar's Hyprland state, gruvbox colors |
 | `nixos/services/hyprland/quickshell/Menu.qml` | rofi -dmenu: the menu window, filter, list, keys, built from `widgets/` |
 | `nixos/services/hyprland/quickshell/widgets/` | the menu parts: `MenuHead` (icon, title, status, pulse), `SearchField` (the text line), `MenuRow`, `KeyHints` |
 | `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass |
@@ -497,10 +497,13 @@ Hyprland Lua, QML and shell, no nix in them.
   monitor binds from warping too. The bar's clicks send one Lua function
   (`hyprctl dispatch` is `return hl.dispatch(...)`, a function works) that
   focuses and puts the cursor back, like i3's `mouse_warping output`.
-- The bar drops emoji, dingbats, braille spinners and nerd glyphs from
-  window titles (claude.ai puts a `✳` there), they come from fallback fonts
-  and sit off the baseline. The bar font is in px (14, the eww bar's 10pt
-  plus a bit), the menus' in pt.
+- The bar has no window titles and no layout symbol. The windows of the
+  open tag are 4px squares after the tags (master, the stack, floating
+  last), 3 rows with 3px above, between and under them on the 24px bar,
+  then the next column, up to 30. The filled one is the tag's last focused
+  window, a click focuses one (the gap around a square counts), the wheel
+  goes to the next or the previous one. The bar font is in px (14, the eww
+  bar's 10pt plus a bit), the menus' in pt.
 - Quickshell keeps `lastIpcObject` (layout, last window, window positions,
   floating) from its last fetch, Hypr.qml refetches workspaces and clients
   50 ms after window, workspace and custom events.
