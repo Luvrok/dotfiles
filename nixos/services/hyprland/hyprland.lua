@@ -352,14 +352,40 @@ hl.bind(mod .. " + m", set_layout("monocle", 0, 0, 0))
 hl.bind(mod .. " + f", hl.dsp.window.center())
 hl.bind(mod .. " + s", hl.dsp.window.pin())
 
--- focusmon / tagmon / tagmonstay: the window goes to the open tag of the next
+-- focusmon / tagmon: the window goes to the open tag of the next
 -- monitor. +1/-1 wrap like dwm, l/r stop at the screen edge
 hl.bind(mod .. " + comma", hl.dsp.focus({ monitor = "-1" }))
 hl.bind(mod .. " + period", hl.dsp.focus({ monitor = "+1" }))
 hl.bind(mod .. " + SHIFT + comma", hl.dsp.window.move({ monitor = "-1" }))
 hl.bind(mod .. " + SHIFT + period", hl.dsp.window.move({ monitor = "+1" }))
-hl.bind(mod .. " + CTRL + comma", hl.dsp.window.move({ monitor = "-1", follow = false }))
-hl.bind(mod .. " + CTRL + period", hl.dsp.window.move({ monitor = "+1", follow = false }))
+
+-- tagmonstay: the window stays the focused one of the tag it lands on, like
+-- dwm. focusing it marks it as that tag's last window, then focus and the
+-- cursor come back. a plain move onto a scratchpad or a fullscreen window,
+-- focusing would close or unfullscreen them
+local function tagmonstay(dir)
+    return function()
+        local w = hl.get_active_window()
+        local mon = hl.get_active_monitor()
+        local cursor = hl.get_cursor_pos()
+        if not w or not mon then
+            return
+        end
+        hl.dispatch(hl.dsp.window.move({ monitor = dir, follow = false }))
+        local target = w.monitor
+        if not target or target.name == mon.name or target.active_special_workspace
+            or (target.active_workspace and target.active_workspace.has_fullscreen) then
+            return
+        end
+        hl.dispatch(hl.dsp.focus({ window = w }))
+        hl.dispatch(hl.dsp.focus({ monitor = mon.name }))
+        if cursor then
+            hl.dispatch(hl.dsp.cursor.move({ x = cursor.x, y = cursor.y }))
+        end
+    end
+end
+hl.bind(mod .. " + CTRL + comma", tagmonstay("-1"))
+hl.bind(mod .. " + CTRL + period", tagmonstay("+1"))
 
 -- reload / quit
 hl.bind(mod .. " + F5", hl.dsp.exec_cmd("hyprctl reload"))
