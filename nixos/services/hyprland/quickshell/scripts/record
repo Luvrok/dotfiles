@@ -1,0 +1,172 @@
+#!/usr/bin/env bash
+# rofi-recording for wayland, Record.qml asks the questions and runs this.
+# wf-recorder grabs and encodes the video (x11grab is x11 only), ffmpeg adds
+# the sound, it can mix the mic and the output, wf-recorder takes one source.
+# wf-recorder records one monitor, fullscreen is the focused one
+#   record start <mode> <quality> <fps> <target> [monitor]
+#   record stop
+set -euo pipefail
+
+DIR="$HOME/HOME/screen_recordings"
+PIDFILE=/tmp/recpid
+MODEFILE=/tmp/recmode
+VAAPI_DEVICE=/dev/dri/renderD128
+# auto, vaapi, nvenc or software
+ENCODER_BACKEND=${ENCODER_BACKEND:-auto}
+OUTPUT_VOLUME=0.35
+MIC_VOLUME=3.0
+
+notify() {
+  notify-send "Screen recorder" "$1"
+}
+
+is_recording() {
+  [[ -f $PIDFILE ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null
+}
+
+stop() {
+  if is_recording; then
+    # wf-recorder finishes the video, then ffmpeg the file
+    kill -INT "$(cat "$PIDFILE")" 2>/dev/null || true
+    rm -f "$PIDFILE" "$MODEFILE"
+    sleep 1
+    notify "Recording ended"
+  else
+    rm -f "$PIDFILE" "$MODEFILE"
+    notify "No active recording"
+  fi
+}
+
+backend() {
+  if [[ $ENCODER_BACKEND != auto ]]; then
+    echo "$ENCODER_BACKEND"
+  elif [[ -e /dev/nvidia0 ]] && ffmpeg -hide_banner -encoders 2>/dev/null | grep -q h264_nvenc; then
+    echo nvenc
+  elif [[ -e $VAAPI_DEVICE ]] && ffmpeg -hide_banner -encoders 2>/dev/null | grep -q h264_vaapi; then
+    echo vaapi
+  else
+    echo software
+  fi
+}
+
+# wf-recorder codec args for a quality
+encoder() {
+  local qp=24 crf=23 rate=30M buf=60M
+  if [[ $1 == normal ]]; then qp=18 crf=18 rate=40M buf=80M; fi
+  # lossless is always software, it doesn't depend on the gpu
+  if [[ $1 == lossless ]]; then
+    echo "-c libx264 -p qp=0 -p preset=ultrafast -x yuv444p"
+    return
+  fi
+  case $(backend) in
+    nvenc) echo "-c h264_nvenc -x nv12 -p preset=p4 -p rc=constqp -p qp=$qp -p maxrate=$rate -p bufsize=$buf" ;;
+    vaapi) echo "-c h264_vaapi -d $VAAPI_DEVICE -p qp=$qp -p maxrate=$rate -p bufsize=$buf" ;;
+    *) echo "-c libx264 -x yuv420p -p preset=veryfast -p crf=$crf -p maxrate=$rate -p bufsize=$buf" ;;
+  esac
+}
+
+# a window on a visible tag, picked with slurp
+window_geometry() {
+  local ws
+  ws=$(hyprctl -j monitors | jq -c '[.[].activeWorkspace.id]')
+  hyprctl -j clients | jq -r --argjson ws "$ws" \
+    '.[] | select(.workspace.id as $w | $ws | index($w)) | "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"' |
+    slurp -r
+}
+
+start() {
+  local mode=$1 quality=$2 fps=$3 target=$4 monitor=${5:-}
+  local out geo fifo recpid
+  local video=() enc=() audio=() filter=() maps=() acodec=(-c:a aac -b:a 192k)
+
+  if is_recording; then
+    notify "Recording is already running"
+    exit 0
+  fi
+
+  case $target in
+    fullscreen) video=(-o "$(hyprctl -j monitors | jq -r '.[] | select(.focused) | .name')") ;;
+    monitor) video=(-o "$monitor") ;;
+    window)
+      geo=$(window_geometry) || exit 0
+      video=(-g "$geo")
+      ;;
+    area)
+      geo=$(slurp) || exit 0
+      video=(-g "$geo")
+      ;;
+    *)
+      notify "Unknown target: $target"
+      exit 1
+      ;;
+  esac
+
+  read -ra enc <<<"$(encoder "$quality")"
+
+  case $mode in
+    screen_only) ;;
+    screen_mic)
+      audio=(-f pulse -i "$(pactl get-default-source)")
+      filter=(-af "pan=stereo|c0=c0|c1=c0,volume=$MIC_VOLUME")
+      maps=(-map 1:a:0)
+      ;;
+    screen_output)
+      audio=(-f pulse -i "$(pactl get-default-sink).monitor")
+      filter=(-af "volume=$OUTPUT_VOLUME")
+      maps=(-map 1:a:0)
+      ;;
+    screen_mic_output)
+      audio=(-f pulse -i "$(pactl get-default-sink).monitor" -f pulse -i "$(pactl get-default-source)")
+      filter=(-filter_complex "[1:a]volume=${OUTPUT_VOLUME}[sys];[2:a]pan=stereo|c0=c0|c1=c0,volume=${MIC_VOLUME}[mic];[sys][mic]amix=inputs=2:normalize=0[aout]")
+      maps=(-map "[aout]")
+      ;;
+    *)
+      notify "Unknown mode: $mode"
+      exit 1
+      ;;
+  esac
+
+  mkdir -p "$DIR"
+  out="$DIR/recording_$(date '+%Y-%m-%d_%H-%M-%S').mkv"
+
+  if [[ $mode == screen_only ]]; then
+    wf-recorder -D "${video[@]}" "${enc[@]}" -r "$fps" -y -f "$out" >/dev/null 2>&1 &
+    recpid=$!
+  else
+    # wf-recorder -> fifo -> ffmpeg, which ends with the video (-shortest)
+    fifo=$(mktemp -u /tmp/recfifo.XXXXXX)
+    mkfifo "$fifo"
+    ffmpeg -nostdin -loglevel error -thread_queue_size 1024 -i "$fifo" "${audio[@]}" "${filter[@]}" \
+      -map 0:v:0 "${maps[@]}" -c:v copy "${acodec[@]}" -shortest "$out" >/dev/null 2>&1 &
+    wf-recorder -D "${video[@]}" "${enc[@]}" -r "$fps" -m matroska -y -f "$fifo" >/dev/null 2>&1 &
+    recpid=$!
+  fi
+
+  echo "$recpid" >"$PIDFILE"
+  echo "$mode:$target:$quality:$fps" >"$MODEFILE"
+
+  # clean up when it ends on its own
+  (
+    while kill -0 "$recpid" 2>/dev/null; do sleep 1; done
+    if [[ -n ${fifo:-} ]]; then rm -f "$fifo"; fi
+    if [[ $(cat "$PIDFILE" 2>/dev/null) == "$recpid" ]]; then
+      rm -f "$PIDFILE" "$MODEFILE"
+      sleep 1
+      notify "Recording ended"
+    fi
+  ) >/dev/null 2>&1 &
+
+  notify "Recording started: $out"
+}
+
+case ${1:-} in
+  start)
+    shift
+    start "$@"
+    ;;
+  stop) stop ;;
+  *)
+    echo "usage: record start <mode> <quality> <fps> <target> [monitor] | record stop" >&2
+    exit 1
+    ;;
+esac

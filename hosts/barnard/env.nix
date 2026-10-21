@@ -3,8 +3,9 @@
 {
   imports = [
     ../../nixos/config/barnard.nix
-    # wayland session next to i3
+    # wayland sessions next to i3
     ../../nixos/services/sway
+    ../../nixos/services/hyprland
   ];
 
   services.displayManager.sddm.setupScript = ''

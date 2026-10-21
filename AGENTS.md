@@ -1,8 +1,8 @@
 # AGENTS.md
 
 NixOS + home-manager dotfiles. This file covers the X11 desktop: i3, picom
-(pijulius fork) with animations, and the eww bar, plus its Wayland twin on
-sway. Also the embeddings and docs index on jedha, and the llama.cpp pin
+(pijulius fork) with animations, and the eww bar, plus its Wayland twins on
+sway and Hyprland (with a Quickshell bar and menus). Also the embeddings and docs index on jedha, and the llama.cpp pin
 it shares with barnard. Keep it in sync when you change how these parts
 talk to each other.
 
@@ -328,3 +328,125 @@ home-manager. Same tags, binds, scratchpads and bar, no animations.
 Test without hardware: `WLR_BACKENDS=headless WLR_HEADLESS_OUTPUTS=2
 WLR_LIBINPUT_NO_DEVICES=1 WLR_RENDERER=pixman sway -c <config>`, keys
 through `wtype -M logo -k 3 -m logo`, pictures through `grim -o HEADLESS-1`.
+
+## Hyprland (wayland)
+
+The same desktop on Hyprland next to i3 and sway, barnard only
+(`hosts/barnard/env.nix` imports it), i3 stays the default. Hyprland's own
+layouts and dispatchers do what the sway-* scripts do, Quickshell is the
+bar, the wallpaper and the menus that stand in for the rofi scripts
+(`home/local/sh/rofi-*` stay for i3 and sway). All of it lives in
+`nixos/services/hyprland/`, no home-manager. The config files are plain
+Hyprland Lua, QML and shell, no nix in them.
+
+| Path | What |
+| --- | --- |
+| `nixos/services/hyprland/default.nix` | `programs.hyprland`, `/etc/xdg/hypr/hyprland.lua`, `/etc/xdg/quickshell/hyprland`, packages, session target, portal, dconf |
+| `nixos/services/hyprland/hyprland.lua` | Hyprland config, the twin of the sway one |
+| `nixos/services/hyprland/quickshell/shell.qml` | bar and wallpaper per monitor, the menus, the ipc targets |
+| `nixos/services/hyprland/quickshell/{Bar,Wallpaper,Hypr,Theme}.qml` | the eww sway bar, `output * bg`, the bar's Hyprland state, gruvbox colors |
+| `nixos/services/hyprland/quickshell/Menu.qml` | rofi -dmenu: entry, filter, list, keys, looks like the rasi files |
+| `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass |
+| `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `askpass` (`hypr-askpass` in PATH) |
+
+- Both configs sit in `/etc/xdg` and are found through `XDG_CONFIG_DIRS`,
+  `~/.config/hypr/hyprland.lua` or `~/.config/quickshell/hyprland` would win.
+  On another distro copy them there.
+- hyprland.lua starts `qs -c hyprland` and talks to it over Quickshell ipc:
+  `qs -c hyprland ipc call menu open <name>` (a second press closes it),
+  `bar toggle`, `record stop`. `hypr-askpass` calls `askpass ask <prompt>`
+  and prints what `qs ipc wait askpass answered` gets.
+- A menu is a layer-shell window with exclusive keyboard focus and a
+  `HyprlandFocusGrab`: esc or a click outside closes it, like rofi exiting the
+  script. Every page is a `show(rows)` call, the window hides while a command
+  runs (pinentry needs the keyboard during `pass show`).
+- Animations follow picom in i3 (`home/picom.nix`): the same speeds and
+  curves, a 6% `slidefade` on a tag switch, the scratchpad slides down. No
+  blur, shadows or rounding.
+- hyprland.lua starts `hyprland-session.target` (bound to
+  `graphical-session.target`, like `sway-session.target`). The X11-only user
+  services stay off, they hang on `nixos-fake-graphical-session.target`.
+  swayidle, sway-audio-idle-inhibit, gammastep, cliphist and `xrdb -merge`
+  start from hyprland.lua like in sway.
+
+### Facts that drove the design
+
+- Hyprland 0.56 reads `hyprland.lua` (the hyprlang `.conf` is legacy, the
+  wiki only documents Lua). Dispatchers are `hl.dsp.*` values, a bind takes
+  one or a function that calls `hl.dispatch`. `hyprctl dispatch` evaluates
+  Lua too, Quickshell 0.3 knows it (`Hyprland.dispatch("hl.dsp.focus(...)")`).
+  0.56 has no `hl.dsp.reload_config` yet, the wiki is ahead, `hyprctl reload`.
+- Check a config without a session: `Hyprland --verify-config -c
+  hyprland.lua` (as root add `--i-am-really-stupid`). It parses the file and
+  runs it, bind functions only run on the key.
+- Per-monitor tags are `r~N`: the Nth workspace id the focused monitor may
+  hold, skipping ids pinned to other monitors or open there. With 1..10
+  pinned to DP-2 the second monitor's `r~1` is 11. A pin to a monitor that's
+  gone doesn't count, so the one left gets 1..9. The bar finds the main
+  monitor through `hyprctl -j workspacerules` (the monitor of workspace 1)
+  and numbers the others by x, like sway-ws.
+- Focusing a monitor focuses its tag's last focused window. A silent move
+  to the other monitor ($mod+Ctrl+comma/period) focuses the window on its
+  new tag, then focus and the cursor go back, so it's the one focused
+  there later, like dwm's tagmon. The last window of a tag goes like
+  $mod+Shift (move with focus, then back): after a silent move the focus
+  didn't stick there, the old window came back. Not onto a scratchpad or a
+  fullscreen window, focusing would close or unfullscreen them. The `l`/`r` monitor
+  selectors stop at the screen edge, the binds use `+1`/`-1`, they wrap.
+- master is dwm tile: `layoutmsg cyclenext/swapnext` wrap like i3-tile,
+  `addmaster/removemaster` are dwm's incnmaster/decnmaster ($mod+i/d).
+  monocle is sway's tabbed tag without tab bars, it hides the windows
+  behind the focused one with alpha 0 through the `fadeSwitch` animation,
+  which is off, so a switch is instant. A workspace rule sets the
+  layout per workspace, $mod+t/$mod+m add one at runtime
+  (`hl.workspace_rule` merges into the rule of the same workspace and
+  re-layouts) and send `hl.dsp.event("layout")`, the bar refetches on
+  `custom>>layout`. A reload drops those runtime rules.
+- smart_no_gaps: monocle tags get `border_size = 0`, a window rule gives
+  floating windows their 1px back (window rules beat workspace rules).
+- Hyprland windows can only slide in from a screen edge, pop or gnome, not
+  drift a few percent like picom, so they pop from 94%. Workspaces
+  (`slidefade 6%`) and special workspaces (`slidefadevert top 6%`) can.
+  Hyprland picks the switch direction by workspace id, like i3-ws-anim's tags.
+  The bar and the wallpaper have `no_anim`, fullscreen windows too.
+- A window resize in master (keys or mouse) never animates, the layout
+  forces warps in `resizeTarget`. `layoutmsg mfact` does animate, so
+  $mod+h/l use it on tiled windows. Stack heights have no layoutmsg, so
+  $mod+Shift+h/l only resize floating windows. dwindle animates keyboard
+  resizes (`misc.animate_manual_resizes`), but it splits any window, it
+  was tried and dropped.
+- Hyprland puts `gaps_in` on every side of a window and doesn't add it at the
+  screen edge: sway's inner 10 / outer 0 is `gaps_in = 5`, `gaps_out = 10`.
+- Scratchpads are special workspaces. `on_created_empty` starts the app when
+  the toggle finds none, `close_special_on_empty` drops it when the app
+  quits. hide/showall park windows in `special:hide_<tag>` and move them
+  back, tiled or floating as they were.
+- Quickshell keeps `lastIpcObject` (layout, last window, window positions,
+  floating) from its last fetch, Hypr.qml refetches workspaces and clients
+  50 ms after window, workspace and custom events.
+- wf-recorder needs `-D`: it asks for frames on damage only, on a still
+  screen it never writes and never stops. It takes one audio source, so
+  sound goes through ffmpeg (fifo, `-c:v copy`, `-shortest` ends it with
+  the video). It records one monitor, fullscreen is the focused one.
+- Quickshell.Bluetooth (BlueZ over D-Bus) gives the state and the toggles,
+  connect and disconnect go through bluetoothctl for its result, pairing
+  through `scripts/bt-pair` (expect, bluetoothctl as the agent) like
+  rofi-bluetooth. A PIN the device asks for comes from the menu over stdin.
+- Hyprland and its portal come from nixpkgs without the overlays
+  (`import pkgs.path`): the dmenu fork in `nixos/overlays` changes uwsm,
+  hyprland's uwsm session file points to it, and that hyprland misses the
+  binary cache and builds from source.
+- Hyprland ships `hyprland-portals.conf`, it replaces portals.conf under
+  Hyprland, so `default.nix` writes it with the termfilechooser line.
+- The Hyprland module turns on `runXdgAutostartIfNone` like the sway one,
+  `default.nix` turns it off again.
+- gpg-agent's pinentry-rofi and the librewolf tab switcher still use rofi,
+  they are not scripts here.
+
+Test without hardware: Hyprland needs a DRM device and doesn't start in a
+container. Quickshell runs on headless sway (see Sway) with
+`QT_QUICK_BACKEND=software`, open a menu with `qs -p <dir> ipc call menu
+open <name>`. wtype only reaches it if a virtual keyboard exists before the
+menu opens (start a `wtype -s 500000 ...` first). The bar needs Hyprland ipc,
+a small fake `.socket.sock`/`.socket2.sock` with `HYPRLAND_INSTANCE_SIGNATURE`
+set is enough.

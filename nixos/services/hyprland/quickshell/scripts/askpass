@@ -1,0 +1,16 @@
+# rofi-askpass for hyprland, for SUDO_ASKPASS or SSH_ASKPASS: the prompt is
+# a quickshell menu (Askpass.qml), this prints what was typed. esc fails,
+# like rofi did. default.nix installs it as hypr-askpass
+#   hypr-askpass [prompt]
+
+prompt=${1:-sudo password:}
+
+# the wait is up before the menu can answer
+{
+  sleep 0.2
+  qs -c hyprland ipc call askpass ask "$prompt" >/dev/null
+} &
+pw=$(qs -c hyprland ipc wait askpass answered)
+
+[ -n "$pw" ] || exit 1
+printf '%s\n' "$pw"
