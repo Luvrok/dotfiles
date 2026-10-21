@@ -346,9 +346,9 @@ Hyprland Lua, QML and shell, no nix in them.
 | `nixos/services/hyprland/quickshell/shell.qml` | bar and wallpaper per monitor, the menus, the ipc targets |
 | `nixos/services/hyprland/quickshell/{Bar,Wallpaper,Hypr,Theme}.qml` | the bar (tags, the open tag's windows as squares, status), `output * bg`, the bar's Hyprland state, gruvbox colors |
 | `nixos/services/hyprland/quickshell/Menu.qml` | rofi -dmenu: the menu window, filter, list, keys, built from `widgets/` |
-| `nixos/services/hyprland/quickshell/widgets/` | the menu parts: `MenuHead` (icon, title, status, pulse), `SearchField` (the text line), `MenuRow`, `KeyHints` |
-| `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass |
-| `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `wifi` (iwd over d-bus), `apps` (the kill menu's apps), `askpass` and `pinentry` (`hypr-askpass`, `hypr-pinentry` in PATH) |
+| `nixos/services/hyprland/quickshell/widgets/` | the menu parts: `MenuHead` (icon, title, status, pulse), `SearchField` (the text line), `MenuRow`, `KeyHints`, `Meter` (the system menu's bars) |
+| `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass. And System (a small btop) and Calendar |
+| `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `wifi` (iwd over d-bus), `apps` (the kill menu's apps), `sysmon` (the system menu's numbers), `askpass` and `pinentry` (`hypr-askpass`, `hypr-pinentry` in PATH) |
 
 - Both configs sit in `/etc/xdg` and are found through `XDG_CONFIG_DIRS`,
   `~/.config/hypr/hyprland.lua` or `~/.config/quickshell/hyprland` would win.
@@ -378,7 +378,9 @@ Hyprland Lua, QML and shell, no nix in them.
   away when closed), the rows, and the keys at the
   bottom (`[[key, what], ...]`, a dot after each). A row is `"name\tinfo"`
   (info dim on the right) or `""` (a divider the cursor skips), `active`
-  rows are orange, `empty` fills a list with no rows. Rows are things to
+  rows are orange, `empty` fills a list with no rows, `body` puts more
+  between the head and the text line (System's meters, the calendar).
+  Rows are things to
   pick, actions are keys (`actions` in the hints: wifi `r`/`d`, bluetooth
   `o`/`s`/`p`/`t`/`a`/`v`, translate `alt+p`..., kill `alt+p`, pass
   `ctrl+a` and `t`, backspace or `h` goes back in pass). Every menu sits 10px under the bar and 10px from the right,
@@ -412,6 +414,17 @@ Hyprland Lua, QML and shell, no nix in them.
   lives on after its window closes (no tray here). Enter TERMs the app and
   everything it started, KILL after 2 s. alt+p lists all processes like
   rofi-killer.
+- System ($mod+Escape, a click on the bar's memory) is a small btop:
+  cpu, memory, the gpu, vram and the network as bars on top, from
+  `scripts/sysmon` (a json line a second, /proc, sysfs, hwmon, integers
+  only so the ru decimal comma can't get in), the processes under them
+  from `top -b -c` (the last second's cpu, kernel threads left out, every
+  second, the cursor stays on its process). `/` searches, `x` ends one
+  (TERM, KILL after 2 s), `s` sorts by memory. top runs with `LC_ALL=C`
+  and an empty HOME, a toprc would change its columns.
+- Calendar ($mod+Ctrl+c, a click on the bar's date): the month with iso
+  weeks, mondays first, or the year (`y`). h/j/k/l move the cursor, n/p a
+  month (a year), t today, the wheel too. It slides 6% like a tag switch.
 - Pass: enter opens an entry's fields, enter copies one, `t` types it.
   ctrl+a (rofi-pass's autotype key) types the login, tab and the password
   with wtype into the window under the menu (`autotype:` in the entry
@@ -500,6 +513,8 @@ Hyprland Lua, QML and shell, no nix in them.
   monitor binds from warping too. The bar's clicks send one Lua function
   (`hyprctl dispatch` is `return hl.dispatch(...)`, a function works) that
   focuses and puts the cursor back, like i3's `mouse_warping output`.
+- SplitParser glues a blank line to the next one ("\ntop - ..."), match
+  lines with a leading `\s*`.
 - The bar has no window titles and no layout symbol. The windows of the
   open tag are 4px squares after the tags (master, the stack, floating
   last), 3 rows with 3px above, between and under them on the 24px bar,

@@ -228,6 +228,8 @@ hl.bind(mod .. " + SHIFT + u", hl.dsp.exec_cmd("nixos_menu"))
 hl.bind(mod .. " + SHIFT + d", qs("menu open audio"))
 hl.bind(mod .. " + SHIFT + y", qs("menu open translate"))
 hl.bind(mod .. " + CTRL + w", qs("menu open wifi"))
+hl.bind(mod .. " + Escape", qs("menu open system"))
+hl.bind(mod .. " + CTRL + c", qs("menu open calendar"))
 hl.bind(mod .. " + o", hl.dsp.exec_cmd("kitty --class movies -e yazi /media/outer-1"))
 
 -- region to the clipboard, the picture or the text on it. esc in slurp does nothing

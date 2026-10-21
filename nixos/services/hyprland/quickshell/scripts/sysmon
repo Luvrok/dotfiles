@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+# what the system menu (System.qml) shows above its processes, a json line
+# a second: cpu and memory from /proc, the amd gpu from sysfs, temperatures
+# from hwmon, network from /proc/net/dev. integers only, the locale's
+# decimal comma can't get in. cpu in tenths of a percent, memory in kB,
+# power in mW, temperatures in m°C, network in bytes a second
+set -u
+
+# the cpu sensor, the gpu and its sensors, found once
+cputemp=""
+for h in /sys/class/hwmon/hwmon*; do
+  [ -r "$h/name" ] || continue
+  case $(<"$h/name") in
+    k10temp | zenpower | coretemp | cpu_thermal) cputemp=$h/temp1_input && break ;;
+  esac
+done
+gpu=""
+for d in /sys/class/drm/card*/device; do
+  [ -r "$d/gpu_busy_percent" ] && gpu=$d && break
+done
+gpuhw=""
+if [ -n "$gpu" ]; then
+  for h in "$gpu"/hwmon/hwmon*; do gpuhw=$h; done
+fi
+
+num() {
+  local v=0
+  { v=$(<"$1"); } 2>/dev/null
+  echo "${v:-0}"
+}
+
+prev_total=0 prev_idle=0 prev_rx=0 prev_tx=0 prev_up=0
+while :; do
+  read -r up _ </proc/uptime
+  up=${up/./}
+
+  read -r _ u n s i w q sq st _ </proc/stat
+  total=$((u + n + s + i + w + q + sq + st))
+  idle=$((i + w))
+  cpu=0
+  if [ "$prev_total" -gt 0 ] && [ "$total" -gt "$prev_total" ]; then
+    cpu=$((1000 * (total - prev_total - idle + prev_idle) / (total - prev_total)))
+  fi
+  prev_total=$total prev_idle=$idle
+
+  while read -r k v _; do
+    case $k in
+      MemTotal:) memtotal=$v ;;
+      MemAvailable:) memavail=$v ;;
+      SwapTotal:) swaptotal=$v ;;
+      SwapFree:) swapfree=$v ;;
+    esac
+  done </proc/meminfo
+
+  # real interfaces only, a vpn or a bridge would count the bytes twice
+  rx=0 tx=0
+  while read -r line; do
+    name=${line%%:*}
+    case ${name// /} in lo | veth* | docker* | br-* | virbr* | podman* | tun* | wg*) continue ;; esac
+    # shellcheck disable=SC2086
+    set -- ${line#*:}
+    rx=$((rx + $1)) tx=$((tx + $9))
+  done < <(tail -n +3 /proc/net/dev)
+  rxs=0 txs=0
+  if [ "$prev_up" -gt 0 ] && [ "$up" -gt "$prev_up" ]; then
+    rxs=$((100 * (rx - prev_rx) / (up - prev_up)))
+    txs=$((100 * (tx - prev_tx) / (up - prev_up)))
+  fi
+  prev_rx=$rx prev_tx=$tx prev_up=$up
+
+  gpujson=null
+  if [ -n "$gpu" ]; then
+    power=$(num "$gpuhw/power1_average")
+    [ "$power" -gt 0 ] || power=$(num "$gpuhw/power1_input")
+    gpujson="{\"busy\":$(num "$gpu/gpu_busy_percent"),\"vram\":$(($(num "$gpu/mem_info_vram_used") / 1024)),\"vramtotal\":$(($(num "$gpu/mem_info_vram_total") / 1024)),\"power\":$((power / 1000)),\"temp\":$(num "$gpuhw/temp1_input")}"
+  fi
+
+  read -r l1 l5 l15 _ </proc/loadavg
+  printf '{"uptime":%s,"load":"%s %s %s","cpu":%s,"cputemp":%s,"mem":%s,"memtotal":%s,"swap":%s,"swaptotal":%s,"rx":%s,"tx":%s,"gpu":%s}\n' \
+    "$((up / 100))" "$l1" "$l5" "$l15" "$cpu" "$([ -n "$cputemp" ] && num "$cputemp" || echo null)" \
+    "$((memtotal - memavail))" "$memtotal" "$((swaptotal - swapfree))" "$swaptotal" "$rxs" "$txs" "$gpujson"
+  sleep 1
+done

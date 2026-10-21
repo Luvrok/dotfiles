@@ -36,6 +36,9 @@ PanelWindow {
     property bool statusAccent: false
     // dim text under the head, like what pinentry asks for
     property string note: ""
+    // more under the head, above the text line: the system menu's meters,
+    // the calendar
+    property Component body: null
     property string busy: ""
     property string activity: ""
     // what enter does, the menu's own keys (in the list, or with ctrl or alt
@@ -197,7 +200,7 @@ PanelWindow {
     }
 
     // xkb keycodes of the us keys
-    readonly property var codes: ({ "/": 61, a: 38, c: 54, d: 40, e: 26, g: 42, h: 43, j: 44, k: 45, l: 46, m: 58, n: 57, o: 32, p: 33, q: 24, r: 27, s: 39, t: 28, u: 30, v: 55, w: 25 })
+    readonly property var codes: ({ "/": 61, a: 38, b: 56, c: 54, d: 40, e: 26, f: 41, g: 42, h: 43, i: 31, j: 44, k: 45, l: 46, m: 58, n: 57, o: 32, p: 33, q: 24, r: 27, s: 39, t: 28, u: 30, v: 55, w: 25, x: 53, y: 29, z: 52 })
 
     // a key by its us name, on any layout. mods: the ctrl, alt and super it
     // needs, shift doesn't matter
@@ -391,6 +394,13 @@ PanelWindow {
                 wrapMode: Text.Wrap
                 color: Theme.dim
                 font: metrics.font
+            }
+
+            Loader {
+                active: root.body !== null
+                visible: active
+                width: parent.width
+                sourceComponent: root.body
             }
 
             SearchField {

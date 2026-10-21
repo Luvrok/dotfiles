@@ -16,6 +16,9 @@ PanelWindow {
     readonly property HyprlandWorkspace ws: monitor?.activeWorkspace ?? null
     readonly property int offset: Hypr.offset(monitor?.name ?? "")
 
+    // a menu on this monitor: the system one, the calendar
+    signal openMenu(string name)
+
     function dispatch(lua) {
         Hyprland.dispatch(lua);
     }
@@ -289,12 +292,20 @@ PanelWindow {
             }
             Sep {}
 
-            // memory, like `free -h`: left click opens btop
+            // memory, like `free -h`: left click opens the system menu, right
+            // click btop
             Label {
                 id: memory
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: Quickshell.execDetached(["kitty", "-e", "btop"])
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: e => {
+                        if (e.button === Qt.RightButton)
+                            Quickshell.execDetached(["kitty", "-e", "btop"]);
+                        else
+                            bar.openMenu("system");
+                    }
                 }
                 Process {
                     id: free
@@ -336,7 +347,7 @@ PanelWindow {
                 visible: wifi.visible
             }
 
-            // date: right click shows a calendar
+            // date: a click opens the calendar
             Label {
                 text: Qt.formatDateTime(clock.date, "dd.MM.yyyy | HH:mm")
                 SystemClock {
@@ -345,8 +356,9 @@ PanelWindow {
                 }
                 MouseArea {
                     anchors.fill: parent
-                    acceptedButtons: Qt.RightButton
-                    onClicked: Quickshell.execDetached(["kitty", "--hold", "-e", "cal", "-3"])
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: bar.openMenu("calendar")
                 }
             }
         }

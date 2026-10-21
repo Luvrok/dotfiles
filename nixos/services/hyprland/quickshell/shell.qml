@@ -39,12 +39,13 @@ ShellRoot {
         return Quickshell.screens[0];
     }
 
-    function open(name) {
+    // on the focused monitor, or on the one a bar was clicked on
+    function open(name, screen) {
         const same = menu === name;
         menu = "";
         if (same)
             return;
-        menuScreen = focusedScreen();
+        menuScreen = screen ?? focusedScreen();
         menu = name;
     }
 
@@ -69,6 +70,7 @@ ShellRoot {
             Bar {
                 screen: perScreen.modelData
                 visible: shell.barShown
+                onOpenMenu: name => shell.open(name, perScreen.modelData)
             }
         }
     }
@@ -181,6 +183,20 @@ ShellRoot {
         Wifi {
             screen: shell.menuScreen
             onDone: shell.close("wifi")
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "system"
+        System {
+            screen: shell.menuScreen
+            onDone: shell.close("system")
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "calendar"
+        Calendar {
+            screen: shell.menuScreen
+            onDone: shell.close("calendar")
         }
     }
     LazyLoader {
