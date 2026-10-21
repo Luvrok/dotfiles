@@ -27,6 +27,8 @@ PanelWindow {
     implicitHeight: Theme.barHeight
     color: Theme.barBg
     WlrLayershell.namespace: "bar"
+    // under the windows: a floating window can cover it
+    WlrLayershell.layer: WlrLayer.Bottom
 
     component Label: Text {
         color: Theme.fg

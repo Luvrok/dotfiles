@@ -168,8 +168,8 @@ hl.window_rule({
     float = true,
     fullscreen_state = "0 2",
     suppress_event = "fullscreen",
-    move = "0 24",
-    size = "monitor_w monitor_h-24",
+    move = "0 0",
+    size = "monitor_w monitor_h",
     border_size = 0,
 })
 

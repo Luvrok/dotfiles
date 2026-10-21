@@ -41,6 +41,7 @@
 
     # quickshell/scripts: record and bt-pair
     wf-recorder
+    wlr-randr
     expect
     jq
     hyprprop
