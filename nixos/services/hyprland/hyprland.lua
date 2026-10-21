@@ -349,13 +349,14 @@ hl.bind(mod .. " + m", set_layout("monocle", 0, 0, 0))
 hl.bind(mod .. " + f", hl.dsp.window.center())
 hl.bind(mod .. " + s", hl.dsp.window.pin())
 
--- focusmon / tagmon / tagmonstay: the window goes to the open tag of the next monitor
-hl.bind(mod .. " + comma", hl.dsp.focus({ monitor = "l" }))
-hl.bind(mod .. " + period", hl.dsp.focus({ monitor = "r" }))
-hl.bind(mod .. " + SHIFT + comma", hl.dsp.window.move({ monitor = "l" }))
-hl.bind(mod .. " + SHIFT + period", hl.dsp.window.move({ monitor = "r" }))
-hl.bind(mod .. " + CTRL + comma", hl.dsp.window.move({ monitor = "l", follow = false }))
-hl.bind(mod .. " + CTRL + period", hl.dsp.window.move({ monitor = "r", follow = false }))
+-- focusmon / tagmon / tagmonstay: the window goes to the open tag of the next
+-- monitor. +1/-1 wrap like dwm, l/r stop at the screen edge
+hl.bind(mod .. " + comma", hl.dsp.focus({ monitor = "-1" }))
+hl.bind(mod .. " + period", hl.dsp.focus({ monitor = "+1" }))
+hl.bind(mod .. " + SHIFT + comma", hl.dsp.window.move({ monitor = "-1" }))
+hl.bind(mod .. " + SHIFT + period", hl.dsp.window.move({ monitor = "+1" }))
+hl.bind(mod .. " + CTRL + comma", hl.dsp.window.move({ monitor = "-1", follow = false }))
+hl.bind(mod .. " + CTRL + period", hl.dsp.window.move({ monitor = "+1", follow = false }))
 
 -- reload / quit
 hl.bind(mod .. " + F5", hl.dsp.exec_cmd("hyprctl reload"))
