@@ -3,11 +3,12 @@ import Quickshell
 import Quickshell.Io
 import qs
 
-// rofi-pass, simpler. enter on an entry types the login, tab and the
-// password into the window under the menu, like rofi-pass's autotype (an
-// "autotype:" line like "user :tab pass :enter" wins). tab opens the
-// fields (pass, or "key: value" lines): enter copies one, cleared after
-// 45 s, t types it, backspace goes back to the entries
+// rofi-pass, simpler. enter on an entry opens its fields (pass, or
+// "key: value" lines): enter copies one, cleared after 45 s, t types it,
+// backspace goes back to the entries. ctrl+a on an entry or its fields
+// types the login, tab and the password into the window under the menu,
+// like rofi-pass's autotype (an "autotype:" line like "user :tab pass
+// :enter" wins)
 Menu {
     id: menu
 
@@ -17,7 +18,7 @@ Menu {
     property var fields: ({})
     property var fieldNames: []
     property string entry: ""
-    // after pass show: "type" the login, or open the "fields"
+    // after pass show: open the "fields", or "type" the login
     property string after: ""
 
     // a page no taller than its rows, the entries are a search, the
@@ -73,15 +74,18 @@ Clearing in 45 seconds"
     icon: "\u{f0306}"
     prompt: "search"
     input: true
-    enterHint: entry === "" ? "type" : "copy"
-    actions: entry === "" ? [["tab", "fields"]] : [["t", "type"], ["⌫", "back"]]
+    enterHint: entry === "" ? "open" : "copy"
+    actions: entry === "" ? [["ctrl+a", "type login"]] : [["t", "type"], ["ctrl+a", "type login"], ["⌫", "back"]]
     lines: 15
 
     keys: e => {
         const pick = current >= 0 ? rows[current] : "";
-        if (entry === "" && e.key === Qt.Key_Tab && pick !== "")
-            open(pick, "fields");
-        else if (entry !== "" && key(e, "t") && current >= 0)
+        if (key(e, "a", Qt.ControlModifier)) {
+            if (entry !== "")
+                type(steps());
+            else if (pick !== "")
+                open(pick, "type");
+        } else if (entry !== "" && key(e, "t") && current >= 0)
             type(["=" + fields[fieldNames[current]]]);
         else
             return false;
@@ -93,7 +97,7 @@ Clearing in 45 seconds"
             hide();
             done();
         } else if (entry === "")
-            open(text, "type");
+            open(text, "fields");
         else {
             hide();
             copy(fields[fieldNames[index]]);

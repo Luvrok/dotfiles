@@ -362,7 +362,11 @@ Hyprland Lua, QML and shell, no nix in them.
   for it (pass runs gpg, gpg asks).
 - A menu is a layer-shell window with exclusive keyboard focus and a
   `HyprlandFocusGrab`: esc or a click outside closes it, like rofi exiting the
-  script. Every page is a `show(rows)` call. While a command runs the menu
+  script. Hyprland still handed the keys to a window now and then (after
+  bluetooth on or a scan, not reproduced in a container), so when they
+  leave quickshell while a menu is open, it turns on-demand and exclusive
+  again 50 ms later: Hyprland focuses a layer that turns exclusive. The
+  askpass menu on top keeps quickshell active, so they don't fight. Every page is a `show(rows)` call. While a command runs the menu
   stays and pulses (`wait("scanning")`, the next `show` ends it), only pass
   hides for pinentry.
 - The look is the eww wifi menu (`home/programs/eww/wifi-menu`), the
@@ -376,8 +380,8 @@ Hyprland Lua, QML and shell, no nix in them.
   (info dim on the right) or `""` (a divider the cursor skips), `active`
   rows are orange, `empty` fills a list with no rows. Rows are things to
   pick, actions are keys (`actions` in the hints: wifi `r`/`d`, bluetooth
-  `o`/`s`/`p`/`t`/`a`/`v`, translate `alt+p`..., kill `alt+p`, pass `tab`
-  and `t`, backspace or `h` goes back in pass). Every menu sits 10px under the bar and 10px from the right,
+  `o`/`s`/`p`/`t`/`a`/`v`, translate `alt+p`..., kill `alt+p`, pass
+  `ctrl+a` and `t`, backspace or `h` goes back in pass). Every menu sits 10px under the bar and 10px from the right,
   Hyprland slides it in from the right edge, fades it and dims the screen
   around it (layer rule for `menu`: `animation = "slide right"`,
   `dim_around`, `decoration.dim_around` as strong as `dim_special`). Inside,
@@ -408,11 +412,11 @@ Hyprland Lua, QML and shell, no nix in them.
   lives on after its window closes (no tray here). Enter TERMs the app and
   everything it started, KILL after 2 s. alt+p lists all processes like
   rofi-killer.
-- Pass: enter types the login, tab and the password with wtype into the
-  window under the menu, like rofi-pass's autotype (`autotype:` in the
-  entry wins, the login is `user`, `login`, `username` or `email`). The
-  secrets go to wtype over stdin, not argv. Tab opens the fields, enter
-  copies one, `t` types it.
+- Pass: enter opens an entry's fields, enter copies one, `t` types it.
+  ctrl+a (rofi-pass's autotype key) types the login, tab and the password
+  with wtype into the window under the menu (`autotype:` in the entry
+  wins, the login is `user`, `login`, `username` or `email`). The secrets
+  go to wtype over stdin, not argv.
 - gpg-agent's pinentry (`home/programs/gpg.nix`) is `hypr-pinentry` while
   `qs -c hyprland ipc show` finds quickshell, pinentry-rofi otherwise. It
   speaks assuan itself and asks through the askpass menu (pin, confirm,

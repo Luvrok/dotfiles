@@ -303,6 +303,38 @@ PanelWindow {
         onCleared: root.cancel()
     }
 
+    // the keys stay here until esc or a click outside. hyprland hands them
+    // to a window now and then anyway (after bluetooth on, a scan), so when
+    // they leave quickshell, drop exclusive and take it back: hyprland
+    // focuses a layer that turns exclusive. the askpass menu on top keeps
+    // quickshell active, so they don't fight
+    Connections {
+        target: Qt.application
+        function onStateChanged() {
+            if (root.visible && Qt.application.state !== Qt.ApplicationActive)
+                reclaim.restart();
+        }
+    }
+
+    // a click outside closes the menu first
+    Timer {
+        id: reclaim
+        interval: 100
+        onTriggered: {
+            if (!root.visible || Qt.application.state === Qt.ApplicationActive)
+                return;
+            root.WlrLayershell.keyboardFocus = WlrKeyboardFocus.OnDemand;
+            retake.start();
+        }
+    }
+
+    // a frame later, two commits
+    Timer {
+        id: retake
+        interval: 50
+        onTriggered: root.WlrLayershell.keyboardFocus = WlrKeyboardFocus.Exclusive
+    }
+
     Timer {
         id: cascadeEnd
         interval: 200
