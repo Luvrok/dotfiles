@@ -259,8 +259,35 @@ PanelWindow {
             }
             Sep {}
 
+            // notifications that wait, a crossed bell while the popups are
+            // off. left click: the menu, right: popups off and on, middle:
+            // clear
+            Label {
+                id: bell
+                visible: Notifs.count > 0 || Notifs.quiet
+                text: (Notifs.quiet ? "\u{f009b}" : "\u{f009a}") + (Notifs.count > 0 ? ` ${Notifs.count}` : "")
+                color: Notifs.quiet ? Theme.dim : Theme.fg
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: e => {
+                        if (e.button === Qt.RightButton)
+                            Notifs.quiet = !Notifs.quiet;
+                        else if (e.button === Qt.MiddleButton)
+                            Notifs.clear();
+                        else
+                            bar.openMenu("notifications");
+                    }
+                }
+            }
+            Sep {
+                visible: bell.visible
+            }
+
             // volume: scroll ±2% unless muted, middle click mutes
             Label {
+                id: volume
                 readonly property PwNode sink: Pipewire.defaultAudioSink
                 readonly property int volume: Math.round((sink?.audio?.volume ?? 0) * 100)
 
@@ -290,12 +317,28 @@ PanelWindow {
                     }
                 }
             }
-            Sep {}
+            Sep {
+                visible: volume.text !== ""
+            }
 
-            // memory, like `free -h`: left click opens the system menu, right
-            // click btop
+            // memory in use, like `free -h`: left click opens the system
+            // menu, right click btop
             Label {
                 id: memory
+
+                // kB, free's way: 692M, 5.2G, 15G
+                function size(kb) {
+                    const g = kb / 1048576;
+                    return g >= 10 ? `${Math.floor(g)}G` : g >= 1 ? `${g.toFixed(1)}G` : `${Math.floor(kb / 1024)}M`;
+                }
+
+                function parse(text) {
+                    const kb = name => parseInt(text.match(new RegExp(`^${name}:\\s+(\\d+)`, "m"))?.[1]);
+                    const total = kb("MemTotal"), avail = kb("MemAvailable");
+                    if (!isNaN(total) && !isNaN(avail))
+                        memory.text = `${size(total - avail)}/${size(total)}`;
+                }
+
                 MouseArea {
                     anchors.fill: parent
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -307,38 +350,28 @@ PanelWindow {
                             bar.openMenu("system");
                     }
                 }
-                Process {
-                    id: free
-                    running: true
-                    command: ["free", "-h"]
-                    stdout: StdioCollector {
-                        onStreamFinished: {
-                            const mem = text.split("\n").find(l => l.startsWith("Mem"))?.split(/\s+/);
-                            if (mem)
-                                memory.text = `${mem[2]}/${mem[1]}`.replace(/i/g, "").replace(/,/g, ".");
-                        }
-                    }
+                FileView {
+                    id: meminfo
+                    path: "/proc/meminfo"
+                    onLoaded: memory.parse(text())
                 }
             }
             Sep {}
 
-            // wifi signal, hidden without wlan0 (barnard has none)
+            // wifi signal from iwd (scripts/wifi), hidden while offline or
+            // without wifi (barnard has none)
             Label {
                 id: wifi
                 visible: text !== ""
                 Process {
-                    id: iwctl
+                    id: signal
                     running: true
-                    command: ["sh", "-c", "[ -e /sys/class/net/wlan0 ] && iwctl station wlan0 show"]
+                    command: ["bash", Quickshell.shellPath("scripts/wifi"), "signal"]
                     stdout: StdioCollector {
                         onStreamFinished: {
-                            if (text === "") {
-                                wifi.text = "";
-                                return;
-                            }
-                            const line = text.split("\n").find(l => /RSSI/.test(l) && !/Average/.test(l));
-                            const rssi = parseInt(line?.trim().split(/\s+/)[1]);
-                            wifi.text = isNaN(rssi) ? "\u{f092b}" : rssi >= -50 ? "\u{f0928}" : rssi >= -60 ? "\u{f0925}" : rssi >= -70 ? "\u{f0922}" : rssi >= -80 ? "\u{f091f}" : "\u{f092b}";
+                            // dbm * 100
+                            const dbm = parseInt(text) / 100;
+                            wifi.text = isNaN(dbm) ? "" : dbm >= -50 ? "\u{f0928}" : dbm >= -60 ? "\u{f0925}" : dbm >= -70 ? "\u{f0922}" : dbm >= -80 ? "\u{f091f}" : "\u{f092b}";
                         }
                     }
                 }
@@ -370,8 +403,8 @@ PanelWindow {
         running: true
         repeat: true
         onTriggered: {
-            free.running = true;
-            iwctl.running = true;
+            meminfo.reload();
+            signal.running = true;
         }
     }
 }

@@ -17,8 +17,16 @@
   };
 
   # both look in XDG_CONFIG_DIRS (/etc/xdg) after ~/.config: hyprland for
-  # hypr/hyprland.lua, quickshell for quickshell/<name> (qs -c hyprland)
-  environment.etc."xdg/hypr/hyprland.lua".source = ./hyprland.lua;
+  # hypr/hyprland.lua, quickshell for quickshell/<name> (qs -c hyprland).
+  # hyprland checks its config while the system builds, so an update that
+  # changes the lua api fails nixos-rebuild, not the next login
+  environment.etc."xdg/hypr/hyprland.lua".source =
+    pkgs.runCommand "hyprland.lua" { } ''
+      mkdir run
+      XDG_RUNTIME_DIR=$PWD/run HOME=$PWD \
+        ${config.programs.hyprland.package}/bin/Hyprland --verify-config -c ${./hyprland.lua} --i-am-really-stupid
+      cp ${./hyprland.lua} $out
+    '';
   environment.etc."xdg/quickshell/hyprland".source = ./quickshell;
 
   environment.systemPackages = with pkgs; [
@@ -68,6 +76,21 @@
     bindsTo = [ "graphical-session.target" ];
     wants = [ "graphical-session-pre.target" ];
     after = [ "graphical-session-pre.target" ];
+  };
+
+  # quickshell is the notification server here (quickshell/Notifs.qml). dunst
+  # (home/services/dunst.nix) starts on the first notification over d-bus,
+  # so it stays off while a hyprland runs. i3 and sway still get it
+  systemd.user.units."dunst.service" = {
+    overrideStrategy = "asDropin";
+    text = ''
+      [Service]
+      ExecCondition=${pkgs.writeShellScript "dunst-not-in-hyprland" ''
+        lock=$XDG_RUNTIME_DIR/hypr/''${HYPRLAND_INSTANCE_SIGNATURE:-none}/hyprland.lock
+        read -r pid 2>/dev/null <"$lock" && kill -0 "$pid" 2>/dev/null && exit 1
+        exit 0
+      ''}
+    '';
   };
 
   # gtk on wayland reads theme, icons, font and cursor from dconf, like in

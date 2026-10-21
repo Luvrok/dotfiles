@@ -12,7 +12,8 @@ import qs
 Menu {
     id: menu
 
-    readonly property string dev: "wlan0"
+    // iwd's first station, scripts/wifi finds it
+    property string dev: ""
     // the network iwd is on
     property string connected: ""
     property bool scanned: false
@@ -46,7 +47,9 @@ Menu {
         }
         // iwd sorts by signal, the connected one goes on top. no sort(),
         // it isn't stable here
-        const found = [...data.networks.filter(n => n.connected), ...data.networks.filter(n => !n.connected)];
+        dev = data.dev ?? "";
+        const nets = data.networks ?? [];
+        const found = [...nets.filter(n => n.connected), ...nets.filter(n => !n.connected)];
         const conn = found.find(n => n.connected);
         connected = conn ? conn.ssid : "";
         if (asking || busy !== "")
@@ -138,7 +141,7 @@ Menu {
 
     Process {
         id: scanner
-        command: ["bash", Quickshell.shellPath("scripts/wifi"), menu.dev, "scan"]
+        command: ["bash", Quickshell.shellPath("scripts/wifi"), "scan"]
         stdout: SplitParser {
             onRead: line => menu.list(line)
         }

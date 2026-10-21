@@ -9,9 +9,8 @@ import qs
 // list follows bluez live: the adapter can show up after the menu opens,
 // devices come in during a scan. keys act on the device under the cursor
 // (enter connects or disconnects, p pairs or forgets, t trusts) or on the
-// adapter (o power, s scan, a pairable, v discoverable). connect and pair go
-// through bluetoothctl, it says if they worked and is the agent for pin
-// codes (scripts/bt-pair)
+// adapter (o power, s scan, a pairable, v discoverable). pairing goes
+// through bluetoothctl, it's the agent for pin codes (scripts/bt-pair)
 Menu {
     id: menu
 
@@ -129,16 +128,24 @@ Menu {
         }, 5000, name.toLowerCase());
     }
 
+    // bluez says when it's done: the state leaves connecting or
+    // disconnecting
     function toggleConnection(d) {
         device = d;
         const name = alias(d);
         const connect = !d.connected;
         notify(connect ? `Подключаю ${name}...` : `Отключаю ${name}...`);
-        wait(connect ? "connecting" : "disconnecting");
-        bluetoothctl.ok = connect ? "Connection successful" : "Successful";
-        bluetoothctl.success = connect ? `${name} подключён` : `${name} отключён`;
-        bluetoothctl.failure = connect ? `Не удалось подключить ${name}` : `Не удалось отключить ${name}`;
-        bluetoothctl.exec(["bluetoothctl", connect ? "connect" : "disconnect", d.address]);
+        if (connect)
+            d.connect();
+        else
+            d.disconnect();
+        waitFor(() => d.state !== BluetoothDeviceState.Connecting && d.state !== BluetoothDeviceState.Disconnecting, () => {
+            if (d.connected === connect)
+                notify(connect ? `${name} подключён` : `${name} отключён`);
+            else
+                notify(connect ? `Не удалось подключить ${name}` : `Не удалось отключить ${name}`, "critical");
+            refresh();
+        }, 30000, connect ? "connecting" : "disconnecting");
     }
 
     function togglePaired(d) {
@@ -271,25 +278,6 @@ Menu {
                 stop();
                 then();
             }
-        }
-    }
-
-    Process {
-        id: bluetoothctl
-
-        property string ok
-        property string success
-        property string failure
-
-        stdout: StdioCollector {
-            id: btOut
-        }
-        onExited: {
-            if (btOut.text.includes(ok))
-                menu.notify(success);
-            else
-                menu.notify(failure, "critical");
-            menu.refresh();
         }
     }
 

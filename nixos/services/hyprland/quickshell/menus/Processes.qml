@@ -25,6 +25,9 @@ Menu {
     property int frameTotal: 0
     property int frameSeen: 0
     property int frames: 0
+    // the process columns by name, from top's header
+    property var cols: ({})
+    property int colCount: 0
 
     // kB
     function size(kb) {
@@ -74,19 +77,29 @@ Menu {
                 cpu = 100 - parseFloat(idle[1]);
             return;
         }
-        // PID USER PR NI VIRT RES SHR S %CPU %MEM TIME+ COMMAND
-        const m = line.match(/^\s*(\d+)\s+(\S+)\s+\S+\s+\S+\s+(\S+)\s+(\S+)\s+\S+\s+\S\s+([\d.]+)\s+[\d.]+\s+\S+\s+(.*)$/);
-        if (!m)
+        // the header: PID USER PR NI VIRT RES SHR S %CPU %MEM TIME+ COMMAND,
+        // the columns go by these names, the command is last
+        if (/^\s*PID\s/.test(line)) {
+            const names = line.trim().split(/\s+/);
+            const at = {};
+            names.forEach((n, i) => at[n] = i);
+            cols = at;
+            colCount = names.length;
             return;
+        }
+        const f = line.trim().split(/\s+/);
+        if (colCount === 0 || !/^\d+$/.test(f[0]) || f.length < colCount)
+            return;
+        const col = name => f[cols[name]] ?? "";
         frameSeen++;
         // a kernel thread has no memory of its own
-        if (parseFloat(m[3]) > 0)
+        if (parseFloat(col("VIRT")) > 0)
             frame.push({
-                pid: parseInt(m[1]),
-                user: m[2],
-                mem: kb(m[4]),
-                cpu: parseFloat(m[5]),
-                name: base(m[6])
+                pid: parseInt(col("PID")),
+                user: col("USER"),
+                mem: kb(col("RES")),
+                cpu: parseFloat(col("%CPU")) || 0,
+                name: base(f.slice(colCount - 1).join(" "))
             });
         if (frameSeen === frameTotal && frames >= 2)
             publish();

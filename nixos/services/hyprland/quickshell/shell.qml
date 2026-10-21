@@ -1,7 +1,6 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Quickshell.Hyprland
 import qs.menus
 
 // the hyprland shell: wallpaper and bar on every monitor, and menus for what
@@ -9,6 +8,7 @@ import qs.menus
 //   qs -c hyprland ipc call menu open <name>
 //   qs -c hyprland ipc call bar toggle
 //   qs -c hyprland ipc call record stop
+//   qs -c hyprland ipc call notifications close   (the popup, quiet, clear)
 // hypr-askpass calls `askpass ask <prompt>`, hypr-pinentry
 // `askpass query <kind> <prompt> <desc> <error>`, both wait for `answered`
 ShellRoot {
@@ -30,22 +30,13 @@ ShellRoot {
     // reads them at start, so run and kill have them when they open
     readonly property var apps: DesktopEntries.applications
 
-    // the monitor that has focus
-    function focusedScreen() {
-        const focused = Hyprland.focusedMonitor?.name;
-        for (let i = 0; i < Quickshell.screens.length; i++)
-            if (Quickshell.screens[i].name === focused)
-                return Quickshell.screens[i];
-        return Quickshell.screens[0];
-    }
-
     // on the focused monitor, or on the one a bar was clicked on
     function open(name, screen) {
         const same = menu === name;
         menu = "";
         if (same)
             return;
-        menuScreen = screen ?? focusedScreen();
+        menuScreen = screen ?? Hypr.focusedScreen();
         menu = name;
     }
 
@@ -98,6 +89,23 @@ ShellRoot {
         }
     }
 
+    // the notification popup, Notifs is the server
+    NotifyPopup {}
+
+    IpcHandler {
+        target: "notifications"
+        // the popup goes, it stays in the menu
+        function close(): void {
+            Notifs.drop(Notifs.current);
+        }
+        function quiet(): void {
+            Notifs.quiet = !Notifs.quiet;
+        }
+        function clear(): void {
+            Notifs.clear();
+        }
+    }
+
     IpcHandler {
         target: "record"
         function stop(): void {
@@ -118,7 +126,7 @@ ShellRoot {
             shell.askPrompt = prompt;
             shell.askNote = desc;
             shell.askError = error;
-            shell.askScreen = shell.focusedScreen();
+            shell.askScreen = Hypr.focusedScreen();
             shell.asking = true;
         }
     }
@@ -215,6 +223,13 @@ ShellRoot {
         Calendar {
             screen: shell.menuScreen
             onDone: shell.close("calendar")
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "notifications"
+        Notifications {
+            screen: shell.menuScreen
+            onDone: shell.close("notifications")
         }
     }
     LazyLoader {

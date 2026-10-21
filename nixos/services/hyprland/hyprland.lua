@@ -56,6 +56,13 @@ hl.config({
         force_default_wallpaper = 0,
     },
 
+    -- config errors at the bottom, like the notifications. hyprland's own
+    -- notifications (lua errors, monitor modes, hyprctl notify) can't move,
+    -- they're drawn at the top right
+    debug = {
+        error_position = 1,
+    },
+
     binds = {
         -- a shown scratchpad hides when the tag changes, like in sway
         hide_special_on_workspace_change = true,
@@ -106,6 +113,8 @@ hl.animation({ leaf = "borderangle", enabled = false })
 -- in from the right edge and fade, like a tag switch drifts
 hl.layer_rule({ match = { namespace = "^(bar|wallpaper)$" }, no_anim = true })
 hl.layer_rule({ match = { namespace = "^menu$" }, animation = "slide right", dim_around = true })
+-- the notification popup comes up from the bottom edge
+hl.layer_rule({ match = { namespace = "^notification$" }, animation = "slide bottom" })
 hl.window_rule({ match = { fullscreen = true }, no_anim = true })
 
 -- x11 apps (st, nsxiv, dmenu) read colors and fonts from ~/.Xresources, xrdb
@@ -231,6 +240,8 @@ hl.bind(mod .. " + CTRL + w", qs("menu open wifi"))
 hl.bind(mod .. " + Escape", qs("menu open system"))
 hl.bind(mod .. " + SHIFT + Escape", qs("menu open processes"))
 hl.bind(mod .. " + CTRL + c", qs("menu open calendar"))
+hl.bind(mod .. " + n", qs("menu open notifications"))
+hl.bind(mod .. " + SHIFT + n", qs("notifications close"))
 hl.bind(mod .. " + o", hl.dsp.exec_cmd("kitty --class movies -e yazi /media/outer-1"))
 
 -- region to the clipboard, the picture or the text on it. esc in slurp does nothing
@@ -442,6 +453,9 @@ hl.on("hyprland.start", function()
     hl.exec_cmd([[swayidle -w timeout 300 "hyprctl dispatch \"hl.dsp.dpms({ action = 'disable' })\"" resume "hyprctl dispatch \"hl.dsp.dpms({ action = 'enable' })\""]])
     hl.exec_cmd("sway-audio-idle-inhibit")
     hl.exec_cmd("gammastep -m wayland -l 59.9343:30.3351 -t 5000:4000")
+    -- quickshell is the notification server, it takes over once a dunst
+    -- from another session lets go. default.nix keeps a new one from starting
+    hl.exec_cmd("systemctl --user stop dunst.service")
     hl.exec_cmd("qs -c hyprland")
 end)
 

@@ -35,7 +35,9 @@ Menu {
     // vnstat's days, months and years, a json line each, for the
     // interface of the default route or the busiest one
     function readTraffic(text) {
-        const parts = text.split("\n").map(l => {
+        // one json each, a line of -- after it: vnstat may print it on more
+        // than one line
+        const parts = text.split(/^--$/m).map(l => {
             try {
                 return JSON.parse(l);
             } catch (e) {
@@ -293,7 +295,7 @@ Menu {
 
     Process {
         id: vnstat
-        command: ["sh", "-c", "vnstat --json d 2; vnstat --json m 1; vnstat --json y 1"]
+        command: ["sh", "-c", "for q in 'd 2' 'm 1' 'y 1'; do vnstat --json $q; echo --; done"]
         stdout: StdioCollector {
             onStreamFinished: menu.readTraffic(text)
         }
