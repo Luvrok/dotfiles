@@ -442,6 +442,11 @@ Hyprland Lua, QML and shell, no nix in them.
   the toggle finds none, `close_special_on_empty` drops it when the app
   quits. hide/showall park windows in `special:hide_<tag>` and move them
   back, tiled or floating as they were.
+- `hl.dsp.focus` warps the cursor to the middle of the window it focuses
+  (or of the monitor a tag lives on), `cursor.no_warps` would stop the
+  monitor binds from warping too. The bar's clicks send one Lua function
+  (`hyprctl dispatch` is `return hl.dispatch(...)`, a function works) that
+  focuses and puts the cursor back, like i3's `mouse_warping output`.
 - Quickshell keeps `lastIpcObject` (layout, last window, window positions,
   floating) from its last fetch, Hypr.qml refetches workspaces and clients
   50 ms after window, workspace and custom events.

@@ -19,6 +19,13 @@ PanelWindow {
         Hyprland.dispatch(lua);
     }
 
+    // focus without moving the cursor. hyprland warps it to the middle of
+    // the window it focuses, or of the monitor a tag lives on, so it goes
+    // back to the click right after, like i3's mouse_warping output
+    function focus(lua) {
+        Hyprland.dispatch(`function() local p = hl.get_cursor_pos(); hl.dispatch(${lua}); if p then hl.dispatch(hl.dsp.cursor.move({ x = p.x, y = p.y })) end end`);
+    }
+
     anchors {
         top: true
         left: true
@@ -118,7 +125,7 @@ PanelWindow {
                         if (e.button === Qt.RightButton)
                             bar.dispatch(`hl.dsp.window.move({ workspace = ${id}, follow = false })`);
                         else
-                            bar.dispatch(`hl.dsp.focus({ workspace = ${id} })`);
+                            bar.focus(`hl.dsp.focus({ workspace = ${id} })`);
                     }
                 }
             }
@@ -204,7 +211,7 @@ PanelWindow {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: bar.dispatch(`hl.dsp.focus({ window = "address:0x${win.address}" })`)
+                            onClicked: bar.focus(`hl.dsp.focus({ window = "address:0x${win.address}" })`)
                         }
                     }
                 }
