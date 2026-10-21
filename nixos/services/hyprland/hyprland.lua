@@ -35,13 +35,14 @@ hl.config({
         shadow = { enabled = false },
         blur = { enabled = false },
         -- scratchpads don't dim what's under them
-        dim_special = 0,
+        dim_special = 0.25,
     },
 
     animations = { enabled = true },
 
     master = {
         mfact = 0.5,
+        orientation = "right",
         -- new windows go to the bottom of the stack
         new_status = "slave",
     },
@@ -147,7 +148,6 @@ hl.window_rule({ match = { float = true }, border_size = 1 })
 ---- windows ------
 -------------------
 
-hl.window_rule({ match = { class = "^librewolf$" }, workspace = "1 silent" })
 hl.window_rule({ match = { class = "^obsidian$" }, workspace = "2 silent" })
 hl.window_rule({ match = { class = "qBittorrent$" }, workspace = "9 silent" })
 hl.window_rule({ match = { class = "^v2rayN$" }, workspace = "9 silent" })
@@ -286,9 +286,21 @@ hl.bind(mod .. " + k", hl.dsp.layout("cycleprev"))
 hl.bind(mod .. " + SHIFT + j", hl.dsp.layout("swapnext"))
 hl.bind(mod .. " + SHIFT + k", hl.dsp.layout("swapprev"))
 
--- setmfact, setcfact: 5% of a 2560x1440 monitor, on the focused window like sway
-hl.bind(mod .. " + l", hl.dsp.window.resize({ x = -128, y = 0, relative = true }))
-hl.bind(mod .. " + h", hl.dsp.window.resize({ x = 128, y = 0, relative = true }))
+-- setmfact like dwm. layoutmsg mfact animates, a window resize in master
+-- jumps. floating windows get resized by 5% of a 2560x1440 monitor
+local function setmfact(step, dx)
+    return function()
+        local w = hl.get_active_window()
+        if w and w.floating then
+            hl.dispatch(hl.dsp.window.resize({ x = dx, y = 0, relative = true }))
+        else
+            hl.dispatch(hl.dsp.layout("mfact " .. step))
+        end
+    end
+end
+hl.bind(mod .. " + l", setmfact("+0.05", -128))
+hl.bind(mod .. " + h", setmfact("-0.05", 128))
+-- setcfact: master has no layoutmsg for the stack heights, so no animation
 hl.bind(mod .. " + SHIFT + h", hl.dsp.window.resize({ x = 0, y = 72, relative = true }))
 hl.bind(mod .. " + SHIFT + l", hl.dsp.window.resize({ x = 0, y = -72, relative = true }))
 

@@ -399,6 +399,9 @@ Hyprland Lua, QML and shell, no nix in them.
   (`slidefade 6%`) and special workspaces (`slidefadevert top 6%`) can.
   Hyprland picks the switch direction by workspace id, like i3-ws-anim's tags.
   The bar and the wallpaper have `no_anim`, fullscreen windows too.
+- A window resize in master (keys or mouse) never animates, the layout
+  forces warps there. `layoutmsg mfact` does animate, so $mod+h/l use it
+  on tiled windows. Stack heights ($mod+Shift+h/l) have no layoutmsg.
 - Hyprland puts `gaps_in` on every side of a window and doesn't add it at the
   screen edge: sway's inner 10 / outer 0 is `gaps_in = 5`, `gaps_out = 10`.
 - Scratchpads are special workspaces. `on_created_empty` starts the app when
