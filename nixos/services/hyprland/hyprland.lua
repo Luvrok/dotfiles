@@ -367,17 +367,24 @@ local function tagmonstay(dir)
     return function()
         local w = hl.get_active_window()
         local mon = hl.get_active_monitor()
+        local target = hl.get_monitor(dir)
         local cursor = hl.get_cursor_pos()
-        if not w or not mon then
+        if not w or not mon or not target or target.name == mon.name then
             return
         end
-        hl.dispatch(hl.dsp.window.move({ monitor = dir, follow = false }))
-        local target = w.monitor
-        if not target or target.name == mon.name or target.active_special_workspace
-            or (target.active_workspace and target.active_workspace.has_fullscreen) then
+        local ws = target.active_workspace
+        if target.active_special_workspace or not ws or ws.has_fullscreen then
+            hl.dispatch(hl.dsp.window.move({ monitor = target.name, follow = false }))
             return
         end
-        hl.dispatch(hl.dsp.focus({ window = w }))
+        if w.workspace and w.workspace.windows == 1 then
+            -- the last window of its tag: a silent move and a focus don't
+            -- stick then, so move it like $mod+shift does
+            hl.dispatch(hl.dsp.window.move({ monitor = target.name }))
+        else
+            hl.dispatch(hl.dsp.window.move({ monitor = target.name, follow = false }))
+            hl.dispatch(hl.dsp.focus({ window = w }))
+        end
         hl.dispatch(hl.dsp.focus({ monitor = mon.name }))
         if cursor then
             hl.dispatch(hl.dsp.cursor.move({ x = cursor.x, y = cursor.y }))

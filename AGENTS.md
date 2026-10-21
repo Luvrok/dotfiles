@@ -388,8 +388,10 @@ Hyprland Lua, QML and shell, no nix in them.
 - Focusing a monitor focuses its tag's last focused window. A silent move
   to the other monitor ($mod+Ctrl+comma/period) focuses the window on its
   new tag, then focus and the cursor go back, so it's the one focused
-  there later, like dwm's tagmon. Not onto a scratchpad or a fullscreen
-  window, focusing would close or unfullscreen them. The `l`/`r` monitor
+  there later, like dwm's tagmon. The last window of a tag goes like
+  $mod+Shift (move with focus, then back): after a silent move the focus
+  didn't stick there, the old window came back. Not onto a scratchpad or a
+  fullscreen window, focusing would close or unfullscreen them. The `l`/`r` monitor
   selectors stop at the screen edge, the binds use `+1`/`-1`, they wrap.
 - master is dwm tile: `layoutmsg cyclenext/swapnext` wrap like i3-tile,
   `addmaster/removemaster` are dwm's incnmaster/decnmaster ($mod+i/d).
