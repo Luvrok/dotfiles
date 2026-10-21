@@ -26,8 +26,8 @@ hl.config({
             active_border = "rgb(d65d0e)",
             inactive_border = "rgb(3c3836)",
         },
-        -- dwindle, not master: master never animates a resize
-        layout = "dwindle",
+        -- dwm tile: master on the left, the stack on the right
+        layout = "master",
     },
 
     decoration = {
@@ -40,12 +40,11 @@ hl.config({
 
     animations = { enabled = true },
 
-    dwindle = {
-        -- a new window goes left of or above the focused one, so the first
-        -- one stays on the right
-        force_split = 1,
-        -- a split keeps its direction when the window changes size
-        preserve_split = true,
+    master = {
+        mfact = 0.5,
+        orientation = "right",
+        -- new windows go to the bottom of the stack
+        new_status = "slave",
     },
 
     misc = {
@@ -54,8 +53,6 @@ hl.config({
         disable_hyprland_logo = true,
         disable_splash_rendering = true,
         force_default_wallpaper = 0,
-        -- resizes from the keyboard glide, mouse drags don't
-        animate_manual_resizes = true,
     },
 
     binds = {
@@ -283,22 +280,33 @@ end)
 hl.bind(mod .. " + SHIFT + b", qs("bar toggle"))
 hl.bind(mod .. " + y", hl.dsp.window.fullscreen())
 
--- focusstack / pushstack: every window of the tag, both wrap
-hl.bind(mod .. " + j", hl.dsp.window.cycle_next())
-hl.bind(mod .. " + k", hl.dsp.window.cycle_next({ next = false }))
-hl.bind(mod .. " + SHIFT + j", hl.dsp.window.swap({ next = true }))
-hl.bind(mod .. " + SHIFT + k", hl.dsp.window.swap({ prev = true }))
+-- focusstack / pushstack: master, then the stack top to bottom, both wrap
+hl.bind(mod .. " + j", hl.dsp.layout("cyclenext"))
+hl.bind(mod .. " + k", hl.dsp.layout("cycleprev"))
+hl.bind(mod .. " + SHIFT + j", hl.dsp.layout("swapnext"))
+hl.bind(mod .. " + SHIFT + k", hl.dsp.layout("swapprev"))
 
--- resize by 5% of a 2560x1440 monitor. on tiles it moves the nearest
--- border: l and shift+l move it left and up, h and shift+h right and down
-hl.bind(mod .. " + l", hl.dsp.window.resize({ x = -128, y = 0, relative = true }))
-hl.bind(mod .. " + h", hl.dsp.window.resize({ x = 128, y = 0, relative = true }))
-hl.bind(mod .. " + SHIFT + h", hl.dsp.window.resize({ x = 0, y = 72, relative = true }))
-hl.bind(mod .. " + SHIFT + l", hl.dsp.window.resize({ x = 0, y = -72, relative = true }))
+-- floating windows get resized by 5% of a 2560x1440 monitor. tiles: h/l
+-- are dwm's setmfact (layoutmsg mfact animates, a window resize in master
+-- jumps), shift+h/l do nothing, no setcfact
+local function resize(x, y, mfact)
+    return function()
+        local w = hl.get_active_window()
+        if w and w.floating then
+            hl.dispatch(hl.dsp.window.resize({ x = x, y = y, relative = true }))
+        elseif w and mfact then
+            hl.dispatch(hl.dsp.layout("mfact " .. mfact))
+        end
+    end
+end
+hl.bind(mod .. " + l", resize(-128, 0, "+0.05"))
+hl.bind(mod .. " + h", resize(128, 0, "-0.05"))
+hl.bind(mod .. " + SHIFT + h", resize(0, 72))
+hl.bind(mod .. " + SHIFT + l", resize(0, -72))
 
--- dwindle has no nmaster: turn the focused split, swap its two sides
-hl.bind(mod .. " + i", hl.dsp.layout("togglesplit"))
-hl.bind(mod .. " + d", hl.dsp.layout("swapsplit"))
+-- incnmaster / decnmaster
+hl.bind(mod .. " + i", hl.dsp.layout("addmaster"))
+hl.bind(mod .. " + d", hl.dsp.layout("removemaster"))
 
 hl.bind(mod .. " + SHIFT + c", hl.dsp.window.close())
 -- previous tag of this monitor
@@ -322,7 +330,7 @@ local function set_layout(layout, gaps_in, gaps_out, border)
         hl.dispatch(hl.dsp.event("layout"))
     end
 end
-hl.bind(mod .. " + t", set_layout("dwindle", 5, 10, 1))
+hl.bind(mod .. " + t", set_layout("master", 5, 10, 1))
 hl.bind(mod .. " + m", set_layout("monocle", 0, 0, 0))
 
 hl.bind(mod .. " + f", hl.dsp.window.center())

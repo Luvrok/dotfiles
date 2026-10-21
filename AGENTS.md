@@ -385,12 +385,8 @@ Hyprland Lua, QML and shell, no nix in them.
   gone doesn't count, so the one left gets 1..9. The bar finds the main
   monitor through `hyprctl -j workspacerules` (the monitor of workspace 1)
   and numbers the others by x, like sway-ws.
-- Tiles are dwindle, not dwm tile: master never animates a resize, it
-  forces warps in `resizeTarget` (keys and mouse). dwindle animates keyboard
-  resizes with `misc.animate_manual_resizes`, mouse drags still snap.
-  `force_split = 1` keeps the first window on the right. $mod+j/k cycle and
-  swap every window of the tag, $mod+i/d are `togglesplit`/`swapsplit` (no
-  nmaster), $mod+h/l move the nearest border, not the focused window's.
+- master is dwm tile: `layoutmsg cyclenext/swapnext` wrap like i3-tile,
+  `addmaster/removemaster` are dwm's incnmaster/decnmaster ($mod+i/d).
   monocle is sway's tabbed tag without tab bars. A workspace rule sets the
   layout per workspace, $mod+t/$mod+m add one at runtime
   (`hl.workspace_rule` merges into the rule of the same workspace and
@@ -403,6 +399,12 @@ Hyprland Lua, QML and shell, no nix in them.
   (`slidefade 6%`) and special workspaces (`slidefadevert top 6%`) can.
   Hyprland picks the switch direction by workspace id, like i3-ws-anim's tags.
   The bar and the wallpaper have `no_anim`, fullscreen windows too.
+- A window resize in master (keys or mouse) never animates, the layout
+  forces warps in `resizeTarget`. `layoutmsg mfact` does animate, so
+  $mod+h/l use it on tiled windows. Stack heights have no layoutmsg, so
+  $mod+Shift+h/l only resize floating windows. dwindle animates keyboard
+  resizes (`misc.animate_manual_resizes`), but it splits any window, it
+  was tried and dropped.
 - Hyprland puts `gaps_in` on every side of a window and doesn't add it at the
   screen edge: sway's inner 10 / outer 0 is `gaps_in = 5`, `gaps_out = 10`.
 - Scratchpads are special workspaces. `on_created_empty` starts the app when

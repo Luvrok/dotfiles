@@ -122,7 +122,7 @@ PanelWindow {
             }
         }
 
-        // 󰓒 tiles, [n] monocle with n windows, nothing on an empty monocle tag
+        // 󰓒 master, [n] monocle with n windows, nothing on an empty monocle tag
         Label {
             leftPadding: 6
             rightPadding: 6
@@ -137,7 +137,7 @@ PanelWindow {
             }
         }
 
-        // windows on the open tag, tiles left to right, floating last.
+        // windows on the open tag, master then the stack, floating last.
         // equal width, orange is the last focused one of this monitor
         Item {
             id: titles
