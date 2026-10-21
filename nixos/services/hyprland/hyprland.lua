@@ -34,8 +34,9 @@ hl.config({
         rounding = 0,
         shadow = { enabled = false },
         blur = { enabled = false },
-        -- scratchpads don't dim what's under them
+        -- scratchpads and the quickshell menus dim what's under them
         dim_special = 0.25,
+        dim_around = 0.25,
     },
 
     animations = { enabled = true },
@@ -99,8 +100,10 @@ hl.animation({ leaf = "border", enabled = false })
 hl.animation({ leaf = "borderangle", enabled = false })
 
 -- the bar and the wallpaper just appear, fullscreen windows take the screen
--- at once. the menus slide in on their own
-hl.layer_rule({ match = { namespace = "^(bar|wallpaper|menu)$" }, no_anim = true })
+-- at once. the quickshell menus sit under the bar on the right, they slide
+-- in from the right edge and fade, like a tag switch drifts
+hl.layer_rule({ match = { namespace = "^(bar|wallpaper)$" }, no_anim = true })
+hl.layer_rule({ match = { namespace = "^menu$" }, animation = "slide right", dim_around = true })
 hl.window_rule({ match = { fullscreen = true }, no_anim = true })
 
 -- x11 apps (st, nsxiv, dmenu) read colors and fonts from ~/.Xresources, xrdb

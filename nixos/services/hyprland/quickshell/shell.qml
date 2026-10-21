@@ -32,21 +32,12 @@ ShellRoot {
         menu = name;
     }
 
-    // later: a menu may give up while it's being created, and its slide
-    // out plays first
+    // later: a menu may give up while it's being created
     function close(name) {
-        closer.name = name;
-        closer.restart();
-    }
-
-    Timer {
-        id: closer
-        property string name
-        interval: 150
-        onTriggered: {
-            if (shell.menu === name)
-                shell.menu = "";
-        }
+        Qt.callLater(() => {
+            if (menu === name)
+                menu = "";
+        });
     }
 
     Variants {

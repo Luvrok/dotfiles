@@ -5,8 +5,10 @@ import Quickshell.Hyprland
 
 // rofi -dmenu in quickshell, drawn like the eww wifi menu
 // (home/programs/eww/wifi-menu): title and status on top, the rows, a key
-// hint below. it slides down from under the bar on the right, the rows come
-// in one after another and the cursor glides. a menu in menus/ sets it up
+// hint below. it sits under the bar on the right, hyprland slides it in
+// from the right edge and dims the screen around it (layer rule for
+// "menu"). the rows come in one after another and the cursor glides. a
+// menu in menus/ sets it up
 // and calls show(rows) for every page, like a rofi call. rows are things to
 // pick, actions are keys. "name\tinfo" puts info in a dim column on the
 // right, "" is a divider. esc or a click outside closes the whole menu, like
@@ -16,7 +18,8 @@ PanelWindow {
 
     // with an entry the rows filter as you type (case insensitive, every word
     // must match). without one j/k/l/q and g/G work too. letter keys go by
-    // where they are on the keyboard, so they work on the ru layout too
+    // where they are on the keyboard, so they work on the ru layout too, and
+    // only without ctrl, alt or super unless they ask for one
     property bool input: true
     property bool password: false
     // the entry's placeholder
@@ -52,9 +55,6 @@ PanelWindow {
     // an entry counts what the filter left
     readonly property string statusText: status !== "" ? status : input && rows.length > 0 ? `${shown.length}/${rows.length}` : ""
 
-    // 0..1 while it slides in or out
-    property real reveal: 0
-    property bool closing: false
     // rows made now come in one after another, the ones typing makes don't
     property bool cascading: false
 
@@ -75,12 +75,7 @@ PanelWindow {
         list.positionViewAtIndex(list.currentIndex, ListView.Contain);
         cascading = true;
         cascadeEnd.restart();
-        if (!visible || closing) {
-            slideOut.stop();
-            closing = false;
-            visible = true;
-            slideIn.restart();
-        }
+        visible = true;
         if (input)
             entry.forceActiveFocus();
         else
@@ -88,11 +83,7 @@ PanelWindow {
     }
 
     function hide() {
-        if (!visible || closing)
-            return;
-        slideIn.stop();
-        closing = true;
-        slideOut.restart();
+        visible = false;
     }
 
     // stay open and pulse while something runs, show() ends it
@@ -151,7 +142,7 @@ PanelWindow {
     }
 
     function accept() {
-        if (busy !== "" || closing)
+        if (busy !== "" || !visible)
             return;
         if (shown.length > 0) {
             if (!divider(list.currentIndex))
@@ -163,15 +154,18 @@ PanelWindow {
     // xkb keycodes of the us letters
     readonly property var codes: ({ a: 38, c: 54, d: 40, e: 26, g: 42, h: 43, j: 44, k: 45, l: 46, m: 58, n: 57, o: 32, p: 33, q: 24, r: 27, s: 39, t: 28, u: 30, v: 55, w: 25 })
 
-    // a letter key by its us name, on any layout
-    function key(e, letter) {
+    // a letter key by its us name, on any layout. mods: the ctrl, alt and
+    // super it needs, shift doesn't matter
+    function key(e, letter, mods) {
+        if ((e.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) !== (mods ?? Qt.NoModifier))
+            return false;
         return e.key === Qt["Key_" + letter.toUpperCase()] || e.nativeScanCode === codes[letter];
     }
 
     function handleKey(e) {
         const k = e.key;
         e.accepted = true;
-        if (closing)
+        if (!visible)
             return;
         if (k === Qt.Key_Escape || (!input && key(e, "q"))) {
             cancel();
@@ -181,16 +175,16 @@ PanelWindow {
             return;
         if (keys && keys(e))
             return;
-        const ctrl = (e.modifiers & Qt.ControlModifier) !== 0;
+        const ctrl = Qt.ControlModifier;
         const shift = (e.modifiers & Qt.ShiftModifier) !== 0;
         const enter = k === Qt.Key_Return || k === Qt.Key_Enter;
-        if (enter && ctrl && input)
+        if (enter && (e.modifiers & ctrl) && input)
             accepted(-1, entry.text);
-        else if (enter || (ctrl && key(e, "m")) || (!input && key(e, "l")))
+        else if (enter || key(e, "m", ctrl) || (!input && key(e, "l")))
             accept();
-        else if (k === Qt.Key_Up || (ctrl && (key(e, "p") || key(e, "k"))) || (!input && key(e, "k")))
+        else if (k === Qt.Key_Up || key(e, "p", ctrl) || key(e, "k", ctrl) || (!input && key(e, "k")))
             move(-1, true);
-        else if (k === Qt.Key_Down || (ctrl && (key(e, "n") || key(e, "j"))) || (!input && key(e, "j")))
+        else if (k === Qt.Key_Down || key(e, "n", ctrl) || key(e, "j", ctrl) || (!input && key(e, "j")))
             move(1, true);
         else if (k === Qt.Key_PageUp)
             move(-lines, false);
@@ -202,15 +196,15 @@ PanelWindow {
             jump(shown.length - 1, -1);
         else if (input && k === Qt.Key_Backspace && entry.text === "")
             back();
-        else if (input && ctrl && key(e, "a"))
+        else if (input && key(e, "a", ctrl))
             entry.cursorPosition = 0;
-        else if (input && ctrl && key(e, "e"))
+        else if (input && key(e, "e", ctrl))
             entry.cursorPosition = entry.text.length;
-        else if (input && ctrl && key(e, "u"))
+        else if (input && key(e, "u", ctrl))
             entry.remove(0, entry.cursorPosition);
-        else if (input && ctrl && key(e, "w"))
+        else if (input && key(e, "w", ctrl))
             entry.text = "";
-        else if (input && ctrl && key(e, "h"))
+        else if (input && key(e, "h", ctrl))
             entry.remove(entry.cursorPosition - 1, entry.cursorPosition);
         else
             e.accepted = false;
@@ -231,43 +225,14 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "menu"
-    // let go of the keyboard at once, pinentry may want it
-    WlrLayershell.keyboardFocus: closing ? WlrKeyboardFocus.None : WlrKeyboardFocus.Exclusive
+    // all keys go here while it's open
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
     // a click anywhere else closes it
     HyprlandFocusGrab {
-        active: root.visible && !root.closing
+        active: root.visible
         windows: [root]
-        onCleared: {
-            if (!root.closing)
-                root.cancel();
-        }
-    }
-
-    NumberAnimation {
-        id: slideIn
-        target: root
-        property: "reveal"
-        to: 1
-        duration: 220
-        easing.type: Easing.OutCubic
-    }
-
-    SequentialAnimation {
-        id: slideOut
-        NumberAnimation {
-            target: root
-            property: "reveal"
-            to: 0
-            duration: 120
-            easing.type: Easing.InCubic
-        }
-        ScriptAction {
-            script: {
-                root.visible = false;
-                root.closing = false;
-            }
-        }
+        onCleared: root.cancel()
     }
 
     Timer {
@@ -288,17 +253,11 @@ PanelWindow {
         Keys.onPressed: e => root.handleKey(e)
     }
 
-    // slides down like an eww revealer: the panel moves out from under its
-    // top edge while it shows more of itself
     Item {
-        width: parent.width
-        height: frame.height * root.reveal
-        clip: true
-        opacity: root.reveal
+        anchors.fill: parent
 
         Rectangle {
             id: frame
-            y: parent.height - height
             width: parent.width
             height: Math.ceil(column.implicitHeight) + 2
             color: Theme.bg

@@ -360,21 +360,24 @@ Hyprland Lua, QML and shell, no nix in them.
   `HyprlandFocusGrab`: esc or a click outside closes it, like rofi exiting the
   script. Every page is a `show(rows)` call. While a command runs the menu
   stays and pulses (`wait("scanning")`, the next `show` ends it), only pass
-  hides for pinentry, a closing menu lets go of the keyboard at once.
+  hides for pinentry.
 - The look is the eww wifi menu (`home/programs/eww/wifi-menu`): a head
   with an icon, title, status and the busy pulse, the entry as a dark strip
   with an orange line, a hint at the bottom. A row is `"name\tinfo"` (info
   dim on the right) or `""` (a divider the cursor skips), `active` rows are
   orange. Rows are things to pick, actions are keys (wifi `r`/`d`,
   bluetooth `o`/`s`/`p`/`t`, translate `alt+p`..., backspace in an empty
-  entry goes back in pass). Every menu drops from under the bar on the
-  right, new rows come in one after another, the cursor glides. Hyprland's
-  layer animation is off for `menu` and the shell unloads a menu 150 ms
-  after `done`, so the slide out plays.
+  entry goes back in pass). Every menu sits under the bar on the right,
+  Hyprland slides it in from the right edge, fades it and dims the screen
+  around it (layer rule for `menu`: `animation = "slide right"`,
+  `dim_around`, `decoration.dim_around` as strong as `dim_special`). Inside,
+  new rows come in one after another and the cursor glides.
 - Menu keys go through `key(e, "j")`: the Qt key or the xkb keycode of the
   us letter, so j/k/r... work on the ru layout too without switching it
-  (translate and clipboard search still take russian). Sizes are whole
-  pixels, a fractional height cut off the bottom border.
+  (translate and clipboard search still take russian). A key fires only
+  with the ctrl, alt and super it asks for (`key(e, "p", Qt.AltModifier)`),
+  ctrl+r is not r. Sizes are whole pixels, a fractional height cut off the
+  bottom border.
 - Animations follow picom in i3 (`home/picom.nix`): the same speeds and
   curves, a 6% `slidefade` on a tag switch, the scratchpad slides down. No
   blur, shadows or rounding.

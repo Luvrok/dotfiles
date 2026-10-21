@@ -233,24 +233,25 @@ Menu {
     lines: 0
 
     keys: e => {
-        if (page !== "menu" || !(e.modifiers & Qt.AltModifier))
+        if (page !== "menu")
             return false;
+        const alt = Qt.AltModifier;
         const typed = menu.text.trim() !== "" ? menu.text : "";
-        if (key(e, "p"))
+        if (key(e, "p", alt))
             paste(true);
-        else if (key(e, "c"))
+        else if (key(e, "c", alt))
             paste(false);
-        else if (key(e, "t") && typed !== "")
+        else if (key(e, "t", alt) && typed !== "")
             pickTarget(code => run(typed, code));
-        else if (key(e, "t"))
+        else if (key(e, "t", alt))
             pickTarget(code => ask(`→ ${code}`, t => run(t, code)));
-        else if (key(e, "v") && typed !== "")
+        else if (key(e, "v", alt) && typed !== "")
             verbose(typed);
-        else if (key(e, "v"))
+        else if (key(e, "v", alt))
             ask("variants", verbose);
-        else if (key(e, "s") && typed !== "")
+        else if (key(e, "s", alt) && typed !== "")
             speak(typed);
-        else if (key(e, "s"))
+        else if (key(e, "s", alt))
             ask("speak", speak);
         else
             return false;
