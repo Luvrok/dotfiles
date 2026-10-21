@@ -11,6 +11,10 @@ Menu {
     // cliphist lines, "id<tab>preview"
     property var entries: []
 
+    title: "clipboard"
+    icon: "\u{f014c}"
+    prompt: "search"
+    hint: "enter copy  esc keep"
     location: "top-right"
     lines: 15
 
@@ -27,8 +31,11 @@ Menu {
         stdout: StdioCollector {
             onStreamFinished: {
                 menu.entries = text.split("\n").filter(l => l !== "");
-                // the preview only, like -display-columns 2
-                menu.show(menu.entries.map(l => l.slice(l.indexOf("\t") + 1)));
+                // no taller than the history
+                menu.lines = Math.max(1, Math.min(menu.entries.length, 15));
+                // the preview only, like -display-columns 2. a tab would
+                // make a column
+                menu.show(menu.entries.map(l => l.slice(l.indexOf("\t") + 1).replace(/\t/g, " ")));
             }
         }
     }

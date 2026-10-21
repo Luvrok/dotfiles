@@ -345,7 +345,7 @@ Hyprland Lua, QML and shell, no nix in them.
 | `nixos/services/hyprland/hyprland.lua` | Hyprland config, the twin of the sway one |
 | `nixos/services/hyprland/quickshell/shell.qml` | bar and wallpaper per monitor, the menus, the ipc targets |
 | `nixos/services/hyprland/quickshell/{Bar,Wallpaper,Hypr,Theme}.qml` | the eww sway bar, `output * bg`, the bar's Hyprland state, gruvbox colors |
-| `nixos/services/hyprland/quickshell/Menu.qml` | rofi -dmenu: entry, filter, list, keys, looks like the rasi files |
+| `nixos/services/hyprland/quickshell/Menu.qml` | rofi -dmenu: entry, filter, list, keys, drawn like the eww wifi menu |
 | `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass |
 | `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `askpass` (`hypr-askpass` in PATH) |
 
@@ -358,8 +358,16 @@ Hyprland Lua, QML and shell, no nix in them.
   and prints what `qs ipc wait askpass answered` gets.
 - A menu is a layer-shell window with exclusive keyboard focus and a
   `HyprlandFocusGrab`: esc or a click outside closes it, like rofi exiting the
-  script. Every page is a `show(rows)` call, the window hides while a command
-  runs (pinentry needs the keyboard during `pass show`).
+  script. Every page is a `show(rows)` call. While a command runs the menu
+  stays and pulses (`wait("scanning")`, the next `show` ends it), only pass
+  hides for pinentry, a closing menu lets go of the keyboard at once.
+- The look is the eww wifi menu (`home/programs/eww/wifi-menu`): a head
+  with an icon, title, status and the busy pulse, the entry as a dark strip
+  with an orange line, a hint at the bottom. A row is `"name\tinfo"` (info
+  dim on the right) or `""` (a divider the cursor skips), `active` rows are
+  orange. It slides down on open, new rows come in one after another, the
+  cursor glides. Hyprland's layer animation is off for `menu` and the shell
+  unloads a menu 150 ms after `done`, so the slide out plays.
 - Animations follow picom in i3 (`home/picom.nix`): the same speeds and
   curves, a 6% `slidefade` on a tag switch, the scratchpad slides down. No
   blur, shadows or rounding.

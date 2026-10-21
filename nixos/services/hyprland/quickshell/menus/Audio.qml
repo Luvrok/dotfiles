@@ -3,21 +3,20 @@ import Quickshell
 import Quickshell.Services.Pipewire
 import qs
 
-// rofi-audio: pick the default output, rows like `wpctl status`
+// rofi-audio: pick the default output, the volume on the right, the
+// default one in orange
 Menu {
     id: menu
 
     readonly property var sinks: Pipewire.nodes.values.filter(n => n.isSink && !n.isStream && n.audio)
-    readonly property var labels: sinks.map(n => {
-        const mark = n === Pipewire.defaultAudioSink ? "*" : " ";
-        const name = n.description || n.nickname || n.name;
-        return `${mark}   ${n.id}. ${name} [vol: ${n.audio.volume.toFixed(2)}]`;
-    })
+    readonly property var labels: sinks.map(n => `${n.description || n.nickname || n.name}\t${Math.round(n.audio.volume * 100)}%`)
 
     input: false
-    menuWidth: ch(80)
-    padV: 4
-    padH: 0
+    title: "audio"
+    icon: "\u{f057e}"
+    hint: "enter use  esc"
+    active: [sinks.indexOf(Pipewire.defaultAudioSink)]
+    menuWidth: ch(64)
 
     onAccepted: (index, text) => {
         hide();

@@ -6,7 +6,8 @@ import qs
 // rofi-translate on LibreTranslate: translate the selection, the clipboard
 // or typed text, the result goes to the clipboard and a notification.
 // russian text goes to english, the rest to russian, ":es text" picks the
-// language. enter on no row translates what's typed, so does ctrl+enter
+// language. enter on no row translates what's typed, so does ctrl+enter.
+// the menu pulses while the server answers
 Menu {
     id: menu
 
@@ -19,7 +20,7 @@ Menu {
     property var languages: []
     readonly property var fallback: [["en", "English"], ["ru", "Russian"], ["es", "Spanish"], ["de", "German"], ["fr", "French"], ["ja", "Japanese"], ["zh", "Chinese"], ["ko", "Korean"], ["uk", "Ukrainian"], ["it", "Italian"]]
 
-    readonly property var actions: ["⇄  selection — перевести выделение        (Alt+p)", "⇄  clipboard — перевести буфер            (Alt+c)", "⇄  target — выбрать целевой язык           (Alt+t)", "⇄  verbose — перевод + альтернативы       (Alt+v)", "⇄  speak — озвучить                      (Alt+s)"]
+    readonly property var actions: ["selection — перевести выделение\talt+p", "clipboard — перевести буфер\talt+c", "target — выбрать целевой язык\talt+t", "verbose — перевод + альтернативы\talt+v", "speak — озвучить\talt+s"]
 
     // menu, target, prompt or verbose. next runs on enter in target and prompt
     property string page: "menu"
@@ -120,7 +121,7 @@ Menu {
 
     // translate, copy, notify. forced: a target picked by hand
     function run(raw, forced) {
-        hide();
+        wait("translating");
         const [code, text] = override(raw);
         if (text === "") {
             notify("low", app, "нет текста");
@@ -145,7 +146,7 @@ Menu {
 
     // translation plus alternatives, enter copies a row
     function verbose(raw) {
-        hide();
+        wait("translating");
         const [code, text] = override(raw);
         if (text === "") {
             done();
@@ -155,6 +156,8 @@ Menu {
         const showAll = body => {
             const rows = [...new Set([body.translatedText, ...(body.alternatives ?? [])].filter(r => r))];
             page = "verbose";
+            status = "variants";
+            hint = "enter copy  esc close";
             input = true;
             menuWidth = screen.width * 0.6;
             lines = 10;
@@ -170,7 +173,7 @@ Menu {
 
     // LibreTranslate has no tts: trans, or espeak-ng in the detected language
     function speak(raw) {
-        hide();
+        wait("speaking");
         const text = override(raw)[1];
         if (text === "") {
             done();
@@ -191,7 +194,7 @@ Menu {
     }
 
     function paste(primarySel) {
-        hide();
+        wait("pasting");
         pasteProc.primarySel = primarySel;
         pasteProc.exec(primarySel ? ["wl-paste", "--primary", "--no-newline"] : ["wl-paste", "--no-newline"]);
     }
@@ -199,7 +202,9 @@ Menu {
     // a text prompt, then next(text)
     function ask(label, then) {
         page = "prompt";
-        prompt = label;
+        status = label;
+        prompt = "text";
+        hint = "enter translate  esc close";
         lines = 0;
         next = then;
         show([]);
@@ -208,15 +213,23 @@ Menu {
     // the language list, then next(code)
     function pickTarget(then) {
         page = "target";
-        prompt = "";
+        status = "target";
+        prompt = "language";
+        hint = "enter pick  esc close";
         lines = 8;
         next = then;
         const langs = languages.length > 0 ? languages.map(l => [l.code, l.name]) : fallback;
         langRows = langs.map(l => l[0]);
-        show(langs.map(l => `${l[0]}  ${l[1]}`));
+        show(langs.map(l => `${l[0]}\t${l[1]}`));
     }
 
+    title: "translate"
+    icon: "\u{f05ca}"
+    status: `${primary} ↔ ${foreign}`
+    prompt: "text or :es text"
+    hint: "enter translate  alt+key action  esc"
     location: "top-right"
+    menuWidth: ch(56)
     lines: 5
 
     keys: e => {

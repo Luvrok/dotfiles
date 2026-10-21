@@ -8,9 +8,11 @@ Menu {
     id: menu
 
     input: false
-    menuWidth: ch(24)
-    padV: 20
-    padH: 0
+    title: "librewolf"
+    icon: "\u{f0239}"
+    hint: "enter open  esc"
+    menuWidth: ch(26)
+    padV: 6
     align: Text.AlignHCenter
 
     onAccepted: (index, text) => {

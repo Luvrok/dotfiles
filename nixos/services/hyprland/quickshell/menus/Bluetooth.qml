@@ -5,26 +5,30 @@ import Quickshell.Bluetooth
 import qs
 
 // rofi-bluetooth: power, scan, pairable, discoverable and the devices, then a
-// page per device to connect, pair and trust. the menu comes back after
-// every action, like the script. connect and pair go through bluetoothctl,
-// it says if they worked and is the agent for pin codes (scripts/bt-pair)
+// page per device to connect, pair and trust. the menu pulses while an
+// action runs and comes back after it, like the script. connected devices
+// are orange. connect and pair go through bluetoothctl, it says if they
+// worked and is the agent for pin codes (scripts/bt-pair)
 Menu {
     id: menu
 
     readonly property BluetoothAdapter adapter: Bluetooth.defaultAdapter
-    readonly property string divider: "---------"
+    readonly property string divider: ""
     // main, device or code
     property string page: "main"
     // the main page's devices, by row
     property var devices: []
     property BluetoothDevice device: null
+    // a scan the menu started, esc stops it
+    property bool scanning: false
 
     function notify(text, urgency, timeout) {
         Quickshell.execDetached(["notify-send", "Bluetooth", text, "-h", "string:x-dunst-stack-tag:rofi-bluetooth", "-h", "string:x-canonical-private-synchronous:rofi-bluetooth", "-u", urgency ?? "normal", "-t", String(timeout ?? 3000)]);
     }
 
-    function list(rows) {
+    function list(rows, accent) {
         input = false;
+        active = accent ?? [];
         lines = Math.min(rows.length, 10);
         show(rows);
     }
@@ -45,27 +49,28 @@ Menu {
         page = "main";
         device = null;
         if (!adapter?.enabled) {
-            list(["Power: off", "Exit"]);
+            list(["power\toff", "exit"]);
             return;
         }
         // the mac is always there, the name may not be yet after a scan
         devices = adapter.devices.values.slice();
         const names = devices.map(d => {
             const unnamed = !d.name || d.name === d.address || d.name === d.address.replace(/:/g, "-");
-            return `${unnamed ? "(без имени)" : d.name}  [${d.address}]`;
+            return `${unnamed ? "(без имени)" : d.name}\t${d.address}`;
         });
-        list(["Power: on", `Scan: ${onOff(adapter.discovering)}`, `Pairable: ${onOff(adapter.pairable)}`, `Discoverable: ${onOff(adapter.discoverable)}`, divider, ...names]);
+        const connected = devices.map((d, i) => d.connected ? i + 5 : -1).filter(i => i >= 0);
+        list(["power\ton", `scan\t${onOff(adapter.discovering)}`, `pairable\t${onOff(adapter.pairable)}`, `discoverable\t${onOff(adapter.discoverable)}`, divider, ...names], connected);
     }
 
     function devicePage(d) {
         page = "device";
         device = d;
-        list([`Connected: ${yesNo(d.connected)}`, `Paired: ${yesNo(d.paired)}`, `Trusted: ${yesNo(d.trusted)}`, divider, "Back", "Exit"]);
+        list([`connected\t${yesNo(d.connected)}`, `paired\t${yesNo(d.paired)}`, `trusted\t${yesNo(d.trusted)}`, divider, "back", "exit"], d.connected ? [0] : []);
     }
 
-    // the menu is hidden while it waits, like rofi while bluetoothctl runs
-    function waitFor(cond, then, ms) {
-        hide();
+    // the menu pulses while it waits
+    function waitFor(cond, then, ms, label) {
+        wait(label ?? "wait");
         poll.cond = cond;
         poll.then = then;
         poll.left = (ms ?? 5000) / poll.interval;
@@ -78,7 +83,7 @@ Menu {
         waitFor(() => adapter.enabled, () => {
             notify("Bluetooth включён");
             mainPage();
-        });
+        }, 5000, "powering on");
     }
 
     function togglePower() {
@@ -88,11 +93,11 @@ Menu {
             waitFor(() => !adapter.enabled, () => {
                 notify("Bluetooth выключен");
                 mainPage();
-            });
+            }, 5000, "powering off");
         } else if (adapter.state === BluetoothAdapterState.Blocked) {
             notify("Снимаю блокировку rfkill...");
             Quickshell.execDetached(["rfkill", "unblock", "bluetooth"]);
-            waitFor(() => false, powerOn, 3000);
+            waitFor(() => false, powerOn, 3000, "unblocking");
         } else
             powerOn();
     }
@@ -100,18 +105,21 @@ Menu {
     function toggleScan() {
         if (adapter.discovering) {
             adapter.discovering = false;
+            scanning = false;
             waitFor(() => !adapter.discovering, () => {
                 notify("Поиск устройств остановлен");
                 mainPage();
-            });
+            }, 5000, "stopping");
         } else {
             notify("Поиск устройств... (12 сек)");
             adapter.discovering = true;
+            scanning = true;
             waitFor(() => false, () => {
                 adapter.discovering = false;
+                scanning = false;
                 notify("Поиск завершён");
                 mainPage();
-            }, 12000);
+            }, 12000, "scanning");
         }
     }
 
@@ -120,7 +128,7 @@ Menu {
         const name = alias(d);
         const connect = !d.connected;
         notify(connect ? `Подключаю ${name}...` : `Отключаю ${name}...`);
-        hide();
+        wait(connect ? "connecting" : "disconnecting");
         bluetoothctl.ok = connect ? "Connection successful" : "Successful";
         bluetoothctl.success = connect ? `${name} подключён` : `${name} отключён`;
         bluetoothctl.failure = connect ? `Не удалось подключить ${name}` : `Не удалось отключить ${name}`;
@@ -132,10 +140,10 @@ Menu {
             device.forget();
             notify("Сопряжение удалено");
             // the device is gone from bluez now
-            waitFor(() => false, mainPage, 500);
+            waitFor(() => false, mainPage, 500, "forgetting");
         } else {
             notify("Начинаю сопряжение...");
-            hide();
+            wait("pairing");
             pair.exec(["expect", "-f", Quickshell.shellPath("scripts/bt-pair"), device.address]);
         }
     }
@@ -147,7 +155,7 @@ Menu {
         waitFor(() => d.trusted === trust, () => {
             notify(trust ? "Устройство добавлено в доверенные" : "Доверие снято");
             devicePage(d);
-        });
+        }, 5000, "trusting");
     }
 
     // a pin or passkey for bt-pair
@@ -155,16 +163,28 @@ Menu {
         page = "code";
         input = true;
         lines = 0;
-        prompt = kind === "pin" ? "Bluetooth PIN" : "Bluetooth passkey";
+        active = [];
+        prompt = kind === "pin" ? "pin" : "passkey";
         show([]);
     }
 
     input: false
+    title: page === "device" && device ? alias(device) : "bluetooth"
+    icon: "\u{f00af}"
+    status: page === "device" && device ? device.address : ""
+    hint: page === "code" ? "enter send  esc cancel" : "j/k move  enter pick  esc close"
     location: "top-right"
+    menuWidth: ch(48)
+
+    // the scan would run on with no one to stop it
+    onCancelled: {
+        if (scanning)
+            adapter.discovering = false;
+    }
 
     onAccepted: (index, text) => {
         if (page === "code") {
-            hide();
+            wait("pairing");
             prompt = "";
             pair.write(text + "\n");
             return;

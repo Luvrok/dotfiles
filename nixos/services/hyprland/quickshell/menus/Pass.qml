@@ -12,7 +12,14 @@ Menu {
     property var entries: []
     // field name -> value of the open entry
     property var fields: ({})
+    property var fieldNames: []
     property string entry: ""
+
+    // a page no taller than its rows
+    function page(rows) {
+        lines = Math.max(1, Math.min(rows.length, 15));
+        show(rows);
+    }
 
     function copy(value) {
         Quickshell.execDetached(["sh", "-c", `
@@ -24,6 +31,10 @@ Clearing in 45 seconds"
             wl-copy --primary --clear`, "sh", value]);
     }
 
+    title: entry === "" ? "pass" : entry
+    icon: "\u{f0306}"
+    prompt: "search"
+    hint: entry === "" ? "enter open  esc close" : "enter copy  esc close"
     lines: 15
 
     onAccepted: (index, text) => {
@@ -37,10 +48,10 @@ Clearing in 45 seconds"
             show_.running = true;
         } else if (index === 0) {
             entry = "";
-            show(entries);
+            page(entries);
         } else {
             hide();
-            copy(fields[text]);
+            copy(fields[fieldNames[index - 1]]);
             done();
         }
     }
@@ -51,7 +62,7 @@ Clearing in 45 seconds"
         stdout: StdioCollector {
             onStreamFinished: {
                 menu.entries = text.split("\n").filter(l => l !== "").map(l => l.slice(menu.store.length + 1, -4)).sort();
-                menu.show(menu.entries);
+                menu.page(menu.entries);
             }
         }
     }
@@ -77,7 +88,8 @@ Clearing in 45 seconds"
             }
             fields.pass = lines[0];
             menu.fields = fields;
-            menu.show(["< Return", ...Object.keys(fields).sort()]);
+            menu.fieldNames = Object.keys(fields).sort();
+            menu.page(["← back", ...menu.fieldNames]);
         }
     }
 }

@@ -7,9 +7,11 @@ Menu {
 
     signal answered(string text)
 
+    title: "password"
+    icon: "\u{f033e}"
     password: true
     lines: 0
-    padH: 8
+    hint: "enter send  esc cancel"
 
     onAccepted: (index, text) => {
         hide();

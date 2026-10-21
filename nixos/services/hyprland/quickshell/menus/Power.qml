@@ -16,12 +16,18 @@ Menu {
         ["⏻", "systemctl poweroff"],
     ]
 
+    readonly property var names: ["lock", "suspend", "logout", "reboot", "shutdown"]
+
+    // big icons, the head names the one under the cursor
     input: false
+    title: names[current] ?? ""
+    hint: ""
     location: "right"
-    menuWidth: 85
+    menuWidth: 100
     lines: 5
-    padV: 20
+    padV: 16
     padH: 0
+    fontSize: 15
     align: Text.AlignHCenter
 
     onAccepted: (index, text) => {

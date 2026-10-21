@@ -3,14 +3,16 @@ import Quickshell
 import Quickshell.Io
 import qs
 
-// rofi-wifi on iwd: scan, then disconnect, rescan or a network, the connected
-// one first. a network iwd doesn't know asks for the password
+// rofi-wifi on iwd, drawn like the eww wifi menu: it drops from the bar and
+// pulses while iwd scans. disconnect, rescan or a network, the connected one
+// first and in orange. a network iwd doesn't know asks for the password
 Menu {
     id: menu
 
     readonly property string dev: "wlan0"
     // the network iwd is on
     property string connected: ""
+    property bool scanned: false
     // real ssids of the network rows
     property var networks: []
     property bool asking: false
@@ -20,9 +22,13 @@ Menu {
         Quickshell.execDetached(["notify-send", "WiFi", text]);
     }
 
+    // the panel stays and pulses, the rows it has stay too
     function scan() {
-        notify("Сканирую сети…");
-        hide();
+        if (!visible) {
+            lines = 0;
+            show([]);
+        }
+        wait("scanning");
         scanner.running = true;
     }
 
@@ -53,24 +59,24 @@ Menu {
             }
             const ssid = t.slice(0, end).join(" ");
             if (ssid !== "")
-                found.push([ssid, (sig.match(/\*/g) ?? []).length]);
+                found.push([ssid, (sig.match(/\*/g) ?? []).length, t[sec].toLowerCase()]);
         }
         // current first
         found.sort((a, b) => (b[0] === connected) - (a[0] === connected));
         return found;
     }
 
-    function label(ssid, stars) {
-        const bars = stars >= 4 ? "▂▄▆█" : stars === 3 ? "▂▄▆_" : stars === 2 ? "▂▄__" : stars === 1 ? "▂___" : "    ";
-        const name = ssid.length > 24 ? ssid.slice(0, 21) + "..." : ssid;
-        return name.padEnd(24) + "  " + bars;
+    // ssid, then security and signal in the dim column, like eww but with
+    // squares, jetbrains mono has no ▮
+    function label(ssid, stars, sec) {
+        const n = Math.max(0, Math.min(stars, 4));
+        return `${ssid}\t${sec === "8021x" ? "eap" : sec}  ${"■".repeat(n)}${"□".repeat(4 - n)}`;
     }
 
     function connect(ssid, password) {
-        hide();
+        wait("connecting");
         connector.ssid = ssid;
         if (password === undefined) {
-            notify(`Подключаюсь к ${ssid}…`);
             connector.exec(["sh", "-c", 'iwctl station "$1" disconnect >/dev/null 2>&1; iwctl station "$1" connect "$2" </dev/null 2>/dev/null', "sh", dev, ssid]);
         } else {
             connector.exec(["iwctl", "--passphrase", password, "station", dev, "connect", ssid]);
@@ -78,8 +84,19 @@ Menu {
     }
 
     input: false
-    menuWidth: ch(36)
-    fontFamily: "monospace"
+    title: asking ? "enter password" : "wi-fi"
+    icon: "\u{f05a9}"
+    status: asking ? target : connected !== "" ? connected : scanned ? "offline" : ""
+    hint: asking ? "enter connect  esc cancel" : "j/k move  enter join  r rescan  esc"
+    location: "top"
+    menuWidth: ch(44)
+
+    keys: e => {
+        if (asking || e.key !== Qt.Key_R)
+            return false;
+        scan();
+        return true;
+    }
 
     onAccepted: (index, text) => {
         if (asking && text === "") {
@@ -94,7 +111,7 @@ Menu {
         }
         const headers = connected !== "" ? 2 : 1;
         if (connected !== "" && index === 0) {
-            hide();
+            wait("disconnecting");
             disconnector.running = true;
         } else if (index === headers - 1)
             scan();
@@ -121,10 +138,14 @@ Menu {
         stdout: StdioCollector {
             onStreamFinished: {
                 const found = menu.parse(text);
+                menu.scanned = true;
                 menu.networks = found.map(n => n[0]);
-                const rows = (menu.connected !== "" ? [`disconnect from ${menu.connected}`] : []).concat(["rescan"], found.map(n => menu.label(n[0], n[1])));
+                const head = menu.connected !== "" ? [`disconnect\t${menu.connected}`, "rescan"] : ["rescan"];
+                const rows = head.concat(found.map(n => menu.label(n[0], n[1], n[2])));
                 menu.input = false;
                 menu.password = false;
+                const current = menu.networks.indexOf(menu.connected);
+                menu.active = current >= 0 ? [head.length + current] : [];
                 menu.lines = Math.min(rows.length, 10);
                 menu.show(rows);
             }
@@ -155,7 +176,7 @@ Menu {
                 menu.target = ssid;
                 menu.input = true;
                 menu.password = true;
-                menu.prompt = "Password";
+                menu.prompt = "password";
                 menu.lines = 0;
                 menu.show([]);
             } else {

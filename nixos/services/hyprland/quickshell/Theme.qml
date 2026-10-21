@@ -11,6 +11,9 @@ Singleton {
     readonly property color border: "#d65d0e"
     readonly property color sel: "#fbf1c7"
     readonly property color selBg: "#d65d0e"
+    // fg at 45% and the dark line, like the eww wifi menu
+    readonly property color dim: "#73ebdbb2"
+    readonly property color line: "#3c3836"
     readonly property string font: "JetBrainsMonoNL Nerd Font"
     readonly property int fontSize: 11
 

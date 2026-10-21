@@ -26,6 +26,10 @@ Menu {
             Quickshell.execDetached([cmd]);
     }
 
+    title: "run"
+    icon: "\u{f018d}"
+    prompt: "command"
+    hint: "enter run  esc close"
     lines: 10
 
     onAccepted: (index, text) => {

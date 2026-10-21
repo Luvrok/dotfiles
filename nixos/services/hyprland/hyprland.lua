@@ -98,8 +98,9 @@ hl.animation({ leaf = "fadeSwitch", enabled = false })
 hl.animation({ leaf = "border", enabled = false })
 hl.animation({ leaf = "borderangle", enabled = false })
 
--- the bar and the wallpaper just appear, fullscreen windows take the screen at once
-hl.layer_rule({ match = { namespace = "^(bar|wallpaper)$" }, no_anim = true })
+-- the bar and the wallpaper just appear, fullscreen windows take the screen
+-- at once. the menus slide in on their own
+hl.layer_rule({ match = { namespace = "^(bar|wallpaper|menu)$" }, no_anim = true })
 hl.window_rule({ match = { fullscreen = true }, no_anim = true })
 
 -- x11 apps (st, nsxiv, dmenu) read colors and fonts from ~/.Xresources, xrdb
