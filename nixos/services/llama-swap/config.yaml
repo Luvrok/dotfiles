@@ -289,7 +289,7 @@ models:
   # n_ubatch = min(n_batch, n_ubatch), а n_batch по умолчанию 2048,
   # так что без него --ubatch-size 8192 молча превращался в 2048.
   "embed":
-    description: "EmbeddingGemma 2 BF16, CPU. For Open WebUI RAG and pi-memory."
+    description: "EmbeddingGemma 2 BF16, CPU. pi-memory"
     cmd: |
       llama-server --port ${PORT} --threads 8
       -m ${models}/embeddinggemma-2/embeddinggemma-2-BF16.gguf
@@ -298,7 +298,7 @@ models:
       --ctx-size 8192
       --batch-size 8192
       --ubatch-size 8192
-    ttl: 0
+    ttl: 600
 
   # Та же EmbeddingGemma 2 + энкодеры картинок/видео/аудио (mmproj).
   # Пространство векторов общее с embed: текст из embed можно
