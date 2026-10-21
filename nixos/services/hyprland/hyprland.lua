@@ -59,7 +59,7 @@ hl.config({
     binds = {
         -- a shown scratchpad hides when the tag changes, like in sway
         hide_special_on_workspace_change = true,
-        -- $mod + wheel goes through the windows, 300 ms a step is slow
+        -- $mod + wheel goes through the tags, 300 ms a step is slow
         scroll_event_delay = 150,
     },
 
@@ -307,10 +307,7 @@ hl.bind(mod .. " + y", hl.dsp.window.fullscreen())
 -- focusstack / pushstack: master, then the stack top to bottom, both wrap
 hl.bind(mod .. " + j", hl.dsp.layout("cyclenext"))
 hl.bind(mod .. " + k", hl.dsp.layout("cycleprev"))
--- the same with the mouse: $mod + wheel, $mod + the side buttons. up and
--- forward go like k
-hl.bind(mod .. " + mouse_down", hl.dsp.layout("cyclenext"))
-hl.bind(mod .. " + mouse_up", hl.dsp.layout("cycleprev"))
+-- the same on the mouse's side buttons, forward goes like k
 hl.bind(mod .. " + mouse:275", hl.dsp.layout("cyclenext"))
 hl.bind(mod .. " + mouse:276", hl.dsp.layout("cycleprev"))
 hl.bind(mod .. " + SHIFT + j", hl.dsp.layout("swapnext"))
@@ -341,6 +338,9 @@ hl.bind(mod .. " + d", hl.dsp.layout("removemaster"))
 hl.bind(mod .. " + SHIFT + c", hl.dsp.window.close())
 -- previous tag of this monitor
 hl.bind(mod .. " + Tab", hl.dsp.focus({ workspace = "previous_per_monitor" }))
+-- $mod + wheel: the next or previous tag with windows on this monitor, wraps
+hl.bind(mod .. " + mouse_down", hl.dsp.focus({ workspace = "m+1" }))
+hl.bind(mod .. " + mouse_up", hl.dsp.focus({ workspace = "m-1" }))
 
 -- setlayout: tile / monocle for this tag, until a reload. the event tells
 -- the bar to redraw its layout symbol

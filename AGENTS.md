@@ -463,8 +463,9 @@ Hyprland Lua, QML and shell, no nix in them.
   selectors stop at the screen edge, the binds use `+1`/`-1`, they wrap.
 - master is dwm tile: `layoutmsg cyclenext/swapnext` wrap like i3-tile,
   `addmaster/removemaster` are dwm's incnmaster/decnmaster ($mod+i/d).
-  $mod + wheel and $mod + the mouse's side buttons do $mod+j/k
-  (`binds.scroll_event_delay` 150, the 300 ms default is slow for that).
+  $mod + the mouse's side buttons do $mod+j/k. $mod + wheel goes through
+  the tags with windows on the monitor (`m+1`/`m-1`, wraps,
+  `binds.scroll_event_delay` 150, the 300 ms default is slow for that).
   monocle is sway's tabbed tag without tab bars, it hides the windows
   behind the focused one with alpha 0 through the `fadeSwitch` animation,
   which is off, so a switch is instant. A workspace rule sets the
