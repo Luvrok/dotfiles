@@ -80,18 +80,6 @@ in
         '';
       });
     })
-    (final: prev: {
-      dmenu = prev.dmenu.overrideAttrs {
-        src = inputs.dmenu.outPath;
-        buildInputs = with pkgs; [
-          libX11
-          libXinerama
-          libXft
-          pkg-config
-        ];
-        makeFlags = [ "PREFIX=$(out)" ];
-      };
-    })
     (self: super: {
       mpv-config = super.stdenvNoCC.mkDerivation {
         pname = "mpv-config";

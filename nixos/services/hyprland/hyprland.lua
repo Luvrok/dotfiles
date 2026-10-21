@@ -41,7 +41,7 @@ hl.config({
     animations = { enabled = true },
 
     master = {
-        mfact = 0.5,
+        mfact = 0.7,
         orientation = "right",
         -- new windows go to the bottom of the stack
         new_status = "slave",
@@ -157,6 +157,19 @@ hl.window_rule({ match = { title = "termfilechooser" }, float = true, size = { 1
 hl.window_rule({ match = { class = "^dragon-drop$" }, float = true, center = true })
 hl.window_rule({ match = { class = "^ffplay$", title = "^android-webcam$" }, float = true })
 
+-- telegram's media viewer: the app thinks it's fullscreen, hyprland keeps it
+-- a floating window under the bar, so the windows behind stay visible and
+-- it pops in like any window
+hl.window_rule({
+    match = { class = "^org\\.telegram\\.desktop$", title = "^(Media viewer|Просмотр медиа)$" },
+    float = true,
+    fullscreen_state = "0 2",
+    suppress_event = "fullscreen",
+    move = "0 24",
+    size = "monitor_w monitor_h-24",
+    border_size = 0,
+})
+
 -- no screen blanking under a fullscreen window
 hl.window_rule({ match = { class = ".*" }, idle_inhibit = "fullscreen" })
 
@@ -220,7 +233,7 @@ hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("dwm-brightness down"))
 
 -- monitors: the main one runs at 120 Hz next to the second one and at 240 Hz alone
 hl.bind(mod .. " + F7", function()
-    hl.monitor({ output = "DP-1", disabled = false })
+    hl.monitor({ output = "DP-1", mode = "2560x1440@120", disabled = false })
     hl.monitor({ output = "DP-2", mode = "2560x1440@120" })
 end)
 hl.bind(mod .. " + SHIFT + F7", function()

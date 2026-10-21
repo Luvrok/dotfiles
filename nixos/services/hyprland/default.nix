@@ -9,17 +9,11 @@
   ...
 }:
 
-let
-  # nixpkgs without the overlays: the dmenu fork in nixos/overlays changes
-  # uwsm, hyprland's uwsm session file points to it, so that hyprland isn't
-  # in the binary cache and builds from source
-  stock = import pkgs.path { inherit (pkgs.stdenv.hostPlatform) system; };
-in
 {
   programs.hyprland = {
     enable = true;
-    package = stock.hyprland;
-    portalPackage = stock.xdg-desktop-portal-hyprland;
+    package = pkgs.hyprland;
+    portalPackage = pkgs.xdg-desktop-portal-hyprland;
   };
 
   # both look in XDG_CONFIG_DIRS (/etc/xdg) after ~/.config: hyprland for
@@ -49,6 +43,7 @@ in
     wf-recorder
     expect
     jq
+    hyprprop
   ];
 
   # hyprland.lua starts and stops it, like sway-session.target in the sway module
@@ -58,16 +53,6 @@ in
     bindsTo = [ "graphical-session.target" ];
     wants = [ "graphical-session-pre.target" ];
     after = [ "graphical-session-pre.target" ];
-  };
-
-  # hyprland-portals.conf replaces portals.conf under hyprland, so the
-  # hyprland package's defaults and the file picker (yazi, xdg module) go here
-  xdg.portal.config.hyprland = {
-    default = [
-      "hyprland"
-      "gtk"
-    ];
-    "org.freedesktop.impl.portal.FileChooser" = [ "termfilechooser" ];
   };
 
   # gtk on wayland reads theme, icons, font and cursor from dconf, like in
