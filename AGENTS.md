@@ -360,8 +360,9 @@ Hyprland Lua, QML and shell, no nix in them.
   `HyprlandFocusGrab`: esc or a click outside closes it, like rofi exiting the
   script. Every page is a `show(rows)` call, the window hides while a command
   runs (pinentry needs the keyboard during `pass show`).
-- No animations, blur, shadows or rounding, like sway. `animations.enabled`
-  in hyprland.lua turns them on.
+- Animations follow picom in i3 (`home/picom.nix`): the same speeds and
+  curves, a 6% `slidefade` on a tag switch, the scratchpad slides down. No
+  blur, shadows or rounding.
 - hyprland.lua starts `hyprland-session.target` (bound to
   `graphical-session.target`, like `sway-session.target`). The X11-only user
   services stay off, they hang on `nixos-fake-graphical-session.target`.
@@ -393,6 +394,11 @@ Hyprland Lua, QML and shell, no nix in them.
   `custom>>layout`. A reload drops those runtime rules.
 - smart_no_gaps: monocle tags get `border_size = 0`, a window rule gives
   floating windows their 1px back (window rules beat workspace rules).
+- Hyprland windows can only slide in from a screen edge, pop or gnome, not
+  drift a few percent like picom, so they pop from 94%. Workspaces
+  (`slidefade 6%`) and special workspaces (`slidefadevert top 6%`) can.
+  Hyprland picks the switch direction by workspace id, like i3-ws-anim's tags.
+  The bar and the wallpaper have `no_anim`, fullscreen windows too.
 - Hyprland puts `gaps_in` on every side of a window and doesn't add it at the
   screen edge: sway's inner 10 / outer 0 is `gaps_in = 5`, `gaps_out = 10`.
 - Scratchpads are special workspaces. `on_created_empty` starts the app when

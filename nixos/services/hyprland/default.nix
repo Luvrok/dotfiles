@@ -1,7 +1,7 @@
 # hyprland: the twin of the sway session on hyprland's own layouts and
-# dispatchers, no animations. the bar, the wallpaper and the menus that do
-# what the rofi scripts do are quickshell. sddm lists it next to i3 and
-# sway, i3 stays the default. barnard only, its env.nix imports this
+# dispatchers, animations like picom in i3. the bar, the wallpaper and the
+# menus that do what the rofi scripts do are quickshell. sddm lists it next
+# to i3 and sway, i3 stays the default. barnard only, its env.nix imports this
 {
   config,
   lib,

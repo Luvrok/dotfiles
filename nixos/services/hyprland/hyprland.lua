@@ -1,7 +1,8 @@
 -- hyprland: the twin of nixos/services/sway/config. same tags, binds,
 -- scratchpads and look, done with hyprland's own layouts and dispatchers.
--- no animations, like sway. the bar, the wallpaper and the menus (the rofi
--- scripts in i3 and sway) are quickshell, its config is `qs -c hyprland`
+-- animations like picom in i3 (home/picom.nix). the bar, the wallpaper and
+-- the menus (the rofi scripts in i3 and sway) are quickshell, its config is
+-- `qs -c hyprland`
 
 local mod = "SUPER"
 
@@ -37,7 +38,7 @@ hl.config({
         dim_special = 0,
     },
 
-    animations = { enabled = false },
+    animations = { enabled = true },
 
     master = {
         mfact = 0.5,
@@ -65,6 +66,37 @@ hl.config({
         follow_mouse = 1,
     },
 })
+
+-- animations, the same timings and curves as picom in i3 (speed is in
+-- 100 ms). ease out for moves, ease in-out for fade in, linear fade out
+hl.curve("out", { type = "bezier", points = { { 0.33, 1 }, { 0.68, 1 } } })
+hl.curve("inout", { type = "bezier", points = { { 0.4, 0 }, { 0.2, 1 } } })
+hl.curve("linear", { type = "bezier", points = { { 0, 0 }, { 1, 1 } } })
+
+-- tag switch: a 6% drift toward the new tag plus a fade, like i3-ws-anim
+hl.animation({ leaf = "workspaces", enabled = true, speed = 2.5, bezier = "out", style = "slidefade 6%" })
+-- scratchpad: slides down like a new window, sinks when it hides
+hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 2.5, bezier = "out", style = "slidefadevert top 6%" })
+-- windows can't drift a bit in hyprland, a small pop in and out instead
+hl.animation({ leaf = "windowsIn", enabled = true, speed = 2.5, bezier = "out", style = "popin 94%" })
+hl.animation({ leaf = "windowsOut", enabled = true, speed = 2.5, bezier = "out", style = "popin 94%" })
+-- tiles glide to their new place
+hl.animation({ leaf = "windowsMove", enabled = true, speed = 2.5, bezier = "out" })
+hl.animation({ leaf = "fadeIn", enabled = true, speed = 2.5, bezier = "inout" })
+hl.animation({ leaf = "fadeOut", enabled = true, speed = 1.5, bezier = "linear" })
+-- quickshell menus pop like the windows, short fades for app popups
+hl.animation({ leaf = "layers", enabled = true, speed = 2.5, bezier = "out", style = "popin 94%" })
+hl.animation({ leaf = "fadeLayersIn", enabled = true, speed = 2.5, bezier = "inout" })
+hl.animation({ leaf = "fadeLayersOut", enabled = true, speed = 1.5, bezier = "linear" })
+hl.animation({ leaf = "fadePopupsIn", enabled = true, speed = 0.8, bezier = "inout" })
+hl.animation({ leaf = "fadePopupsOut", enabled = true, speed = 0.6, bezier = "linear" })
+-- border color changes at once, like i3
+hl.animation({ leaf = "border", enabled = false })
+hl.animation({ leaf = "borderangle", enabled = false })
+
+-- the bar and the wallpaper just appear, fullscreen windows take the screen at once
+hl.layer_rule({ match = { namespace = "^(bar|wallpaper)$" }, no_anim = true })
+hl.window_rule({ match = { fullscreen = true }, no_anim = true })
 
 -- x11 apps (st, nsxiv, dmenu) read colors and fonts from ~/.Xresources, xrdb
 -- below. xwayland starts with hyprland and stays
