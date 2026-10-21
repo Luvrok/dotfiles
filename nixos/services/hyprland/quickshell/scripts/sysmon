@@ -4,7 +4,7 @@
 # from sysfs, temperatures from hwmon. integers only, the locale's decimal
 # comma can't get in. cpu in tenths of a percent (threads in percent),
 # memory and disks in kB, power in mW, temperatures in m°C, clocks in MHz,
-# rates in bytes a second
+# rates in bytes a second. vnstat's days and months come from the menu
 set -u
 
 # a number from /proc or sysfs into REPLY, 0 when it isn't there. read, so
@@ -47,7 +47,7 @@ for c in /sys/class/drm/card[0-9] /sys/class/drm/card[0-9][0-9]; do
 done
 
 declare -a ptot pidle
-prev_total=0 prev_idle=0 prev_up=0 prev_rx=0 prev_tx=0 prev_rd=0 prev_wr=0
+prev_total=0 prev_idle=0 prev_up=0 prev_rx=0 prev_tx=0
 n=0 disks="[]" ip=""
 while :; do
   read -r up _ </proc/uptime
@@ -105,22 +105,13 @@ while :; do
 
   read -r l1 l5 l15 procs _ </proc/loadavg
 
-  # whole disks only, partitions count again
-  rs=0 ws=0
-  while read -r _ _ name _ _ r _ _ _ w _; do
-    case $name in
-      nvme*p* | mmcblk*p* | loop* | ram* | zram* | dm-* | md* | sr*) ;;
-      nvme* | sd* | vd* | xvd* | mmcblk*) rs=$((rs + r)) ws=$((ws + w)) ;;
-    esac
-  done </proc/diskstats
-
   # the default route's interface, real ones only for the rates: a vpn or
   # a bridge would count the bytes twice
   iface=""
   while read -r ifc dest _; do
     [ "$dest" = 00000000 ] && iface=$ifc && break
   done < <(tail -n +2 /proc/net/route)
-  rx=0 tx=0 rxtotal=0 txtotal=0
+  rx=0 tx=0
   while read -r line; do
     name=${line%%:*}
     name=${name// /}
@@ -128,14 +119,13 @@ while :; do
     # shellcheck disable=SC2086
     set -- ${line#*:}
     rx=$((rx + $1)) tx=$((tx + $9))
-    [ "$name" = "$iface" ] && rxtotal=$1 txtotal=$9
   done < <(tail -n +3 /proc/net/dev)
 
-  rates="0,0,0,0"
+  rates="0,0"
   if [ "$prev_up" -gt 0 ] && [ "$dt" -gt 0 ]; then
-    rates="$((100 * (rx - prev_rx) / dt)),$((100 * (tx - prev_tx) / dt)),$((100 * 512 * (rs - prev_rd) / dt)),$((100 * 512 * (ws - prev_wr) / dt))"
+    rates="$((100 * (rx - prev_rx) / dt)),$((100 * (tx - prev_tx) / dt))"
   fi
-  prev_up=$up prev_rx=$rx prev_tx=$tx prev_rd=$rs prev_wr=$ws
+  prev_up=$up prev_rx=$rx prev_tx=$tx
 
   # disks and the address change rarely, every 5 s
   if [ $((n % 5)) -eq 0 ]; then
@@ -175,9 +165,9 @@ while :; do
     g+="${g:+,}{\"busy\":$busy,\"vram\":$vram,\"vramtotal\":$vramtotal,\"gtt\":$gtt,\"power\":$((power / 1000)),\"temp\":$gtemp,\"sclk\":$sclk,\"fan\":$fan}"
   done
 
-  printf '{%s,"uptime":%s,"load":"%s %s %s","procs":%s,"cpu":%s,"use":[%s],"freq":%s,"freqmax":%s,"cputemp":%s,"mem":%s,"memtotal":%s,"cache":%s,"swap":%s,"swaptotal":%s,"disks":%s,"iface":%s,"ip":%s,"rates":[%s],"rxtotal":%s,"txtotal":%s,"gpus":[%s]}\n' \
+  printf '{%s,"uptime":%s,"load":"%s %s %s","procs":%s,"cpu":%s,"use":[%s],"freq":%s,"freqmax":%s,"cputemp":%s,"mem":%s,"memtotal":%s,"cache":%s,"swap":%s,"swaptotal":%s,"disks":%s,"iface":%s,"ip":%s,"rates":[%s],"gpus":[%s]}\n' \
     "$static" "$((up / 100))" "$l1" "$l5" "$l15" "${procs#*/}" "$cpu" "$use" "$freq" "$freqmax" "$temp" \
     "$((memtotal - memavail))" "$memtotal" "$((cached + buffers + reclaim))" "$((swaptotal - swapfree))" "$swaptotal" \
-    "$disks" "$(json "$iface")" "$(json "$ip")" "$rates" "$rxtotal" "$txtotal" "$g"
+    "$disks" "$(json "$iface")" "$(json "$ip")" "$rates" "$g"
   sleep 1
 done

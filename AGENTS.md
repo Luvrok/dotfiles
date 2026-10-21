@@ -418,10 +418,14 @@ Hyprland Lua, QML and shell, no nix in them.
   `scripts/sysmon` (a json line a second, /proc, sysfs, hwmon, df, ip,
   integers only so the ru decimal comma can't get in). The cpu model,
   cores and threads under the head. Left: cpu (clock, temperature), a
-  bar for every thread, load, memory (cache), swap, disks. Right: every
-  amdgpu (load, W, temperature, clock, then vram and gtt, a small one
-  next to a big one is "igpu"), the network (the default route's
-  interface, its address, bytes since boot), disk io. `p` shows the
+  bar for every thread, load (processes running or waiting, over 1, 5
+  and 15 min), memory, cache, swap, disks (the mount's last part). Right:
+  every amdgpu (load, W, temperature, clock, then vram and gtt, a small
+  one next to a big one is "igpu"), the network (the default route's
+  interface and address), then vnstat for that interface every 30 s
+  (`vnstat --json d 2`, `m 1`, `y 1`, bytes since jsonversion 2): today
+  and yesterday, the month and its estimate at this pace, the year and
+  all of it. `p` shows the
   processes from `top -b -c` (the last second's cpu, kernel threads left
   out), top runs only then. The list sorts itself every second, so it has
   no cursor until j/k (`startOnFirst: false`), then the cursor stays on its
