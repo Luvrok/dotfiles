@@ -18,15 +18,15 @@ Menu {
 
     readonly property var names: ["lock", "suspend", "logout", "reboot", "shutdown"]
 
-    // big icons, the head names the one under the cursor
+    // icons only, the head names the one under the cursor
     input: false
     title: names[current] ?? ""
     hint: ""
-    menuWidth: 100
+    menuWidth: 88
     lines: 5
-    padV: 16
+    padV: 10
     padH: 0
-    fontSize: 15
+    fontSize: 12
     align: Text.AlignHCenter
 
     onAccepted: (index, text) => {

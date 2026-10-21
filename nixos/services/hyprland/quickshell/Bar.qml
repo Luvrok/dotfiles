@@ -15,6 +15,12 @@ PanelWindow {
     readonly property HyprlandWorkspace ws: monitor?.activeWorkspace ?? null
     readonly property int offset: Hypr.offset(monitor?.name ?? "")
 
+    // a title without its icons: emoji, dingbats, braille spinners and
+    // nerd font glyphs come from other fonts and sit off the baseline
+    function plain(title) {
+        return title.replace(/[\u2190-\u2bff\u2800-\u28ff\ue000-\uf8ff\ufe00-\ufe0f\u200d]|[\ud83c-\ud83e][\udc00-\udfff]|[\udb80-\udbff][\udc00-\udfff]/g, "").replace(/\s+/g, " ").trim();
+    }
+
     function dispatch(lua) {
         Hyprland.dispatch(lua);
     }
@@ -40,7 +46,7 @@ PanelWindow {
     component Label: Text {
         color: Theme.fg
         font.family: Theme.barFont
-        font.pointSize: Theme.barFontSize
+        font.pixelSize: Theme.barFontSize
         verticalAlignment: Text.AlignVCenter
         height: bar.height
     }
@@ -97,8 +103,8 @@ PanelWindow {
 
                 Label {
                     id: tagLabel
-                    leftPadding: 9
-                    rightPadding: 9
+                    leftPadding: 7
+                    rightPadding: 7
                     text: tag.modelData.label
                     color: tag.selected || tag.urgent ? Theme.sel : Theme.fg
                 }
@@ -202,7 +208,7 @@ PanelWindow {
                             rightPadding: 6
                             elide: Text.ElideRight
                             textFormat: Text.PlainText
-                            text: win.modelData.title
+                            text: bar.plain(win.modelData.title)
                             color: win.selected ? Theme.sel : Theme.fg
                         }
 

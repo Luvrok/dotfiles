@@ -88,7 +88,7 @@ Menu {
     icon: "\u{f05a9}"
     status: asking ? target : connected !== "" ? connected : scanned ? "offline" : ""
     hint: asking ? "enter connect  esc cancel" : "j/k move  enter join  r rescan  d disconnect  esc"
-    menuWidth: ch(44)
+    menuWidth: ch(48)
 
     keys: e => {
         if (asking)

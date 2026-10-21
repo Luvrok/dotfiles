@@ -447,6 +447,10 @@ Hyprland Lua, QML and shell, no nix in them.
   monitor binds from warping too. The bar's clicks send one Lua function
   (`hyprctl dispatch` is `return hl.dispatch(...)`, a function works) that
   focuses and puts the cursor back, like i3's `mouse_warping output`.
+- The bar drops emoji, dingbats, braille spinners and nerd glyphs from
+  window titles (claude.ai puts a `✳` there), they come from fallback fonts
+  and sit off the baseline. The bar font is in px (14, the eww bar's 10pt
+  plus a bit), the menus' in pt.
 - Quickshell keeps `lastIpcObject` (layout, last window, window positions,
   floating) from its last fetch, Hypr.qml refetches workspaces and clients
   50 ms after window, workspace and custom events.
