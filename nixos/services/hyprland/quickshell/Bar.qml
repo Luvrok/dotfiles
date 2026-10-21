@@ -287,7 +287,7 @@ PanelWindow {
 
             // volume: scroll ±2% unless muted, middle click mutes
             Label {
-                id: volume
+                id: sound
                 readonly property PwNode sink: Pipewire.defaultAudioSink
                 readonly property int volume: Math.round((sink?.audio?.volume ?? 0) * 100)
 
@@ -318,7 +318,7 @@ PanelWindow {
                 }
             }
             Sep {
-                visible: volume.text !== ""
+                visible: sound.text !== ""
             }
 
             // memory in use, like `free -h`: left click opens the system
@@ -364,7 +364,7 @@ PanelWindow {
                 id: wifi
                 visible: text !== ""
                 Process {
-                    id: signal
+                    id: iwd
                     running: true
                     command: ["bash", Quickshell.shellPath("scripts/wifi"), "signal"]
                     stdout: StdioCollector {
@@ -404,7 +404,7 @@ PanelWindow {
         repeat: true
         onTriggered: {
             meminfo.reload();
-            signal.running = true;
+            iwd.running = true;
         }
     }
 }
