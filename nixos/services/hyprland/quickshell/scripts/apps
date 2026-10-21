@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# the apps of the kill menu (Kill.qml): every process with a wayland or x11
+# connection, with a window or not (an app that lives on in the background
+# after its window closes keeps it), the processes and hyprland's windows.
+# Kill.qml folds each app into its top such process
+#   apps list       --gui-- pids, --ps-- "pid ppid pcpu rss args", --clients-- json
+#   apps kill <pid> TERM the app and all it started, KILL them if it still
+#                   lives after 2 s
+set -u
+
+case ${1:-} in
+  list)
+    echo --gui--
+    # the compositor's and xwayland's ends sit on the socket path, their
+    # peers are the clients
+    ss -xpH | awk '
+      $5 ~ /\/wayland-[0-9]+$|\.X11-unix\/X[0-9]+$/ { peer[$8] = 1; next }
+      { s = $0; if (sub(/^.*users:/, "", s)) users[$6] = s }
+      END {
+        for (i in peer) {
+          s = users[i]
+          while (match(s, /pid=[0-9]+/)) {
+            print substr(s, RSTART + 4, RLENGTH - 4)
+            s = substr(s, RSTART + RLENGTH)
+          }
+        }
+      }' | sort -un
+    echo --ps--
+    ps -eo pid=,ppid=,pcpu=,rss=,args=
+    echo --clients--
+    hyprctl -j clients
+    ;;
+  kill)
+    case ${2:-} in "" | 0* | 1 | *[!0-9]*) exit 1 ;; esac
+    # the pid and its descendants
+    pids=$(ps -eo pid=,ppid= | awk -v root="$2" '
+      { kids[$2] = kids[$2] " " $1 }
+      END {
+        out = root; q[1] = root; n = 1
+        while (n > 0) {
+          p = q[n--]
+          m = split(kids[p], k, " ")
+          for (i = 1; i <= m; i++) { out = out " " k[i]; q[++n] = k[i] }
+        }
+        print out
+      }')
+    # shellcheck disable=SC2086
+    kill -TERM $pids 2>/dev/null
+    sleep 2
+    # shellcheck disable=SC2086
+    kill -0 "$2" 2>/dev/null && kill -KILL $pids 2>/dev/null
+    ;;
+  *)
+    echo "usage: apps list | kill <pid>" >&2
+    exit 1
+    ;;
+esac

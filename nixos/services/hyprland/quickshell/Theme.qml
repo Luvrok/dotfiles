@@ -11,14 +11,18 @@ Singleton {
     readonly property color border: "#d65d0e"
     readonly property color sel: "#fbf1c7"
     readonly property color selBg: "#d65d0e"
+    // fg at 45% and the dark line, like the eww wifi menu
+    readonly property color dim: "#73ebdbb2"
+    readonly property color line: "#3c3836"
     readonly property string font: "JetBrainsMonoNL Nerd Font"
-    readonly property int fontSize: 11
+    readonly property int fontSize: 10
 
     // bar
     readonly property color barBg: "#171717"
     readonly property color urgent: "#cc241d"
     readonly property color hover: "#40d65d0e"
     readonly property string barFont: "JetBrainsMonoNL NFP"
-    readonly property int barFontSize: 10
+    // px: 14 is the eww bar's 10pt plus a bit
+    readonly property int barFontSize: 14
     readonly property int barHeight: 24
 }

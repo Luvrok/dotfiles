@@ -25,7 +25,11 @@ Menu {
     }
 
     input: false
-    menuWidth: 260
+    title: "record"
+    icon: "\u{f044a}"
+    // the question of this page
+    status: ["sound", "quality", "fps", "what", "monitor"][picks.length] ?? ""
+    menuWidth: 280
     align: Text.AlignHCenter
 
     onAccepted: (index, text) => {

@@ -9,7 +9,8 @@ import qs.menus
 //   qs -c hyprland ipc call menu open <name>
 //   qs -c hyprland ipc call bar toggle
 //   qs -c hyprland ipc call record stop
-// hypr-askpass calls `askpass ask <prompt>` and waits for `answered`
+// hypr-askpass calls `askpass ask <prompt>`, hypr-pinentry
+// `askpass query <kind> <prompt> <desc> <error>`, both wait for `answered`
 ShellRoot {
     id: shell
 
@@ -17,18 +18,33 @@ ShellRoot {
     // the open menu, it shows on the monitor that had focus
     property string menu: ""
     property ShellScreen menuScreen: null
+    property ShellScreen askScreen: null
+    // the password prompt, it opens over a menu that waits for it (pass
+    // runs gpg, gpg asks)
+    property bool asking: false
+    property string askKind: "pin"
     property string askPrompt: ""
+    property string askNote: ""
+    property string askError: ""
+    // the desktop entries are read in the background on first use, this
+    // reads them at start, so run and kill have them when they open
+    readonly property var apps: DesktopEntries.applications
+
+    // the monitor that has focus
+    function focusedScreen() {
+        const focused = Hyprland.focusedMonitor?.name;
+        for (let i = 0; i < Quickshell.screens.length; i++)
+            if (Quickshell.screens[i].name === focused)
+                return Quickshell.screens[i];
+        return Quickshell.screens[0];
+    }
 
     function open(name) {
         const same = menu === name;
         menu = "";
         if (same)
             return;
-        const focused = Hyprland.focusedMonitor?.name;
-        menuScreen = Quickshell.screens[0];
-        for (let i = 0; i < Quickshell.screens.length; i++)
-            if (Quickshell.screens[i].name === focused)
-                menuScreen = Quickshell.screens[i];
+        menuScreen = focusedScreen();
         menu = name;
     }
 
@@ -84,9 +100,16 @@ ShellRoot {
         target: "askpass"
         signal answered(text: string)
         function ask(prompt: string): void {
+            query("pin", prompt, "", "");
+        }
+        // kind: pin, confirm or message
+        function query(kind: string, prompt: string, desc: string, error: string): void {
+            shell.askKind = kind;
             shell.askPrompt = prompt;
-            shell.menu = "";
-            shell.open("askpass");
+            shell.askNote = desc;
+            shell.askError = error;
+            shell.askScreen = shell.focusedScreen();
+            shell.asking = true;
         }
     }
 
@@ -168,12 +191,15 @@ ShellRoot {
         }
     }
     LazyLoader {
-        active: shell.menu === "askpass"
+        active: shell.asking
         Askpass {
-            screen: shell.menuScreen
+            screen: shell.askScreen
+            kind: shell.askKind
             prompt: shell.askPrompt
+            note: shell.askNote
+            error: shell.askError
             onAnswered: text => askpass.answered(text)
-            onDone: shell.close("askpass")
+            onDone: Qt.callLater(() => shell.asking = false)
         }
     }
 }

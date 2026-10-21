@@ -34,8 +34,9 @@ hl.config({
         rounding = 0,
         shadow = { enabled = false },
         blur = { enabled = false },
-        -- scratchpads don't dim what's under them
+        -- scratchpads and the quickshell menus dim what's under them
         dim_special = 0.25,
+        dim_around = 0.25,
     },
 
     animations = { enabled = true },
@@ -58,6 +59,8 @@ hl.config({
     binds = {
         -- a shown scratchpad hides when the tag changes, like in sway
         hide_special_on_workspace_change = true,
+        -- $mod + wheel goes through the tags, 300 ms a step is slow
+        scroll_event_delay = 150,
     },
 
     input = {
@@ -98,8 +101,11 @@ hl.animation({ leaf = "fadeSwitch", enabled = false })
 hl.animation({ leaf = "border", enabled = false })
 hl.animation({ leaf = "borderangle", enabled = false })
 
--- the bar and the wallpaper just appear, fullscreen windows take the screen at once
+-- the bar and the wallpaper just appear, fullscreen windows take the screen
+-- at once. the quickshell menus sit under the bar on the right, they slide
+-- in from the right edge and fade, like a tag switch drifts
 hl.layer_rule({ match = { namespace = "^(bar|wallpaper)$" }, no_anim = true })
+hl.layer_rule({ match = { namespace = "^menu$" }, animation = "slide right", dim_around = true })
 hl.window_rule({ match = { fullscreen = true }, no_anim = true })
 
 -- x11 apps (st, nsxiv, dmenu) read colors and fonts from ~/.Xresources, xrdb
@@ -151,12 +157,14 @@ hl.window_rule({ match = { float = true }, border_size = 1 })
 ---- windows ------
 -------------------
 
+-- a pattern has to match the whole class or title, not a part like in sway.
+-- qbittorrent's app_id is org.qbittorrent.qBittorrent
 hl.window_rule({ match = { class = "^obsidian$" }, workspace = "2 silent" })
-hl.window_rule({ match = { class = "qBittorrent$" }, workspace = "9 silent" })
+hl.window_rule({ match = { class = ".*qBittorrent$" }, workspace = "9 silent" })
 hl.window_rule({ match = { class = "^v2rayN$" }, workspace = "9 silent" })
 
 hl.window_rule({ match = { title = "^Picture-in-Picture$" }, float = true, pin = true, size = { 720, 400 } })
-hl.window_rule({ match = { title = "termfilechooser" }, float = true, size = { 1000, 700 }, center = true })
+hl.window_rule({ match = { title = ".*termfilechooser.*" }, float = true, size = { 1000, 700 }, center = true })
 hl.window_rule({ match = { class = "^dragon-drop$" }, float = true, center = true })
 hl.window_rule({ match = { class = "^ffplay$", title = "^android-webcam$" }, float = true })
 
@@ -299,6 +307,9 @@ hl.bind(mod .. " + y", hl.dsp.window.fullscreen())
 -- focusstack / pushstack: master, then the stack top to bottom, both wrap
 hl.bind(mod .. " + j", hl.dsp.layout("cyclenext"))
 hl.bind(mod .. " + k", hl.dsp.layout("cycleprev"))
+-- the same on the mouse's side buttons, forward goes like k
+hl.bind(mod .. " + mouse:275", hl.dsp.layout("cyclenext"))
+hl.bind(mod .. " + mouse:276", hl.dsp.layout("cycleprev"))
 hl.bind(mod .. " + SHIFT + j", hl.dsp.layout("swapnext"))
 hl.bind(mod .. " + SHIFT + k", hl.dsp.layout("swapprev"))
 
@@ -327,6 +338,9 @@ hl.bind(mod .. " + d", hl.dsp.layout("removemaster"))
 hl.bind(mod .. " + SHIFT + c", hl.dsp.window.close())
 -- previous tag of this monitor
 hl.bind(mod .. " + Tab", hl.dsp.focus({ workspace = "previous_per_monitor" }))
+-- $mod + wheel: the next or previous tag with windows on this monitor, wraps
+hl.bind(mod .. " + mouse_down", hl.dsp.focus({ workspace = "m+1" }))
+hl.bind(mod .. " + mouse_up", hl.dsp.focus({ workspace = "m-1" }))
 
 -- setlayout: tile / monocle for this tag, until a reload. the event tells
 -- the bar to redraw its layout symbol

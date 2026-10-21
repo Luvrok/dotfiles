@@ -6,7 +6,10 @@ import qs
 // rofi-translate on LibreTranslate: translate the selection, the clipboard
 // or typed text, the result goes to the clipboard and a notification.
 // russian text goes to english, the rest to russian, ":es text" picks the
-// language. enter on no row translates what's typed, so does ctrl+enter
+// language. enter translates what's typed, alt+p the selection, alt+c the
+// clipboard. alt+t picks the target, alt+v shows the alternatives, alt+s
+// speaks, each for the typed text or asks for one. the menu pulses while
+// the server answers
 Menu {
     id: menu
 
@@ -19,7 +22,6 @@ Menu {
     property var languages: []
     readonly property var fallback: [["en", "English"], ["ru", "Russian"], ["es", "Spanish"], ["de", "German"], ["fr", "French"], ["ja", "Japanese"], ["zh", "Chinese"], ["ko", "Korean"], ["uk", "Ukrainian"], ["it", "Italian"]]
 
-    readonly property var actions: ["⇄  selection — перевести выделение        (Alt+p)", "⇄  clipboard — перевести буфер            (Alt+c)", "⇄  target — выбрать целевой язык           (Alt+t)", "⇄  verbose — перевод + альтернативы       (Alt+v)", "⇄  speak — озвучить                      (Alt+s)"]
 
     // menu, target, prompt or verbose. next runs on enter in target and prompt
     property string page: "menu"
@@ -120,7 +122,7 @@ Menu {
 
     // translate, copy, notify. forced: a target picked by hand
     function run(raw, forced) {
-        hide();
+        wait("translating");
         const [code, text] = override(raw);
         if (text === "") {
             notify("low", app, "нет текста");
@@ -145,7 +147,7 @@ Menu {
 
     // translation plus alternatives, enter copies a row
     function verbose(raw) {
-        hide();
+        wait("translating");
         const [code, text] = override(raw);
         if (text === "") {
             done();
@@ -155,7 +157,8 @@ Menu {
         const showAll = body => {
             const rows = [...new Set([body.translatedText, ...(body.alternatives ?? [])].filter(r => r))];
             page = "verbose";
-            input = true;
+            status = "variants";
+            input = false;
             menuWidth = screen.width * 0.6;
             lines = 10;
             show(rows);
@@ -170,7 +173,7 @@ Menu {
 
     // LibreTranslate has no tts: trans, or espeak-ng in the detected language
     function speak(raw) {
-        hide();
+        wait("speaking");
         const text = override(raw)[1];
         if (text === "") {
             done();
@@ -191,7 +194,7 @@ Menu {
     }
 
     function paste(primarySel) {
-        hide();
+        wait("pasting");
         pasteProc.primarySel = primarySel;
         pasteProc.exec(primarySel ? ["wl-paste", "--primary", "--no-newline"] : ["wl-paste", "--no-newline"]);
     }
@@ -199,7 +202,9 @@ Menu {
     // a text prompt, then next(text)
     function ask(label, then) {
         page = "prompt";
-        prompt = label;
+        status = label;
+        prompt = "text";
+        input = true;
         lines = 0;
         next = then;
         show([]);
@@ -208,61 +213,57 @@ Menu {
     // the language list, then next(code)
     function pickTarget(then) {
         page = "target";
-        prompt = "";
+        status = "target";
+        prompt = "language";
+        input = true;
         lines = 8;
         next = then;
         const langs = languages.length > 0 ? languages.map(l => [l.code, l.name]) : fallback;
         langRows = langs.map(l => l[0]);
-        show(langs.map(l => `${l[0]}  ${l[1]}`));
+        show(langs.map(l => `${l[0]}\t${l[1]}`));
     }
 
-    location: "top-right"
-    lines: 5
+    title: "translate"
+    icon: "\u{f05ca}"
+    status: `${primary} ↔ ${foreign}`
+    prompt: "text or :es text"
+    input: true
+    enterHint: page === "verbose" ? "copy" : page === "target" ? "pick" : "translate"
+    // the main page's actions are alt keys
+    hints: page === "menu" ? [["enter", "translate"], ["alt+p", "selection"], ["alt+c", "clipboard"], ["alt+t", "target"], ["alt+v", "variants"], ["alt+s", "speak"], ["esc", "close"]] : input ? [["enter", enterHint], ...(lines > 0 ? [["↑↓", "move"]] : []), ["esc", "close"]] : [["j/k", "move"], ["enter", enterHint], ["esc", "close"]]
+    menuWidth: ch(56)
+    lines: 0
 
     keys: e => {
-        if (page !== "menu" || !(e.modifiers & Qt.AltModifier))
+        if (page !== "menu")
             return false;
-        const typed = menu.text;
-        switch (e.key) {
-        case Qt.Key_P:
+        const alt = Qt.AltModifier;
+        const typed = menu.text.trim() !== "" ? menu.text : "";
+        if (key(e, "p", alt))
             paste(true);
-            break;
-        case Qt.Key_C:
+        else if (key(e, "c", alt))
             paste(false);
-            break;
-        case Qt.Key_T:
-            if (typed.trim() === "")
-                finish();
-            else
-                pickTarget(code => run(typed, code));
-            break;
-        case Qt.Key_V:
+        else if (key(e, "t", alt) && typed !== "")
+            pickTarget(code => run(typed, code));
+        else if (key(e, "t", alt))
+            pickTarget(code => ask(`→ ${code}`, t => run(t, code)));
+        else if (key(e, "v", alt) && typed !== "")
             verbose(typed);
-            break;
-        case Qt.Key_S:
+        else if (key(e, "v", alt))
+            ask("variants", verbose);
+        else if (key(e, "s", alt) && typed !== "")
             speak(typed);
-            break;
-        default:
+        else if (key(e, "s", alt))
+            ask("speak", speak);
+        else
             return false;
-        }
         return true;
     }
 
     onAccepted: (index, text) => {
-        if (page === "menu") {
-            if (index === 0)
-                paste(true);
-            else if (index === 1)
-                paste(false);
-            else if (index === 2)
-                pickTarget(code => ask(`→ ${code}`, t => run(t, code)));
-            else if (index === 3)
-                ask("verbose", verbose);
-            else if (index === 4)
-                ask("speak", speak);
-            else
-                run(text);
-        } else if (page === "target") {
+        if (page === "menu")
+            run(text);
+        else if (page === "target") {
             if (index < 0)
                 finish();
             else
@@ -328,6 +329,6 @@ Menu {
             } catch (e) {}
         };
         xhr.send();
-        show(actions);
+        show([]);
     }
 }

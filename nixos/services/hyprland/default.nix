@@ -29,6 +29,17 @@
       runtimeInputs = [ quickshell ];
       text = builtins.readFile ./quickshell/scripts/askpass;
     })
+    # pinentry for gpg-agent, the same menu. home/programs/gpg.nix picks it
+    # while quickshell runs
+    (writeShellApplication {
+      name = "hypr-pinentry";
+      # gpg-agent may start it with a bare PATH
+      runtimeInputs = [
+        quickshell
+        coreutils
+      ];
+      text = builtins.readFile ./quickshell/scripts/pinentry;
+    })
 
     # started from hyprland.lua, the same tools as in sway
     swayidle # xidlehook
@@ -39,12 +50,15 @@
     grim # flameshot
     slurp
 
-    # quickshell/scripts: record and bt-pair
+    # quickshell/scripts: record, bt-pair, wifi and apps
     wf-recorder
     wlr-randr
     expect
     jq
+    iproute2
     hyprprop
+    # pass types the login with it
+    wtype
   ];
 
   # hyprland.lua starts and stops it, like sway-session.target in the sway module

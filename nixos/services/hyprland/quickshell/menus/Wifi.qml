@@ -3,15 +3,20 @@ import Quickshell
 import Quickshell.Io
 import qs
 
-// rofi-wifi on iwd: scan, then disconnect, rescan or a network, the connected
-// one first. a network iwd doesn't know asks for the password
+// rofi-wifi on iwd, drawn like the eww wifi menu. the networks come from
+// iwd over d-bus (scripts/wifi): the ones it knows right away, then the
+// scan fills them in while the keys keep working. strongest first, the
+// connected one on top and in orange. enter joins, or leaves the connected
+// one, r rescans, d disconnects. a locked network iwd doesn't know asks for
+// the password
 Menu {
     id: menu
 
     readonly property string dev: "wlan0"
     // the network iwd is on
     property string connected: ""
-    // real ssids of the network rows
+    property bool scanned: false
+    // {ssid, type, connected, known, signal} by row
     property var networks: []
     property bool asking: false
     property string target: ""
@@ -21,85 +26,110 @@ Menu {
     }
 
     function scan() {
-        notify("Сканирую сети…");
-        hide();
         scanner.running = true;
     }
 
-    function parse(out) {
-        const clean = out.replace(/\x1B\[[0-9;]*[A-Za-z]/g, "");
-        const [show, list] = clean.split("--networks--");
-        const conn = show.split("\n").map(l => l.match(/^\s*Connected network\s+(.*\S)\s*$/)).find(m => m);
-        connected = conn ? conn[1] : "";
-
-        // "ssid security signal", the ssid may have spaces, iwd may put the
-        // signal before the security
-        const found = [];
-        for (const line of (list ?? "").split("\n")) {
-            const t = line.replace(/^[>\s]*/, "").split(/\s+/).filter(s => s !== "");
-            let sec = -1;
-            for (let i = t.length - 1; i >= 0; i--)
-                if (/^(psk|open|8021x)$/i.test(t[i])) {
-                    sec = i;
-                    break;
-                }
-            if (sec < 1)
-                continue;
-            let end = sec;
-            let sig = t.slice(sec + 1).join("");
-            if (sig === "" && /^\*+$/.test(t[sec - 1])) {
-                sig = t[sec - 1];
-                end--;
-            }
-            const ssid = t.slice(0, end).join(" ");
-            if (ssid !== "")
-                found.push([ssid, (sig.match(/\*/g) ?? []).length]);
-        }
-        // current first
-        found.sort((a, b) => (b[0] === connected) - (a[0] === connected));
-        return found;
+    // ssid, then security and signal in the dim column, like eww but with
+    // squares, jetbrains mono has no ▮. signal is dbm * 100
+    function label(n) {
+        const bars = n.signal >= -6000 ? 4 : n.signal >= -6700 ? 3 : n.signal >= -7500 ? 2 : 1;
+        return `${n.ssid}\t${n.type === "8021x" ? "eap" : n.type}  ${"■".repeat(bars)}${"□".repeat(4 - bars)}`;
     }
 
-    function label(ssid, stars) {
-        const bars = stars >= 4 ? "▂▄▆█" : stars === 3 ? "▂▄▆_" : stars === 2 ? "▂▄__" : stars === 1 ? "▂___" : "    ";
-        const name = ssid.length > 24 ? ssid.slice(0, 21) + "..." : ssid;
-        return name.padEnd(24) + "  " + bars;
+    // a line from scripts/wifi, the cursor stays on its network
+    function list(line) {
+        let data;
+        try {
+            data = JSON.parse(line);
+        } catch (e) {
+            return;
+        }
+        // iwd sorts by signal, the connected one goes on top. no sort(),
+        // it isn't stable here
+        const found = [...data.networks.filter(n => n.connected), ...data.networks.filter(n => !n.connected)];
+        const conn = found.find(n => n.connected);
+        connected = conn ? conn.ssid : "";
+        if (asking || busy !== "")
+            return;
+        const keep = current >= 0 ? networks[current]?.ssid : undefined;
+        networks = found;
+        active = conn ? [0] : [];
+        lines = Math.max(1, Math.min(found.length, 10));
+        const rows = found.map(n => label(n));
+        if (!scanned) {
+            scanned = true;
+            show(rows);
+        } else
+            update(rows, found.findIndex(n => n.ssid === keep));
     }
 
     function connect(ssid, password) {
-        hide();
+        wait("connecting");
         connector.ssid = ssid;
-        if (password === undefined) {
-            notify(`Подключаюсь к ${ssid}…`);
-            connector.exec(["sh", "-c", 'iwctl station "$1" disconnect >/dev/null 2>&1; iwctl station "$1" connect "$2" </dev/null 2>/dev/null', "sh", dev, ssid]);
-        } else {
+        if (password === undefined)
+            connector.exec(["iwctl", "station", dev, "connect", ssid]);
+        else
             connector.exec(["iwctl", "--passphrase", password, "station", dev, "connect", ssid]);
-        }
+    }
+
+    function disconnect() {
+        wait("disconnecting");
+        disconnector.running = true;
+    }
+
+    function askPassword(ssid) {
+        asking = true;
+        target = ssid;
+        input = true;
+        password = true;
+        prompt = "password";
+        lines = 0;
+        show([]);
     }
 
     input: false
-    menuWidth: ch(36)
-    fontFamily: "monospace"
+    title: asking ? "enter password" : "wi-fi"
+    icon: "\u{f05a9}"
+    status: asking ? target : connected !== "" ? connected : scanned ? "offline" : ""
+    statusAccent: !asking && connected !== ""
+    activity: scanner.running && !asking ? "scanning" : ""
+    empty: scanner.running ? "looking for networks…" : "no networks, r to scan"
+    searchable: !asking
+    enterHint: asking ? "connect" : current >= 0 && networks[current]?.connected ? "leave" : "join"
+    actions: [["r", "rescan"], ["d", "disconnect"]]
+    menuWidth: ch(48)
+
+    keys: e => {
+        if (asking)
+            return false;
+        if (key(e, "r"))
+            scan();
+        else if (key(e, "d") && connected !== "")
+            disconnect();
+        else
+            return false;
+        return true;
+    }
 
     onAccepted: (index, text) => {
-        if (asking && text === "") {
-            hide();
-            notify("Отменено");
-            done();
-            return;
-        }
         if (asking) {
-            connect(target, text);
+            if (text === "") {
+                hide();
+                notify("Отменено");
+                done();
+            } else
+                connect(target, text);
             return;
         }
-        const headers = connected !== "" ? 2 : 1;
-        if (connected !== "" && index === 0) {
-            hide();
-            disconnector.running = true;
-        } else if (index === headers - 1)
-            scan();
+        const n = networks[index];
+        if (!n)
+            return;
+        if (n.connected)
+            disconnect();
+        else if (n.known || n.type === "open")
+            connect(n.ssid);
         else
-            connect(networks[index - headers]);
+            askPassword(n.ssid);
     }
     onCancelled: {
         if (asking)
@@ -108,26 +138,14 @@ Menu {
 
     Process {
         id: scanner
-        command: ["sh", "-c", `
-            dev=$1
-            iwctl station "$dev" scan >/dev/null 2>&1
-            for _ in 1 2 3 4 5 6 7 8 9 10; do
-                sleep 0.5
-                iwctl station "$dev" show | sed 's/\\x1b\\[[0-9;]*[A-Za-z]//g' | grep -Eq '^\\s*Scanning\\s+yes' || break
-            done
-            iwctl station "$dev" show
-            echo --networks--
-            iwctl station "$dev" get-networks`, "sh", menu.dev]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const found = menu.parse(text);
-                menu.networks = found.map(n => n[0]);
-                const rows = (menu.connected !== "" ? [`disconnect from ${menu.connected}`] : []).concat(["rescan"], found.map(n => menu.label(n[0], n[1])));
-                menu.input = false;
-                menu.password = false;
-                menu.lines = Math.min(rows.length, 10);
-                menu.show(rows);
-            }
+        command: ["bash", Quickshell.shellPath("scripts/wifi"), menu.dev, "scan"]
+        stdout: SplitParser {
+            onRead: line => menu.list(line)
+        }
+        onExited: {
+            // no iwd or no device
+            if (!menu.scanned)
+                menu.list('{"networks": []}');
         }
     }
 
@@ -149,15 +167,9 @@ Menu {
             if (code === 0) {
                 menu.notify(`Подключено: ${ssid}`);
                 menu.done();
-            } else if (!menu.asking) {
-                // iwd doesn't know it, ask for the password
-                menu.asking = true;
-                menu.target = ssid;
-                menu.input = true;
-                menu.password = true;
-                menu.prompt = "Password";
-                menu.lines = 0;
-                menu.show([]);
+            } else if (!menu.asking && menu.networks.find(n => n.ssid === ssid)?.type !== "open") {
+                // iwd forgot it or the password changed, ask
+                menu.askPassword(ssid);
             } else {
                 menu.notify(`Ошибка подключения к ${ssid}`);
                 menu.done();
@@ -165,5 +177,9 @@ Menu {
         }
     }
 
-    Component.onCompleted: scan()
+    Component.onCompleted: {
+        lines = 1;
+        show([]);
+        scan();
+    }
 }

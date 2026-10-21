@@ -11,6 +11,17 @@ let
         ln -sf $out/bin/pinentry-rofi $out/bin/pinentry
     '';
   };
+
+  # hyprland's quickshell asks while it runs (hypr-pinentry, from
+  # nixos/services/hyprland), rofi otherwise. a full path, gpg-agent's PATH
+  # may not have it
+  pinentry = pkgs.writeShellScriptBin "pinentry" ''
+    hypr=/run/current-system/sw/bin/hypr-pinentry
+    if [ -x "$hypr" ] && "$hypr" --check; then
+      exec "$hypr" "$@"
+    fi
+    exec ${pinentryRofiThemed}/bin/pinentry-rofi "$@"
+  '';
 in
 {
   programs.gpg.enable = true;
@@ -18,6 +29,6 @@ in
   services.gpg-agent = {
     enable = true;
     defaultCacheTtl = 60;
-    pinentry.package = pinentryRofiThemed;
+    pinentry.package = pinentry;
   };
 }
