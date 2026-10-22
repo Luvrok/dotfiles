@@ -269,6 +269,11 @@ let
     # textfox and Sidebery
     "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
     "sidebar.revamp" = false; # old sidebar, Sidebery needs it
+    # Mozilla's Nova redesign, on by default since 158: pills, rounded urlbar
+    # and menus. "Enable the Nova redesign" in the settings is the first one
+    "browser.nova.enabled" = false;
+    "browser.newtabpage.activity-stream.nova.enabled" = false;
+    "browser.aboutaddons.novaThemesPickerEnabled" = false;
     "svg.context-properties.content.enabled" = true;
     "widget.gtk.ignore-bogus-leave-notify" = 1;
     "widget.use-xdg-desktop-portal.file-picker" = 1;
