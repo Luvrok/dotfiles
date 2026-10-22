@@ -82,6 +82,7 @@
       tor
       v2rayn
       wireshark
+      proxychains-ng
 
       # --- system ---
       acpi

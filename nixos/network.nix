@@ -43,7 +43,7 @@ in
     # hyprland nix menu. jedha by wifi like jedha-tunnel.nix, its eth is .216
     hosts = {
       "192.168.0.217" = [ "jedha" ];
-      "192.168.0.5" = [ "mos-eisley" ];
+      "195.19.202.21" = [ "mos-eisley" ];
       "45.38.20.187" = [ "kessel" ];
     };
 
