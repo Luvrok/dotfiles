@@ -3,6 +3,7 @@
 {
   imports = [
     ../../nixos/config/barnard.nix
+    ./xray.nix
     # wayland sessions next to i3
     ../../nixos/services/sway
     ../../nixos/services/hyprland
