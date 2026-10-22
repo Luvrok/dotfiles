@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Pipewire
 import qs
 import qs.widgets
@@ -9,7 +10,12 @@ import qs.widgets
 // in it, live. j/k move, h/l -/+5% (with shift 1%), 1-9 sets 10..90%
 // (0 is 100%), m mutes, enter makes a device the default (orange) or
 // mutes an app. the mouse drags, clicks or scrolls a bar, a left click on a
-// device's name makes it the default, a middle or right click mutes
+// device's name makes it the default, a middle or right click mutes.
+// s on an app or an input sends it somewhere else too, like a wire in
+// qpwgraph: a page of the apps that record and the outputs, the ones it
+// goes to orange, enter adds or takes away a wire (scripts/route). youtube
+// into discord next to the mic, the mic into the speakers, an app on two
+// outputs. the line says where it goes besides the usual
 Menu {
     id: menu
 
@@ -24,6 +30,10 @@ Menu {
     // the cursor's node, it stays on it when the list changes
     property var picked: null
     readonly property int at: Math.max(0, items.findIndex(i => i.node && i.node === picked))
+    // the send page is for this node
+    property var sending: null
+    // where it can go: what records, the outputs
+    property var targets: []
 
     function build() {
         const of = kind => listed.filter(n => kindOf(n) === kind).map(n => ({
@@ -75,6 +85,57 @@ Menu {
         return media !== label(n) ? media : "";
     }
 
+    // the nodes n's sound goes to, level meters left out
+    function routes(n) {
+        return Pipewire.linkGroups.values.filter(g => g.source === n && kindOf(g.target) !== "").map(g => g.target);
+    }
+
+    // where it goes besides the usual: an app's recorders and outputs but
+    // the default one, an input's outputs
+    function sends(n) {
+        if (n.isStream && kindOf(n) !== "app")
+            return [];
+        return routes(n).filter(t => kindOf(n) === "app" ? t !== Pipewire.defaultAudioSink : kindOf(t) === "out").map(t => label(t));
+    }
+
+    // what a recording app gets besides the default input
+    function feeds(n) {
+        if (kindOf(n) !== "rec")
+            return [];
+        return Pipewire.linkGroups.values.filter(g => g.target === n && g.source !== Pipewire.defaultAudioSource && kindOf(g.source) !== "").map(g => label(g.source));
+    }
+
+    // the wires first, they're short, then what it plays
+    function info(n) {
+        const to = sends(n), from = feeds(n);
+        return [to.length > 0 ? `→ ${to.join(", ")}` : "", from.length > 0 ? `← ${from.join(", ")}` : "", detail(n)].filter(s => s !== "").join("  ");
+    }
+
+    function openSend(n) {
+        if (!n || (kindOf(n) !== "app" && kindOf(n) !== "in"))
+            return;
+        sending = n;
+        relistTargets();
+        lines = Math.max(1, Math.min(targets.length, 10));
+        show(targets.map(t => `${label(t)}${kindOf(t) === "rec" && detail(t) !== "" ? ` · ${detail(t)}` : ""}\t${kindOf(t) === "rec" ? "records" : "output"}`));
+    }
+
+    function relistTargets() {
+        targets = listed.filter(t => t !== sending && (kindOf(t) === "rec" || kindOf(t) === "out"));
+    }
+
+    function closeSend() {
+        sending = null;
+        lines = 0;
+        show([]);
+    }
+
+    // a wire there or none
+    function toggleSend(to) {
+        const linked = routes(sending).includes(to);
+        Quickshell.execDetached(["bash", Quickshell.shellPath("scripts/route"), linked ? "unlink" : "link", String(sending.id), String(to.id)]);
+    }
+
     function isDefault(n) {
         return n === Pipewire.defaultAudioSink || n === Pipewire.defaultAudioSource;
     }
@@ -116,15 +177,29 @@ Menu {
             makeDefault(n);
     }
 
-    title: "audio"
-    icon: "\u{f057e}"
-    status: Pipewire.defaultAudioSink ? label(Pipewire.defaultAudioSink) : ""
-    statusAccent: Pipewire.defaultAudioSink !== null
+    title: sending ? "send" : "audio"
+    icon: sending ? "\u{f1394}" : "\u{f057e}"
+    status: sending ? label(sending) : Pipewire.defaultAudioSink ? label(Pipewire.defaultAudioSink) : ""
+    statusAccent: sending !== null || Pipewire.defaultAudioSink !== null
     lines: 0
     menuWidth: ch(88)
-    hints: [["j/k", "move"], ["h/l", "volume"], ["0-9", "level"], ["m", "mute"], ["enter", picked?.isStream ? "mute" : "default"], ["esc", "close"]]
+    hints: sending ? [["j/k", "move"], ["enter", "wire / unwire"], ["h", "back"], ["esc", "close"]] : [["j/k", "move"], ["h/l", "volume"], ["0-9", "level"], ["m", "mute"], ["enter", picked?.isStream ? "mute" : "default"], ...(kindOf(picked ?? {}) === "app" || kindOf(picked ?? {}) === "in" ? [["s", "send"]] : []), ["esc", "close"]]
+    // the targets it goes to
+    active: sending ? targets.map((t, i) => routes(sending).includes(t) ? i : -1).filter(i => i >= 0) : []
+    body: sending ? null : mixer
+
+    onAccepted: index => {
+        if (sending && targets[index])
+            toggleSend(targets[index]);
+    }
+    onBack: {
+        if (sending)
+            closeSend();
+    }
 
     keys: e => {
+        if (sending)
+            return false;
         const k = e.key;
         const n = picked;
         const step = e.modifiers & Qt.ShiftModifier ? 0.01 : 0.05;
@@ -140,6 +215,8 @@ Menu {
             setVolume(n, k === Qt.Key_0 ? 1 : (k - Qt.Key_0) / 10);
         else if (key(e, "m"))
             toggleMute(n);
+        else if (key(e, "s"))
+            openSend(n);
         else if (k === Qt.Key_Return || k === Qt.Key_Enter)
             use(n);
         else
@@ -153,6 +230,9 @@ Menu {
 
     function relist() {
         items = build();
+        // the one it sends from is gone
+        if (sending && !listed.includes(sending))
+            closeSend();
         if (!picked || !items.some(i => i.node === picked))
             picked = Pipewire.defaultAudioSink ?? items.find(i => i.node)?.node ?? null;
     }
@@ -179,7 +259,8 @@ Menu {
         objects: menu.nodes
     }
 
-    body: Component {
+    Component {
+        id: mixer
         Column {
             width: parent?.width ?? 0
             topPadding: 2
@@ -224,7 +305,7 @@ Menu {
                             readonly property var node: line.modelData.node
                             width: line.width
                             name: menu.label(node)
-                            info: menu.detail(node)
+                            info: menu.info(node)
                             value: node.audio?.volume ?? 0
                             muted: node.audio?.muted ?? false
                             peak: menu.peakOf(node)

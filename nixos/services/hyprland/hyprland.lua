@@ -249,12 +249,15 @@ hl.bind("Print", hl.dsp.exec_cmd([[g=$(slurp) && grim -g "$g" - | wl-copy --type
 hl.bind(mod .. " + Print", hl.dsp.exec_cmd(
     [[g=$(slurp) && grim -g "$g" - | tesseract -l eng+rus stdin stdout 2>/dev/null | wl-copy && notify-send OCR "Text copied"]]))
 
--- XF86
-hl.bind("XF86AudioMute", hl.dsp.exec_cmd("dwm-volume mute"))
-hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("dwm-volume down"))
-hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("dwm-volume up"))
-hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("dwm-brightness up"))
-hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("dwm-brightness down"))
+-- XF86. volume and brightness go on while the key is held (the keyboard's
+-- repeat rate), on the lock screen too
+local held = { repeating = true, locked = true }
+hl.bind("XF86AudioMute", hl.dsp.exec_cmd("dwm-volume mute"), { locked = true })
+hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), { locked = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("dwm-volume down"), held)
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("dwm-volume up"), held)
+hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("dwm-brightness up"), held)
+hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("dwm-brightness down"), held)
 
 -- monitors: the main one runs at 120 Hz next to the second one and at 240 Hz alone
 hl.bind(mod .. " + F7", function()

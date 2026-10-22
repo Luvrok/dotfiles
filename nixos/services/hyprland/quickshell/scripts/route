@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# the audio menu's sends, like a wire in qpwgraph: the output ports of one
+# pipewire node to the input ports of another, the same channel to the
+# same channel (all to a mono one, else by order). pw-link's links linger,
+# wireplumber leaves them alone, they go when either node goes
+#   route link <from node id> <to node id>
+#   route unlink <from node id> <to node id>
+set -u
+
+[ $# -eq 3 ] || exit 2
+from=$2 to=$3
+dump=$(pw-dump) || exit 1
+
+# "id channel" of a node's ports, monitor ports left out
+ports() {
+  jq -r --arg n "$1" --arg d "$2" '.[]
+    | select(.type == "PipeWire:Interface:Port"
+      and (.info.props["node.id"] | tostring) == $n
+      and .info.direction == $d
+      and (.info.props["port.monitor"] | tostring) != "true")
+    | "\(.id) \(.info.props["audio.channel"] // "MONO")"' <<<"$dump"
+}
+
+case $1 in
+  link)
+    mapfile -t outs < <(ports "$from" output)
+    mapfile -t ins < <(ports "$to" input)
+    [ ${#outs[@]} -gt 0 ] && [ ${#ins[@]} -gt 0 ] || exit 1
+    i=0
+    for o in "${outs[@]}"; do
+      read -r oid och <<<"$o"
+      target=""
+      for p in "${ins[@]}"; do
+        read -r pid pch <<<"$p"
+        [ "$pch" = "$och" ] && target=$pid && break
+      done
+      if [ -z "$target" ]; then
+        read -r target _ <<<"${ins[$((i % ${#ins[@]}))]}"
+      fi
+      # already there is fine
+      pw-link "$oid" "$target" 2>/dev/null || true
+      i=$((i + 1))
+    done
+    ;;
+  unlink)
+    jq -r --arg a "$from" --arg b "$to" '.[]
+      | select(.type == "PipeWire:Interface:Link"
+        and (.info["output-node-id"] | tostring) == $a
+        and (.info["input-node-id"] | tostring) == $b)
+      | .id' <<<"$dump" | while read -r link; do
+      pw-link -d "$link"
+    done
+    ;;
+  *) exit 2 ;;
+esac

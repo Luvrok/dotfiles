@@ -351,7 +351,7 @@ Hyprland Lua, QML and shell, no nix in them.
 | `nixos/services/hyprland/quickshell/Menu.qml` | rofi -dmenu: the menu window, filter, list, keys, built from `widgets/` |
 | `nixos/services/hyprland/quickshell/widgets/` | the menu parts: `MenuHead` (icon, title, status, pulse), `SearchField` (the text line), `MenuRow`, `KeyHints`, `Meter` and `Threads` (the system menu's bars), `Fader` (a mixer line) |
 | `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass. And System (a small btop), Processes, Calendar and Notifications |
-| `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `wifi` (iwd over d-bus, the menu's networks and the bar's signal), `apps` (the kill menu's apps), `sysmon` (the system menu's numbers), `askpass` and `pinentry` (`hypr-askpass`, `hypr-pinentry` in PATH) |
+| `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `wifi` (iwd over d-bus, the menu's networks and the bar's signal), `apps` (the kill menu's apps), `sysmon` (the system menu's numbers), `route` (the audio menu's wires), `askpass` and `pinentry` (`hypr-askpass`, `hypr-pinentry` in PATH) |
 
 - Both configs sit in `/etc/xdg` and are found through `XDG_CONFIG_DIRS`,
   `~/.config/hypr/hyprland.lua` or `~/.config/quickshell/hyprland` would win.
@@ -475,7 +475,16 @@ Hyprland Lua, QML and shell, no nix in them.
   (shift 1%), 0-9 sets 10..90% and 0 100%, m mutes, enter makes a device
   the default or mutes an app. The mouse drags, clicks or scrolls a bar, a
   left click on a device's name makes it the default, middle or right
-  mutes. Volumes are cubic like wpctl's and pavucontrol's.
+  mutes. Volumes are cubic like wpctl's and pavucontrol's. `s` on an app
+  or an input sends it somewhere else too, like a wire in qpwgraph: a page
+  of what records and the outputs, the ones it goes to orange, enter adds
+  or takes away the wire (`scripts/route`). Youtube into discord next to
+  the mic, the mic into the speakers, an app on two outputs. A line says
+  its wires besides the usual: `→ Discord` on the app, `← LibreWolf` on
+  the recorder.
+- Volume and brightness keys repeat while held (`repeating`), they and
+  the mute keys work on the lock screen too (`locked`). XF86AudioMicMute
+  mutes the default input.
 - Pass: enter opens an entry's fields, enter copies one, `t` types it.
   ctrl+a (rofi-pass's autotype key) types the login, tab and the password
   with wtype into the window under the menu (`autotype:` in the entry
@@ -612,6 +621,12 @@ Hyprland Lua, QML and shell, no nix in them.
   `Variants` on the nodes, not in the lines: the Repeater makes its lines
   again when the list changes, a new meter changes the node list, and the
   list only changes when its `shape` string does.
+- `scripts/route` reads ports and links from `pw-dump` (json) and wires
+  them with `pw-link`: the same `audio.channel`, all to a mono input, else
+  by order. pw-link's links linger after it quits, wireplumber leaves
+  links it didn't make alone, they go with either node. Quickshell can
+  read links (`Pipewire.linkGroups`, source and target nodes) but not make
+  them.
 - A menu's own property or function must not take a name Menu has
   (`shown`, `move`, `title`...), it shadows Menu's and breaks it. An id
   that's also a property of the same object wins over the property:

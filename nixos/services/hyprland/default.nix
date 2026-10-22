@@ -58,7 +58,9 @@
     grim # flameshot
     slurp
 
-    # quickshell/scripts: record, bt-pair, wifi and apps
+    # quickshell/scripts: record, bt-pair, wifi, apps and route (pw-dump,
+    # pw-link)
+    pipewire
     wf-recorder
     wlr-randr
     expect
