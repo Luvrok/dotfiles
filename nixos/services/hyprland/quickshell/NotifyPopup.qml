@@ -71,7 +71,7 @@ PanelWindow {
     visible: false
     color: "transparent"
     anchors.bottom: true
-    margins.bottom: 10
+    margins.bottom: 15
     implicitWidth: Math.ceil(metrics.averageCharacterWidth * 56)
     implicitHeight: frame.height
     exclusionMode: ExclusionMode.Ignore
