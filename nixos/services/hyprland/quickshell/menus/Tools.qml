@@ -36,6 +36,12 @@ Menu {
             run: 'g=$(slurp) && grim -g "$g" - | tesseract -l eng+rus stdin stdout 2>/dev/null | wl-copy && notify-send OCR "Text copied"'
         },
         {
+            key: "t",
+            name: "translate",
+            icon: "\u{f05ca}",
+            menu: "translate"
+        },
+        {
             key: "m",
             name: "player",
             icon: "\u{f075a}",

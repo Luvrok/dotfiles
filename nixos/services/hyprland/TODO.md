@@ -7,6 +7,10 @@
 
 ## проверить на barnard
 
+- Фейковый фуллскрин: `$mod+y` на тайле и на плавающем окне, туда и обратно плавно, окно возвращается на своё место в стеке. `f` в mpv, фуллскрин видео в LibreWolf. Игра из Steam уходит в настоящий. `$mod+Shift+y` поверх фейкового и обратно.
+- PiP: `alt+p` в LibreWolf, `$mod+Shift+p` на другой монитор в фуллскрин и обратно, двойной клик в PiP.
+- translate в tools (`t`), `q`/backspace назад в tools.
+
 - Скриншот: выделение и рисование мышью, сохранение. Если монитор с масштабом не 1 — размер png. `shift+s`: yazi открывается, файл ложится куда выбрал.
 - Блокировка: пароль через PAM, `loginctl lock-session` из меню power, блокировка перед сном. Нужен перелогин: swayidle стартует с Hyprland.
 - systemd: `sudo -A` спрашивает пароль в askpass и запускает или останавливает системный юнит.
@@ -40,9 +44,6 @@
     hyprctl dispatch 'hl.animation({ leaf = "workspacesOut", enabled = true, speed = 2.5, bezier = "out", style = "slide 6%" })'
     ```
   - Если мигает — `slide` для обоих.
-- **Фуллскрин без hide/show заднего фона**
-  - Найти, какая анимация у окон сзади, дать им `no_anim` или фейковый фуллскрин по классам.
-  - У mpv теряется только direct scanout, качество то же.
 - **Тема VeraCrypt**
   - Это wxWidgets/GTK3; под root он не видит пользовательский dconf.
   - Для Qt: `QT_QPA_PLATFORMTHEME` плюс qt6ct или kvantum с gruvbox.

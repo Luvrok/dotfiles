@@ -230,9 +230,11 @@ Menu {
     input: true
     enterHint: page === "verbose" ? "copy" : page === "target" ? "pick" : "translate"
     // the main page's actions are alt keys
-    hints: page === "menu" ? [["enter", "translate"], ["alt+p", "selection"], ["alt+c", "clipboard"], ["alt+t", "target"], ["alt+v", "variants"], ["alt+s", "speak"], ["esc", "close"]] : input ? [["enter", enterHint], ...(lines > 0 ? [["↑↓", "move"]] : []), ["esc", "close"]] : [["j/k", "move"], ["enter", enterHint], ["esc", "close"]]
+    hints: page === "menu" ? [["enter", "translate"], ["alt+p", "selection"], ["alt+c", "clipboard"], ["alt+t", "target"], ["alt+v", "variants"], ["alt+s", "speak"], ...upHint, ["esc", "close"]] : input ? [["enter", enterHint], ...(lines > 0 ? [["↑↓", "move"]] : []), ["esc", "close"]] : [["j/k", "move"], ["enter", enterHint], ["esc", "close"]]
     menuWidth: ch(56)
     lines: 0
+    // backspace in an empty text line goes back to tools from the main page
+    atTop: page === "menu"
 
     keys: e => {
         if (page !== "menu")
