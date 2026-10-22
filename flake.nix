@@ -26,7 +26,7 @@
     dmenu.flake = false;
     slock.url = "github:Luvrok/slock";
     slock.flake = false;
-    textfoxy.url = "github:Luvrok/textfoxy";
+    textfoxy.url = "github:Luvrok/textfoxy?ref=claude/zealous-cerf-xdz2wx";
     voidsddm.url = "github:Luvrok/VoidSDDM";
     voidsddm.flake = false;
 

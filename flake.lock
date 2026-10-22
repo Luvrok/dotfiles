@@ -521,15 +521,16 @@
         "nixpkgs": "nixpkgs_6"
       },
       "locked": {
-        "lastModified": 1783185433,
-        "narHash": "sha256-g10sKob4hMdO8IOvTflnMLXSUpcY67Q5I0e6XJnCJCM=",
+        "lastModified": 1792700306,
+        "narHash": "sha256-flZvPSYcyYHGGloRte3ULOgxjmSlwdZSSsyjn2rKVo8=",
         "owner": "Luvrok",
         "repo": "textfoxy",
-        "rev": "fbcab7975b318b30d877f5b13a53a011a3b83991",
+        "rev": "8761bafa4438ba06b3f989b0d76b656284024377",
         "type": "github"
       },
       "original": {
         "owner": "Luvrok",
+        "ref": "claude/zealous-cerf-xdz2wx",
         "repo": "textfoxy",
         "type": "github"
       }
