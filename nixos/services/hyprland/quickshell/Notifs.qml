@@ -16,6 +16,9 @@ Singleton {
 
     // the popup's, null while it's down
     property Notification current: null
+    // the monitor it's up on: the focused one when it comes up, set before
+    // current, so the popup of another monitor never sees it
+    property string popupScreen: ""
     // the popup's reply link: the menu opens on its reply page
     property Notification replying: null
     signal replyWanted
@@ -78,6 +81,8 @@ Singleton {
             return;
         }
         const up = current === n;
+        if (!current)
+            popupScreen = Hypr.focusedScreen()?.name ?? "";
         current = n;
         popped(same || up);
     }

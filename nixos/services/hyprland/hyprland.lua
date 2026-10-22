@@ -115,8 +115,10 @@ hl.animation({ leaf = "borderangle", enabled = false })
 -- in from the right edge and fade, like a tag switch drifts
 hl.layer_rule({ match = { namespace = "^(bar|wallpaper|shot)$" }, no_anim = true })
 hl.layer_rule({ match = { namespace = "^menu$" }, animation = "slide right", dim_around = true })
--- the notification popup comes up from the bottom edge
-hl.layer_rule({ match = { namespace = "^notification$" }, animation = "slide bottom" })
+-- the notification popup stays mapped and slides itself (NotifyPopup.qml):
+-- a layer that unmaps while a menu holds its focus grab clears the grab,
+-- the menu closed whenever a popup ran out
+hl.layer_rule({ match = { namespace = "^notification$" }, no_anim = true })
 hl.window_rule({ match = { fullscreen = true }, no_anim = true })
 
 -- x11 apps (st, nsxiv, dmenu) read colors and fonts from ~/.Xresources, xrdb

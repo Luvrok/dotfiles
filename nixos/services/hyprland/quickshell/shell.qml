@@ -106,8 +106,12 @@ ShellRoot {
         }
     }
 
-    // the notification popup, Notifs is the server
-    NotifyPopup {}
+    // the notification popup, one per monitor, Notifs is the server
+    Variants {
+        model: Quickshell.screens
+
+        NotifyPopup {}
+    }
 
     // the lock screen: `lock now`
     Lock {

@@ -455,8 +455,10 @@ Hyprland Lua, QML and shell, no nix in them.
   month (a year), t today, the wheel too. It slides 6% like a tag switch.
 - Notifications: `Notifs.qml` is the server, `NotifyPopup.qml` shows one at
   a time, the newest, at the bottom in the middle of the focused monitor
-  (layer `notification`, it slides up from the bottom edge, no dim), 10px
-  from the edge like dunst's `bottom-center`. 5 s (low 3 s, the app's own
+  (`Notifs.popupScreen`, picked before `current` changes), 15px from the
+  edge like dunst's `bottom-center`, no dim. One layer per monitor, always
+  mapped: it slides up from the bottom edge and back in QML, and lets
+  clicks through while it's down (an empty `mask`). 5 s (low 3 s, the app's own
   time if it sets one, 0 stays, critical with none stays), a hairline at the bottom runs
   out and stops under the pointer. Left click: the default action (or the
   only one), right: away, middle: dismissed, the other actions are links.
@@ -772,6 +774,10 @@ Hyprland Lua, QML and shell, no nix in them.
   send-text --stdin` types raw text, a plain `send-text` reads python
   escapes. nixrun waits 150 ms so the menu is gone before the scratchpad
   shows and takes focus.
+- A layer that unmaps while a menu holds its focus grab clears the grab
+  (`CLayerSurface::onUnmap` refocuses, the grab rejects the window under
+  the cursor), so every expired popup closed the open menu. The popup
+  never unmaps now, its layer rule is `no_anim`.
 - Lock surfaces don't give their items focus, the password line takes it
   (`forceActiveFocus`). Quickshell's pam runs in a helper process, the
   config is `/etc/pam.d/quickshell`.
