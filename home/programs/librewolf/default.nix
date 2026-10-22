@@ -19,6 +19,14 @@ let
     theme = "~/.config/rofi/rofi-librewolf-menu.rasi";
   };
 
+  # unloads the pinned tabs the session restored: firefox gives them a
+  # browser right away, so sidebery showed them as loaded (unload-pinned/)
+  unloadPinned = pkgs.runCommand "unload-pinned-xpi" { nativeBuildInputs = [ pkgs.zip ]; } ''
+    mkdir ext && cp ${./unload-pinned}/* ext/
+    find ext -exec touch -d @315532800 {} +
+    mkdir $out && (cd ext && zip -q -X -r -9 $out/unload-pinned.xpi .)
+  '';
+
   mkProfile = id: {
     inherit id;
     isDefault = id == 0;
@@ -124,6 +132,10 @@ let
         installation_mode = "force_installed";
         allowed_in_private_browsing = true;
       };
+      "@unload.pinned" = {
+        install_url = "file://${unloadPinned}/unload-pinned.xpi";
+        installation_mode = "force_installed";
+      };
     }
     // builtins.listToAttrs [
       (extension "foxyproxy-standard" "foxyproxy@eric.h.jung")
@@ -166,9 +178,11 @@ in
     };
 
     config = {
-      background.color = "#282828";
+      # the colors of the quickshell menus (nixos/services/hyprland/quickshell/Theme.qml)
+      background.color = "#171717";
 
       border = {
+        color = "#3c3836";
         width = "1px";
         transition = "0.3s ease";
         radius = "0px";
@@ -183,6 +197,9 @@ in
       font = {
         family = "JetBrainsMonoNL Nerd Font Propo";
         size = "14px";
+        color = "#ebdbb2";
+        accent = "#d65d0e";
+        selected = "#fbf1c7";
       };
 
       tabs = {
@@ -197,11 +214,6 @@ in
       };
 
       extraConfig = ''
-        :root {
-          --tf-accent: #d65d0e !important;
-          --tf-border: #3c3836 !important;
-        }
-
         #tabbrowser-tabbox {
           padding: 0 !important;
 
@@ -214,10 +226,6 @@ in
           padding-left: 0px !important;
         }
 
-        #sidebar-box {
-          margin: 8px 0px 8px 8px !important;
-        }
-
         toolbarpaletteitem[place="toolbar"][id^="wrapper-customizableui-special-spring"],
         toolbarspring {
           max-width: 142.5px !important;
@@ -227,15 +235,7 @@ in
           flex: 38 80 !important;
         }
 
-        #urlbar > .urlbar-background {
-          border: 0 !important;
-        }
-
         #translations-button {
-          display: none !important;
-        }
-
-        findbar[hidden] {
           display: none !important;
         }
       '';
