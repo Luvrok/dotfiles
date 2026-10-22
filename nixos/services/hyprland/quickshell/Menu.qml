@@ -225,15 +225,9 @@ PanelWindow {
             accepted(-1, field.text);
     }
 
-    // xkb keycodes of the us keys
-    readonly property var codes: ({ "/": 61, a: 38, b: 56, c: 54, d: 40, e: 26, f: 41, g: 42, h: 43, i: 31, j: 44, k: 45, l: 46, m: 58, n: 57, o: 32, p: 33, q: 24, r: 27, s: 39, t: 28, u: 30, v: 55, w: 25, x: 53, y: 29, z: 52 })
-
-    // a key by its us name, on any layout. mods: the ctrl, alt and super it
-    // needs, shift doesn't matter
+    // a key by its us name, on any layout (Kb.qml)
     function key(e, name, mods) {
-        if ((e.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) !== (mods ?? Qt.NoModifier))
-            return false;
-        return e.key === (name === "/" ? Qt.Key_Slash : Qt["Key_" + name.toUpperCase()]) || e.nativeScanCode === codes[name];
+        return Kb.key(e, name, mods);
     }
 
     function handleKey(e) {

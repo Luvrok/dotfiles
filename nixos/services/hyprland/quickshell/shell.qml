@@ -28,6 +28,10 @@ ShellRoot {
     // a script's rofi -dmenu (hypr-dmenu): its rows file, prompt, row,
     // markup. its own loader too, a menu may be open
     property bool picking: false
+    // the screenshot: grim's frame of the focused monitor, then Shot over it
+    property bool shooting: false
+    property string shotFrame: ""
+    property ShellScreen shotScreen: null
     property var pick: ({})
     property string askKind: "pin"
     property string askPrompt: ""
@@ -120,6 +124,27 @@ ShellRoot {
         target: "record"
         function stop(): void {
             Quickshell.execDetached(["bash", Quickshell.shellPath("scripts/record"), "stop"]);
+        }
+    }
+
+    // print and tools s: the frame first, the menu shows it frozen
+    IpcHandler {
+        target: "shot"
+        function take(): void {
+            if (shell.shooting || grim.running)
+                return;
+            shell.menu = "";
+            shell.shotScreen = Hypr.focusedScreen();
+            shell.shotFrame = `${Quickshell.env("XDG_RUNTIME_DIR")}/hypr-shot/frame-${Date.now()}.png`;
+            grim.exec(["sh", "-c", 'mkdir -p "$(dirname "$2")" && rm -f "$(dirname "$2")"/frame-*.png && grim -o "$1" "$2"', "sh", shell.shotScreen.name, shell.shotFrame]);
+        }
+    }
+
+    Process {
+        id: grim
+        onExited: code => {
+            if (code === 0)
+                shell.shooting = true;
         }
     }
 
@@ -323,6 +348,14 @@ ShellRoot {
         Windows {
             screen: shell.menuScreen
             onDone: shell.close("windows")
+        }
+    }
+    LazyLoader {
+        active: shell.shooting
+        Shot {
+            screen: shell.shotScreen
+            frame: `file://${shell.shotFrame}`
+            onDone: Qt.callLater(() => shell.shooting = false)
         }
     }
     LazyLoader {

@@ -57,7 +57,8 @@ Menu {
             key: "s",
             name: "shot",
             icon: "\u{f0e51}",
-            run: 'g=$(slurp) && grim -g "$g" - | wl-copy --type image/png'
+            // after the menu has slid away
+            run: "sleep 0.3; qs -c hyprland ipc call shot take"
         }
     ]
 

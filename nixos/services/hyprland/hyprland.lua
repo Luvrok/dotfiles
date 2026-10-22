@@ -111,7 +111,7 @@ hl.animation({ leaf = "borderangle", enabled = false })
 -- the bar and the wallpaper just appear, fullscreen windows take the screen
 -- at once. the quickshell menus sit under the bar on the right, they slide
 -- in from the right edge and fade, like a tag switch drifts
-hl.layer_rule({ match = { namespace = "^(bar|wallpaper)$" }, no_anim = true })
+hl.layer_rule({ match = { namespace = "^(bar|wallpaper|shot)$" }, no_anim = true })
 hl.layer_rule({ match = { namespace = "^menu$" }, animation = "slide right", dim_around = true })
 -- the notification popup comes up from the bottom edge
 hl.layer_rule({ match = { namespace = "^notification$" }, animation = "slide bottom" })
@@ -248,8 +248,9 @@ hl.bind(mod .. " + x", qs("menu open windows"))
 hl.bind(mod .. " + SHIFT + n", qs("notifications close"))
 hl.bind(mod .. " + o", hl.dsp.exec_cmd("kitty --class movies -e yazi /media/outer-1"))
 
--- region to the clipboard, the picture or the text on it. esc in slurp does nothing
-hl.bind("Print", hl.dsp.exec_cmd([[g=$(slurp) && grim -g "$g" - | wl-copy --type image/png]]))
+-- print: the screenshot (quickshell Shot.qml, frozen like flameshot). $mod+print:
+-- the text of a region to the clipboard, esc in slurp does nothing
+hl.bind("Print", qs("shot take"))
 hl.bind(mod .. " + Print", hl.dsp.exec_cmd(
     [[g=$(slurp) && grim -g "$g" - | tesseract -l eng+rus stdin stdout 2>/dev/null | wl-copy && notify-send OCR "Text copied"]]))
 
