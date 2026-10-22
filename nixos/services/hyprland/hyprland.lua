@@ -243,6 +243,8 @@ hl.bind(mod .. " + CTRL + c", qs("menu open calendar"))
 hl.bind(mod .. " + n", qs("menu open notifications"))
 -- the small tools: emoji, calc, color, ocr, shot
 hl.bind(mod .. " + a", qs("menu open tools"))
+-- every window of every tag, like alt-tab
+hl.bind(mod .. " + x", qs("menu open windows"))
 hl.bind(mod .. " + SHIFT + n", qs("notifications close"))
 hl.bind(mod .. " + o", hl.dsp.exec_cmd("kitty --class movies -e yazi /media/outer-1"))
 

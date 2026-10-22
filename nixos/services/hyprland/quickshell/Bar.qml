@@ -64,10 +64,9 @@ PanelWindow {
         // left click: go there, right click: move the window there
         Repeater {
             model: {
-                const labels = ["scl", "obs", "sh1", "sh2", "smth", "virt", "med", "smth", "vpn"];
                 const tags = [];
                 for (let i = 1; i <= 9; i++)
-                    tags.push({ id: bar.offset + i, label: labels[i - 1] });
+                    tags.push({ id: bar.offset + i, label: Hypr.labels[i - 1] });
                 // workspaces left here by an unplugged monitor, so their windows don't get lost
                 for (const w of Hyprland.workspaces.values)
                     if (w.monitor === bar.monitor && w.id > 0 && (w.id <= bar.offset || w.id > bar.offset + 9))

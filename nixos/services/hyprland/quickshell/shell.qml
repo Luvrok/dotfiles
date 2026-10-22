@@ -9,7 +9,8 @@ import qs.menus
 //   qs -c hyprland ipc call bar toggle
 //   qs -c hyprland ipc call record stop
 //   qs -c hyprland ipc call notifications close   (the popup, quiet, clear)
-// hypr-askpass calls `askpass ask <prompt>`, hypr-pinentry
+// hypr-dmenu calls `dmenu ask <rows file> <prompt> <row> <markup>` and waits
+// for `answered`. hypr-askpass calls `askpass ask <prompt>`, hypr-pinentry
 // `askpass query <kind> <prompt> <desc> <error>`, both wait for `answered`
 ShellRoot {
     id: shell
@@ -24,6 +25,10 @@ ShellRoot {
     // the password prompt, it opens over a menu that waits for it (pass
     // runs gpg, gpg asks)
     property bool asking: false
+    // a script's rofi -dmenu (hypr-dmenu): its rows file, prompt, row,
+    // markup. its own loader too, a menu may be open
+    property bool picking: false
+    property var pick: ({})
     property string askKind: "pin"
     property string askPrompt: ""
     property string askNote: ""
@@ -115,6 +120,22 @@ ShellRoot {
         target: "record"
         function stop(): void {
             Quickshell.execDetached(["bash", Quickshell.shellPath("scripts/record"), "stop"]);
+        }
+    }
+
+    IpcHandler {
+        id: dmenu
+        target: "dmenu"
+        signal answered(index: string)
+        function ask(file: string, prompt: string, selected: string, markup: string): void {
+            shell.pick = {
+                file: file,
+                prompt: prompt,
+                selected: parseInt(selected) || 0,
+                markup: markup === "1",
+                screen: Hypr.focusedScreen()
+            };
+            shell.picking = true;
         }
     }
 
@@ -268,6 +289,25 @@ ShellRoot {
         Record {
             screen: shell.menuScreen
             onDone: shell.close("record")
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "windows"
+        Windows {
+            screen: shell.menuScreen
+            onDone: shell.close("windows")
+        }
+    }
+    LazyLoader {
+        active: shell.picking
+        Dmenu {
+            screen: shell.pick.screen
+            file: shell.pick.file
+            ask: shell.pick.prompt
+            selected: shell.pick.selected
+            markup: shell.pick.markup
+            onAnswered: index => dmenu.answered(index)
+            onDone: Qt.callLater(() => shell.picking = false)
         }
     }
     LazyLoader {

@@ -28,6 +28,19 @@ Singleton {
         return Math.max(0, order.indexOf(monitor)) * 10;
     }
 
+    // the bar's names for tags 1..9 of a monitor
+    readonly property var labels: ["scl", "obs", "sh1", "sh2", "smth", "virt", "med", "smth", "vpn"]
+
+    // a workspace as the bar names it: its tag, a scratchpad, or its name
+    function tagName(ws) {
+        if (!ws)
+            return "";
+        if (ws.id < 0)
+            return ws.name.replace(/^special:/, "");
+        const n = ws.id % 10;
+        return n >= 1 && n <= 9 ? labels[n - 1] : ws.name;
+    }
+
     // the screen of the monitor that has focus
     function focusedScreen() {
         const focused = Hyprland.focusedMonitor?.name;

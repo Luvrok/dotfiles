@@ -37,6 +37,17 @@
       runtimeInputs = [ quickshell ];
       text = builtins.readFile ./quickshell/scripts/askpass;
     })
+    # rofi -dmenu for scripts, the librewolf tab switcher's host uses it
+    # while quickshell runs (home/programs/librewolf)
+    (writeShellApplication {
+      name = "hypr-dmenu";
+      runtimeInputs = [
+        quickshell
+        coreutils
+        gnused
+      ];
+      text = builtins.readFile ./quickshell/scripts/dmenu;
+    })
     # pinentry for gpg-agent, the same menu. home/programs/gpg.nix picks it
     # while quickshell runs
     (writeShellApplication {
