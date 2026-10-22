@@ -40,6 +40,9 @@ ShellRoot {
     // the desktop entries are read in the background on first use, this
     // reads them at start, so run and kill have them when they open
     readonly property var apps: DesktopEntries.applications
+    // the player keeps track of which one started last from the start, not
+    // from when its menu first opens
+    readonly property var players: Media.players
 
     // on the focused monitor, or on the one a bar was clicked on
     function open(name, screen) {
@@ -335,6 +338,15 @@ ShellRoot {
         Record {
             screen: shell.menuScreen
             onDone: shell.close("record")
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "player"
+        Player {
+            screen: shell.menuScreen
+            parentMenu: shell.menuParent
+            onDone: shell.close("player")
+            onGoTo: name => shell.swap(name)
         }
     }
     LazyLoader {

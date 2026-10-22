@@ -348,12 +348,12 @@ Hyprland Lua, QML and shell, no nix in them.
 | `nixos/services/hyprland/quickshell/shell.qml` | bar and wallpaper per monitor, the menus, the ipc targets |
 | `nixos/services/hyprland/quickshell/{Bar,Wallpaper,Hypr,Theme}.qml` | the bar (tags, the open tag's windows as squares, status), `output * bg`, the bar's Hyprland state and the focused screen, gruvbox colors |
 | `nixos/services/hyprland/quickshell/{Notifs,NotifyPopup}.qml` | the notification server (`org.freedesktop.Notifications`), the popup |
-| `nixos/services/hyprland/quickshell/{Toggles,Kb}.qml` | singletons: the switches' states, layout-proof keys |
+| `nixos/services/hyprland/quickshell/{Media,Toggles,Kb}.qml` | singletons: the player and cava's levels, the switches' states, layout-proof keys |
 | `nixos/services/hyprland/quickshell/{Shot,Lock}.qml` | the screenshot over a frozen frame, the lock screen |
-| `nixos/services/hyprland/proxychains.conf` | the run menu's proxychains (`/etc/proxychains-xray.conf`) |
+| `nixos/services/hyprland/quickshell/cava.conf`, `nixos/services/hyprland/proxychains.conf` | the visualizer's cava, the run menu's proxychains (`/etc/proxychains-xray.conf`) |
 | `nixos/services/hyprland/quickshell/Menu.qml` | rofi -dmenu: the menu window, filter, list, keys, built from `widgets/` |
-| `nixos/services/hyprland/quickshell/widgets/` | the menu parts: `MenuHead` (icon, title, status, pulse), `SearchField` (the text line), `MenuRow`, `KeyHints`, `Meter` and `Threads` (the system menu's bars), `Fader` (a mixer line), `Tile` (a big square of tools and switches) |
-| `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass. And System (a small btop), Processes, Calendar, Notifications, Windows, Dmenu (hypr-dmenu), and Tools with Emoji, Calc, Units (systemd) and Switches |
+| `nixos/services/hyprland/quickshell/widgets/` | the menu parts: `MenuHead` (icon, title, status, pulse), `SearchField` (the text line), `MenuRow`, `KeyHints`, `Meter` and `Threads` (the system menu's bars), `Fader` (a mixer line), `Tile` (a big square of tools and switches), `Visualizer` (cava's bars) |
+| `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass. And System (a small btop), Processes, Calendar, Notifications, Windows, Player, Dmenu (hypr-dmenu), and Tools with Emoji, Calc, Units (systemd) and Switches |
 | `nixos/services/hyprland/TODO.md` | what's left to do here, a plain list |
 | `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `wifi` (iwd over d-bus, the menu's networks and the bar's signal), `apps` (the kill menu's apps), `sysmon` (the system menu's numbers), `route` (the audio menu's wires), `units` (systemctl and journalctl for the systemd menu), `proxied` (run's xray mode), `revive` (run's apps that hide in the background), `savefile` (`hypr-savefile`, "save as" through the file chooser portal), `dmenu` (`hypr-dmenu`), `askpass` and `pinentry` (`hypr-askpass`, `hypr-pinentry` in PATH) |
 
@@ -506,7 +506,8 @@ Hyprland Lua, QML and shell, no nix in them.
 - Clipboard shows a picture under the cursor above the text line:
   cliphist's `[[ binary data ... png 640x360 ]]` line is decoded once into
   `$XDG_RUNTIME_DIR/hypr-clip/<id>.<type>`.
-- Tools also has u systemd, v switches, and s is the screenshot.
+- Tools also has m player, u systemd, v switches, and s is the
+  screenshot.
 - Windows ($mod+x): every window of every tag, the one focused before
   first like alt-tab (`focusHistoryID`), the tag in the dim column
   (`Hypr.tagName`, the bar's names live in `Hypr.labels`). Enter focuses
@@ -528,6 +529,17 @@ Hyprland Lua, QML and shell, no nix in them.
   zapret is `zapret-discord-youtube.service`, dnscrypt
   `dnscrypt-proxy.service`. Checks run every 10 s, 2 s while the menu is
   open, the bar shows the icons of what's on.
+- Player (tools m, audio's p): `Media.player` is the one
+  picked with tab until another one starts, else what plays before what
+  doesn't, a browser after the rest (music stays over a youtube tab, the
+  tab shows when nothing else plays), then the one that started last
+  (`started`, one that shows up playing counts). Cover, track, a seek bar
+  for the mouse, time, a 24-bar visualizer, the players. space, n/p, h/l
+  seek 10 s, a goes to audio and audio's p comes back. Not in the bar.
+  cava and the position polling run only while the menu is open
+  (`Media.watched`) and something plays. shell.qml reads `Media.players`
+  at start, so `started` counts from then, not from the menu's first open. mpv shows up through `mpvScripts.mpris`
+  (home/programs/mpv.nix).
 - Shot (print, tools s): grim takes the focused monitor first, then a
   full-screen layer shows that frame, so it's the moment of the key like
   flameshot. Drag to select (f the whole screen), then r rect, a arrow,
@@ -725,6 +737,9 @@ Hyprland Lua, QML and shell, no nix in them.
 - A component's own property must not take a name its type has: Shot's
   drawing color is `ink` (a window has `color`), Tile's state is `mode`
   (an Item has `state`), a Process can't have an `id` property.
+- mpris doesn't push the position while it plays, Media calls
+  `positionChanged()` every second. cava's raw output (ascii, `;` between
+  bars, a line a frame) comes through a SplitParser.
 - Shot draws on a Canvas over the frame, the blur is a mosaic: each 12 px
   cell is the frame's pixel in its middle (`drawImage` 1x1 to the cell),
   no shaders, so it works on any renderer. The selection is an Item that
@@ -757,6 +772,7 @@ from `pw-cli create-node adapter '{ factory.name=support.null-audio-sink
 media.name=... }'`. Quickshell runs on headless sway (see Sway) with
 `QT_QUICK_BACKEND=software`. The systemd menu runs on fake `systemctl`,
 `journalctl` and `sudo` in PATH (there's no systemd in a container), the
+player on mpv with `mpvScripts.mpris` playing into the test pipewire, the
 lock shows but a container's pam can't check a password. The file
 chooser runs on `xdg-desktop-portal` and termfilechooser from the store
 with a fake `cmd` that writes the path to its 5th argument (and creates
