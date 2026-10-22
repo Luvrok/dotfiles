@@ -655,6 +655,12 @@ Hyprland Lua, QML and shell, no nix in them.
   (`hl.workspace_rule` merges into the rule of the same workspace and
   re-layouts) and send `hl.dsp.event("layout")`, the bar refetches on
   `custom>>layout`. A reload drops those runtime rules.
+- Apps may ask to be maximized (kitty did after a nixpkgs update): a
+  maximized window (`fullscreen: 1` in `hyprctl clients`) covers the tag
+  like monocle with gaps, hides the master and blows a scratchpad up to
+  the screen. A rule for every class has `suppress_event = "maximize"`,
+  like Hyprland's example config. A later rule's `suppress_event` replaces
+  it, so telegram's viewer lists `fullscreen maximize`.
 - A window rule pattern has to match the whole class or title (RE2
   FullMatch), sway matches a part: `qBittorrent$` misses
   `org.qbittorrent.qBittorrent`, hence `.*qBittorrent$`.
