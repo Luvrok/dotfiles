@@ -338,15 +338,6 @@ ShellRoot {
         }
     }
     LazyLoader {
-        active: shell.menu === "player"
-        Player {
-            screen: shell.menuScreen
-            parentMenu: shell.menuParent
-            onDone: shell.close("player")
-            onGoTo: name => shell.swap(name)
-        }
-    }
-    LazyLoader {
         active: shell.menu === "units"
         Units {
             screen: shell.menuScreen

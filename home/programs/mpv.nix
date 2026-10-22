@@ -1,10 +1,6 @@
 { pkgs, ... }:
 
 {
-  programs.mpv = {
-    enable = true;
-    # mpris: the hyprland bar and player menu see it (quickshell's Media.qml)
-    scripts = [ pkgs.mpvScripts.mpris ];
-  };
+  programs.mpv.enable = true;
   xdg.configFile."mpv".source = pkgs.mpv-config;
 }

@@ -183,7 +183,7 @@ Menu {
     statusAccent: sending !== null || Pipewire.defaultAudioSink !== null
     lines: 0
     menuWidth: ch(88)
-    hints: sending ? [["j/k", "move"], ["enter", "wire / unwire"], ["h", "back"], ["esc", "close"]] : [["j/k", "move"], ["h/l", "volume"], ["0-9", "level"], ["m", "mute"], ["enter", picked?.isStream ? "mute" : "default"], ...(kindOf(picked ?? {}) === "app" || kindOf(picked ?? {}) === "in" ? [["s", "send"]] : []), ["p", "player"], ["esc", "close"]]
+    hints: sending ? [["j/k", "move"], ["enter", "wire / unwire"], ["h", "back"], ["esc", "close"]] : [["j/k", "move"], ["h/l", "volume"], ["0-9", "level"], ["m", "mute"], ["enter", picked?.isStream ? "mute" : "default"], ...(kindOf(picked ?? {}) === "app" || kindOf(picked ?? {}) === "in" ? [["s", "send"]] : []), ["esc", "close"]]
     // the targets it goes to
     active: sending ? targets.map((t, i) => routes(sending).includes(t) ? i : -1).filter(i => i >= 0) : []
     body: sending ? null : mixer
@@ -217,8 +217,6 @@ Menu {
             toggleMute(n);
         else if (key(e, "s"))
             openSend(n);
-        else if (key(e, "p"))
-            goTo("player");
         else if (k === Qt.Key_Return || k === Qt.Key_Enter)
             use(n);
         else

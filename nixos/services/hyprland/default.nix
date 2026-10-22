@@ -90,9 +90,7 @@
     hyprprop
     # pass types the login with it
     wtype
-    # the player's visualizer
-    cava
-    # the run menu's alt+enter
+    # the run menu's xray mode (scripts/proxied)
     proxychains-ng
     # the tools menu: color picker, calc, the emoji's names
     hyprpicker

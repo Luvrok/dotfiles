@@ -258,62 +258,6 @@ PanelWindow {
             }
             Sep {}
 
-            // what plays (Media.qml): play or pause and the title with a
-            // hairline under it that fills as it plays. a click on the icon
-            // plays or pauses, on the title opens the player menu, the wheel
-            // goes to the next or previous track
-            Row {
-                id: media
-                visible: Media.player !== null
-                height: parent.height
-                spacing: 6
-
-                Label {
-                    text: Media.playing ? "\u{f03e4}" : "\u{f040a}"
-                    color: Media.playing ? Theme.selBg : Theme.fg
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: Media.player?.togglePlaying()
-                    }
-                }
-                Label {
-                    id: track
-                    width: Math.min(implicitWidth, 240)
-                    elide: Text.ElideRight
-                    text: Media.player?.trackTitle || Media.player?.identity || ""
-
-                    Rectangle {
-                        readonly property real done: Media.player && Media.player.length > 0 ? Math.min(1, Media.player.position / Media.player.length) : 0
-                        visible: Media.player?.lengthSupported ?? false
-                        y: track.height - 4
-                        width: track.width
-                        height: 1
-                        color: Theme.line
-
-                        Rectangle {
-                            width: Math.round(parent.width * parent.done)
-                            height: 1
-                            color: Media.playing ? Theme.selBg : Theme.fg
-                        }
-                    }
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: bar.openMenu("player")
-                        onWheel: w => {
-                            if (w.angleDelta.y > 0)
-                                Media.player?.previous();
-                            else
-                                Media.player?.next();
-                        }
-                    }
-                }
-            }
-            Sep {
-                visible: media.visible
-            }
-
             // the switches that are on (vpn, zapret, dnscrypt), a click opens
             // the switches menu
             Label {
