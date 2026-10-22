@@ -201,6 +201,9 @@ local scratchpads = {
     spterm = "kitty --class spterm --name spterm --title scratchpad",
     spdotfiles = "kitty --class spdotfiles --name spdotfiles --title dotfiles -e sh -c 'cd ~/HOME/infra/dotfiles && nvim'",
     rangerterm = "kitty --class rangerterm --name rangerterm --title ranger -e sh -c 'cd && yazi'",
+    -- a mini terminal for the nix menu's builds (quickshell scripts/nixrun
+    -- types into it over kitty's remote control)
+    spnix = "kitty --class spnix --name spnix --title nix -o font_size=8 -o allow_remote_control=socket-only --listen-on unix:@hypr-nix",
 }
 for name, cmd in pairs(scratchpads) do
     hl.workspace_rule({ workspace = "special:" .. name, on_created_empty = cmd })
@@ -211,6 +214,13 @@ hl.window_rule({
     float = true,
     size = { 1280, 910 },
     center = true,
+})
+-- where the menus are: under the bar on the right
+hl.window_rule({
+    match = { class = "^spnix$" },
+    float = true,
+    size = { 760, 420 },
+    move = { "monitor_w - window_w - 10", "34" },
 })
 
 -------------------
@@ -235,7 +245,7 @@ hl.bind(mod .. " + r", qs("menu open record"))
 hl.bind(mod .. " + SHIFT + r", qs("record stop"))
 hl.bind(mod .. " + u", qs("menu open pass"))
 hl.bind(mod .. " + CTRL + k", qs("menu open kill"))
-hl.bind(mod .. " + SHIFT + u", hl.dsp.exec_cmd("nixos_menu"))
+hl.bind(mod .. " + SHIFT + u", qs("menu open nix"))
 hl.bind(mod .. " + SHIFT + d", qs("menu open audio"))
 hl.bind(mod .. " + SHIFT + y", qs("menu open translate"))
 hl.bind(mod .. " + CTRL + w", qs("menu open wifi"))
@@ -280,6 +290,7 @@ end)
 hl.bind(mod .. " + g", hl.dsp.workspace.toggle_special("spterm"))
 hl.bind(mod .. " + v", hl.dsp.workspace.toggle_special("spdotfiles"))
 hl.bind(mod .. " + e", hl.dsp.workspace.toggle_special("rangerterm"))
+hl.bind(mod .. " + CTRL + u", hl.dsp.workspace.toggle_special("spnix"))
 
 -- setscratch: focused window goes to the $mod+g scratchpad
 hl.bind(mod .. " + CTRL + g", function()

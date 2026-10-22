@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# the nix menu's commands (Nix.qml) go to the mini kitty scratchpad
+# (special:spnix, $mod+ctrl+u). it starts and shows if it isn't up, the
+# command is typed into its shell, so the output, a sudo password and
+# ctrl+c are there. one that still runs isn't typed into
+#   nixrun <command line>
+set -u
+
+sock=unix:@hypr-nix
+# the menu goes first, hyprland won't focus a window under it
+sleep 0.15
+
+up() {
+  kitty @ --to "$sock" ls >/dev/null 2>&1
+}
+
+shown=$(hyprctl -j monitors | jq 'any(.[]; .specialWorkspace.name == "special:spnix")')
+if [ "$shown" != true ]; then
+  hyprctl dispatch 'hl.dsp.workspace.toggle_special("spnix")' >/dev/null
+fi
+for _ in $(seq 50); do
+  up && break
+  sleep 0.1
+done
+if ! up; then
+  notify-send -a nixos "nixos" "the terminal didn't start"
+  exit 1
+fi
+
+# anything in the foreground besides its shell is still running
+busy=$(kitty @ --to "$sock" ls | jq '.[0].tabs[0].windows[0] | [.foreground_processes[].pid] - [.pid] | length')
+if [ "$busy" != 0 ]; then
+  notify-send -a nixos "nixos" "something still runs there"
+  exit 1
+fi
+printf '%s\r' "$1" | kitty @ --to "$sock" send-text --stdin

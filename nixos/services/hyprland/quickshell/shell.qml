@@ -228,6 +228,13 @@ ShellRoot {
         }
     }
     LazyLoader {
+        active: shell.menu === "nix"
+        Nix {
+            screen: shell.menuScreen
+            onDone: shell.close("nix")
+        }
+    }
+    LazyLoader {
         active: shell.menu === "power"
         Power {
             screen: shell.menuScreen

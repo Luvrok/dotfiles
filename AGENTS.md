@@ -353,9 +353,9 @@ Hyprland Lua, QML and shell, no nix in them.
 | `nixos/services/hyprland/quickshell/cava.conf`, `nixos/services/hyprland/proxychains.conf` | the visualizer's cava, the run menu's proxychains (`/etc/proxychains-xray.conf`) |
 | `nixos/services/hyprland/quickshell/Menu.qml` | rofi -dmenu: the menu window, filter, list, keys, built from `widgets/` |
 | `nixos/services/hyprland/quickshell/widgets/` | the menu parts: `MenuHead` (icon, title, status, pulse), `SearchField` (the text line), `MenuRow`, `KeyHints`, `Meter` and `Threads` (the system menu's bars), `Fader` (a mixer line), `Tile` (a big square of tools and switches), `Visualizer` (cava's bars) |
-| `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass. And System (a small btop), Processes, Calendar, Notifications, Windows, Player, Dmenu (hypr-dmenu), and Tools with Emoji, Calc, Units (systemd) and Switches |
+| `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass. And System (a small btop), Processes, Calendar, Notifications, Windows, Player, Nix (nixos builds), Dmenu (hypr-dmenu), and Tools with Emoji, Calc, Units (systemd) and Switches |
 | `nixos/services/hyprland/TODO.md` | what's left to do here, a plain list |
-| `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `wifi` (iwd over d-bus, the menu's networks and the bar's signal), `apps` (the kill menu's apps), `sysmon` (the system menu's numbers), `route` (the audio menu's wires), `units` (systemctl and journalctl for the systemd menu), `proxied` (run's xray mode), `revive` (run's apps that hide in the background), `savefile` (`hypr-savefile`, "save as" through the file chooser portal), `dmenu` (`hypr-dmenu`), `askpass` and `pinentry` (`hypr-askpass`, `hypr-pinentry` in PATH) |
+| `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `wifi` (iwd over d-bus, the menu's networks and the bar's signal), `apps` (the kill menu's apps), `sysmon` (the system menu's numbers), `route` (the audio menu's wires), `units` (systemctl and journalctl for the systemd menu), `nixrun` (the nix menu's commands into its terminal), `proxied` (run's xray mode), `revive` (run's apps that hide in the background), `savefile` (`hypr-savefile`, "save as" through the file chooser portal), `dmenu` (`hypr-dmenu`), `askpass` and `pinentry` (`hypr-askpass`, `hypr-pinentry` in PATH) |
 
 - Both configs sit in `/etc/xdg` and are found through `XDG_CONFIG_DIRS`,
   `~/.config/hypr/hyprland.lua` or `~/.config/quickshell/hyprland` would win.
@@ -508,6 +508,16 @@ Hyprland Lua, QML and shell, no nix in them.
   `$XDG_RUNTIME_DIR/hypr-clip/<id>.<type>`.
 - Tools also has m player, u systemd, v switches, and s is the
   screenshot.
+- Nix ($mod+Shift+u, the i3 and sway key calls a nixos_menu that isn't
+  there): sapply, supdate, sclean
+  and `sapply-remote` / `sclean-remote` for the hosts in its `hosts`
+  (flake and ssh name). Enter types the command into a mini kitty
+  scratchpad (`special:spnix`, $mod+Ctrl+u, font 8, under the bar on the
+  right), `scripts/nixrun` shows it first and starts it when it's not up.
+  It's a plain scratchpad: hide it while it builds, the scripts' own
+  notification says how it went, the sudo password goes there too. One
+  that still runs isn't typed into (anything in its foreground besides
+  the shell, `kitty @ ls`), a notification says so. t shows or hides it.
 - Windows ($mod+x): every window of every tag, the one focused before
   first like alt-tab (`focusHistoryID`), the tag in the dim column
   (`Hypr.tagName`, the bar's names live in `Hypr.labels`). Enter focuses
@@ -757,6 +767,11 @@ Hyprland Lua, QML and shell, no nix in them.
   jeepney) listens there before it asks. termfilechooser puts a help file
   at the suggested path, adds `_` when one is there, and stats what was
   picked, the png replaces it.
+- The mini kitty listens on the abstract socket `@hypr-nix`
+  (`allow_remote_control=socket-only`, only that kitty), `kitty @
+  send-text --stdin` types raw text, a plain `send-text` reads python
+  escapes. nixrun waits 150 ms so the menu is gone before the scratchpad
+  shows and takes focus.
 - Lock surfaces don't give their items focus, the password line takes it
   (`forceActiveFocus`). Quickshell's pam runs in a helper process, the
   config is `/etc/pam.d/quickshell`.
