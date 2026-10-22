@@ -355,7 +355,7 @@ Hyprland Lua, QML and shell, no nix in them.
 | `nixos/services/hyprland/quickshell/widgets/` | the menu parts: `MenuHead` (icon, title, status, pulse), `SearchField` (the text line), `MenuRow`, `KeyHints`, `Meter` and `Threads` (the system menu's bars), `Fader` (a mixer line), `Tile` (a big square of tools and switches), `Visualizer` (cava's bars) |
 | `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass. And System (a small btop), Processes, Calendar, Notifications, Windows, Player, Dmenu (hypr-dmenu), and Tools with Emoji, Calc, Units (systemd) and Switches |
 | `nixos/services/hyprland/TODO.md` | what's left to do here, a plain list |
-| `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `wifi` (iwd over d-bus, the menu's networks and the bar's signal), `apps` (the kill menu's apps), `sysmon` (the system menu's numbers), `route` (the audio menu's wires), `units` (systemctl and journalctl for the systemd menu), `dmenu` (`hypr-dmenu`), `askpass` and `pinentry` (`hypr-askpass`, `hypr-pinentry` in PATH) |
+| `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `wifi` (iwd over d-bus, the menu's networks and the bar's signal), `apps` (the kill menu's apps), `sysmon` (the system menu's numbers), `route` (the audio menu's wires), `units` (systemctl and journalctl for the systemd menu), `proxied` (run's xray mode), `revive` (run's apps that hide in the background), `savefile` (`hypr-savefile`, "save as" through the file chooser portal), `dmenu` (`hypr-dmenu`), `askpass` and `pinentry` (`hypr-askpass`, `hypr-pinentry` in PATH) |
 
 - Both configs sit in `/etc/xdg` and are found through `XDG_CONFIG_DIRS`,
   `~/.config/hypr/hyprland.lua` or `~/.config/quickshell/hyprland` would win.
@@ -510,8 +510,8 @@ Hyprland Lua, QML and shell, no nix in them.
   screenshot.
 - Windows ($mod+x): every window of every tag, the one focused before
   first like alt-tab (`focusHistoryID`), the tag in the dim column
-  (`Hypr.tagName`, the bar's names live in `Hypr.labels`). Enter focuses,
-  alt+x closes.
+  (`Hypr.tagName`, the bar's names live in `Hypr.labels`). Enter focuses
+  (`Hypr.dispatchLater`, once the menu is gone), alt+x closes.
 - hypr-dmenu is rofi -dmenu over a menu (`-p`, `-selected-row`, `-format
   i`, `-markup-rows`: tags go, a `<span>` starts the dim column), its own
   loader like askpass. The librewolf tab switcher's native host
@@ -530,26 +530,43 @@ Hyprland Lua, QML and shell, no nix in them.
   `dnscrypt-proxy.service`. Checks run every 10 s, 2 s while the menu is
   open, the bar shows the icons of what's on.
 - Player (tools m, a click on the bar's title): `Media.player` is the one
-  picked with tab, else the one playing, else the first. Cover, track, a
-  seek bar for the mouse, time, a 24-bar visualizer, the players. space,
-  n/p, h/l seek 10 s, a goes to audio and audio's p comes back. The bar
-  shows play/pause (a click toggles), 8 bars and the title (the wheel
-  skips). cava runs only while something plays.
+  picked with tab until another one starts, else what plays before what
+  doesn't, a browser after the rest (music stays over a youtube tab, the
+  tab shows when nothing else plays), then the one that started last
+  (`started`, one that shows up playing counts). Cover, track, a seek bar
+  for the mouse, time, a 24-bar visualizer, the players. space, n/p, h/l
+  seek 10 s, a goes to audio and audio's p comes back. The bar shows
+  play/pause (a click toggles) and the title with a hairline under it
+  that fills as it plays (the wheel skips). cava runs only while
+  something plays. mpv shows up through `mpvScripts.mpris`
+  (home/programs/mpv.nix).
 - Shot (print, tools s): grim takes the focused monitor first, then a
   full-screen layer shows that frame, so it's the moment of the key like
   flameshot. Drag to select (f the whole screen), then r rect, a arrow,
-  l line, p pen, m marker, t text, b blur, v selects again, c color, [ ]
-  width, u or ctrl+z undo. enter copies the png, s saves it to
-  ~/Pictures/screenshots and copies the path, esc drops it.
+  l line, p pen, m marker, t text, b blur, v selects again, c the color
+  of what's drawn next, [ ] width, u or ctrl+z undo. enter copies the
+  png, s saves it to flameshot's folder (home/services/flameshot.nix) and
+  copies the path, shift+s asks where (hypr-savefile, termfilechooser),
+  esc drops it. With no room around the selection the tools sit over the
+  keys.
 - Lock (`lock now`): the session lock, a clock and the password line on
   every monitor (the compositor picks which gets the keys), pam service
   `quickshell`. swayidle runs it on `loginctl lock-session` (the power
   menu's lock) and before sleep. `misc.allow_session_lock_restore` lets a
   restarted quickshell lock again.
-- Run's alt+enter starts the app or the typed command through xray:
-  `proxychains4 -q -f /etc/proxychains-xray.conf` (socks5 on v2rayN's
-  mixed 10808, names resolve over there) and the `*_proxy` vars for what
-  LD_PRELOAD can't reach (go, static binaries).
+- Run's tab turns on xray (an orange "xray" in the head), what runs then
+  goes through `scripts/proxied`: chromium and electron apps (the wrapper
+  names electron or chrom, or .pak files sit next to the binary) get
+  `--proxy-server=socks5://127.0.0.1:10808`, they skip LD_PRELOAD and the
+  env vars. The rest `proxychains4 -q -f /etc/proxychains-xray.conf`
+  (socks5 on v2rayN's mixed 10808, names resolve over there) and the
+  `*_proxy` vars for what LD_PRELOAD can't reach (go, static binaries).
+- Run starts apps through `scripts/revive`: element with no tray hides
+  on close, a second start says "other instance detected" and quits, the
+  old one never shows. When the start quits within 3 s and the oldest
+  process from the same store path (or command) is an app (a wayland or
+  x11 connection) with no window, it's ended like the kill menu does and
+  the app starts again. One with a window is left alone.
 - Notifications fold an app with more than one into a line with its own
   page. r answers one with an inline reply (`↩` in front) in the text
   line, the popup's reply link opens that page (`Notifs.reply`). x on an
@@ -728,6 +745,18 @@ Hyprland Lua, QML and shell, no nix in them.
   no shaders, so it works on any renderer. The selection is an Item that
   clips a second copy of the frame and the canvas, `grabToImage` on it is
   the png.
+- A value type read from a property (a `color`) is a reference in Qt 6:
+  `{ color: ink }` followed the property and recolored every shape, Shot
+  keeps the string (`${ink}`).
+- Hyprland refuses window focus while a layer has the keys exclusively,
+  then focuses the window under the cursor when it unmaps. A tag switch
+  still happened, so focus "worked" across tags only. Menus dispatch focus
+  100 ms after they hide (`Hypr.dispatchLater`).
+- The file chooser portal answers on a request object named after the
+  caller's unique name and `handle_token`, `hypr-savefile` (python,
+  jeepney) listens there before it asks. termfilechooser puts a help file
+  at the suggested path, adds `_` when one is there, and stats what was
+  picked, the png replaces it.
 - Lock surfaces don't give their items focus, the password line takes it
   (`forceActiveFocus`). Quickshell's pam runs in a helper process, the
   config is `/etc/pam.d/quickshell`.
@@ -744,7 +773,10 @@ media.name=... }'`. Quickshell runs on headless sway (see Sway) with
 `QT_QUICK_BACKEND=software`. The systemd menu runs on fake `systemctl`,
 `journalctl` and `sudo` in PATH (there's no systemd in a container), the
 player on mpv with `mpvScripts.mpris` playing into the test pipewire, the
-lock shows but a container's pam can't check a password. Open a menu with `qs -p <dir> ipc call menu
+lock shows but a container's pam can't check a password. The file
+chooser runs on `xdg-desktop-portal` and termfilechooser from the store
+with a fake `cmd` that writes the path to its 5th argument (and creates
+the file), `XDG_DESKTOP_PORTAL_DIR` at termfilechooser's portals. Open a menu with `qs -p <dir> ipc call menu
 open <name>`. wtype only reaches it if a virtual keyboard exists before the
 menu opens (start a `wtype -s 500000 ...` first). The bar needs Hyprland ipc,
 a small fake `.socket.sock`/`.socket2.sock` with `HYPRLAND_INSTANCE_SIGNATURE`

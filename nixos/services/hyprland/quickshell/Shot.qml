@@ -7,8 +7,10 @@ import qs.widgets
 // went down (shell.qml), this shows that frame frozen over everything.
 // drag to select, then draw in it: r rect, a arrow, l line, p pen, m marker,
 // t text, b blur (a mosaic), v selects again, f takes the whole screen.
-// c the next color, [ ] thinner and thicker, u or ctrl+z undo. enter copies
-// it, s saves it to ~/Pictures/screenshots and copies the path, esc drops it
+// c the color of what's drawn next, [ ] thinner and thicker, u or ctrl+z
+// undo. enter copies it, s saves it to flameshot's folder and copies
+// the path, shift+s asks where (the file chooser portal, hypr-savefile),
+// esc drops it
 PanelWindow {
     id: shot
 
@@ -54,7 +56,7 @@ PanelWindow {
         if (typing && textInput.text !== "")
             shapes = [...shapes, {
                     tool: "text",
-                    color: ink,
+                    color: `${ink}`,
                     width: lineWidth,
                     pts: [{
                             x: typing.x,
@@ -74,18 +76,24 @@ PanelWindow {
         return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}-${p(d.getSeconds())}`;
     }
 
-    // the selection as a png: copied, or saved and its path copied
-    function finish(save) {
+    // the selection as a png: copied ("copy"), saved and its path copied
+    // ("save"), or saved where the file chooser says ("ask")
+    function finish(how) {
         if (sel.width < 2 || sel.height < 2)
             return;
         commitText();
-        const dir = save ? `${Quickshell.env("HOME")}/Pictures/screenshots` : `${Quickshell.env("XDG_RUNTIME_DIR")}/hypr-shot`;
-        const file = `${dir}/${save ? stamp() : "shot"}.png`;
-        Quickshell.execDetached(["mkdir", "-p", dir]);
+        // flameshot's folder in i3 (home/services/flameshot.nix)
+        const shots = `${Quickshell.env("HOME")}/HOME/wizzard/media/screenshot`;
+        const run = `${Quickshell.env("XDG_RUNTIME_DIR")}/hypr-shot`;
+        const file = how === "save" ? `${shots}/${stamp()}.png` : how === "ask" ? `${run}/${stamp()}.png` : `${run}/shot.png`;
+        Quickshell.execDetached(["mkdir", "-p", shots, run]);
         crop.grabToImage(r => {
             r.saveToFile(file);
-            if (save)
+            if (how === "save")
                 Quickshell.execDetached(["sh", "-c", 'printf %s "$1" | wl-copy; notify-send -a screenshot "saved" "$1"', "sh", file]);
+            else if (how === "ask")
+                // the chooser opens once this layer is gone
+                Quickshell.execDetached(["sh", "-c", 'to=$(hypr-savefile "$(basename "$1")" "$2" "save screenshot") && mv "$1" "$to" && printf %s "$to" | wl-copy && notify-send -a screenshot "saved" "$to"; rm -f "$1"', "sh", file, shots]);
             else
                 Quickshell.execDetached(["sh", "-c", 'wl-copy --type image/png < "$1"; notify-send -a screenshot "copied" "$2"', "sh", file, `${Math.round(sel.width)}×${Math.round(sel.height)}`]);
             shot.done();
@@ -103,9 +111,10 @@ PanelWindow {
             } else
                 done();
         } else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter || Kb.key(e, "c", ctrl))
-            finish(false);
+            finish("copy");
         else if (Kb.key(e, "s") || Kb.key(e, "s", ctrl))
-            finish(true);
+            // Kb.key doesn't look at shift
+            finish(e.modifiers & Qt.ShiftModifier ? "ask" : "save");
         else if (Kb.key(e, "u") || Kb.key(e, "z", ctrl))
             undo();
         else if (Kb.key(e, "c"))
@@ -114,8 +123,11 @@ PanelWindow {
             lineWidth = Math.max(1, lineWidth - 1);
         else if (Kb.key(e, "]"))
             lineWidth = Math.min(12, lineWidth + 1);
-        else if (Kb.key(e, "f"))
+        else if (Kb.key(e, "f")) {
+            // like after a drag, the rect tool is next
             sel = Qt.rect(0, 0, width, height);
+            tool = "rect";
+        }
         else {
             const t = tools.find(t => Kb.key(e, t.key));
             if (t)
@@ -301,7 +313,7 @@ PanelWindow {
             } else
                 shot.drawing = {
                     tool: shot.tool,
-                    color: shot.ink,
+                    color: `${shot.ink}`,
                     width: shot.lineWidth,
                     pts: [{
                             x: e.x,
@@ -339,13 +351,18 @@ PanelWindow {
         }
     }
 
-    // the tools under the selection, above it when there's no room
+    // the tools under the selection, above it when there's no room, inside
+    // over the keys when there's none either (the whole screen)
     Row {
         id: bar
         visible: shot.sel.width > 4 && shot.sel.height > 4
         spacing: 4
         x: Math.max(4, Math.min(shot.width - width - 4, shot.sel.x))
-        y: shot.sel.y + shot.sel.height + 8 + height < shot.height ? shot.sel.y + shot.sel.height + 8 : Math.max(4, shot.sel.y - height - 24)
+        y: {
+            const below = shot.sel.y + shot.sel.height + 8;
+            const above = shot.sel.y - height - 24;
+            return below + height < keysBox.y - 8 ? below : above >= 30 ? above : keysBox.y - height - 12;
+        }
 
         Repeater {
             model: shot.tools
@@ -405,6 +422,7 @@ PanelWindow {
 
     // the keys, at the bottom of the screen
     Rectangle {
+        id: keysBox
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 15
@@ -419,7 +437,7 @@ PanelWindow {
             x: 12
             y: 6
             width: 900
-            hints: shot.sel.width > 4 ? [["enter", "copy"], ["s", "save"], ["c", "color"], ["[ ]", "width"], ["u", "undo"], ["f", "whole screen"], ["esc", "close"]] : [["drag", "select"], ["f", "whole screen"], ["esc", "close"]]
+            hints: shot.sel.width > 4 ? [["enter", "copy"], ["s", "save"], ["shift+s", "save as"], ["c", "color"], ["[ ]", "width"], ["u", "undo"], ["esc", "close"]] : [["drag", "select"], ["f", "whole screen"], ["esc", "close"]]
         }
     }
 }

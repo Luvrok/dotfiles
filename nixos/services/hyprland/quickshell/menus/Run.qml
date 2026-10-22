@@ -7,9 +7,11 @@ import qs
 // in PATH like rofi-menu, that's thousands on nixos), the ones run before
 // on top, most used first. ~/.local/share/hypr-run holds "count<tab>id".
 // enter with no match runs the typed text as a command, one that ends
-// with ; runs in a terminal. alt+enter runs the app or the command through
-// xray: proxychains-ng (/etc/proxychains-xray.conf) and the *_proxy vars
-// for what it can't catch (go, static binaries)
+// with ; runs in a terminal. an app that lives on in the background without
+// a window and ignores a second start (element) is ended and started again
+// (scripts/revive). tab turns on xray: the app or the command runs
+// through it (scripts/proxied: --proxy-server for chromium and electron,
+// proxychains-ng and the *_proxy vars for the rest)
 Menu {
     id: menu
 
@@ -17,6 +19,8 @@ Menu {
     property var cache: []
     // DesktopEntry by row
     property var apps: []
+    // tab: what runs goes through xray
+    property bool xray: false
 
     function uses(id) {
         return cache.find(e => e[1] === id)?.[0] ?? 0;
@@ -44,26 +48,26 @@ Menu {
         return [Quickshell.env("TERMINAL") || "kitty", "-e", ...command];
     }
 
-    // through xray: proxychains and the proxy vars, then the command
-    function proxied(command) {
-        const p = "http://127.0.0.1:10808";
-        return ["env", `http_proxy=${p}`, `https_proxy=${p}`, `HTTP_PROXY=${p}`, `HTTPS_PROXY=${p}`, "all_proxy=socks5://127.0.0.1:10808", "proxychains4", "-q", "-f", "/etc/proxychains-xray.conf", ...command];
+    // through xray when it's on
+    function wrap(command) {
+        return xray ? ["bash", Quickshell.shellPath("scripts/proxied"), ...command] : command;
     }
 
-    function launch(entry, vpn) {
+    // an app that lives on without a window (element) gets ended and runs
+    // again (scripts/revive)
+    function launch(entry) {
         bump(entry.id);
-        const command = entry.runInTerminal ? terminal(entry.command) : entry.command;
+        const command = entry.runInTerminal ? wrap(terminal(entry.command)) : ["bash", Quickshell.shellPath("scripts/revive"), entry.command[0], "--", ...wrap(entry.command)];
         Quickshell.execDetached({
-            command: vpn ? proxied(command) : command,
+            command: command,
             workingDirectory: entry.workingDirectory
         });
     }
 
-    function runCommand(cmd, vpn) {
+    function runCommand(cmd) {
         if (cmd.trim() === "")
             return;
-        const command = cmd.endsWith(";") ? terminal(["sh", "-c", cmd.slice(0, -1)]) : ["sh", "-c", cmd];
-        Quickshell.execDetached(vpn ? proxied(command) : command);
+        Quickshell.execDetached(wrap(cmd.endsWith(";") ? terminal(["sh", "-c", cmd.slice(0, -1)]) : ["sh", "-c", cmd]));
     }
 
     title: "run"
@@ -71,17 +75,14 @@ Menu {
     prompt: "app or command"
     input: true
     enterHint: "run"
-    actions: [["alt+enter", "via xray"]]
+    status: xray ? "xray" : ""
+    statusAccent: xray
+    actions: [["tab", xray ? "direct" : "via xray"]]
 
     keys: e => {
-        if (!((e.key === Qt.Key_Return || e.key === Qt.Key_Enter) && e.modifiers & Qt.AltModifier))
+        if (e.key !== Qt.Key_Tab)
             return false;
-        hide();
-        if (current >= 0)
-            launch(apps[current], true);
-        else
-            runCommand(menu.text, true);
-        done();
+        xray = !xray;
         return true;
     }
     empty: "looking for apps…"

@@ -61,6 +61,13 @@ Singleton {
         }
     }
 
+    // a dispatch once a menu is gone: hyprland won't focus a window while a
+    // layer holds the keys, then focuses the one under the cursor
+    function dispatchLater(lua) {
+        later.lua = lua;
+        later.restart();
+    }
+
     function setLayout(name) {
         layout = name.startsWith("Russian") ? "RU" : "EN";
     }
@@ -87,6 +94,13 @@ Singleton {
                     root.setLayout(kb.active_keymap);
             }
         }
+    }
+
+    Timer {
+        id: later
+        property string lua: ""
+        interval: 100
+        onTriggered: Hyprland.dispatch(lua)
     }
 
     // quickshell keeps workspace layouts, window positions and last windows

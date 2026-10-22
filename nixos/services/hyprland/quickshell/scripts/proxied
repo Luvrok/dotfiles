@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# the run menu's xray mode: runs a command through v2rayN's mixed port.
+# chromium and electron apps get --proxy-server (they skip LD_PRELOAD and
+# the env vars), the rest proxychains-ng (/etc/proxychains-xray.conf) and
+# the *_proxy vars for what it can't catch (go, static binaries)
+#   proxied <command> [args...]
+set -u
+
+port=10808
+http=http://127.0.0.1:$port
+
+# chromium or electron: the wrapper names it, or the binary sits next to
+# chromium's .pak files (discord, a prebuilt app)
+chromish() {
+  local exe=$1 file
+  exe=$(command -v -- "$exe") || return 1
+  for file in "$exe" "$(readlink -f -- "$exe")"; do
+    if [ "$(head -c 2 -- "$file" 2>/dev/null)" = "#!" ] && grep -qiE 'electron|chrom' -- "$file"; then
+      return 0
+    fi
+    if ls "$(dirname -- "$file")"/*.pak >/dev/null 2>&1; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+export http_proxy=$http https_proxy=$http HTTP_PROXY=$http HTTPS_PROXY=$http
+export all_proxy=socks5://127.0.0.1:$port ALL_PROXY=socks5://127.0.0.1:$port
+
+flag=--proxy-server=socks5://127.0.0.1:$port
+# a typed command comes as sh -c, its first word counts
+if [ "$1" = sh ] && [ "${2:-}" = -c ] && chromish "${3%% *}"; then
+  exec sh -c "$3 $flag"
+fi
+if chromish "$1"; then
+  exe=$1
+  shift
+  exec "$exe" "$flag" "$@"
+fi
+exec proxychains4 -q -f /etc/proxychains-xray.conf "$@"

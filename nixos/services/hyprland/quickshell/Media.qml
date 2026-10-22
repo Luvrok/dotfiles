@@ -5,19 +5,40 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
 
-// the player the bar and the player menu show (mpris: mpv, the browser,
-// spotify): the one picked in the menu while it's there, else the one
-// playing, else the first. cava gives the visualizer's 24 levels while
-// something plays, nothing runs otherwise
+// the player the bar and the player menu show (mpris: feishin, mpv, the
+// browser): the one picked in the menu with tab, until another one starts.
+// else what plays before what doesn't, a browser after the rest (music
+// stays on top of a youtube tab, the tab shows when nothing else plays),
+// then the one that started last. cava gives the visualizer's 24 levels
+// while something plays, nothing runs otherwise
 Singleton {
     id: root
 
     readonly property var players: Mpris.players.values
     property MprisPlayer chosen: null
-    readonly property MprisPlayer player: players.includes(chosen) ? chosen : players.find(p => p.isPlaying) ?? players[0] ?? null
+    // when each one last started playing, by dbus name
+    property var started: ({})
+    readonly property MprisPlayer player: {
+        if (players.includes(chosen))
+            return chosen;
+        const rank = p => (p.isPlaying ? 0 : 2) + (browser(p) ? 1 : 0);
+        return players.slice().sort((a, b) => rank(a) - rank(b) || (started[b.dbusName] ?? 0) - (started[a.dbusName] ?? 0) || a.dbusName.localeCompare(b.dbusName))[0] ?? null;
+    }
     readonly property bool playing: player?.isPlaying ?? false
     // 0..1 each, low to high
     property var levels: []
+
+    function mark(p) {
+        started = Object.assign({}, started, {
+            [p.dbusName]: Date.now()
+        });
+        if (chosen !== p)
+            chosen = null;
+    }
+
+    function browser(p) {
+        return /firefox|librewolf|chrom|brave|vivaldi|opera|edge|zen|plasma-browser/i.test(`${p.identity} ${p.desktopEntry} ${p.dbusName}`);
+    }
 
     function next() {
         if (players.length < 2)
@@ -45,6 +66,25 @@ Singleton {
             out.push(v);
         }
         return out;
+    }
+
+    // a player that starts takes the bar, even from one picked by hand
+    Variants {
+        model: Mpris.players.values
+
+        // one that shows up playing starts too
+        Connections {
+            required property MprisPlayer modelData
+            target: modelData
+            function onIsPlayingChanged() {
+                if (modelData.isPlaying)
+                    root.mark(modelData);
+            }
+            Component.onCompleted: {
+                if (modelData.isPlaying)
+                    root.mark(modelData);
+            }
+        }
     }
 
     // mpris doesn't send the position as it moves, ask once a second

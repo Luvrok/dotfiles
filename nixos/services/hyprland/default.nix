@@ -31,7 +31,7 @@
   # the lock screen's password (quickshell/Lock.qml, PamContext "quickshell")
   security.pam.services.quickshell = { };
 
-  # alt+enter in the run menu: an app through xray
+  # the run menu's xray mode (tab): an app through xray
   environment.etc."proxychains-xray.conf".source = ./proxychains.conf;
 
   environment.systemPackages = with pkgs; [
@@ -53,6 +53,11 @@
       ];
       text = builtins.readFile ./quickshell/scripts/dmenu;
     })
+    # "save as" through the file chooser portal (termfilechooser), the
+    # screenshot's shift+s
+    (writers.writePython3Bin "hypr-savefile" {
+      libraries = [ python3Packages.jeepney ];
+    } (builtins.readFile ./quickshell/scripts/savefile))
     # pinentry for gpg-agent, the same menu. home/programs/gpg.nix picks it
     # while quickshell runs
     (writeShellApplication {

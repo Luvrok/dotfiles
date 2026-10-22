@@ -55,7 +55,7 @@ Menu {
         const t = wins[index];
         hide();
         if (t)
-            Hyprland.dispatch(`hl.dsp.focus({ window = "address:${addr(t)}" })`);
+            Hypr.dispatchLater(`hl.dsp.focus({ window = "address:${addr(t)}" })`);
         done();
     }
 
