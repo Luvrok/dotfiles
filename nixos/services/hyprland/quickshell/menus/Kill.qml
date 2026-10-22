@@ -6,18 +6,14 @@ import qs
 // rofi-killer, by app: every program with a wayland or x11 connection
 // (scripts/apps), with its windows or "background" when it has none, like
 // an app that lives on after its window closes. enter ends the app and all
-// it started: SIGTERM, SIGKILL if it still lives after 2 s. alt+p switches
-// to all processes by cpu like rofi-killer, enter kills the group of one.
-// quickshell and its group are left alone
+// it started: SIGTERM, SIGKILL if it still lives after 2 s. alt+p goes to
+// all the processes (the processes menu). quickshell and what started it
+// are left alone
 Menu {
     id: menu
 
-    // all processes instead of apps
-    property bool procs: false
-    // {pid, pgid} by row in processes, {pid} in apps
+    // {pid} by row
     property var targets: []
-    property string appsText: ""
-    property string procsText: ""
 
     // a process's name: the file it runs, without nix's wrapper dots
     function base(args) {
@@ -128,32 +124,13 @@ Menu {
         return sorted.map(a => a.row);
     }
 
-    // ps output as rows, targets follows
-    function processes(text) {
-        const list = text.split("\n").map(l => l.match(/^\s*(\d+)\s+(\d+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(.*)$/)).filter(m => m);
-        targets = list.map(m => ({
-                    pid: m[1],
-                    pgid: m[2]
-                }));
-        // the command, then user, cpu, memory and pid in a column
-        return list.map(m => `${m[6]}\t${m[3]}  ${m[4].padStart(5)}%  ${m[5].padStart(4)}%  ${m[1].padStart(7)}`);
-    }
-
-    function page() {
-        const text = procs ? procsText : appsText;
-        if (text !== "")
-            show(procs ? processes(text) : apps(text));
-        else
-            (procs ? psList : appList).running = true;
-    }
-
     title: "kill"
     icon: "\u{f068c}"
-    status: procs ? "all processes" : "apps"
-    prompt: procs ? "process" : "app"
+    status: "apps"
+    prompt: "app"
     input: true
     enterHint: "kill"
-    actions: [["alt+p", procs ? "apps" : "processes"]]
+    actions: [["alt+p", "processes"]]
     empty: "looking…"
     menuWidth: ch(100)
     lines: 12
@@ -161,8 +138,7 @@ Menu {
     keys: e => {
         if (!key(e, "p", Qt.AltModifier))
             return false;
-        procs = !procs;
-        page();
+        goTo("processes");
         return true;
     }
 
@@ -173,16 +149,7 @@ Menu {
             done();
             return;
         }
-        if (procs)
-            Quickshell.execDetached(["sh", "-c", `
-                pid=$1 pgid=$2
-                case $pgid in "" | 0* | *[!0-9]*) exit 1 ;; esac
-                [ "$pgid" = "$(ps -o pgid= -p "$3" | tr -d ' ')" ] && exit 1
-                kill -TERM "-$pgid" 2>/dev/null
-                sleep 2
-                kill -0 "$pid" 2>/dev/null && kill -KILL "-$pgid" 2>/dev/null`, "sh", t.pid, t.pgid, String(Quickshell.processId)]);
-        else
-            Quickshell.execDetached(["bash", Quickshell.shellPath("scripts/apps"), "kill", t.pid]);
+        Quickshell.execDetached(["bash", Quickshell.shellPath("scripts/apps"), "kill", t.pid]);
         done();
     }
 
@@ -191,23 +158,7 @@ Menu {
         running: true
         command: ["bash", Quickshell.shellPath("scripts/apps"), "list"]
         stdout: StdioCollector {
-            onStreamFinished: {
-                menu.appsText = text;
-                if (!menu.procs)
-                    menu.show(menu.apps(text));
-            }
-        }
-    }
-
-    Process {
-        id: psList
-        command: ["ps", "-eo", "pid,pgid,user,pcpu,pmem,cmd", "--sort=-pcpu", "--no-headers"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                menu.procsText = text;
-                if (menu.procs)
-                    menu.show(menu.processes(text));
-            }
+            onStreamFinished: menu.show(menu.apps(text))
         }
     }
 

@@ -1,32 +1,37 @@
 #!/usr/bin/env bash
-# the wifi menu's networks from iwd over d-bus, like the eww wifi menu: a
-# json line with what iwd knows now, then with scan, a line every 0.5 s
-# while iwd scans. signal is dbm * 100, iwd already sorts by it
-#   wifi <dev> [scan]
-# {"scanning": bool, "networks": [{ssid, type, connected, known, signal}]}
+# wifi from iwd over d-bus, like the eww wifi menu. the device is iwd's
+# first station, none: no networks and an empty signal
+#   wifi [scan]   the wifi menu's networks: a json line with what iwd knows
+#                 now, with scan a line every 0.5 s while iwd scans
+#                 {"dev", "scanning": bool, "networks": [{ssid, type,
+#                 connected, known, signal}]}
+#   wifi signal   the bar's: the connected network's signal or nothing
+# signal is dbm * 100, iwd already sorts by it
 set -u
 
-dev=$1
-
 objects() {
-  busctl --json=short call net.connman.iwd / org.freedesktop.DBus.ObjectManager GetManagedObjects
+  busctl --json=short call net.connman.iwd / org.freedesktop.DBus.ObjectManager GetManagedObjects 2>/dev/null
 }
 
-# the station of $dev
-st=$(objects | jq -r --arg d "$dev" '.data[0] | to_entries[]
-  | select(.value["net.connman.iwd.Station"] and .value["net.connman.iwd.Device"].Name.data == $d)
-  | .key' | head -n1)
+# the station's path and its device's name
+read -r st dev < <(objects | jq -r '.data[0] | to_entries
+  | map(select(.value["net.connman.iwd.Station"])
+    | [.key, .value["net.connman.iwd.Device"].Name.data]) | sort_by(.[1]) | .[0] // empty | join(" ")')
+st=${st:-} dev=${dev:-}
+
+ordered() {
+  busctl --json=short call net.connman.iwd "$st" net.connman.iwd.Station GetOrderedNetworks 2>/dev/null || echo '{"data":[[]]}'
+}
 
 list() {
   if [ -z "$st" ]; then
-    printf '{"scanning":false,"networks":[]}\n'
+    printf '{"dev":"","scanning":false,"networks":[]}\n'
     return
   fi
-  jq -nc --argjson objs "$(objects)" \
-    --argjson ord "$(busctl --json=short call net.connman.iwd "$st" net.connman.iwd.Station GetOrderedNetworks)" \
-    --argjson scanning "$1" '
+  jq -nc --argjson objs "$(objects)" --argjson ord "$(ordered)" \
+    --arg dev "$dev" --argjson scanning "$1" '
     $objs.data[0] as $o
-    | {scanning: $scanning, networks: [$ord.data[0][] | . as [$path, $sig]
+    | {dev: $dev, scanning: $scanning, networks: [$ord.data[0][] | . as [$path, $sig]
         | $o[$path]["net.connman.iwd.Network"] as $n
         | select($n != null)
         | {
@@ -38,17 +43,27 @@ list() {
           }]}'
 }
 
-if [ "${2:-}" != scan ] || [ -z "$st" ]; then
-  list false
-  exit
-fi
+case ${1:-} in
+  signal)
+    [ -n "$st" ] || exit 0
+    jq -r --argjson objs "$(objects)" '$objs.data[0] as $o | .data[0][]
+      | select($o[.[0]]["net.connman.iwd.Network"].Connected.data == true) | .[1]' <<<"$(ordered)" | head -n1
+    exit
+    ;;
+  scan) ;;
+  *)
+    list false
+    exit
+    ;;
+esac
 
 list true
+[ -n "$st" ] || exit 0
 # fails with busy if iwd scans already, that's fine
 busctl call net.connman.iwd "$st" net.connman.iwd.Station Scan >/dev/null 2>&1 || true
 for _ in $(seq 20); do
   sleep 0.5
-  if [ "$(busctl get-property net.connman.iwd "$st" net.connman.iwd.Station Scanning)" = "b false" ]; then
+  if [ "$(busctl get-property net.connman.iwd "$st" net.connman.iwd.Station Scanning 2>/dev/null)" != "b true" ]; then
     break
   fi
   list true

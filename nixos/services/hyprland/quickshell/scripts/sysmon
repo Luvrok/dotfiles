@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+# what the system menu (System.qml) shows, a json line a second: the cpu
+# and every thread, memory, disks, the network from /proc, every amd gpu
+# from sysfs, temperatures from hwmon. integers only, the locale's decimal
+# comma can't get in. cpu in tenths of a percent (threads in percent),
+# memory and disks in kB, power in mW, temperatures in m°C, clocks in MHz,
+# rates in bytes a second. vnstat's days and months come from the menu
+set -u
+
+# a number from /proc or sysfs into REPLY, 0 when it isn't there. read, so
+# no fork for each file
+rd() {
+  REPLY=
+  read -r REPLY 2>/dev/null <"$1"
+  REPLY=${REPLY:-0}
+}
+
+json() {
+  local s=${1//\\/\\\\}
+  printf '"%s"' "${s//\"/\\\"}"
+}
+
+# found once: the cpu, its sensor, the gpus
+model=$(sed -n 's/^model name[[:space:]]*:[[:space:]]*//p' /proc/cpuinfo | head -n 1)
+threads=$(grep -c '^processor' /proc/cpuinfo)
+cores=$(awk -F: '/^physical id/ { p = $2 } /^core id/ { print p ":" $2 }' /proc/cpuinfo | sort -u | wc -l)
+[ "$cores" -gt 0 ] || cores=$threads
+static="\"host\":$(json "$(uname -n)"),\"kernel\":$(json "$(uname -r)"),\"model\":$(json "$model"),\"cores\":$cores,\"threads\":$threads"
+
+cputemp=""
+for h in /sys/class/hwmon/hwmon*; do
+  [ -r "$h/name" ] || continue
+  rd "$h/name"
+  case $REPLY in
+    k10temp | zenpower | coretemp | cpu_thermal) cputemp=$h/temp1_input && break ;;
+  esac
+done
+freqs=(/sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_cur_freq)
+
+gpus=() gpuhw=()
+for c in /sys/class/drm/card[0-9] /sys/class/drm/card[0-9][0-9]; do
+  d=$c/device
+  [ -r "$d/gpu_busy_percent" ] || continue
+  hw=""
+  for h in "$d"/hwmon/hwmon*; do hw=$h; done
+  gpus+=("$d") gpuhw+=("$hw")
+done
+
+declare -a ptot pidle
+prev_total=0 prev_idle=0 prev_up=0 prev_rx=0 prev_tx=0
+n=0 disks="[]" ip=""
+while :; do
+  read -r up _ </proc/uptime
+  up=${up/./}
+  dt=$((up - prev_up))
+
+  # the cpu, then every thread
+  cpu=0 use="" i=0
+  while read -r name u ni s id w q sq st _; do
+    case $name in
+      cpu)
+        total=$((u + ni + s + id + w + q + sq + st)) idle=$((id + w))
+        if [ "$prev_total" -gt 0 ] && [ "$total" -gt "$prev_total" ]; then
+          cpu=$((1000 * (total - prev_total - idle + prev_idle) / (total - prev_total)))
+        fi
+        prev_total=$total prev_idle=$idle
+        ;;
+      cpu*)
+        total=$((u + ni + s + id + w + q + sq + st)) idle=$((id + w)) p=0
+        if [ "${ptot[i]:-0}" -gt 0 ] && [ "$total" -gt "${ptot[i]}" ]; then
+          p=$((100 * (total - ptot[i] - idle + pidle[i]) / (total - ptot[i])))
+        fi
+        ptot[i]=$total pidle[i]=$idle
+        use+="${use:+,}$p"
+        i=$((i + 1))
+        ;;
+      *) break ;;
+    esac
+  done </proc/stat
+
+  freq=0 freqmax=0
+  for f in "${freqs[@]}"; do
+    rd "$f"
+    freq=$((freq + REPLY / 1000))
+    [ $((REPLY / 1000)) -gt "$freqmax" ] && freqmax=$((REPLY / 1000))
+  done
+  [ "${#freqs[@]}" -gt 0 ] && [ -e "${freqs[0]}" ] && freq=$((freq / ${#freqs[@]}))
+  temp=null
+  if [ -n "$cputemp" ]; then
+    rd "$cputemp"
+    temp=$REPLY
+  fi
+
+  while read -r k v _; do
+    case $k in
+      MemTotal:) memtotal=$v ;;
+      MemAvailable:) memavail=$v ;;
+      Buffers:) buffers=$v ;;
+      Cached:) cached=$v ;;
+      SReclaimable:) reclaim=$v ;;
+      SwapTotal:) swaptotal=$v ;;
+      SwapFree:) swapfree=$v ;;
+    esac
+  done </proc/meminfo
+
+  read -r l1 l5 l15 procs _ </proc/loadavg
+
+  # the default route's interface, real ones only for the rates: a vpn or
+  # a bridge would count the bytes twice
+  iface=""
+  while read -r ifc dest _; do
+    [ "$dest" = 00000000 ] && iface=$ifc && break
+  done < <(tail -n +2 /proc/net/route)
+  rx=0 tx=0
+  while read -r line; do
+    name=${line%%:*}
+    name=${name// /}
+    case $name in lo | veth* | docker* | br-* | virbr* | podman* | tun* | wg*) continue ;; esac
+    # shellcheck disable=SC2086
+    set -- ${line#*:}
+    rx=$((rx + $1)) tx=$((tx + $9))
+  done < <(tail -n +3 /proc/net/dev)
+
+  rates="0,0"
+  if [ "$prev_up" -gt 0 ] && [ "$dt" -gt 0 ]; then
+    rates="$((100 * (rx - prev_rx) / dt)),$((100 * (tx - prev_tx) / dt))"
+  fi
+  prev_up=$up prev_rx=$rx prev_tx=$tx
+
+  # disks and the address change rarely, every 5 s
+  if [ $((n % 5)) -eq 0 ]; then
+    disks=$(df -lP -k -x tmpfs -x devtmpfs -x efivarfs -x overlay -x squashfs -x ramfs 2>/dev/null | awk '
+      NR > 1 && $6 !~ /^\/(boot|nix\/store|run|var\/lib\/docker)/ && !seen[$1]++ {
+        printf "%s[\"%s\",%s,%s]", n++ ? "," : "[", $6, $2, $3
+      }
+      END { print n ? "]" : "[]" }')
+    ip=""
+    [ -n "$iface" ] && ip=$(ip -4 -o addr show dev "$iface" 2>/dev/null | awk '{ sub(/\/.*/, "", $4); print $4; exit }')
+  fi
+  n=$((n + 1))
+
+  g=""
+  for j in "${!gpus[@]}"; do
+    d=${gpus[j]} hw=${gpuhw[j]}
+    rd "$d/gpu_busy_percent"
+    busy=$REPLY
+    rd "$d/mem_info_vram_used"
+    vram=$((REPLY / 1024))
+    rd "$d/mem_info_vram_total"
+    vramtotal=$((REPLY / 1024))
+    rd "$d/mem_info_gtt_used"
+    gtt=$((REPLY / 1024))
+    rd "$hw/power1_average"
+    power=$REPLY
+    if [ "$power" -eq 0 ]; then
+      rd "$hw/power1_input"
+      power=$REPLY
+    fi
+    rd "$hw/temp1_input"
+    gtemp=$REPLY
+    rd "$hw/freq1_input"
+    sclk=$((REPLY / 1000000))
+    rd "$hw/fan1_input"
+    fan=$REPLY
+    g+="${g:+,}{\"busy\":$busy,\"vram\":$vram,\"vramtotal\":$vramtotal,\"gtt\":$gtt,\"power\":$((power / 1000)),\"temp\":$gtemp,\"sclk\":$sclk,\"fan\":$fan}"
+  done
+
+  printf '{%s,"uptime":%s,"load":"%s %s %s","procs":%s,"cpu":%s,"use":[%s],"freq":%s,"freqmax":%s,"cputemp":%s,"mem":%s,"memtotal":%s,"cache":%s,"swap":%s,"swaptotal":%s,"disks":%s,"iface":%s,"ip":%s,"rates":[%s],"gpus":[%s]}\n' \
+    "$static" "$((up / 100))" "$l1" "$l5" "$l15" "${procs#*/}" "$cpu" "$use" "$freq" "$freqmax" "$temp" \
+    "$((memtotal - memavail))" "$memtotal" "$((cached + buffers + reclaim))" "$((swaptotal - swapfree))" "$swaptotal" \
+    "$disks" "$(json "$iface")" "$(json "$ip")" "$rates" "$g"
+  sleep 1
+done

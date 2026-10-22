@@ -1,7 +1,6 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Quickshell.Hyprland
 import qs.menus
 
 // the hyprland shell: wallpaper and bar on every monitor, and menus for what
@@ -9,6 +8,7 @@ import qs.menus
 //   qs -c hyprland ipc call menu open <name>
 //   qs -c hyprland ipc call bar toggle
 //   qs -c hyprland ipc call record stop
+//   qs -c hyprland ipc call notifications close   (the popup, quiet, clear)
 // hypr-askpass calls `askpass ask <prompt>`, hypr-pinentry
 // `askpass query <kind> <prompt> <desc> <error>`, both wait for `answered`
 ShellRoot {
@@ -18,6 +18,8 @@ ShellRoot {
     // the open menu, it shows on the monitor that had focus
     property string menu: ""
     property ShellScreen menuScreen: null
+    // the menu the open one came from (tools), its q goes back there
+    property string menuParent: ""
     property ShellScreen askScreen: null
     // the password prompt, it opens over a menu that waits for it (pass
     // runs gpg, gpg asks)
@@ -30,22 +32,25 @@ ShellRoot {
     // reads them at start, so run and kill have them when they open
     readonly property var apps: DesktopEntries.applications
 
-    // the monitor that has focus
-    function focusedScreen() {
-        const focused = Hyprland.focusedMonitor?.name;
-        for (let i = 0; i < Quickshell.screens.length; i++)
-            if (Quickshell.screens[i].name === focused)
-                return Quickshell.screens[i];
-        return Quickshell.screens[0];
-    }
-
-    function open(name) {
+    // on the focused monitor, or on the one a bar was clicked on
+    function open(name, screen) {
         const same = menu === name;
         menu = "";
         if (same)
             return;
-        menuScreen = focusedScreen();
+        menuScreen = screen ?? Hypr.focusedScreen();
+        menuParent = "";
         menu = name;
+    }
+
+    // another menu on the same monitor, later: the one asking is unloaded.
+    // parent: the menu its q goes back to
+    function swap(name, parent) {
+        Qt.callLater(() => {
+            menu = "";
+            menuParent = parent ?? "";
+            menu = name;
+        });
     }
 
     // later: a menu may give up while it's being created
@@ -69,6 +74,7 @@ ShellRoot {
             Bar {
                 screen: perScreen.modelData
                 visible: shell.barShown
+                onOpenMenu: name => shell.open(name, perScreen.modelData)
             }
         }
     }
@@ -85,6 +91,23 @@ ShellRoot {
         target: "menu"
         function open(name: string): void {
             shell.open(name);
+        }
+    }
+
+    // the notification popup, Notifs is the server
+    NotifyPopup {}
+
+    IpcHandler {
+        target: "notifications"
+        // the popup goes, it stays in the menu
+        function close(): void {
+            Notifs.drop(Notifs.current);
+        }
+        function quiet(): void {
+            Notifs.quiet = !Notifs.quiet;
+        }
+        function clear(): void {
+            Notifs.clear();
         }
     }
 
@@ -108,7 +131,7 @@ ShellRoot {
             shell.askPrompt = prompt;
             shell.askNote = desc;
             shell.askError = error;
-            shell.askScreen = shell.focusedScreen();
+            shell.askScreen = Hypr.focusedScreen();
             shell.asking = true;
         }
     }
@@ -160,6 +183,15 @@ ShellRoot {
         Kill {
             screen: shell.menuScreen
             onDone: shell.close("kill")
+            onGoTo: name => shell.swap(name)
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "processes"
+        Processes {
+            screen: shell.menuScreen
+            onDone: shell.close("processes")
+            onGoTo: name => shell.swap(name)
         }
     }
     LazyLoader {
@@ -181,6 +213,54 @@ ShellRoot {
         Wifi {
             screen: shell.menuScreen
             onDone: shell.close("wifi")
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "system"
+        System {
+            screen: shell.menuScreen
+            onDone: shell.close("system")
+            onGoTo: name => shell.swap(name)
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "calendar"
+        Calendar {
+            screen: shell.menuScreen
+            onDone: shell.close("calendar")
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "notifications"
+        Notifications {
+            screen: shell.menuScreen
+            onDone: shell.close("notifications")
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "tools"
+        Tools {
+            screen: shell.menuScreen
+            onDone: shell.close("tools")
+            onGoTo: name => shell.swap(name, "tools")
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "emoji"
+        Emoji {
+            screen: shell.menuScreen
+            parentMenu: shell.menuParent
+            onDone: shell.close("emoji")
+            onGoTo: name => shell.swap(name)
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "calc"
+        Calc {
+            screen: shell.menuScreen
+            parentMenu: shell.menuParent
+            onDone: shell.close("calc")
+            onGoTo: name => shell.swap(name)
         }
     }
     LazyLoader {

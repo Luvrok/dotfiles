@@ -36,6 +36,12 @@ PanelWindow {
     property bool statusAccent: false
     // dim text under the head, like what pinentry asks for
     property string note: ""
+    // more under the head, above the text line: the system menu's meters,
+    // the calendar
+    property Component body: null
+    // the cursor starts on the first row. false: on none until j/k, for a
+    // list that sorts itself every second
+    property bool startOnFirst: true
     property string busy: ""
     property string activity: ""
     // what enter does, the menu's own keys (in the list, or with ctrl or alt
@@ -43,7 +49,9 @@ PanelWindow {
     // hides them
     property string enterHint: "pick"
     property var actions: []
-    property var hints: input && !searchable ? [["enter", enterHint], ...(lines > 0 ? [["↑↓", "move"]] : []), ...actions, ["esc", "close"]] : input ? [["enter", enterHint], ["↑↓", "move"], ["tab", "list"], ["q", "back"], ["esc", "close"]] : [["j/k", "move"], ["enter", enterHint], ...actions, ...(searchable ? [["/", "search"]] : []), ["esc", "close"]]
+    property var hints: input && !searchable ? [["enter", enterHint], ...(lines > 0 ? [["↑↓", "move"]] : []), ...actions, ...upHint, ["esc", "close"]] : input ? [["enter", enterHint], ["↑↓", "move"], ["tab", "list"], ["q", "back"], ["esc", "close"]] : [["j/k", "move"], ["enter", enterHint], ...actions, ...(searchable ? [["/", "search"]] : []), ...upHint, ["esc", "close"]]
+    // back to the menu it came from: q, or backspace while typing
+    readonly property var upHint: parentMenu !== "" && atTop ? [[input ? "⌫" : "q", parentMenu]] : []
     // rows in the accent color: the connected network, the default sink
     property var active: []
     // in the list when there are no rows
@@ -61,6 +69,10 @@ PanelWindow {
     // a menu's own keys, returns true if it took the key. it gets the list's
     // keys, tab and every ctrl, alt or super key
     property var keys: null
+    // the menu it was opened from (tools), q goes back there. atTop: the
+    // menu is on its first page, a page of its own goes back first
+    property string parentMenu: ""
+    property bool atTop: true
 
     property var rows: []
     property var shown: []
@@ -81,6 +93,8 @@ PanelWindow {
     signal cancelled
     // the shell unloads the menu
     signal done
+    // the shell opens another menu instead: kill and processes, system
+    signal goTo(string name)
 
     // a new page
     function show(newRows, selected) {
@@ -88,8 +102,9 @@ PanelWindow {
         busy = "";
         field.input.text = "";
         filter();
-        jump(Math.max(0, Math.min(selected ?? 0, shown.length - 1)), 1);
-        list.positionViewAtIndex(list.currentIndex, ListView.Contain);
+        if (startOnFirst || selected !== undefined)
+            jump(Math.max(0, Math.min(selected ?? 0, shown.length - 1)), 1);
+        list.positionViewAtIndex(Math.max(0, list.currentIndex), ListView.Contain);
         cascading = true;
         cascadeEnd.restart();
         visible = true;
@@ -103,7 +118,8 @@ PanelWindow {
         rows = newRows;
         filter();
         const pos = row !== undefined ? shown.indexOf(row) : -1;
-        jump(Math.max(0, Math.min(pos >= 0 ? pos : at, shown.length - 1)), 1);
+        if (startOnFirst || at >= 0)
+            jump(Math.max(0, Math.min(pos >= 0 ? pos : at, shown.length - 1)), 1);
     }
 
     function hide() {
@@ -113,6 +129,14 @@ PanelWindow {
     // stay open and pulse while something runs, show() ends it
     function wait(label) {
         busy = label;
+    }
+
+    // back a page, or to the menu it came from
+    function up() {
+        if (parentMenu !== "" && atTop)
+            goTo(parentMenu);
+        else
+            back();
     }
 
     function cancel() {
@@ -156,7 +180,7 @@ PanelWindow {
                 out.push(i);
         }
         shown = out;
-        list.currentIndex = 0;
+        list.currentIndex = startOnFirst ? 0 : -1;
     }
 
     function divider(i) {
@@ -168,6 +192,11 @@ PanelWindow {
         const n = shown.length;
         if (n === 0)
             return;
+        // no cursor yet: the first key puts it on top
+        if (list.currentIndex < 0) {
+            jump(0, 1);
+            return;
+        }
         const dir = step < 0 ? -1 : 1;
         let i = list.currentIndex + step;
         for (let k = 0; k <= n; k++) {
@@ -189,7 +218,7 @@ PanelWindow {
     function accept() {
         if (busy !== "" || !visible)
             return;
-        if (shown.length > 0) {
+        if (shown.length > 0 && list.currentIndex >= 0) {
             if (!divider(list.currentIndex))
                 accepted(shown[list.currentIndex], rows[shown[list.currentIndex]]);
         } else if (input)
@@ -197,7 +226,7 @@ PanelWindow {
     }
 
     // xkb keycodes of the us keys
-    readonly property var codes: ({ "/": 61, a: 38, c: 54, d: 40, e: 26, g: 42, h: 43, j: 44, k: 45, l: 46, m: 58, n: 57, o: 32, p: 33, q: 24, r: 27, s: 39, t: 28, u: 30, v: 55, w: 25 })
+    readonly property var codes: ({ "/": 61, a: 38, b: 56, c: 54, d: 40, e: 26, f: 41, g: 42, h: 43, i: 31, j: 44, k: 45, l: 46, m: 58, n: 57, o: 32, p: 33, q: 24, r: 27, s: 39, t: 28, u: 30, v: 55, w: 25, x: 53, y: 29, z: 52 })
 
     // a key by its us name, on any layout. mods: the ctrl, alt and super it
     // needs, shift doesn't matter
@@ -242,7 +271,7 @@ PanelWindow {
             else if (searchable && field.text === "" && key(e, "q"))
                 closeSearch(false);
             else if (k === Qt.Key_Backspace && field.text === "")
-                back();
+                up();
             else if (key(e, "a", ctrl))
                 field.input.cursorPosition = 0;
             else if (key(e, "e", ctrl))
@@ -274,8 +303,10 @@ PanelWindow {
             openSearch();
         else if (key(e, "q") && field.text !== "")
             closeSearch(false);
+        else if (key(e, "q") && parentMenu !== "" && atTop)
+            goTo(parentMenu);
         else if (k === Qt.Key_Backspace || key(e, "h"))
-            back();
+            up();
     }
 
     visible: false
@@ -391,6 +422,13 @@ PanelWindow {
                 wrapMode: Text.Wrap
                 color: Theme.dim
                 font: metrics.font
+            }
+
+            Loader {
+                active: root.body !== null
+                visible: active
+                width: parent.width
+                sourceComponent: root.body
             }
 
             SearchField {

@@ -278,7 +278,8 @@ home-manager. Same tags, binds, scratchpads and bar, no animations.
   wanted by `nixos-fake-graphical-session.target`. Only the X session wrapper
   starts it (i3, dwm), sway's `sway-session.target` pulls in
   `graphical-session.target` only, so they'd start under sway otherwise.
-  dunst runs in both.
+  dunst runs in both (under Hyprland Quickshell is the notification
+  server, see there).
 - sway gets their stand-ins from its config: swayidle +
   sway-audio-idle-inhibit (xidlehook), gammastep (redshift), cliphist
   (greenclip), `xrdb -merge ~/.Xresources` (the X session wrapper does it
@@ -334,28 +335,32 @@ through `wtype -M logo -k 3 -m logo`, pictures through `grim -o HEADLESS-1`.
 The same desktop on Hyprland next to i3 and sway, barnard only
 (`hosts/barnard/env.nix` imports it), i3 stays the default. Hyprland's own
 layouts and dispatchers do what the sway-* scripts do, Quickshell is the
-bar, the wallpaper and the menus that stand in for the rofi scripts
-(`home/local/sh/rofi-*` stay for i3 and sway). All of it lives in
+bar, the wallpaper, the notifications (instead of dunst) and the menus
+that stand in for the rofi scripts (`home/local/sh/rofi-*` stay for i3 and
+sway). All of it lives in
 `nixos/services/hyprland/`, no home-manager. The config files are plain
 Hyprland Lua, QML and shell, no nix in them.
 
 | Path | What |
 | --- | --- |
-| `nixos/services/hyprland/default.nix` | `programs.hyprland`, `/etc/xdg/hypr/hyprland.lua`, `/etc/xdg/quickshell/hyprland`, packages, session target, portal, dconf |
+| `nixos/services/hyprland/default.nix` | `programs.hyprland`, `/etc/xdg/hypr/hyprland.lua` (checked while it builds), `/etc/xdg/quickshell/hyprland`, packages, session target, dunst off, portal, dconf |
 | `nixos/services/hyprland/hyprland.lua` | Hyprland config, the twin of the sway one |
 | `nixos/services/hyprland/quickshell/shell.qml` | bar and wallpaper per monitor, the menus, the ipc targets |
-| `nixos/services/hyprland/quickshell/{Bar,Wallpaper,Hypr,Theme}.qml` | the bar (tags, the open tag's windows as squares, status), `output * bg`, the bar's Hyprland state, gruvbox colors |
+| `nixos/services/hyprland/quickshell/{Bar,Wallpaper,Hypr,Theme}.qml` | the bar (tags, the open tag's windows as squares, status), `output * bg`, the bar's Hyprland state and the focused screen, gruvbox colors |
+| `nixos/services/hyprland/quickshell/{Notifs,NotifyPopup}.qml` | the notification server (`org.freedesktop.Notifications`), the popup |
 | `nixos/services/hyprland/quickshell/Menu.qml` | rofi -dmenu: the menu window, filter, list, keys, built from `widgets/` |
-| `nixos/services/hyprland/quickshell/widgets/` | the menu parts: `MenuHead` (icon, title, status, pulse), `SearchField` (the text line), `MenuRow`, `KeyHints` |
-| `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass |
-| `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `wifi` (iwd over d-bus), `apps` (the kill menu's apps), `askpass` and `pinentry` (`hypr-askpass`, `hypr-pinentry` in PATH) |
+| `nixos/services/hyprland/quickshell/widgets/` | the menu parts: `MenuHead` (icon, title, status, pulse), `SearchField` (the text line), `MenuRow`, `KeyHints`, `Meter` and `Threads` (the system menu's bars), `Fader` (a mixer line) |
+| `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass. And System (a small btop), Processes, Calendar, Notifications, and Tools with Emoji and Calc |
+| `nixos/services/hyprland/TODO.md` | what's left to do here, a plain list |
+| `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `wifi` (iwd over d-bus, the menu's networks and the bar's signal), `apps` (the kill menu's apps), `sysmon` (the system menu's numbers), `route` (the audio menu's wires), `askpass` and `pinentry` (`hypr-askpass`, `hypr-pinentry` in PATH) |
 
 - Both configs sit in `/etc/xdg` and are found through `XDG_CONFIG_DIRS`,
   `~/.config/hypr/hyprland.lua` or `~/.config/quickshell/hyprland` would win.
   On another distro copy them there.
 - hyprland.lua starts `qs -c hyprland` and talks to it over Quickshell ipc:
   `qs -c hyprland ipc call menu open <name>` (a second press closes it),
-  `bar toggle`, `record stop`. `hypr-askpass` calls `askpass ask <prompt>`,
+  `bar toggle`, `record stop`, `notifications close` (the popup, $mod+Shift+n),
+  `notifications quiet`, `notifications clear`. `hypr-askpass` calls `askpass ask <prompt>`,
   `hypr-pinentry` `askpass query <kind> <prompt> <desc> <error>`, both print
   what `qs ipc wait askpass answered` gets. The askpass menu has its own
   loader (`asking`), not `menu`, so it opens over a hidden menu that waits
@@ -378,7 +383,9 @@ Hyprland Lua, QML and shell, no nix in them.
   away when closed), the rows, and the keys at the
   bottom (`[[key, what], ...]`, a dot after each). A row is `"name\tinfo"`
   (info dim on the right) or `""` (a divider the cursor skips), `active`
-  rows are orange, `empty` fills a list with no rows. Rows are things to
+  rows are orange, `empty` fills a list with no rows, `body` puts more
+  between the head and the text line (System's meters, the calendar).
+  Rows are things to
   pick, actions are keys (`actions` in the hints: wifi `r`/`d`, bluetooth
   `o`/`s`/`p`/`t`/`a`/`v`, translate `alt+p`..., kill `alt+p`, pass
   `ctrl+a` and `t`, backspace or `h` goes back in pass). Every menu sits 10px under the bar and 10px from the right,
@@ -397,6 +404,9 @@ Hyprland Lua, QML and shell, no nix in them.
   the keys, devices come in as they're found.
 - Wifi reads iwd over d-bus like the eww wifi menu (`scripts/wifi`):
   `GetOrderedNetworks` gives the signal in dBm * 100, strongest first. The
+  device is iwd's first station, the script says which (`dev`), iwctl
+  connects and disconnects it (only its exit code counts). The bar's
+  signal is `scripts/wifi signal`, the connected network's. The
   list is there at once, a scan fills it in every 0.5 s and doesn't block
   the keys. iwctl prints 4 stars for every network and greys the weak
   ones out with color codes, so counting stars gave full bars everywhere.
@@ -410,8 +420,90 @@ Hyprland Lua, QML and shell, no nix in them.
   ends), folded into its topmost such process, with its windows from
   `hyprctl clients`. One without a window is "background", like an app that
   lives on after its window closes (no tray here). Enter TERMs the app and
-  everything it started, KILL after 2 s. alt+p lists all processes like
-  rofi-killer.
+  everything it started, KILL after 2 s. alt+p goes to Processes.
+- A menu's `goTo(name)` asks shell.qml for another menu in its place
+  (`swap`, a call later, the asking one is unloaded): kill alt+p and
+  processes alt+a, system p.
+- System ($mod+Escape, a click on the bar's memory) is a small btop, from
+  `scripts/sysmon` (a json line a second, /proc, sysfs, hwmon, df, ip,
+  integers only so the ru decimal comma can't get in). The cpu model,
+  cores and threads under the head. Left: cpu (clock, temperature), a
+  bar for every thread, load (processes running or waiting, over 1, 5
+  and 15 min), memory, cache, swap, disks (the mount's last part). Right:
+  every amdgpu (load, W, temperature, clock, then vram and gtt, a small
+  one next to a big one is "igpu"), the network (the default route's
+  interface and address), then vnstat for that interface every 30 s
+  (`vnstat --json d 2`, `m 1`, `y 1`, a `--` line after each, bytes since
+  jsonversion 2): today
+  and yesterday, the month and its estimate at this pace, the year and
+  all of it. `p` goes to Processes.
+- Processes ($mod+Shift+Escape) is every process from `top -b -c` (the
+  last second's cpu, kernel threads left out), a search like Kill's. The
+  list sorts itself every second, so it has no cursor until ↑↓
+  (`startOnFirst: false`), then the cursor stays on its process. Enter
+  ends the one under it or the first match of what's typed (TERM, KILL
+  after 2 s), alt+s sorts by memory, alt+a goes to Kill. top runs with
+  `LC_ALL=C` and an empty HOME, a toprc would change its columns. The
+  columns go by the names in top's header, the command is the last one.
+- Calendar ($mod+Ctrl+c, a click on the bar's date): the month with iso
+  weeks, mondays first, or the year (`y`). h/j/k/l move the cursor, n/p a
+  month (a year), t today, the wheel too. It slides 6% like a tag switch.
+- Notifications: `Notifs.qml` is the server, `NotifyPopup.qml` shows one at
+  a time, the newest, at the bottom in the middle of the focused monitor
+  (layer `notification`, it slides up from the bottom edge, no dim), 10px
+  from the edge like dunst's `bottom-center`. 5 s (low 3 s, the app's own
+  time if it sets one, 0 stays, critical with none stays), a hairline at the bottom runs
+  out and stops under the pointer. Left click: the default action (or the
+  only one), right: away, middle: dismissed, the other actions are links.
+  A newer one takes the place (a quick fade), `+N` says how many wait. The rest stay in
+  the menu ($mod+n, a click on the bar's bell) until they're dismissed or
+  their app closes them, 50 at most: enter runs the default action, one
+  with more actions opens them as a page, x dismisses, c clears, d is
+  quiet (no popups but critical, a crossed bell in the bar). A progress
+  (the `value` hint: dwm-volume, dwm-brightness), a low one with a stack
+  tag ("Volume: Mute") or a transient one only pops up. The same
+  `x-dunst-stack-tag` (or the synchronous hints) of the same app takes the
+  older one's place, an app that sends again with its id updates it: if
+  it's up, the popup stays, its text and bar change and its time starts
+  over (`popped(same)`, no fade, no new slide). They survive a quickshell
+  reload (`keepOnReload`), not a restart.
+- Audio ($mod+Shift+d, a click on the bar's volume) is a small
+  pavucontrol: outputs, inputs, the apps that play and the ones that
+  record, live from Quickshell's Pipewire. Each line is a `Fader`: the
+  name (orange: the default device), what an app plays (`media.name`, a
+  tab, a song), a bar with the volume and, inside it, the level of what
+  plays (`PwNodePeakMonitor`), the percent or mute. j/k move, h/l ∓5%
+  (shift 1%), 0-9 sets 10..90% and 0 100%, m mutes, enter makes a device
+  the default or mutes an app. The mouse drags, clicks or scrolls a bar, a
+  left click on a device's name makes it the default, middle or right
+  mutes. Volumes are cubic like wpctl's and pavucontrol's. `s` on an app
+  or an input sends it somewhere else too, like a wire in qpwgraph: a page
+  of what records and the outputs, the ones it goes to orange, enter adds
+  or takes away the wire (`scripts/route`). Youtube into discord next to
+  the mic, the mic into the speakers, an app on two outputs. A line says
+  its wires besides the usual: `→ Discord` on the app, `← LibreWolf` on
+  the recorder.
+- Tools ($mod+a) keeps the small tools behind one key: big squares, the
+  key that opens one in its corner (e emoji, c calc, p color with
+  hyprpicker, o ocr, s a region shot). One with a menu opens in its place
+  (`goTo`, shell.qml's `swap(name, "tools")` sets `menuParent`), the
+  others run. In a tool q goes back (backspace in an empty text line),
+  `parentMenu` and `atTop` in Menu, esc closes. New tools go into its
+  `tools` list, the old menus keep their own keys.
+- Emoji: the symbols a layout lacks (— « » → ≈...) and every emoji of
+  unicode's `emoji-test.txt` (`unicode-emoji`, `/share/unicode` is in
+  `pathsToLink`), found by name, the recent ones first
+  (`~/.local/share/hypr-emoji`). Enter copies, alt+t types it with wtype.
+- Calc: qalc (libqalculate) as you type, `LC_ALL=C` for the dot, units
+  and currencies too. Enter copies the answer and keeps it in the list,
+  ↑↓ and enter copy an older one (`startOnFirst: false`, so enter takes
+  the typed one).
+- Clipboard shows a picture under the cursor above the text line:
+  cliphist's `[[ binary data ... png 640x360 ]]` line is decoded once into
+  `$XDG_RUNTIME_DIR/hypr-clip/<id>.<type>`.
+- Volume and brightness keys repeat while held (`repeating`), they and
+  the mute keys work on the lock screen too (`locked`). XF86AudioMicMute
+  mutes the default input.
 - Pass: enter opens an entry's fields, enter copies one, `t` types it.
   ctrl+a (rofi-pass's autotype key) types the login, tab and the password
   with wtype into the window under the menu (`autotype:` in the entry
@@ -445,8 +537,16 @@ Hyprland Lua, QML and shell, no nix in them.
   Lua too, Quickshell 0.3 knows it (`Hyprland.dispatch("hl.dsp.focus(...)")`).
   0.56 has no `hl.dsp.reload_config` yet, the wiki is ahead, `hyprctl reload`.
 - Check a config without a session: `Hyprland --verify-config -c
-  hyprland.lua` (as root add `--i-am-really-stupid`). It parses the file and
-  runs it, bind functions only run on the key.
+  hyprland.lua` (as root add `--i-am-really-stupid`, and XDG_RUNTIME_DIR
+  must be set). It parses the file and runs it, bind functions only run on
+  the key, exit 1 on an error. `default.nix` runs it in the build, so a
+  Hyprland update that changes the Lua api fails `nixos-rebuild` with the
+  line, not the login.
+- Hyprland's own notifications (Lua runtime errors, monitor modes,
+  `hyprctl notify`) are drawn top right, hardcoded in
+  `NotificationOverlay.cpp`, no option moves them, a patch would build
+  Hyprland from source. Config errors are a bar, `debug.error_position`
+  puts it at the bottom.
 - Per-monitor tags are `r~N`: the Nth workspace id the focused monitor may
   hold, skipping ids pinned to other monitors or open there. With 1..10
   pinned to DP-2 the second monitor's `r~1` is 11. A pin to a monitor that's
@@ -500,6 +600,8 @@ Hyprland Lua, QML and shell, no nix in them.
   monitor binds from warping too. The bar's clicks send one Lua function
   (`hyprctl dispatch` is `return hl.dispatch(...)`, a function works) that
   focuses and puts the cursor back, like i3's `mouse_warping output`.
+- SplitParser glues a blank line to the next one ("\ntop - ..."), match
+  lines with a leading `\s*`.
 - The bar has no window titles and no layout symbol. The windows of the
   open tag are 4px squares after the tags (master, the stack, floating
   last), 3 rows with 3px above, between and under them on the 24px bar,
@@ -514,10 +616,44 @@ Hyprland Lua, QML and shell, no nix in them.
   screen it never writes and never stops. It takes one audio source, so
   sound goes through ffmpeg (fifo, `-c:v copy`, `-shortest` ends it with
   the video). It records one monitor, fullscreen is the focused one.
-- Quickshell.Bluetooth (BlueZ over D-Bus) gives the state and the toggles,
-  connect and disconnect go through bluetoothctl for its result, pairing
-  through `scripts/bt-pair` (expect, bluetoothctl as the agent) like
-  rofi-bluetooth. A PIN the device asks for comes from the menu over stdin.
+- Quickshell.Bluetooth (BlueZ over D-Bus) gives the state, the toggles,
+  connect and disconnect (done when the device's state leaves connecting
+  or disconnecting, `connected` says how it went). Pairing goes through
+  `scripts/bt-pair` (expect, bluetoothctl as the agent) like
+  rofi-bluetooth, Quickshell has no agent. A PIN the device asks for comes
+  from the menu over stdin.
+- Quickshell's NotificationServer takes `org.freedesktop.Notifications`
+  only while it's free and takes it as soon as the owner lets go. dunst
+  has no unit that starts it, d-bus activation does on the first
+  notification, so a drop-in from `default.nix` gives it an
+  `ExecCondition`: no start while the pid in
+  `$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/hyprland.lock` lives
+  (Hyprland exports the signature to systemd, a stale one points at a dead
+  pid or no lock). hyprland.lua stops a dunst left from another session.
+- Quickshell's Pipewire types by `media.class`: an app that plays is
+  `AudioOutStream` (it has the Sink flag, `isSink` is true), one that
+  records `AudioInStream`, so Audio goes by `type`. A level meter is a
+  capture stream named after the program (`.quickshell-wrapped`,
+  `stream.monitor` true): one on a recording stream would meter the
+  meters, so they're only on outputs, inputs and apps, and streams show
+  once they're bound (`ready`) and aren't monitors. The meters live in a
+  `Variants` on the nodes, not in the lines: the Repeater makes its lines
+  again when the list changes, a new meter changes the node list, and the
+  list only changes when its `shape` string does.
+- `scripts/route` reads ports and links from `pw-dump` (json) and wires
+  them with `pw-link`: the same `audio.channel`, all to a mono input, else
+  by order. pw-link's links linger after it quits, wireplumber leaves
+  links it didn't make alone, they go with either node. Quickshell can
+  read links (`Pipewire.linkGroups`, source and target nodes) but not make
+  them.
+- A menu's own property or function must not take a name Menu has
+  (`shown`, `move`, `title`...), it shadows Menu's and breaks it. An id
+  that's also a property of the same object wins over the property:
+  `id: volume` on the bar's volume label printed the label.
+- Quickshell's `Notification.expireTimeout` is the app's ms passed
+  through, its doc says seconds, so the popup counts a small one as
+  seconds. The bar's memory is MemTotal - MemAvailable from /proc/meminfo,
+  like free's "used".
 - Hyprland and its portal come from nixpkgs without the overlays
   (`import pkgs.path`): the dmenu fork in `nixos/overlays` changes uwsm,
   hyprland's uwsm session file points to it, and that hyprland misses the
@@ -531,7 +667,14 @@ Hyprland Lua, QML and shell, no nix in them.
 - The librewolf tab switcher still uses rofi, it's not a script here.
 
 Test without hardware: Hyprland needs a DRM device and doesn't start in a
-container. Quickshell runs on headless sway (see Sway) with
+container. Notifications need a session bus (`dbus-daemon --session
+--fork --print-address`), send them with `busctl --address=... call
+org.freedesktop.Notifications /org/freedesktop/Notifications
+org.freedesktop.Notifications Notify susssasa{sv}i ...`. Audio needs
+`pipewire` and `wireplumber` on the stand's XDG_RUNTIME_DIR, null devices
+from `pw-cli create-node adapter '{ factory.name=support.null-audio-sink
+... object.linger=true }'`, apps from `pw-play -P '{ application.name=...
+media.name=... }'`. Quickshell runs on headless sway (see Sway) with
 `QT_QUICK_BACKEND=software`, open a menu with `qs -p <dir> ipc call menu
 open <name>`. wtype only reaches it if a virtual keyboard exists before the
 menu opens (start a `wtype -s 500000 ...` first). The bar needs Hyprland ipc,

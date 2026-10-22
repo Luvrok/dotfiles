@@ -16,6 +16,9 @@ PanelWindow {
     readonly property HyprlandWorkspace ws: monitor?.activeWorkspace ?? null
     readonly property int offset: Hypr.offset(monitor?.name ?? "")
 
+    // a menu on this monitor: the system one, the calendar
+    signal openMenu(string name)
+
     function dispatch(lua) {
         Hyprland.dispatch(lua);
     }
@@ -256,8 +259,36 @@ PanelWindow {
             }
             Sep {}
 
-            // volume: scroll ±2% unless muted, middle click mutes
+            // notifications that wait, a crossed bell while the popups are
+            // off. left click: the menu, right: popups off and on, middle:
+            // clear
             Label {
+                id: bell
+                visible: Notifs.count > 0 || Notifs.quiet
+                text: (Notifs.quiet ? "\u{f009b}" : "\u{f009a}") + (Notifs.count > 0 ? ` ${Notifs.count}` : "")
+                color: Notifs.quiet ? Theme.dim : Theme.fg
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: e => {
+                        if (e.button === Qt.RightButton)
+                            Notifs.quiet = !Notifs.quiet;
+                        else if (e.button === Qt.MiddleButton)
+                            Notifs.clear();
+                        else
+                            bar.openMenu("notifications");
+                    }
+                }
+            }
+            Sep {
+                visible: bell.visible
+            }
+
+            // volume: scroll ±2% unless muted, middle click mutes, a click
+            // opens the mixer (the audio menu)
+            Label {
+                id: sound
                 readonly property PwNode sink: Pipewire.defaultAudioSink
                 readonly property int volume: Math.round((sink?.audio?.volume ?? 0) * 100)
 
@@ -276,8 +307,14 @@ PanelWindow {
 
                 MouseArea {
                     anchors.fill: parent
-                    acceptedButtons: Qt.MiddleButton
-                    onClicked: parent.sink.audio.muted = !parent.sink.audio.muted
+                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: e => {
+                        if (e.button === Qt.LeftButton)
+                            bar.openMenu("audio");
+                        else
+                            parent.sink.audio.muted = !parent.sink.audio.muted;
+                    }
                     onWheel: w => {
                         const audio = parent.sink?.audio;
                         if (!audio || audio.muted)
@@ -287,47 +324,61 @@ PanelWindow {
                     }
                 }
             }
-            Sep {}
+            Sep {
+                visible: sound.text !== ""
+            }
 
-            // memory, like `free -h`: left click opens btop
+            // memory in use, like `free -h`: left click opens the system
+            // menu, right click btop
             Label {
                 id: memory
+
+                // kB, free's way: 692M, 5.2G, 15G
+                function size(kb) {
+                    const g = kb / 1048576;
+                    return g >= 10 ? `${Math.floor(g)}G` : g >= 1 ? `${g.toFixed(1)}G` : `${Math.floor(kb / 1024)}M`;
+                }
+
+                function parse(text) {
+                    const kb = name => parseInt(text.match(new RegExp(`^${name}:\\s+(\\d+)`, "m"))?.[1]);
+                    const total = kb("MemTotal"), avail = kb("MemAvailable");
+                    if (!isNaN(total) && !isNaN(avail))
+                        memory.text = `${size(total - avail)}/${size(total)}`;
+                }
+
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: Quickshell.execDetached(["kitty", "-e", "btop"])
-                }
-                Process {
-                    id: free
-                    running: true
-                    command: ["free", "-h"]
-                    stdout: StdioCollector {
-                        onStreamFinished: {
-                            const mem = text.split("\n").find(l => l.startsWith("Mem"))?.split(/\s+/);
-                            if (mem)
-                                memory.text = `${mem[2]}/${mem[1]}`.replace(/i/g, "").replace(/,/g, ".");
-                        }
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: e => {
+                        if (e.button === Qt.RightButton)
+                            Quickshell.execDetached(["kitty", "-e", "btop"]);
+                        else
+                            bar.openMenu("system");
                     }
+                }
+                FileView {
+                    id: meminfo
+                    path: "/proc/meminfo"
+                    onLoaded: memory.parse(text())
                 }
             }
             Sep {}
 
-            // wifi signal, hidden without wlan0 (barnard has none)
+            // wifi signal from iwd (scripts/wifi), hidden while offline or
+            // without wifi (barnard has none)
             Label {
                 id: wifi
                 visible: text !== ""
                 Process {
-                    id: iwctl
+                    id: iwd
                     running: true
-                    command: ["sh", "-c", "[ -e /sys/class/net/wlan0 ] && iwctl station wlan0 show"]
+                    command: ["bash", Quickshell.shellPath("scripts/wifi"), "signal"]
                     stdout: StdioCollector {
                         onStreamFinished: {
-                            if (text === "") {
-                                wifi.text = "";
-                                return;
-                            }
-                            const line = text.split("\n").find(l => /RSSI/.test(l) && !/Average/.test(l));
-                            const rssi = parseInt(line?.trim().split(/\s+/)[1]);
-                            wifi.text = isNaN(rssi) ? "\u{f092b}" : rssi >= -50 ? "\u{f0928}" : rssi >= -60 ? "\u{f0925}" : rssi >= -70 ? "\u{f0922}" : rssi >= -80 ? "\u{f091f}" : "\u{f092b}";
+                            // dbm * 100
+                            const dbm = parseInt(text) / 100;
+                            wifi.text = isNaN(dbm) ? "" : dbm >= -50 ? "\u{f0928}" : dbm >= -60 ? "\u{f0925}" : dbm >= -70 ? "\u{f0922}" : dbm >= -80 ? "\u{f091f}" : "\u{f092b}";
                         }
                     }
                 }
@@ -336,7 +387,7 @@ PanelWindow {
                 visible: wifi.visible
             }
 
-            // date: right click shows a calendar
+            // date: a click opens the calendar
             Label {
                 text: Qt.formatDateTime(clock.date, "dd.MM.yyyy | HH:mm")
                 SystemClock {
@@ -345,8 +396,9 @@ PanelWindow {
                 }
                 MouseArea {
                     anchors.fill: parent
-                    acceptedButtons: Qt.RightButton
-                    onClicked: Quickshell.execDetached(["kitty", "--hold", "-e", "cal", "-3"])
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: bar.openMenu("calendar")
                 }
             }
         }
@@ -358,8 +410,8 @@ PanelWindow {
         running: true
         repeat: true
         onTriggered: {
-            free.running = true;
-            iwctl.running = true;
+            meminfo.reload();
+            iwd.running = true;
         }
     }
 }

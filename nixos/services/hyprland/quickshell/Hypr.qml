@@ -28,6 +28,26 @@ Singleton {
         return Math.max(0, order.indexOf(monitor)) * 10;
     }
 
+    // the screen of the monitor that has focus
+    function focusedScreen() {
+        const focused = Hyprland.focusedMonitor?.name;
+        const screens = Quickshell.screens;
+        for (let i = 0; i < screens.length; i++)
+            if (screens[i].name === focused)
+                return screens[i];
+        return screens[0];
+    }
+
+    // hyprctl's json, or what to use when it says something else
+    function parse(text, fallback) {
+        try {
+            return JSON.parse(text) ?? fallback;
+        } catch (e) {
+            console.warn(`hyprctl: ${e}`);
+            return fallback;
+        }
+    }
+
     function setLayout(name) {
         layout = name.startsWith("Russian") ? "RU" : "EN";
     }
@@ -38,7 +58,7 @@ Singleton {
         command: ["hyprctl", "-j", "workspacerules"]
         stdout: StdioCollector {
             onStreamFinished: {
-                const rule = JSON.parse(text).find(r => r.workspaceString === "1" && r.monitor);
+                const rule = root.parse(text, []).find(r => r.workspaceString === "1" && r.monitor);
                 root.pinned = rule ? rule.monitor : "";
             }
         }
@@ -49,7 +69,7 @@ Singleton {
         command: ["hyprctl", "-j", "devices"]
         stdout: StdioCollector {
             onStreamFinished: {
-                const kb = JSON.parse(text).keyboards.find(k => k.main);
+                const kb = (root.parse(text, {}).keyboards ?? []).find(k => k.main);
                 if (kb)
                     root.setLayout(kb.active_keymap);
             }
