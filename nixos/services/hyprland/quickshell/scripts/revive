@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# the run menu's apps: runs one, and when it only pokes an instance of
+# itself that lives on without a window (element with no tray: "other
+# instance detected", the old one never shows) and quits, ends that
+# instance (TERM, KILL after 2 s, scripts/apps kill) and runs it again
+#   revive <exe> -- <command...>
+set -u
+
+exe=$1
+shift 2
+"$@" &
+new=$!
+
+# a real start keeps running
+for _ in 1 2 3 4 5 6; do
+  sleep 0.5
+  kill -0 "$new" 2>/dev/null || break
+done
+kill -0 "$new" 2>/dev/null && exit 0
+
+# the other instance: the oldest process that runs from the same store
+# path or the command itself, not us (our args may hold them too)
+cmd=$(command -v -- "$exe") || exit 0
+path=$(readlink -f -- "$cmd")
+case $path in /nix/store/*) store=$(printf %s "$path" | cut -d/ -f1-4) ;; *) store=$path ;; esac
+pids=$({ pgrep -f -- "$store"; pgrep -f -- "$cmd"; } | sort -un | grep -vxF "$$" | paste -sd,)
+[ -n "$pids" ] || exit 0
+old=$(ps -o pid= --sort=start_time -p "$pids" | head -1 | tr -d ' ')
+[ -n "$old" ] || exit 0
+
+# it and what it started: an app (a wayland or x11 connection, like the
+# kill menu's) with no window
+tree=$(ps -eo pid=,ppid= | awk -v root="$old" '
+  { kids[$2] = kids[$2] " " $1 }
+  END {
+    q[1] = root; n = 1
+    while (n > 0) {
+      p = q[n--]; print p
+      split(kids[p], k, " ")
+      for (i in k) q[++n] = k[i]
+    }
+  }')
+apps=$(bash "$(dirname -- "$0")/apps" list)
+gui=$(printf '%s\n' "$apps" | sed -n '/^--gui--$/,/^--ps--$/p')
+windows=$(printf '%s\n' "$apps" | sed '1,/^--clients--$/d' | jq -r '.[].pid')
+in_tree() {
+  grep -qxF -f <(printf '%s\n' "$tree") <<< "$1"
+}
+if ! in_tree "$gui" || in_tree "$windows"; then
+  exit 0
+fi
+
+bash "$(dirname -- "$0")/apps" kill "$old"
+for _ in 1 2 3 4 5 6 7 8; do
+  kill -0 "$old" 2>/dev/null || break
+  sleep 0.5
+done
+exec "$@"

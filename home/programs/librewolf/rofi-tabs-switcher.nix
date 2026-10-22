@@ -1,4 +1,4 @@
-{ lib, stdenv, fetchFromGitHub, runCommand, writeText, makeWrapper
+{ lib, stdenv, fetchFromGitHub, runCommand, writeText, writeShellScriptBin, makeWrapper
 , rofi, python3, zip, theme ? null }:
 
 let
@@ -10,6 +10,16 @@ let
     rev   = "f9679dc82a52a18c3b65349ef991244998aaa781";
     hash  = "sha256-XNa6aUR0olMvUHwDqyVFdfjZcAW1yYbD95UX0pMOyvI=";
   };
+
+  # the helper's rofi: the quickshell menu while hyprland's quickshell runs
+  # (hypr-dmenu, nixos/services/hyprland), rofi in i3 and sway
+  rofiShim = writeShellScriptBin "rofi" ''
+    dmenu=/run/current-system/sw/bin/hypr-dmenu
+    if [ -x "$dmenu" ] && "$dmenu" --check; then
+      exec "$dmenu" "$@"
+    fi
+    exec ${rofi}/bin/rofi "$@"
+  '';
 
   native_helper = stdenv.mkDerivation {
     pname = "rofi-tab-switcher-helper";
@@ -23,7 +33,7 @@ let
       install -Dm755 rofiface.py $out/libexec/rofiface.py
       patchShebangs $out/libexec/rofiface.py
       makeWrapper $out/libexec/rofiface.py $out/bin/rofiface \
-        --prefix PATH : ${lib.makeBinPath [ rofi ]} \
+        --prefix PATH : ${lib.makeBinPath [ rofiShim ]} \
         ${lib.optionalString (theme != null)
           ''--set ROFI_TAB_SWITCHER_THEME "${theme}"''}
     '';

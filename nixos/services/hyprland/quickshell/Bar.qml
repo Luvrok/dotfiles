@@ -64,10 +64,9 @@ PanelWindow {
         // left click: go there, right click: move the window there
         Repeater {
             model: {
-                const labels = ["scl", "obs", "sh1", "sh2", "smth", "virt", "med", "smth", "vpn"];
                 const tags = [];
                 for (let i = 1; i <= 9; i++)
-                    tags.push({ id: bar.offset + i, label: labels[i - 1] });
+                    tags.push({ id: bar.offset + i, label: Hypr.labels[i - 1] });
                 // workspaces left here by an unplugged monitor, so their windows don't get lost
                 for (const w of Hyprland.workspaces.values)
                     if (w.monitor === bar.monitor && w.id > 0 && (w.id <= bar.offset || w.id > bar.offset + 9))
@@ -258,6 +257,23 @@ PanelWindow {
                 }
             }
             Sep {}
+
+            // the switches that are on (vpn, zapret, dnscrypt), a click opens
+            // the switches menu
+            Label {
+                id: switches
+                readonly property var on: Toggles.list.filter(t => Toggles.isOn(t.id))
+                visible: on.length > 0
+                text: on.map(t => t.icon).join(" ")
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: bar.openMenu("switches")
+                }
+            }
+            Sep {
+                visible: switches.visible
+            }
 
             // notifications that wait, a crossed bell while the popups are
             // off. left click: the menu, right: popups off and on, middle:

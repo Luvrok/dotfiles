@@ -54,6 +54,8 @@ hl.config({
         disable_hyprland_logo = true,
         disable_splash_rendering = true,
         force_default_wallpaper = 0,
+        -- a quickshell that dies while locked can lock again when it's back
+        allow_session_lock_restore = true,
     },
 
     -- config errors at the bottom, like the notifications. hyprland's own
@@ -111,10 +113,12 @@ hl.animation({ leaf = "borderangle", enabled = false })
 -- the bar and the wallpaper just appear, fullscreen windows take the screen
 -- at once. the quickshell menus sit under the bar on the right, they slide
 -- in from the right edge and fade, like a tag switch drifts
-hl.layer_rule({ match = { namespace = "^(bar|wallpaper)$" }, no_anim = true })
+hl.layer_rule({ match = { namespace = "^(bar|wallpaper|shot)$" }, no_anim = true })
 hl.layer_rule({ match = { namespace = "^menu$" }, animation = "slide right", dim_around = true })
--- the notification popup comes up from the bottom edge
-hl.layer_rule({ match = { namespace = "^notification$" }, animation = "slide bottom" })
+-- the notification popup stays mapped and slides itself (NotifyPopup.qml):
+-- a layer that unmaps while a menu holds its focus grab clears the grab,
+-- the menu closed whenever a popup ran out
+hl.layer_rule({ match = { namespace = "^notification$" }, no_anim = true })
 hl.window_rule({ match = { fullscreen = true }, no_anim = true })
 
 -- x11 apps (st, nsxiv, dmenu) read colors and fonts from ~/.Xresources, xrdb
@@ -199,6 +203,9 @@ local scratchpads = {
     spterm = "kitty --class spterm --name spterm --title scratchpad",
     spdotfiles = "kitty --class spdotfiles --name spdotfiles --title dotfiles -e sh -c 'cd ~/HOME/infra/dotfiles && nvim'",
     rangerterm = "kitty --class rangerterm --name rangerterm --title ranger -e sh -c 'cd && yazi'",
+    -- a mini terminal for the nix menu's builds (quickshell scripts/nixrun
+    -- types into it over kitty's remote control)
+    spnix = "kitty --class spnix --name spnix --title nix -o font_size=8 -o allow_remote_control=socket-only --listen-on unix:@hypr-nix",
 }
 for name, cmd in pairs(scratchpads) do
     hl.workspace_rule({ workspace = "special:" .. name, on_created_empty = cmd })
@@ -209,6 +216,13 @@ hl.window_rule({
     float = true,
     size = { 1280, 910 },
     center = true,
+})
+-- where the menus are: under the bar on the right
+hl.window_rule({
+    match = { class = "^spnix$" },
+    float = true,
+    size = { 760, 420 },
+    move = { "monitor_w - window_w - 10", "34" },
 })
 
 -------------------
@@ -233,7 +247,7 @@ hl.bind(mod .. " + r", qs("menu open record"))
 hl.bind(mod .. " + SHIFT + r", qs("record stop"))
 hl.bind(mod .. " + u", qs("menu open pass"))
 hl.bind(mod .. " + CTRL + k", qs("menu open kill"))
-hl.bind(mod .. " + SHIFT + u", hl.dsp.exec_cmd("nixos_menu"))
+hl.bind(mod .. " + SHIFT + u", qs("menu open nix"))
 hl.bind(mod .. " + SHIFT + d", qs("menu open audio"))
 hl.bind(mod .. " + SHIFT + y", qs("menu open translate"))
 hl.bind(mod .. " + CTRL + w", qs("menu open wifi"))
@@ -243,11 +257,14 @@ hl.bind(mod .. " + CTRL + c", qs("menu open calendar"))
 hl.bind(mod .. " + n", qs("menu open notifications"))
 -- the small tools: emoji, calc, color, ocr, shot
 hl.bind(mod .. " + a", qs("menu open tools"))
+-- every window of every tag, like alt-tab
+hl.bind(mod .. " + x", qs("menu open windows"))
 hl.bind(mod .. " + SHIFT + n", qs("notifications close"))
 hl.bind(mod .. " + o", hl.dsp.exec_cmd("kitty --class movies -e yazi /media/outer-1"))
 
--- region to the clipboard, the picture or the text on it. esc in slurp does nothing
-hl.bind("Print", hl.dsp.exec_cmd([[g=$(slurp) && grim -g "$g" - | wl-copy --type image/png]]))
+-- print: the screenshot (quickshell Shot.qml, frozen like flameshot). $mod+print:
+-- the text of a region to the clipboard, esc in slurp does nothing
+hl.bind("Print", qs("shot take"))
 hl.bind(mod .. " + Print", hl.dsp.exec_cmd(
     [[g=$(slurp) && grim -g "$g" - | tesseract -l eng+rus stdin stdout 2>/dev/null | wl-copy && notify-send OCR "Text copied"]]))
 
@@ -275,6 +292,7 @@ end)
 hl.bind(mod .. " + g", hl.dsp.workspace.toggle_special("spterm"))
 hl.bind(mod .. " + v", hl.dsp.workspace.toggle_special("spdotfiles"))
 hl.bind(mod .. " + e", hl.dsp.workspace.toggle_special("rangerterm"))
+hl.bind(mod .. " + CTRL + u", hl.dsp.workspace.toggle_special("spnix"))
 
 -- setscratch: focused window goes to the $mod+g scratchpad
 hl.bind(mod .. " + CTRL + g", function()
@@ -455,7 +473,9 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("systemctl --user start hyprland-session.target")
     hl.exec_cmd("xrdb -merge ~/.Xresources")
     hl.exec_cmd("wl-paste --watch cliphist -max-items 200 store")
-    hl.exec_cmd([[swayidle -w timeout 300 "hyprctl dispatch \"hl.dsp.dpms({ action = 'disable' })\"" resume "hyprctl dispatch \"hl.dsp.dpms({ action = 'enable' })\""]])
+    -- the lock screen is quickshell's (Lock.qml): loginctl lock-session (the
+    -- power menu) and suspend lock it
+    hl.exec_cmd([[swayidle -w timeout 300 "hyprctl dispatch \"hl.dsp.dpms({ action = 'disable' })\"" resume "hyprctl dispatch \"hl.dsp.dpms({ action = 'enable' })\"" lock "qs -c hyprland ipc call lock now" before-sleep "qs -c hyprland ipc call lock now"]])
     hl.exec_cmd("sway-audio-idle-inhibit")
     hl.exec_cmd("gammastep -m wayland -l 59.9343:30.3351 -t 5000:4000")
     -- quickshell is the notification server, it takes over once a dunst

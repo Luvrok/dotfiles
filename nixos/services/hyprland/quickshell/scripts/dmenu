@@ -1,0 +1,40 @@
+# rofi -dmenu for hyprland, on a quickshell menu (Dmenu.qml): the rows come
+# on stdin, this prints the picked one, nothing and exit 1 on esc. it takes
+# the rofi flags the tab switcher and scripts use, the rest is ignored.
+# pango markup in the rows (-markup-rows) is dropped, a <span> starts the
+# dim column. default.nix installs it as hypr-dmenu
+#   hypr-dmenu [-p prompt] [-selected-row N] [-format i|s] [-markup-rows]
+#   hypr-dmenu --check    exit 0 while quickshell runs
+
+prompt="" selected=0 format=s markup=0
+while [ $# -gt 0 ]; do
+  case $1 in
+    --check) exec qs -c hyprland ipc show >/dev/null 2>&1 ;;
+    -p) prompt=${2:-}; shift ;;
+    -selected-row) selected=${2:-0}; shift ;;
+    -format) format=${2:-s}; shift ;;
+    -markup-rows) markup=1 ;;
+    -theme | -theme-str | -scroll-method | -mesg | -l | -lines) shift ;;
+  esac
+  shift
+done
+
+dir=${XDG_RUNTIME_DIR:-/tmp}/hypr-dmenu
+mkdir -p "$dir"
+rows=$dir/$$
+trap 'rm -f "$rows"' EXIT
+cat >"$rows"
+
+# the wait is up before the menu can answer
+{
+  sleep 0.2
+  qs -c hyprland ipc call dmenu ask "$rows" "$prompt" "$selected" "$markup" >/dev/null
+} &
+i=$(qs -c hyprland ipc wait dmenu answered)
+
+case $i in "" | *[!0-9]*) exit 1 ;; esac
+if [ "$format" = i ]; then
+  printf '%s\n' "$i"
+else
+  sed -n "$((i + 1))p" "$rows"
+fi

@@ -9,7 +9,8 @@ import qs.menus
 //   qs -c hyprland ipc call bar toggle
 //   qs -c hyprland ipc call record stop
 //   qs -c hyprland ipc call notifications close   (the popup, quiet, clear)
-// hypr-askpass calls `askpass ask <prompt>`, hypr-pinentry
+// hypr-dmenu calls `dmenu ask <rows file> <prompt> <row> <markup>` and waits
+// for `answered`. hypr-askpass calls `askpass ask <prompt>`, hypr-pinentry
 // `askpass query <kind> <prompt> <desc> <error>`, both wait for `answered`
 ShellRoot {
     id: shell
@@ -24,6 +25,14 @@ ShellRoot {
     // the password prompt, it opens over a menu that waits for it (pass
     // runs gpg, gpg asks)
     property bool asking: false
+    // a script's rofi -dmenu (hypr-dmenu): its rows file, prompt, row,
+    // markup. its own loader too, a menu may be open
+    property bool picking: false
+    // the screenshot: grim's frame of the focused monitor, then Shot over it
+    property bool shooting: false
+    property string shotFrame: ""
+    property ShellScreen shotScreen: null
+    property var pick: ({})
     property string askKind: "pin"
     property string askPrompt: ""
     property string askNote: ""
@@ -31,6 +40,9 @@ ShellRoot {
     // the desktop entries are read in the background on first use, this
     // reads them at start, so run and kill have them when they open
     readonly property var apps: DesktopEntries.applications
+    // the player keeps track of which one started last from the start, not
+    // from when its menu first opens
+    readonly property var players: Media.players
 
     // on the focused monitor, or on the one a bar was clicked on
     function open(name, screen) {
@@ -94,8 +106,33 @@ ShellRoot {
         }
     }
 
-    // the notification popup, Notifs is the server
-    NotifyPopup {}
+    // the notification popup, one per monitor, Notifs is the server
+    Variants {
+        model: Quickshell.screens
+
+        NotifyPopup {}
+    }
+
+    // the lock screen: `lock now`
+    Lock {
+        id: lockScreen
+    }
+
+    IpcHandler {
+        target: "lock"
+        function now(): void {
+            shell.menu = "";
+            lockScreen.lock();
+        }
+    }
+
+    Connections {
+        target: Notifs
+        function onReplyWanted() {
+            shell.menu = "";
+            shell.open("notifications");
+        }
+    }
 
     IpcHandler {
         target: "notifications"
@@ -115,6 +152,43 @@ ShellRoot {
         target: "record"
         function stop(): void {
             Quickshell.execDetached(["bash", Quickshell.shellPath("scripts/record"), "stop"]);
+        }
+    }
+
+    // print and tools s: the frame first, the menu shows it frozen
+    IpcHandler {
+        target: "shot"
+        function take(): void {
+            if (shell.shooting || grim.running)
+                return;
+            shell.menu = "";
+            shell.shotScreen = Hypr.focusedScreen();
+            shell.shotFrame = `${Quickshell.env("XDG_RUNTIME_DIR")}/hypr-shot/frame-${Date.now()}.png`;
+            grim.exec(["sh", "-c", 'mkdir -p "$(dirname "$2")" && rm -f "$(dirname "$2")"/frame-*.png && grim -o "$1" "$2"', "sh", shell.shotScreen.name, shell.shotFrame]);
+        }
+    }
+
+    Process {
+        id: grim
+        onExited: code => {
+            if (code === 0)
+                shell.shooting = true;
+        }
+    }
+
+    IpcHandler {
+        id: dmenu
+        target: "dmenu"
+        signal answered(index: string)
+        function ask(file: string, prompt: string, selected: string, markup: string): void {
+            shell.pick = {
+                file: file,
+                prompt: prompt,
+                selected: parseInt(selected) || 0,
+                markup: markup === "1",
+                screen: Hypr.focusedScreen()
+            };
+            shell.picking = true;
         }
     }
 
@@ -155,6 +229,13 @@ ShellRoot {
         Librewolf {
             screen: shell.menuScreen
             onDone: shell.close("librewolf")
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "nix"
+        Nix {
+            screen: shell.menuScreen
+            onDone: shell.close("nix")
         }
     }
     LazyLoader {
@@ -268,6 +349,60 @@ ShellRoot {
         Record {
             screen: shell.menuScreen
             onDone: shell.close("record")
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "player"
+        Player {
+            screen: shell.menuScreen
+            parentMenu: shell.menuParent
+            onDone: shell.close("player")
+            onGoTo: name => shell.swap(name)
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "units"
+        Units {
+            screen: shell.menuScreen
+            parentMenu: shell.menuParent
+            onDone: shell.close("units")
+            onGoTo: name => shell.swap(name)
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "switches"
+        Switches {
+            screen: shell.menuScreen
+            parentMenu: shell.menuParent
+            onDone: shell.close("switches")
+            onGoTo: name => shell.swap(name)
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "windows"
+        Windows {
+            screen: shell.menuScreen
+            onDone: shell.close("windows")
+        }
+    }
+    LazyLoader {
+        active: shell.shooting
+        Shot {
+            screen: shell.shotScreen
+            frame: `file://${shell.shotFrame}`
+            onDone: Qt.callLater(() => shell.shooting = false)
+        }
+    }
+    LazyLoader {
+        active: shell.picking
+        Dmenu {
+            screen: shell.pick.screen
+            file: shell.pick.file
+            ask: shell.pick.prompt
+            selected: shell.pick.selected
+            markup: shell.pick.markup
+            onAnswered: index => dmenu.answered(index)
+            onDone: Qt.callLater(() => shell.picking = false)
         }
     }
     LazyLoader {

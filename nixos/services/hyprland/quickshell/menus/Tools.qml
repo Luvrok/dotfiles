@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs
+import qs.widgets
 
 // the small tools behind one key ($mod+a): big squares, each with the key
 // that opens it in the corner. a tool with a menu opens in its place and
@@ -35,10 +36,29 @@ Menu {
             run: 'g=$(slurp) && grim -g "$g" - | tesseract -l eng+rus stdin stdout 2>/dev/null | wl-copy && notify-send OCR "Text copied"'
         },
         {
+            key: "m",
+            name: "player",
+            icon: "\u{f075a}",
+            menu: "player"
+        },
+        {
+            key: "u",
+            name: "systemd",
+            icon: "\u{f08d6}",
+            menu: "units"
+        },
+        {
+            key: "v",
+            name: "switches",
+            icon: "\u{f0521}",
+            menu: "switches"
+        },
+        {
             key: "s",
             name: "shot",
             icon: "\u{f0e51}",
-            run: 'g=$(slurp) && grim -g "$g" - | wl-copy --type image/png'
+            // after the menu has slid away
+            run: "sleep 0.3; qs -c hyprland ipc call shot take"
         }
     ]
 
@@ -85,72 +105,15 @@ Menu {
             Repeater {
                 model: menu.tools
 
-                delegate: Rectangle {
-                    id: tile
+                delegate: Tile {
                     required property var modelData
-                    required property int index
-
                     width: grid.side
                     height: grid.side
-                    color: mouse.containsMouse ? Theme.hover : "transparent"
-                    border.width: 1
-                    border.color: mouse.containsMouse ? Theme.border : Theme.line
-                    opacity: 0
-                    Component.onCompleted: intro.start()
-
-                    NumberAnimation {
-                        id: intro
-                        target: tile
-                        property: "opacity"
-                        to: 1
-                        duration: 160
-                        easing.type: Easing.OutCubic
-                    }
-
-                    // the key in the corner
-                    Rectangle {
-                        x: 5
-                        y: 5
-                        width: keyText.implicitWidth + 8
-                        height: keyText.implicitHeight + 2
-                        color: Theme.selBg
-
-                        Text {
-                            id: keyText
-                            anchors.centerIn: parent
-                            text: tile.modelData.key
-                            color: Theme.sel
-                            font.family: Theme.font
-                            font.pointSize: 8
-                            font.bold: true
-                        }
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        anchors.verticalCenterOffset: -6
-                        text: tile.modelData.icon
-                        color: Theme.selBg
-                        font.family: Theme.font
-                        font.pointSize: 22
-                    }
-
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.bottom: parent.bottom
-                        anchors.bottomMargin: 6
-                        text: tile.modelData.name
-                        color: Theme.fg
-                        font: menu.rowFont
-                    }
-
-                    MouseArea {
-                        id: mouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: menu.pick(tile.modelData)
-                    }
+                    key: modelData.key
+                    icon: modelData.icon
+                    name: modelData.name
+                    font: menu.rowFont
+                    onClicked: menu.pick(modelData)
                 }
             }
         }

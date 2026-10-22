@@ -9,17 +9,26 @@ import Quickshell.Services.Notifications
 // menus. it goes after 5 s (3 s low, the app's own time if it sets one,
 // else critical ones stay), the line at the bottom shows what's left and
 // stops while the pointer is on it. left click: the default action, right
-// click: away (it stays in the menu), middle: dismissed. hyprland slides
-// it up from the bottom edge (layer rule for "notification")
+// click: away (it stays in the menu), middle: dismissed. one per monitor,
+// always mapped: a layer that unmaps while a menu holds its focus grab
+// clears the grab and closes the menu. so it slides up from the bottom
+// edge itself, and lets clicks through while it's down (an empty mask)
 PanelWindow {
     id: popup
 
-    readonly property Notification n: Notifs.current
+    required property ShellScreen modelData
+    // it's up here
+    readonly property bool here: Notifs.current !== null && Notifs.popupScreen === modelData.name
+    // what it shows, kept while it slides away
+    property Notification n: null
+    property bool shown: false
     readonly property bool critical: n?.urgency === NotificationUrgency.Critical
     // the countdown, 1 to 0
     property real left: 1
-    // it just came up, hyprland slides it in
+    // it just came up, no fade from the last one
     property bool fresh: false
+    // the height it had when it went, the text may go before it's down
+    property real kept: 0
     readonly property string icon: {
         if (!n)
             return "";
@@ -54,38 +63,45 @@ PanelWindow {
         }
     }
 
-    // on the focused monitor when it comes up, it stays there while it's up
-    function follow() {
-        if (!n) {
-            countdown.stop();
-            visible = false;
-            return;
-        }
-        if (!visible) {
-            screen = Hypr.focusedScreen();
-            visible = true;
+    onHereChanged: {
+        if (here) {
+            n = Notifs.current;
+            kept = 0;
             fresh = true;
+            shown = true;
+        } else {
+            countdown.stop();
+            kept = frame.height;
+            shown = false;
         }
     }
 
-    visible: false
+    screen: modelData
     color: "transparent"
     anchors.bottom: true
-    margins.bottom: 15
     implicitWidth: Math.ceil(metrics.averageCharacterWidth * 56)
-    implicitHeight: frame.height
+    // 15px over the bottom edge, it slides in from below that
+    implicitHeight: frame.height + 15
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "notification"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    // clicks go through while it's down
+    mask: Region {
+        item: popup.shown ? frame : null
+    }
 
     Connections {
         target: Notifs
+        // a newer one takes the place of the one up
         function onCurrentChanged() {
-            popup.follow();
+            if (popup.here)
+                popup.n = Notifs.current;
         }
         // a new one fades in over the one up, an update just changes
         function onPopped(same) {
+            if (!popup.here)
+                return;
             if (!same && !popup.fresh)
                 swap.restart();
             popup.fresh = false;
@@ -123,7 +139,23 @@ PanelWindow {
     Rectangle {
         id: frame
         width: parent.width
-        height: Math.ceil(content.implicitHeight) + 2
+        height: Math.max(Math.ceil(content.implicitHeight) + 2, popup.kept)
+        // up: 15px over the edge, down: under it, like hyprland's slide
+        y: popup.shown ? 0 : popup.height
+        opacity: popup.shown ? 1 : 0
+        // hyprland's layersIn and fadeLayersOut
+        Behavior on y {
+            NumberAnimation {
+                duration: popup.shown ? 250 : 150
+                easing.type: popup.shown ? Easing.OutCubic : Easing.Linear
+            }
+        }
+        Behavior on opacity {
+            NumberAnimation {
+                duration: popup.shown ? 250 : 150
+                easing.type: popup.shown ? Easing.InOutCubic : Easing.Linear
+            }
+        }
         color: Theme.bg
         border.width: 1
         border.color: popup.critical ? Theme.urgent : Theme.border
@@ -236,9 +268,13 @@ PanelWindow {
                 }
             }
 
-            // the actions but the default one, the click takes them
+            // the actions but the default one, the click takes them. reply
+            // opens the menu's text line for it
             Flow {
-                readonly property var acts: (popup.n?.actions ?? []).filter(a => a.identifier !== "default" && a.text !== "")
+                readonly property var acts: [...(popup.n?.hasInlineReply ? [{
+                            text: popup.n.inlineReplyPlaceholder || "reply",
+                            reply: true
+                        }] : []), ...(popup.n?.actions ?? []).filter(a => a.identifier !== "default" && a.identifier !== "inline-reply" && a.text !== "")]
                 visible: acts.length > 0
                 x: popup.textX - 1
                 width: parent.width - x - 12
@@ -260,7 +296,12 @@ PanelWindow {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: parent.modelData.invoke()
+                            onClicked: {
+                                if (parent.modelData.reply)
+                                    Notifs.reply(popup.n);
+                                else
+                                    parent.modelData.invoke();
+                            }
                         }
                     }
                 }
