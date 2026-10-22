@@ -166,9 +166,11 @@ in
     };
 
     config = {
-      background.color = "#282828";
+      # the colors of the quickshell menus (nixos/services/hyprland/quickshell/Theme.qml)
+      background.color = "#171717";
 
       border = {
+        color = "#3c3836";
         width = "1px";
         transition = "0.3s ease";
         radius = "0px";
@@ -183,6 +185,9 @@ in
       font = {
         family = "JetBrainsMonoNL Nerd Font Propo";
         size = "14px";
+        color = "#ebdbb2";
+        accent = "#d65d0e";
+        selected = "#fbf1c7";
       };
 
       tabs = {
@@ -197,11 +202,6 @@ in
       };
 
       extraConfig = ''
-        :root {
-          --tf-accent: #d65d0e !important;
-          --tf-border: #3c3836 !important;
-        }
-
         #tabbrowser-tabbox {
           padding: 0 !important;
 
@@ -214,10 +214,6 @@ in
           padding-left: 0px !important;
         }
 
-        #sidebar-box {
-          margin: 8px 0px 8px 8px !important;
-        }
-
         toolbarpaletteitem[place="toolbar"][id^="wrapper-customizableui-special-spring"],
         toolbarspring {
           max-width: 142.5px !important;
@@ -227,15 +223,7 @@ in
           flex: 38 80 !important;
         }
 
-        #urlbar > .urlbar-background {
-          border: 0 !important;
-        }
-
         #translations-button {
-          display: none !important;
-        }
-
-        findbar[hidden] {
           display: none !important;
         }
       '';
