@@ -285,7 +285,8 @@ PanelWindow {
                 visible: bell.visible
             }
 
-            // volume: scroll ±2% unless muted, middle click mutes
+            // volume: scroll ±2% unless muted, middle click mutes, a click
+            // opens the mixer (the audio menu)
             Label {
                 id: sound
                 readonly property PwNode sink: Pipewire.defaultAudioSink
@@ -306,8 +307,14 @@ PanelWindow {
 
                 MouseArea {
                     anchors.fill: parent
-                    acceptedButtons: Qt.MiddleButton
-                    onClicked: parent.sink.audio.muted = !parent.sink.audio.muted
+                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: e => {
+                        if (e.button === Qt.LeftButton)
+                            bar.openMenu("audio");
+                        else
+                            parent.sink.audio.muted = !parent.sink.audio.muted;
+                    }
                     onWheel: w => {
                         const audio = parent.sink?.audio;
                         if (!audio || audio.muted)

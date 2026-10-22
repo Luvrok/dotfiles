@@ -18,6 +18,8 @@ PanelWindow {
     readonly property bool critical: n?.urgency === NotificationUrgency.Critical
     // the countdown, 1 to 0
     property real left: 1
+    // it just came up, hyprland slides it in
+    property bool fresh: false
     readonly property string icon: {
         if (!n)
             return "";
@@ -62,8 +64,8 @@ PanelWindow {
         if (!visible) {
             screen = Hypr.focusedScreen();
             visible = true;
-        } else
-            swap.restart();
+            fresh = true;
+        }
     }
 
     visible: false
@@ -82,7 +84,11 @@ PanelWindow {
         function onCurrentChanged() {
             popup.follow();
         }
-        function onPopped() {
+        // a new one fades in over the one up, an update just changes
+        function onPopped(same) {
+            if (!same && !popup.fresh)
+                swap.restart();
+            popup.fresh = false;
             popup.restart();
         }
     }

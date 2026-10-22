@@ -349,7 +349,7 @@ Hyprland Lua, QML and shell, no nix in them.
 | `nixos/services/hyprland/quickshell/{Bar,Wallpaper,Hypr,Theme}.qml` | the bar (tags, the open tag's windows as squares, status), `output * bg`, the bar's Hyprland state and the focused screen, gruvbox colors |
 | `nixos/services/hyprland/quickshell/{Notifs,NotifyPopup}.qml` | the notification server (`org.freedesktop.Notifications`), the popup |
 | `nixos/services/hyprland/quickshell/Menu.qml` | rofi -dmenu: the menu window, filter, list, keys, built from `widgets/` |
-| `nixos/services/hyprland/quickshell/widgets/` | the menu parts: `MenuHead` (icon, title, status, pulse), `SearchField` (the text line), `MenuRow`, `KeyHints`, `Meter` and `Threads` (the system menu's bars) |
+| `nixos/services/hyprland/quickshell/widgets/` | the menu parts: `MenuHead` (icon, title, status, pulse), `SearchField` (the text line), `MenuRow`, `KeyHints`, `Meter` and `Threads` (the system menu's bars), `Fader` (a mixer line) |
 | `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass. And System (a small btop), Processes, Calendar and Notifications |
 | `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `wifi` (iwd over d-bus, the menu's networks and the bar's signal), `apps` (the kill menu's apps), `sysmon` (the system menu's numbers), `askpass` and `pinentry` (`hypr-askpass`, `hypr-pinentry` in PATH) |
 
@@ -454,16 +454,28 @@ Hyprland Lua, QML and shell, no nix in them.
   time if it sets one, 0 stays, critical with none stays), a hairline at the bottom runs
   out and stops under the pointer. Left click: the default action (or the
   only one), right: away, middle: dismissed, the other actions are links.
-  A newer one takes the place, `+N` says how many wait. The rest stay in
+  A newer one takes the place (a quick fade), `+N` says how many wait. The rest stay in
   the menu ($mod+n, a click on the bar's bell) until they're dismissed or
   their app closes them, 50 at most: enter runs the default action, one
   with more actions opens them as a page, x dismisses, c clears, d is
   quiet (no popups but critical, a crossed bell in the bar). A progress
-  (the `value` hint: dwm-volume, dwm-brightness) or a transient one only
-  pops up. The same `x-dunst-stack-tag` (or the synchronous hints) of the
-  same app replaces the older one, an app that sends again with its id
-  updates it in place and it pops up again. They survive a quickshell
+  (the `value` hint: dwm-volume, dwm-brightness), a low one with a stack
+  tag ("Volume: Mute") or a transient one only pops up. The same
+  `x-dunst-stack-tag` (or the synchronous hints) of the same app takes the
+  older one's place, an app that sends again with its id updates it: if
+  it's up, the popup stays, its text and bar change and its time starts
+  over (`popped(same)`, no fade, no new slide). They survive a quickshell
   reload (`keepOnReload`), not a restart.
+- Audio ($mod+Shift+d, a click on the bar's volume) is a small
+  pavucontrol: outputs, inputs, the apps that play and the ones that
+  record, live from Quickshell's Pipewire. Each line is a `Fader`: the
+  name (orange: the default device), what an app plays (`media.name`, a
+  tab, a song), a bar with the volume and, inside it, the level of what
+  plays (`PwNodePeakMonitor`), the percent or mute. j/k move, h/l ∓5%
+  (shift 1%), 0-9 sets 10..90% and 0 100%, m mutes, enter makes a device
+  the default or mutes an app. The mouse drags, clicks or scrolls a bar, a
+  left click on a device's name makes it the default, middle or right
+  mutes. Volumes are cubic like wpctl's and pavucontrol's.
 - Pass: enter opens an entry's fields, enter copies one, `t` types it.
   ctrl+a (rofi-pass's autotype key) types the login, tab and the password
   with wtype into the window under the menu (`autotype:` in the entry
@@ -590,6 +602,20 @@ Hyprland Lua, QML and shell, no nix in them.
   `$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/hyprland.lock` lives
   (Hyprland exports the signature to systemd, a stale one points at a dead
   pid or no lock). hyprland.lua stops a dunst left from another session.
+- Quickshell's Pipewire types by `media.class`: an app that plays is
+  `AudioOutStream` (it has the Sink flag, `isSink` is true), one that
+  records `AudioInStream`, so Audio goes by `type`. A level meter is a
+  capture stream named after the program (`.quickshell-wrapped`,
+  `stream.monitor` true): one on a recording stream would meter the
+  meters, so they're only on outputs, inputs and apps, and streams show
+  once they're bound (`ready`) and aren't monitors. The meters live in a
+  `Variants` on the nodes, not in the lines: the Repeater makes its lines
+  again when the list changes, a new meter changes the node list, and the
+  list only changes when its `shape` string does.
+- A menu's own property or function must not take a name Menu has
+  (`shown`, `move`, `title`...), it shadows Menu's and breaks it. An id
+  that's also a property of the same object wins over the property:
+  `id: volume` on the bar's volume label printed the label.
 - Quickshell's `Notification.expireTimeout` is the app's ms passed
   through, its doc says seconds, so the popup counts a small one as
   seconds. The bar's memory is MemTotal - MemAvailable from /proc/meminfo,
@@ -610,7 +636,11 @@ Test without hardware: Hyprland needs a DRM device and doesn't start in a
 container. Notifications need a session bus (`dbus-daemon --session
 --fork --print-address`), send them with `busctl --address=... call
 org.freedesktop.Notifications /org/freedesktop/Notifications
-org.freedesktop.Notifications Notify susssasa{sv}i ...`. Quickshell runs on headless sway (see Sway) with
+org.freedesktop.Notifications Notify susssasa{sv}i ...`. Audio needs
+`pipewire` and `wireplumber` on the stand's XDG_RUNTIME_DIR, null devices
+from `pw-cli create-node adapter '{ factory.name=support.null-audio-sink
+... object.linger=true }'`, apps from `pw-play -P '{ application.name=...
+media.name=... }'`. Quickshell runs on headless sway (see Sway) with
 `QT_QUICK_BACKEND=software`, open a menu with `qs -p <dir> ipc call menu
 open <name>`. wtype only reaches it if a virtual keyboard exists before the
 menu opens (start a `wtype -s 500000 ...` first). The bar needs Hyprland ipc,

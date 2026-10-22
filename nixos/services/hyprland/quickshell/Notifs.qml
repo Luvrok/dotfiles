@@ -7,9 +7,10 @@ import Quickshell.Services.Notifications
 // the notification server, instead of dunst (it stays for i3 and sway, its
 // unit doesn't start under hyprland). one popup at a time, the newest, the
 // rest wait in the notifications menu until they're dismissed or their app
-// takes them back. a progress (the value hint: volume, brightness) and a
-// transient one only pop up. one with the same stack tag as an older one
-// of its app replaces it, like dunst
+// takes them back. a progress (the value hint: volume, brightness), a low
+// one with a stack tag (volume: mute) and a transient one only pop up. one
+// with the same stack tag as an older one of its app takes its place, in
+// the popup too: it stays up and changes, its time starts over
 Singleton {
     id: root
 
@@ -27,8 +28,9 @@ Singleton {
     }
     readonly property int count: list.length
 
-    // it pops up again, even when it's the one up already
-    signal popped
+    // it pops up again, even when it's the one up already. same: it took
+    // the place of the one up (an update, the same stack tag)
+    signal popped(bool same)
 
     function tag(n) {
         const h = n.hints;
@@ -37,16 +39,19 @@ Singleton {
 
     // shown while it pops up only
     function passing(n) {
-        return n.transient || n.hints.value !== undefined;
+        return n.transient || n.hints.value !== undefined || (n.urgency === NotificationUrgency.Low && tag(n) !== "");
     }
 
     function add(n) {
         n.tracked = true;
         const t = tag(n);
-        if (t !== "")
-            for (const o of server.trackedNotifications.values)
-                if (o.appName === n.appName && tag(o) === t)
-                    o.dismiss();
+        const older = t === "" ? [] : server.trackedNotifications.values.filter(o => o.appName === n.appName && tag(o) === t);
+        // the popup moves on to it before the old one goes, so it stays up
+        const same = older.includes(current);
+        if (same)
+            current = n;
+        for (const o of older)
+            o.dismiss();
         // the menu keeps 50
         for (const o of list.slice(49))
             o.expire();
@@ -54,7 +59,7 @@ Singleton {
         if (n.lastGeneration)
             note(n);
         else
-            raise(n);
+            raise(n, same);
     }
 
     function note(n) {
@@ -62,15 +67,16 @@ Singleton {
         stamp++;
     }
 
-    function raise(n) {
+    function raise(n, same) {
         note(n);
         if (quiet && n.urgency !== NotificationUrgency.Critical) {
             if (passing(n))
                 n.expire();
             return;
         }
+        const up = current === n;
         current = n;
-        popped();
+        popped(same || up);
     }
 
     // the popup is done with it: time's up or clicked away
