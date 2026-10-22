@@ -106,7 +106,7 @@
       sysstat
       util-linux
       vnstat
-      calibre # ebook convert
+      # calibre # ebook convert
       glances
       acl
       inotify-info

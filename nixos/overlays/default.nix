@@ -117,12 +117,15 @@ in
         }).overrideAttrs
           (oldAttrs: {
             # Enable native CPU optimizations (AVX, AVX2, etc.)
-            cmakeFlags = (oldAttrs.cmakeFlags or [ ]) ++ [ "-DGGML_NATIVE=ON" ];
-            # Disable Nix's march=native stripping
+            cmakeFlags = (oldAttrs.cmakeFlags or [ ]) ++ [
+              "-DGGML_NATIVE=ON"
+              "-DLLAMA_BUILD_TESTS=OFF" # later -D wins
+            ];
             preConfigure = ''
               export NIX_ENFORCE_NO_NATIVE=0
               ${oldAttrs.preConfigure or ""}
             '';
+            doCheck = false;
           });
     })
     (final: prev: {

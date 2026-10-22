@@ -14,8 +14,8 @@
     ./libretranslate
     ./kiss-worker.nix
     ./subtitle-translator
-    ./embeddings.nix
-    ./docs-mcp
+    # ./embeddings.nix
+    # ./docs-mcp
   ];
 
   sops.defaultSopsFile = ../../secrets/barnard.yaml;
@@ -112,7 +112,7 @@
     glances
     openssl
     ranger
-    calibre
+    # calibre
     age
     sops
     tmux
