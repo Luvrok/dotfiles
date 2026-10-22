@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# the systemd menu's units (Units.qml) and what it does to them. system
+# units go through sudo -A, the password is asked by the askpass menu
+#   units list                  a json array: [{unit, scope, active, sub,
+#                               description, enabled}], services and timers
+#   units do <scope> <verb> <unit>   start, stop, restart, enable, disable
+#   units log <scope> <unit>    the last 80 lines of its journal
+set -u
+
+ctl() {
+  if [ "$1" = user ]; then
+    shift
+    systemctl --user "$@"
+  else
+    shift
+    systemctl "$@"
+  fi
+}
+
+case ${1:-} in
+  list)
+    for scope in system user; do
+      jq -n --arg scope "$scope" \
+        --argjson units "$(ctl "$scope" list-units --type=service,timer --all --output=json --no-pager 2>/dev/null || echo '[]')" \
+        --argjson files "$(ctl "$scope" list-unit-files --type=service,timer --output=json --no-pager 2>/dev/null || echo '[]')" '
+        ($files | map({(.unit_file): .state}) | add // {}) as $state
+        | $units | map({unit, scope: $scope, active, sub, description, enabled: ($state[.unit] // "")})'
+    done | jq -sc 'add'
+    ;;
+  do)
+    [ $# -eq 4 ] || exit 2
+    case $3 in start | stop | restart | enable | disable) ;; *) exit 2 ;; esac
+    if [ "$2" = user ]; then
+      systemctl --user "$3" "$4"
+    else
+      SUDO_ASKPASS=$(command -v hypr-askpass) sudo -A systemctl "$3" "$4"
+    fi
+    ;;
+  log)
+    [ $# -eq 3 ] || exit 2
+    if [ "$2" = user ]; then
+      journalctl --user-unit "$3" -n 80 -o short --no-pager
+    else
+      journalctl -u "$3" -n 80 -o short --no-pager
+    fi
+    ;;
+  *) exit 2 ;;
+esac

@@ -292,6 +292,24 @@ ShellRoot {
         }
     }
     LazyLoader {
+        active: shell.menu === "units"
+        Units {
+            screen: shell.menuScreen
+            parentMenu: shell.menuParent
+            onDone: shell.close("units")
+            onGoTo: name => shell.swap(name)
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "switches"
+        Switches {
+            screen: shell.menuScreen
+            parentMenu: shell.menuParent
+            onDone: shell.close("switches")
+            onGoTo: name => shell.swap(name)
+        }
+    }
+    LazyLoader {
         active: shell.menu === "windows"
         Windows {
             screen: shell.menuScreen

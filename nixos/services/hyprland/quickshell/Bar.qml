@@ -258,6 +258,23 @@ PanelWindow {
             }
             Sep {}
 
+            // the switches that are on (vpn, zapret, dnscrypt), a click opens
+            // the switches menu
+            Label {
+                id: switches
+                readonly property var on: Toggles.list.filter(t => Toggles.isOn(t.id))
+                visible: on.length > 0
+                text: on.map(t => t.icon).join(" ")
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: bar.openMenu("switches")
+                }
+            }
+            Sep {
+                visible: switches.visible
+            }
+
             // notifications that wait, a crossed bell while the popups are
             // off. left click: the menu, right: popups off and on, middle:
             // clear
