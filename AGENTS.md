@@ -511,7 +511,7 @@ Hyprland Lua, QML and shell, no nix in them.
 - Nix ($mod+Shift+u, the i3 and sway key calls a nixos_menu that isn't
   there): sapply, supdate, sclean
   and `sapply-remote` / `sclean-remote` for the hosts in its `hosts`
-  (flake and ssh name). Enter types the command into a mini kitty
+  (flake name, resolved through `networking.hosts` in nixos/network.nix). Enter types the command into a mini kitty
   scratchpad (`special:spnix`, $mod+Ctrl+u, font 8, under the bar on the
   right), `scripts/nixrun` shows it first and starts it when it's not up.
   It's a plain scratchpad: hide it while it builds, the scripts' own

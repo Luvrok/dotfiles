@@ -39,6 +39,14 @@ in
     usePredictableInterfaceNames = true;
     networkmanager.enable = false;
 
+    # the servers by name (/etc/hosts): ssh root@jedha, sapply-remote, the
+    # hyprland nix menu. jedha by wifi like jedha-tunnel.nix, its eth is .216
+    hosts = {
+      "192.168.0.217" = [ "jedha" ];
+      "192.168.0.5" = [ "mos-eisley" ];
+      "45.38.20.187" = [ "kessel" ];
+    };
+
     firewall = {
       enable = true;
       trustedInterfaces = [ "virbr0" ];
