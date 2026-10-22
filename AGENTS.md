@@ -613,7 +613,7 @@ Hyprland Lua, QML and shell, no nix in them.
   (`fakefs` in hyprland.lua remembers it, a reload forgets). Classes in
   `real_fullscreen` (steam games, gamescope) and the `game` content type
   get real fullscreen, $mod+Shift+y gives it to anything (direct scanout,
-  the windows behind fade out, no animation), on a fake one it comes
+  it grows while the windows behind fade out), on a fake one it comes
   back to fake. mpv in fake fullscreen has the same picture, only direct
   scanout is gone. Idle: `idle_inhibit` "focus" on a fake one, mpv and
   browsers inhibit on their own too.
@@ -687,7 +687,7 @@ Hyprland Lua, QML and shell, no nix in them.
   drift a few percent like picom, so they pop from 94%. Workspaces
   (`slidefade 6%`) and special workspaces (`slidefadevert top 6%`) can.
   Hyprland picks the switch direction by workspace id, like i3-ws-anim's tags.
-  The bar and the wallpaper have `no_anim`, fullscreen windows too.
+  The bar and the wallpaper have `no_anim`.
 - Real fullscreen fades every other window of the tag and the bar to 0
   (`setFullscreenFadeAnimation`, the `fadeIn` speed, no option), the
   wallpaper showed around a window growing to fullscreen. Hence the fake
@@ -696,8 +696,13 @@ Hyprland Lua, QML and shell, no nix in them.
   but `window.update_rules` does (rules can match
   `fullscreen_state_client`), hyprland.lua floats or tiles the window a
   timer tick later, not in the middle of the rule pass. `fullscreen_state`
-  with internal 0 and client 2 is what the app sees, the dispatcher turns
-  sync off for that window too.
+  with internal 0 and client 2 is what the app sees. The dispatcher leaves
+  sync on when both states match, `set_prop sync_fullscreen unset` after
+  each one gives the rule back.
+- Each layout keeps its own fullscreen states. Telling a tile it's
+  fullscreen and then floating it left the state with master, and $mod+y
+  froze Hyprland. The window floats first, then gets client 2 (like
+  telegram's viewer), an app's request on a tile is taken back first.
 - monocle's only layoutmsgs are cyclenext and cycleprev, an `mfact` is a
   Lua runtime error (top right), so $mod+h/l do nothing there.
 - A window resize in master (keys or mouse) never animates, the layout

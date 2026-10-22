@@ -110,16 +110,15 @@ hl.animation({ leaf = "fadeSwitch", enabled = false })
 hl.animation({ leaf = "border", enabled = false })
 hl.animation({ leaf = "borderangle", enabled = false })
 
--- the bar and the wallpaper just appear, fullscreen windows take the screen
--- at once. the quickshell menus sit under the bar on the right, they slide
--- in from the right edge and fade, like a tag switch drifts
+-- the bar and the wallpaper just appear. the quickshell menus sit under the
+-- bar on the right, they slide in from the right edge and fade, like a tag
+-- switch drifts
 hl.layer_rule({ match = { namespace = "^(bar|wallpaper|shot)$" }, no_anim = true })
 hl.layer_rule({ match = { namespace = "^menu$" }, animation = "slide right", dim_around = true })
 -- the notification popup stays mapped and slides itself (NotifyPopup.qml):
 -- a layer that unmaps while a menu holds its focus grab clears the grab,
 -- the menu closed whenever a popup ran out
 hl.layer_rule({ match = { namespace = "^notification$" }, no_anim = true })
-hl.window_rule({ match = { fullscreen = true }, no_anim = true })
 
 -- x11 apps (st, nsxiv, dmenu) read colors and fonts from ~/.Xresources, xrdb
 -- below. xwayland starts with hyprland and stays
@@ -239,6 +238,16 @@ local function tiled_order(ws)
     return list
 end
 
+-- the dispatcher leaves sync on for a window whose two states match, then
+-- an app's own request would be real fullscreen. unset: the rule above again
+local function fs_state(w, internal, client)
+    hl.dispatch(hl.dsp.window.fullscreen_state({ internal = internal, client = client, action = "set", window = w }))
+    hl.dispatch(hl.dsp.window.set_prop({ prop = "sync_fullscreen", value = "unset", window = w }))
+end
+
+-- the window floats first and then is told it's fullscreen, like telegram's
+-- viewer: the state lives with the layout that has the window. an app's own
+-- request left it with master's, so that one is taken back first
 local function fakefs_enter(w)
     local m = w.monitor
     if fakefs[w.address] or not m then
@@ -253,7 +262,9 @@ local function fakefs_enter(w)
         end
     end
     fakefs[w.address] = rec
-    hl.dispatch(hl.dsp.window.fullscreen_state({ internal = 0, client = 2, action = "set", window = w }))
+    if w.fullscreen_client ~= 0 and not w.floating then
+        fs_state(w, 0, 0)
+    end
     if w.floating then
         hl.dispatch(hl.dsp.window.alter_zorder({ mode = "top", window = w }))
     else
@@ -262,6 +273,7 @@ local function fakefs_enter(w)
     hl.dispatch(hl.dsp.window.tag({ tag = "+fakefs", window = w }))
     hl.dispatch(hl.dsp.window.resize({ x = m.width / m.scale, y = m.height / m.scale, window = w }))
     hl.dispatch(hl.dsp.window.move({ x = m.x, y = m.y, window = w }))
+    fs_state(w, 0, 2)
 end
 
 local function fakefs_exit(w)
@@ -270,7 +282,7 @@ local function fakefs_exit(w)
         return
     end
     fakefs[w.address] = nil
-    hl.dispatch(hl.dsp.window.fullscreen_state({ internal = 0, client = 0, action = "set", window = w }))
+    fs_state(w, 0, 0)
     hl.dispatch(hl.dsp.window.tag({ tag = "-fakefs", window = w }))
     if rec.floating then
         -- where it was on the monitor it's on now
@@ -324,12 +336,12 @@ local function fakefs_sync(w)
     local client, internal, fake = w.fullscreen_client, w.fullscreen, fakefs[w.address] ~= nil
     if client == 2 and internal == 0 and not fake then
         if wants_real(w) then
-            hl.dispatch(hl.dsp.window.fullscreen_state({ internal = 2, client = 2, action = "set", window = w }))
+            fs_state(w, 2, 2)
         else
             fakefs_enter(w)
         end
     elseif client == 0 and internal == 2 then
-        hl.dispatch(hl.dsp.window.fullscreen_state({ internal = 0, client = 0, action = "set", window = w }))
+        fs_state(w, 0, 0)
         fakefs_exit(w)
     elseif client == 0 and fake then
         fakefs_exit(w)
@@ -495,8 +507,8 @@ end)
 -- windows
 hl.bind(mod .. " + SHIFT + b", qs("bar toggle"))
 -- fake fullscreen, see the windows section. $mod+shift+y: real
--- fullscreen for games (direct scanout, the windows behind fade out). a
--- fake one comes back once the real one ends
+-- fullscreen for games (direct scanout, the windows behind fade out while
+-- it grows). a fake one comes back once the real one ends
 hl.bind(mod .. " + y", function()
     local w = hl.get_active_window()
     if not w then
@@ -505,7 +517,7 @@ hl.bind(mod .. " + y", function()
     if fakefs[w.address] then
         fakefs_exit(w)
     elseif w.fullscreen ~= 0 then
-        hl.dispatch(hl.dsp.window.fullscreen_state({ internal = 0, client = 0, action = "set" }))
+        fs_state(w, 0, 0)
     else
         fakefs_enter(w)
     end
@@ -516,10 +528,9 @@ hl.bind(mod .. " + SHIFT + y", function()
         return
     end
     if w.fullscreen == 2 then
-        local client = fakefs[w.address] and 2 or 0
-        hl.dispatch(hl.dsp.window.fullscreen_state({ internal = 0, client = client, action = "set" }))
+        fs_state(w, 0, fakefs[w.address] and 2 or 0)
     else
-        hl.dispatch(hl.dsp.window.fullscreen_state({ internal = 2, client = 2, action = "set" }))
+        fs_state(w, 2, 2)
     end
 end)
 
