@@ -7,7 +7,9 @@ import qs
 // in PATH like rofi-menu, that's thousands on nixos), the ones run before
 // on top, most used first. ~/.local/share/hypr-run holds "count<tab>id".
 // enter with no match runs the typed text as a command, one that ends
-// with ; runs in a terminal
+// with ; runs in a terminal. alt+enter runs the app or the command through
+// xray: proxychains-ng (/etc/proxychains-xray.conf) and the *_proxy vars
+// for what it can't catch (go, static binaries)
 Menu {
     id: menu
 
@@ -42,21 +44,26 @@ Menu {
         return [Quickshell.env("TERMINAL") || "kitty", "-e", ...command];
     }
 
-    function launch(entry) {
+    // through xray: proxychains and the proxy vars, then the command
+    function proxied(command) {
+        const p = "http://127.0.0.1:10808";
+        return ["env", `http_proxy=${p}`, `https_proxy=${p}`, `HTTP_PROXY=${p}`, `HTTPS_PROXY=${p}`, "all_proxy=socks5://127.0.0.1:10808", "proxychains4", "-q", "-f", "/etc/proxychains-xray.conf", ...command];
+    }
+
+    function launch(entry, vpn) {
         bump(entry.id);
+        const command = entry.runInTerminal ? terminal(entry.command) : entry.command;
         Quickshell.execDetached({
-            command: entry.runInTerminal ? terminal(entry.command) : entry.command,
+            command: vpn ? proxied(command) : command,
             workingDirectory: entry.workingDirectory
         });
     }
 
-    function runCommand(cmd) {
+    function runCommand(cmd, vpn) {
         if (cmd.trim() === "")
             return;
-        if (cmd.endsWith(";"))
-            Quickshell.execDetached(terminal(["sh", "-c", cmd.slice(0, -1)]));
-        else
-            Quickshell.execDetached(["sh", "-c", cmd]);
+        const command = cmd.endsWith(";") ? terminal(["sh", "-c", cmd.slice(0, -1)]) : ["sh", "-c", cmd];
+        Quickshell.execDetached(vpn ? proxied(command) : command);
     }
 
     title: "run"
@@ -64,6 +71,19 @@ Menu {
     prompt: "app or command"
     input: true
     enterHint: "run"
+    actions: [["alt+enter", "via xray"]]
+
+    keys: e => {
+        if (!((e.key === Qt.Key_Return || e.key === Qt.Key_Enter) && e.modifiers & Qt.AltModifier))
+            return false;
+        hide();
+        if (current >= 0)
+            launch(apps[current], true);
+        else
+            runCommand(menu.text, true);
+        done();
+        return true;
+    }
     empty: "looking for apps…"
     lines: 10
 

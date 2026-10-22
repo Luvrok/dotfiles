@@ -397,7 +397,7 @@ PanelWindow {
             }
             MouseArea {
                 anchors.fill: parent
-                onClicked: shot.inkAt = (shot.inkAt + 1) % shot.inks.length
+                onClicked: shot.colorAt = (shot.colorAt + 1) % shot.colors.length
                 onWheel: w => shot.lineWidth = Math.max(1, Math.min(12, shot.lineWidth + (w.angleDelta.y > 0 ? 1 : -1)))
             }
         }

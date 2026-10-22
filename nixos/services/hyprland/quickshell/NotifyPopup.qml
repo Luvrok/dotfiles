@@ -236,9 +236,13 @@ PanelWindow {
                 }
             }
 
-            // the actions but the default one, the click takes them
+            // the actions but the default one, the click takes them. reply
+            // opens the menu's text line for it
             Flow {
-                readonly property var acts: (popup.n?.actions ?? []).filter(a => a.identifier !== "default" && a.text !== "")
+                readonly property var acts: [...(popup.n?.hasInlineReply ? [{
+                            text: popup.n.inlineReplyPlaceholder || "reply",
+                            reply: true
+                        }] : []), ...(popup.n?.actions ?? []).filter(a => a.identifier !== "default" && a.identifier !== "inline-reply" && a.text !== "")]
                 visible: acts.length > 0
                 x: popup.textX - 1
                 width: parent.width - x - 12
@@ -260,7 +264,12 @@ PanelWindow {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: parent.modelData.invoke()
+                            onClicked: {
+                                if (parent.modelData.reply)
+                                    Notifs.reply(popup.n);
+                                else
+                                    parent.modelData.invoke();
+                            }
                         }
                     }
                 }

@@ -28,6 +28,11 @@
       cp ${./hyprland.lua} $out
     '';
   environment.etc."xdg/quickshell/hyprland".source = ./quickshell;
+  # the lock screen's password (quickshell/Lock.qml, PamContext "quickshell")
+  security.pam.services.quickshell = { };
+
+  # alt+enter in the run menu: an app through xray
+  environment.etc."proxychains-xray.conf".source = ./proxychains.conf;
 
   environment.systemPackages = with pkgs; [
     quickshell
@@ -82,6 +87,8 @@
     wtype
     # the player's visualizer
     cava
+    # the run menu's alt+enter
+    proxychains-ng
     # the tools menu: color picker, calc, the emoji's names
     hyprpicker
     libqalculate

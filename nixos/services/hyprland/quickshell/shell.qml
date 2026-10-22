@@ -106,6 +106,27 @@ ShellRoot {
     // the notification popup, Notifs is the server
     NotifyPopup {}
 
+    // the lock screen: `lock now`
+    Lock {
+        id: lockScreen
+    }
+
+    IpcHandler {
+        target: "lock"
+        function now(): void {
+            shell.menu = "";
+            lockScreen.lock();
+        }
+    }
+
+    Connections {
+        target: Notifs
+        function onReplyWanted() {
+            shell.menu = "";
+            shell.open("notifications");
+        }
+    }
+
     IpcHandler {
         target: "notifications"
         // the popup goes, it stays in the menu

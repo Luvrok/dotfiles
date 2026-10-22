@@ -54,6 +54,8 @@ hl.config({
         disable_hyprland_logo = true,
         disable_splash_rendering = true,
         force_default_wallpaper = 0,
+        -- a quickshell that dies while locked can lock again when it's back
+        allow_session_lock_restore = true,
     },
 
     -- config errors at the bottom, like the notifications. hyprland's own
@@ -458,7 +460,9 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("systemctl --user start hyprland-session.target")
     hl.exec_cmd("xrdb -merge ~/.Xresources")
     hl.exec_cmd("wl-paste --watch cliphist -max-items 200 store")
-    hl.exec_cmd([[swayidle -w timeout 300 "hyprctl dispatch \"hl.dsp.dpms({ action = 'disable' })\"" resume "hyprctl dispatch \"hl.dsp.dpms({ action = 'enable' })\""]])
+    -- the lock screen is quickshell's (Lock.qml): loginctl lock-session (the
+    -- power menu) and suspend lock it
+    hl.exec_cmd([[swayidle -w timeout 300 "hyprctl dispatch \"hl.dsp.dpms({ action = 'disable' })\"" resume "hyprctl dispatch \"hl.dsp.dpms({ action = 'enable' })\"" lock "qs -c hyprland ipc call lock now" before-sleep "qs -c hyprland ipc call lock now"]])
     hl.exec_cmd("sway-audio-idle-inhibit")
     hl.exec_cmd("gammastep -m wayland -l 59.9343:30.3351 -t 5000:4000")
     -- quickshell is the notification server, it takes over once a dunst
