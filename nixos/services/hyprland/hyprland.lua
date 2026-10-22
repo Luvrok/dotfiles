@@ -241,6 +241,8 @@ hl.bind(mod .. " + Escape", qs("menu open system"))
 hl.bind(mod .. " + SHIFT + Escape", qs("menu open processes"))
 hl.bind(mod .. " + CTRL + c", qs("menu open calendar"))
 hl.bind(mod .. " + n", qs("menu open notifications"))
+-- the small tools: emoji, calc, color, ocr, shot
+hl.bind(mod .. " + a", qs("menu open tools"))
 hl.bind(mod .. " + SHIFT + n", qs("notifications close"))
 hl.bind(mod .. " + o", hl.dsp.exec_cmd("kitty --class movies -e yazi /media/outer-1"))
 

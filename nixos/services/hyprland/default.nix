@@ -69,7 +69,14 @@
     hyprprop
     # pass types the login with it
     wtype
+    # the tools menu: color picker, calc, the emoji's names
+    hyprpicker
+    libqalculate
+    unicode-emoji
   ];
+
+  # the emoji menu reads /run/current-system/sw/share/unicode/emoji
+  environment.pathsToLink = [ "/share/unicode" ];
 
   # hyprland.lua starts and stops it, like sway-session.target in the sway module
   systemd.user.targets.hyprland-session = {

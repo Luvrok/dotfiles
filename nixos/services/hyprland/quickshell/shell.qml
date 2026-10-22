@@ -18,6 +18,8 @@ ShellRoot {
     // the open menu, it shows on the monitor that had focus
     property string menu: ""
     property ShellScreen menuScreen: null
+    // the menu the open one came from (tools), its q goes back there
+    property string menuParent: ""
     property ShellScreen askScreen: null
     // the password prompt, it opens over a menu that waits for it (pass
     // runs gpg, gpg asks)
@@ -37,13 +39,16 @@ ShellRoot {
         if (same)
             return;
         menuScreen = screen ?? Hypr.focusedScreen();
+        menuParent = "";
         menu = name;
     }
 
-    // another menu on the same monitor, later: the one asking is unloaded
-    function swap(name) {
+    // another menu on the same monitor, later: the one asking is unloaded.
+    // parent: the menu its q goes back to
+    function swap(name, parent) {
         Qt.callLater(() => {
             menu = "";
+            menuParent = parent ?? "";
             menu = name;
         });
     }
@@ -230,6 +235,32 @@ ShellRoot {
         Notifications {
             screen: shell.menuScreen
             onDone: shell.close("notifications")
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "tools"
+        Tools {
+            screen: shell.menuScreen
+            onDone: shell.close("tools")
+            onGoTo: name => shell.swap(name, "tools")
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "emoji"
+        Emoji {
+            screen: shell.menuScreen
+            parentMenu: shell.menuParent
+            onDone: shell.close("emoji")
+            onGoTo: name => shell.swap(name)
+        }
+    }
+    LazyLoader {
+        active: shell.menu === "calc"
+        Calc {
+            screen: shell.menuScreen
+            parentMenu: shell.menuParent
+            onDone: shell.close("calc")
+            onGoTo: name => shell.swap(name)
         }
     }
     LazyLoader {

@@ -49,7 +49,9 @@ PanelWindow {
     // hides them
     property string enterHint: "pick"
     property var actions: []
-    property var hints: input && !searchable ? [["enter", enterHint], ...(lines > 0 ? [["↑↓", "move"]] : []), ...actions, ["esc", "close"]] : input ? [["enter", enterHint], ["↑↓", "move"], ["tab", "list"], ["q", "back"], ["esc", "close"]] : [["j/k", "move"], ["enter", enterHint], ...actions, ...(searchable ? [["/", "search"]] : []), ["esc", "close"]]
+    property var hints: input && !searchable ? [["enter", enterHint], ...(lines > 0 ? [["↑↓", "move"]] : []), ...actions, ...upHint, ["esc", "close"]] : input ? [["enter", enterHint], ["↑↓", "move"], ["tab", "list"], ["q", "back"], ["esc", "close"]] : [["j/k", "move"], ["enter", enterHint], ...actions, ...(searchable ? [["/", "search"]] : []), ...upHint, ["esc", "close"]]
+    // back to the menu it came from: q, or backspace while typing
+    readonly property var upHint: parentMenu !== "" && atTop ? [[input ? "⌫" : "q", parentMenu]] : []
     // rows in the accent color: the connected network, the default sink
     property var active: []
     // in the list when there are no rows
@@ -67,6 +69,10 @@ PanelWindow {
     // a menu's own keys, returns true if it took the key. it gets the list's
     // keys, tab and every ctrl, alt or super key
     property var keys: null
+    // the menu it was opened from (tools), q goes back there. atTop: the
+    // menu is on its first page, a page of its own goes back first
+    property string parentMenu: ""
+    property bool atTop: true
 
     property var rows: []
     property var shown: []
@@ -123,6 +129,14 @@ PanelWindow {
     // stay open and pulse while something runs, show() ends it
     function wait(label) {
         busy = label;
+    }
+
+    // back a page, or to the menu it came from
+    function up() {
+        if (parentMenu !== "" && atTop)
+            goTo(parentMenu);
+        else
+            back();
     }
 
     function cancel() {
@@ -257,7 +271,7 @@ PanelWindow {
             else if (searchable && field.text === "" && key(e, "q"))
                 closeSearch(false);
             else if (k === Qt.Key_Backspace && field.text === "")
-                back();
+                up();
             else if (key(e, "a", ctrl))
                 field.input.cursorPosition = 0;
             else if (key(e, "e", ctrl))
@@ -289,8 +303,10 @@ PanelWindow {
             openSearch();
         else if (key(e, "q") && field.text !== "")
             closeSearch(false);
+        else if (key(e, "q") && parentMenu !== "" && atTop)
+            goTo(parentMenu);
         else if (k === Qt.Key_Backspace || key(e, "h"))
-            back();
+            up();
     }
 
     visible: false

@@ -350,7 +350,8 @@ Hyprland Lua, QML and shell, no nix in them.
 | `nixos/services/hyprland/quickshell/{Notifs,NotifyPopup}.qml` | the notification server (`org.freedesktop.Notifications`), the popup |
 | `nixos/services/hyprland/quickshell/Menu.qml` | rofi -dmenu: the menu window, filter, list, keys, built from `widgets/` |
 | `nixos/services/hyprland/quickshell/widgets/` | the menu parts: `MenuHead` (icon, title, status, pulse), `SearchField` (the text line), `MenuRow`, `KeyHints`, `Meter` and `Threads` (the system menu's bars), `Fader` (a mixer line) |
-| `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass. And System (a small btop), Processes, Calendar and Notifications |
+| `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass. And System (a small btop), Processes, Calendar, Notifications, and Tools with Emoji and Calc |
+| `nixos/services/hyprland/TODO.md` | what's left to do here, a plain list |
 | `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `wifi` (iwd over d-bus, the menu's networks and the bar's signal), `apps` (the kill menu's apps), `sysmon` (the system menu's numbers), `route` (the audio menu's wires), `askpass` and `pinentry` (`hypr-askpass`, `hypr-pinentry` in PATH) |
 
 - Both configs sit in `/etc/xdg` and are found through `XDG_CONFIG_DIRS`,
@@ -482,6 +483,24 @@ Hyprland Lua, QML and shell, no nix in them.
   the mic, the mic into the speakers, an app on two outputs. A line says
   its wires besides the usual: `→ Discord` on the app, `← LibreWolf` on
   the recorder.
+- Tools ($mod+a) keeps the small tools behind one key: big squares, the
+  key that opens one in its corner (e emoji, c calc, p color with
+  hyprpicker, o ocr, s a region shot). One with a menu opens in its place
+  (`goTo`, shell.qml's `swap(name, "tools")` sets `menuParent`), the
+  others run. In a tool q goes back (backspace in an empty text line),
+  `parentMenu` and `atTop` in Menu, esc closes. New tools go into its
+  `tools` list, the old menus keep their own keys.
+- Emoji: the symbols a layout lacks (— « » → ≈...) and every emoji of
+  unicode's `emoji-test.txt` (`unicode-emoji`, `/share/unicode` is in
+  `pathsToLink`), found by name, the recent ones first
+  (`~/.local/share/hypr-emoji`). Enter copies, alt+t types it with wtype.
+- Calc: qalc (libqalculate) as you type, `LC_ALL=C` for the dot, units
+  and currencies too. Enter copies the answer and keeps it in the list,
+  ↑↓ and enter copy an older one (`startOnFirst: false`, so enter takes
+  the typed one).
+- Clipboard shows a picture under the cursor above the text line:
+  cliphist's `[[ binary data ... png 640x360 ]]` line is decoded once into
+  `$XDG_RUNTIME_DIR/hypr-clip/<id>.<type>`.
 - Volume and brightness keys repeat while held (`repeating`), they and
   the mute keys work on the lock screen too (`locked`). XF86AudioMicMute
   mutes the default input.
