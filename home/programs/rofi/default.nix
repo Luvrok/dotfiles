@@ -12,12 +12,12 @@
     plugins = with pkgs; [
       rofi-calc
     ];
-    pass = {
-      enable = true;
-      package = pkgs.rofi-pass;
-      stores = [ "$HOME/.password-store" ];
-      extraConfig = import ./rofi-pass.nix { inherit lib pkgs config; };
-    };
+    # pass = {
+    #   enable = true;
+    #   package = pkgs.rofi-pass;
+    #   stores = [ "$HOME/.password-store" ];
+    #   extraConfig = import ./rofi-pass.nix { inherit lib pkgs config; };
+    # };
     terminal = "${pkgs.kitty}/bin/kitty";
     extraConfig = {
       kb-accept-entry = "Control+m,Return,KP_Enter";

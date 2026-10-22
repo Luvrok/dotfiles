@@ -21,7 +21,7 @@
     devmon.enable = true;
     displayManager.defaultSession = "none+i3";
     blueman.enable = true;
-    journald.console = "/dev/tty4";
+    # journald.console = "/dev/tty4";
     earlyoom.enable = true;
     thermald.enable = true;
     rgb-off.enable = true;
