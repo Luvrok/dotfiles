@@ -5,6 +5,7 @@ import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Services.Pipewire
+import qs.widgets
 
 // dwm-like bar, the twin of nixos/services/sway/eww: tags, the windows of
 // the open tag as squares, status. hyprland hides it under fullscreen
@@ -257,6 +258,52 @@ PanelWindow {
                 }
             }
             Sep {}
+
+            // what plays (Media.qml): play or pause, a small visualizer, the
+            // title. a click on the icon plays or pauses, on the rest opens
+            // the player menu, the wheel goes to the next or previous track
+            Row {
+                id: media
+                visible: Media.player !== null
+                height: parent.height
+                spacing: 6
+
+                Label {
+                    text: Media.playing ? "\u{f03e4}" : "\u{f040a}"
+                    color: Media.playing ? Theme.selBg : Theme.fg
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Media.player?.togglePlaying()
+                    }
+                }
+                Visualizer {
+                    visible: Media.playing
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 8 * 3 + 7 * 2
+                    height: 12
+                    count: 8
+                }
+                Label {
+                    width: Math.min(implicitWidth, 240)
+                    elide: Text.ElideRight
+                    text: Media.player?.trackTitle || Media.player?.identity || ""
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: bar.openMenu("player")
+                        onWheel: w => {
+                            if (w.angleDelta.y > 0)
+                                Media.player?.previous();
+                            else
+                                Media.player?.next();
+                        }
+                    }
+                }
+            }
+            Sep {
+                visible: media.visible
+            }
 
             // the switches that are on (vpn, zapret, dnscrypt), a click opens
             // the switches menu

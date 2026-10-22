@@ -80,6 +80,8 @@
     hyprprop
     # pass types the login with it
     wtype
+    # the player's visualizer
+    cava
     # the tools menu: color picker, calc, the emoji's names
     hyprpicker
     libqalculate
