@@ -17,11 +17,16 @@ let
     "image/jxl"
   ];
 
+  # shared-mime-info 2.4 renamed some types and kept the old names as
+  # aliases. xdg-open asks for the new name (video/matroska for mkv), the
+  # files and mpv.desktop still use the old one, so both are here
   videoTypes = [
     "video/mp4"
+    "video/matroska"
     "video/x-matroska"
     "video/webm"
     "video/quicktime"
+    "video/vnd.avi"
     "video/x-msvideo"
     "video/mpeg"
     "video/ogg"
@@ -37,12 +42,14 @@ let
     "audio/x-flac"
     "audio/ogg"
     "audio/opus"
+    "audio/vnd.wave"
     "audio/wav"
     "audio/x-wav"
     "audio/aac"
     "audio/mp4"
     "audio/x-m4a"
     "audio/webm"
+    "audio/matroska"
     "audio/x-matroska"
   ];
 
@@ -55,6 +62,7 @@ let
     "application/x-shellscript"
     "application/json"
     "application/toml"
+    "application/yaml"
     "application/x-yaml"
     "application/xml"
     "text/xml"
