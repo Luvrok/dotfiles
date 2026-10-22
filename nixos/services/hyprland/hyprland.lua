@@ -181,6 +181,11 @@ hl.window_rule({ match = { title = ".*termfilechooser.*" }, float = true, size =
 hl.window_rule({ match = { class = "^dragon-drop$" }, float = true, center = true })
 hl.window_rule({ match = { class = "^ffplay$", title = "^android-webcam$" }, float = true })
 
+-- apps ask to be maximized (kitty after a nixpkgs update): a maximized window
+-- covers the tag like monocle with gaps, the master goes under it, and a
+-- scratchpad fills the screen. tiles and floats keep their size instead
+hl.window_rule({ match = { class = ".*" }, suppress_event = "maximize" })
+
 -- telegram's media viewer: the app thinks it's fullscreen, hyprland keeps it
 -- a floating window under the bar, so the windows behind stay visible and
 -- it pops in like any window
@@ -188,7 +193,7 @@ hl.window_rule({
     match = { class = "^org\\.telegram\\.desktop$", title = "^(Media viewer|Просмотр медиа)$" },
     float = true,
     fullscreen_state = "0 2",
-    suppress_event = "fullscreen",
+    suppress_event = "fullscreen maximize",
     move = "0 0",
     size = "monitor_w monitor_h",
     border_size = 0,
