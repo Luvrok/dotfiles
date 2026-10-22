@@ -286,7 +286,9 @@ ShellRoot {
         active: shell.menu === "translate"
         Translate {
             screen: shell.menuScreen
+            parentMenu: shell.menuParent
             onDone: shell.close("translate")
+            onGoTo: name => shell.swap(name)
         }
     }
     LazyLoader {

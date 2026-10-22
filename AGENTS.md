@@ -508,8 +508,8 @@ Hyprland Lua, QML and shell, no nix in them.
 - Clipboard shows a picture under the cursor above the text line:
   cliphist's `[[ binary data ... png 640x360 ]]` line is decoded once into
   `$XDG_RUNTIME_DIR/hypr-clip/<id>.<type>`.
-- Tools also has m player, u systemd, v switches, and s is the
-  screenshot.
+- Tools also has t translate (it had $mod+Shift+y, now real fullscreen),
+  m player, u systemd, v switches, and s is the screenshot.
 - Nix ($mod+Shift+u, the i3 and sway key calls a nixos_menu that isn't
   there): sapply, supdate, sclean
   and `sapply-remote` / `sclean-remote` for the hosts in its `hosts`
@@ -605,6 +605,23 @@ Hyprland Lua, QML and shell, no nix in them.
 - Animations follow picom in i3 (`home/picom.nix`): the same speeds and
   curves, a 6% `slidefade` on a tag switch, the scratchpad slides down. No
   blur, shadows or rounding.
+- Fullscreen is fake ($mod+y, and what an app asks for: mpv's f, a video,
+  a browser): the app is told it's fullscreen, the window floats, gets
+  the monitor's size with no border and glides there and back like a
+  tile, over the bar (a bottom layer). The windows behind stay. Leaving
+  it tiles the window again and swaps it back to its place in master
+  (`fakefs` in hyprland.lua remembers it, a reload forgets). Classes in
+  `real_fullscreen` (steam games, gamescope) and the `game` content type
+  get real fullscreen, $mod+Shift+y gives it to anything (direct scanout,
+  it grows while the windows behind fade out), on a fake one it comes
+  back to fake. mpv in fake fullscreen has the same picture, only direct
+  scanout is gone. Idle: `idle_inhibit` "focus" on a fake one, mpv and
+  browsers inhibit on their own too.
+- Picture-in-Picture isn't pinned, so it can go fullscreen and stays on
+  its tag. alt+p in LibreWolf opens it (`key_togglePictureInPicture` in
+  `home/programs/librewolf/customKeys.json`, about:keyboard's file),
+  $mod+Shift+p sends it to the other monitor in fake fullscreen, again
+  brings it back as it was. The focus stays.
 - hyprland.lua starts `hyprland-session.target` (bound to
   `graphical-session.target`, like `sway-session.target`). The X11-only user
   services stay off, they hang on `nixos-fake-graphical-session.target`.
@@ -670,7 +687,24 @@ Hyprland Lua, QML and shell, no nix in them.
   drift a few percent like picom, so they pop from 94%. Workspaces
   (`slidefade 6%`) and special workspaces (`slidefadevert top 6%`) can.
   Hyprland picks the switch direction by workspace id, like i3-ws-anim's tags.
-  The bar and the wallpaper have `no_anim`, fullscreen windows too.
+  The bar and the wallpaper have `no_anim`.
+- Real fullscreen fades every other window of the tag and the bar to 0
+  (`setFullscreenFadeAnimation`, the `fadeIn` speed, no option), the
+  wallpaper showed around a window growing to fullscreen. Hence the fake
+  one. A rule for every class has `sync_fullscreen = false`: an app's
+  request then changes only its client state, no event fires for that
+  but `window.update_rules` does (rules can match
+  `fullscreen_state_client`), hyprland.lua floats or tiles the window a
+  timer tick later, not in the middle of the rule pass. `fullscreen_state`
+  with internal 0 and client 2 is what the app sees. The dispatcher leaves
+  sync on when both states match, `set_prop sync_fullscreen unset` after
+  each one gives the rule back.
+- Each layout keeps its own fullscreen states. Telling a tile it's
+  fullscreen and then floating it left the state with master, and $mod+y
+  froze Hyprland. The window floats first, then gets client 2 (like
+  telegram's viewer), an app's request on a tile is taken back first.
+- monocle's only layoutmsgs are cyclenext and cycleprev, an `mfact` is a
+  Lua runtime error (top right), so $mod+h/l do nothing there.
 - A window resize in master (keys or mouse) never animates, the layout
   forces warps in `resizeTarget`. `layoutmsg mfact` does animate, so
   $mod+h/l use it on tiled windows. Stack heights have no layoutmsg, so
