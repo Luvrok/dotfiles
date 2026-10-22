@@ -19,6 +19,14 @@ let
     theme = "~/.config/rofi/rofi-librewolf-menu.rasi";
   };
 
+  # unloads the pinned tabs the session restored: firefox gives them a
+  # browser right away, so sidebery showed them as loaded (unload-pinned/)
+  unloadPinned = pkgs.runCommand "unload-pinned-xpi" { nativeBuildInputs = [ pkgs.zip ]; } ''
+    mkdir ext && cp ${./unload-pinned}/* ext/
+    find ext -exec touch -d @315532800 {} +
+    mkdir $out && (cd ext && zip -q -X -r -9 $out/unload-pinned.xpi .)
+  '';
+
   mkProfile = id: {
     inherit id;
     isDefault = id == 0;
@@ -123,6 +131,10 @@ let
         install_url = "file://${rofiTabs.xpi}/rofi-tab-switcher.xpi";
         installation_mode = "force_installed";
         allowed_in_private_browsing = true;
+      };
+      "@unload.pinned" = {
+        install_url = "file://${unloadPinned}/unload-pinned.xpi";
+        installation_mode = "force_installed";
       };
     }
     // builtins.listToAttrs [

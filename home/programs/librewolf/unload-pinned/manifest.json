@@ -1,0 +1,8 @@
+{
+  "manifest_version": 2,
+  "name": "unload pinned",
+  "description": "Unloads the pinned tabs the session restored, so they show as unloaded until opened.",
+  "version": "1.0",
+  "browser_specific_settings": { "gecko": { "id": "@unload.pinned" } },
+  "background": { "scripts": ["background.js"] }
+}
