@@ -42,8 +42,8 @@ hl.config({
     animations = { enabled = true },
 
     master = {
-        mfact = 0.7,
-        orientation = "right",
+        mfact = 0.6,
+        orientation = "left",
         -- new windows go to the bottom of the stack
         new_status = "slave",
     },
