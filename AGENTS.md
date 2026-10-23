@@ -265,10 +265,10 @@ The second number must be 0, NaN comes out of the JSON encoder as `null`.
   merges the nix keys over it (`jq '.[0] * .[1]'`), nix wins. `models.json`
   and the rest are store symlinks, pi only reads them.
 - pi packages are pinned (`npm:name@version`), bump them by hand.
-- `embed` runs on the GPU and is always loaded: preload, `ttl: 0`, a
-  persistent group. Its VRAM (weights plus the compute buffer of a 8192
-  ubatch) stays taken, main models with `--fit` adapt, `qwen-uncensored`
-  (`--fit off`) may not fit then, `--ubatch-size 4096` halves the buffer.
+- `embed` runs on the CPU and is always loaded: preload, `ttl: 0`, a
+  persistent group. On the GPU its VRAM (weights plus the compute buffer
+  of a 8192 ubatch) stayed taken, and `qwen-uncensored` (`--fit off`, all
+  on the GPU) died with `CUBLAS_STATUS_ALLOC_FAILED` on its first request.
   pi-memory's `dimensions` must be the model's width (768), a mismatch
   re-embeds every fact at each session start.
 - `globalTTL` is long on purpose: an unload drops llama-server's prompt

@@ -1,6 +1,6 @@
 # docs-mcp-server: docs in a sqlite index, read-only search over MCP for pi
 # (home/programs/pi). the docs are in sources.nix, the sync timers scrape
-# them with the cli. vectors come from llama-swap's embed (GPU)
+# them with the cli. vectors come from llama-swap's embed (CPU)
 {
   config,
   lib,
