@@ -284,12 +284,17 @@ models:
   # Open WebUI RAG + поиск по памяти pi (settings.json: memory.embedding).
   # Вектор 768 (EmbeddingGemma 2), pi-memory держит то же число.
   # Всегда загружена: preload + ttl 0 + persistent-группа.
+  # docs-mcp (nixos/services/docs-mcp) ходит по алиасу: он хранит имя модели
+  # в индексе. Другая модель или квант = новый алиас там и здесь, иначе
+  # старые и новые векторы смешаются.
   "embed":
-    description: "EmbeddingGemma 2 BF16, CPU. pi-memory"
+    description: "EmbeddingGemma 2 BF16, CPU. pi-memory, docs-mcp"
     cmd: |
       llama-server --port ${PORT} --threads 8
       -m ${embed-model}
       ${embed-args}
+    aliases:
+      - embeddinggemma-2-bf16
     ttl: 0
 
   # Та же EmbeddingGemma 2 + энкодеры картинок/видео/аудио (mmproj).

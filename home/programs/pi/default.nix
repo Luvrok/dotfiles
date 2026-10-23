@@ -2,11 +2,24 @@
   config,
   pkgs,
   lib,
+  osConfig ? { },
   ...
 }:
 let
   llamaSwapHost = "http://localhost:11434";
   searxngUrl = "http://127.0.0.1:11433";
+  docsMcpUrl = "http://127.0.0.1:6280/mcp";
+
+  # the docs index runs on barnard only (nixos/services/docs-mcp)
+  hasDocs = osConfig.virtualisation.oci-containers.containers or { } ? docs-mcp;
+  # names only, so the skill knows what's there without asking
+  docsSources = import ../../../nixos/services/docs-mcp/sources.nix {
+    inherit pkgs;
+    config = osConfig;
+  };
+  docsLibraries = lib.concatStringsSep ", " (
+    lib.sort lib.lessThan (lib.concatMap builtins.attrNames (builtins.attrValues docsSources))
+  );
 
   # Qwen3.8 sampling per thinking level (official Qwen / Unsloth values).
   # llama-swap forces top_k and min_p, the :pi alias leaves the rest to pi.
@@ -216,11 +229,73 @@ let
     video.enabled = false;
   };
 
-  # pi writes settings.json itself (/model and /thinking Ctrl+S,
-  # lastChangelogVersion), a store symlink makes every write fail. So it's a
-  # real file: nix keys are merged over it on each switch and win, the rest
-  # of what pi saved stays.
+  # pi's built-in MCP client. direct: the tools are declared like built-in
+  # ones, a local model calls them more reliably than through codemode
+  # scripts. fetch_url is hidden, pi-web-access's fetch_content does that
+  piMcp.mcpServers = lib.optionalAttrs hasDocs {
+    docs = {
+      url = docsMcpUrl;
+      description = "Search the local documentation index: ${docsLibraries}";
+      exposure = "direct";
+      toolExposure.fetch_url = "hidden";
+      # embedding the query waits for embed while it's busy with a sync
+      timeout = 120;
+    };
+  };
+
+  docsSkill = pkgs.writeTextDir "SKILL.md" ''
+    ---
+    name: docs
+    description: Search the local documentation index for ${docsLibraries}. Use before answering about or writing code for any of these, and instead of web search for them.
+    ---
+
+    # Local docs index
+
+    The `mcp__docs__*` tools search documentation indexed on this machine:
+    ${docsLibraries}. It's faster and more exact than web search for these.
+
+    ## Steps
+
+    1. `mcp__docs__search_docs` with `library` (a name above) and a short
+       English `query` worded the way the docs would say it: option, function
+       or flag names, not a question. `limit` 5 to 10.
+    2. Each result is a passage with its page `url`. When a passage is cut
+       short or you need the whole section, call `mcp__docs__read_page` with
+       that url as `pathOrUrl`.
+    3. Nothing useful: rephrase once with other terms, or try the related
+       library: nixos-manual for NixOS options and modules, nix-manual for
+       the nix CLI and language, nixpkgs-manual for builders, fetchers and
+       overrides, nix-dev for tutorials.
+    4. Still nothing: say so, then use web search.
+
+    ## Rules
+
+    - `mcp__docs__list_libraries` shows everything indexed, also libraries
+      added by hand.
+    - Answer from the passages and name the page url.
+    - Don't make up option names or flags the docs didn't show.
+  '';
+
+  # pi writes settings.json and mcp.json itself (/model and /thinking
+  # Ctrl+S, lastChangelogVersion, /mcp exposure), a store symlink makes
+  # every write fail. So they're real files: nix keys are merged over them
+  # on each switch and win, the rest of what pi saved stays.
   piSettingsFile = pkgs.writeText "pi-settings.json" (builtins.toJSON piSettings);
+  piMcpFile = pkgs.writeText "pi-mcp.json" (builtins.toJSON piMcp);
+
+  jq = lib.getExe pkgs.jq;
+  mergeJson = name: file: ''
+    f=${config.home.homeDirectory}/.pi/agent/${name}
+    run mkdir -p "$(dirname "$f")"
+    if [ -L "$f" ]; then run rm "$f"; fi
+    if [ -s "$f" ] && ${jq} -e . "$f" >/dev/null 2>&1; then
+      tmp=$(mktemp)
+      ${jq} -s '.[0] * .[1]' "$f" ${file} >"$tmp"
+      run mv "$tmp" "$f"
+    else
+      run install -m 644 ${file} "$f"
+    fi
+  '';
 
   # ~/.local/share/pi/npm instead of the read-only store, node available.
   # Done without an overlay so it works with home-manager.useGlobalPkgs = true.
@@ -256,19 +331,13 @@ in
       source = ./pi-skills;
       recursive = true;
     };
+  }
+  // lib.optionalAttrs hasDocs {
+    ".pi/agent/skills/docs".source = docsSkill;
   };
 
-  # after linkGeneration, so the old store symlink is already gone
-  home.activation.piSettings = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-    f=${config.home.homeDirectory}/.pi/agent/settings.json
-    run mkdir -p "$(dirname "$f")"
-    if [ -L "$f" ]; then run rm "$f"; fi
-    if [ -s "$f" ] && ${lib.getExe pkgs.jq} -e . "$f" >/dev/null 2>&1; then
-      tmp=$(mktemp)
-      ${lib.getExe pkgs.jq} -s '.[0] * .[1]' "$f" ${piSettingsFile} >"$tmp"
-      run mv "$tmp" "$f"
-    else
-      run install -m 644 ${piSettingsFile} "$f"
-    fi
-  '';
+  # after linkGeneration, so an old store symlink is already gone
+  home.activation.piSettings = lib.hm.dag.entryAfter [ "linkGeneration" ] (
+    mergeJson "settings.json" piSettingsFile + mergeJson "mcp.json" piMcpFile
+  );
 }

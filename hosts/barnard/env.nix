@@ -4,6 +4,8 @@
   imports = [
     ../../nixos/config/barnard.nix
     ./xray.nix
+    # docs index for pi, vectors from llama-swap
+    ../../nixos/services/docs-mcp
     # wayland sessions next to i3
     ../../nixos/services/sway
     ../../nixos/services/hyprland
