@@ -388,6 +388,13 @@ ShellRoot {
         }
     }
     LazyLoader {
+        active: shell.menu === "keys"
+        Keys {
+            screen: shell.menuScreen
+            onDone: shell.close("keys")
+        }
+    }
+    LazyLoader {
         active: shell.shooting
         Shot {
             screen: shell.shotScreen

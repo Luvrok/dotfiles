@@ -21,6 +21,7 @@
 - `$mod+x` на окно того же тега: фокус переходит.
 - nixos ($mod+Shift+u): apply в мини-kitty ($mod+Ctrl+u), пароль sudo там же, скрыть и вернуть во время сборки, remote на jedha.
 - mpv после home-manager switch виден в меню плеера.
+- Keys ($mod+/): открывается на странице LibreWolf и nvim (kitty со zsh называет окно по команде), поиск `/`.
 
 ## дальше
 
