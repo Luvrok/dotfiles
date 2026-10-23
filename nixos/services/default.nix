@@ -19,7 +19,7 @@
   services = {
     vnstat.enable = true;
     devmon.enable = true;
-    displayManager.defaultSession = "none+i3";
+    displayManager.defaultSession = "hyprland";
     blueman.enable = true;
     # journald.console = "/dev/tty4";
     earlyoom.enable = true;
