@@ -130,7 +130,7 @@ models:
       ${llama}
       ${qwen-uc}
       --ctx-size 65536
-      --gpu-layers all
+      # --gpu-layers all
       -fa on
       -b 1024 -ub 1024
       --fit off

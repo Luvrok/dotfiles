@@ -80,7 +80,7 @@
       shadowsocks-rust
       tcpdump
       tor
-      v2rayn
+      # v2rayn
       wireshark
       proxychains-ng
 
