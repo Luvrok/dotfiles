@@ -5,8 +5,9 @@ import Quickshell
 import Quickshell.Io
 
 // what the switches menu turns on and off, and the bar shows while it's
-// on: vpn (v2rayN and its xray), zapret, dnscrypt-proxy. a check says if
-// it's on, on and off do it. system units go through scripts/units, so
+// on: vpn (xray.service, hosts/barnard/xray.nix), zapret, dnscrypt-proxy.
+// a check says if it's on, on and off do it. xray has a polkit rule, so
+// plain systemctl, the other system units go through scripts/units and
 // sudo asks in the askpass menu. a new switch is a line in `list`
 Singleton {
     id: root
@@ -18,9 +19,9 @@ Singleton {
             id: "vpn",
             name: "vpn",
             icon: "\u{f0582}",
-            check: "pgrep -x xray",
-            on: "setsid -f v2rayN >/dev/null 2>&1; sleep 3",
-            off: "pkill -x v2rayN; pkill -x xray"
+            check: "systemctl is-active -q xray",
+            on: "systemctl start xray",
+            off: "systemctl stop xray"
         },
         {
             key: "z",

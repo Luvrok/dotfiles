@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# the run menu's xray mode: runs a command through v2rayN's mixed port.
+# the run menu's xray mode: runs a command through xray's mixed port.
 # chromium and electron apps get --proxy-server (they skip LD_PRELOAD and
 # the env vars), the rest proxychains-ng (/etc/proxychains-xray.conf) and
 # the *_proxy vars for what it can't catch (go, static binaries)

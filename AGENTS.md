@@ -536,8 +536,10 @@ Hyprland Lua, QML and shell, no nix in them.
   last 80 journal lines (alt+r works there too, h back). System units go
   through `sudo -A` with hypr-askpass, the menu pulses meanwhile.
 - Switches (tools v, a click on the bar's icons): `Toggles.list`, one
-  square each, orange while on, a pulse while it switches. vpn is v2rayN
-  and its xray (on starts v2rayN, off kills both, xray running is on),
+  square each, orange while on, a pulse while it switches. vpn is
+  `xray.service` (`hosts/barnard/xray.nix`: the git-crypted
+  `hosts/barnard/xray.json`, up from boot, restarts 10 s after a crash,
+  a polkit rule lets the user start and stop it without a password),
   zapret is `zapret-discord-youtube.service`, dnscrypt
   `dnscrypt-proxy.service`. Checks run every 10 s, 2 s while the menu is
   open, the bar shows the icons of what's on.
@@ -571,7 +573,7 @@ Hyprland Lua, QML and shell, no nix in them.
   names electron or chrom, or .pak files sit next to the binary) get
   `--proxy-server=socks5://127.0.0.1:10808`, they skip LD_PRELOAD and the
   env vars. The rest `proxychains4 -q -f /etc/proxychains-xray.conf`
-  (socks5 on v2rayN's mixed 10808, names resolve over there) and the
+  (socks5 on xray's mixed 10808, names resolve over there) and the
   `*_proxy` vars for what LD_PRELOAD can't reach (go, static binaries).
 - Run starts apps through `scripts/revive`: element with no tray hides
   on close, a second start says "other instance detected" and quits, the
