@@ -2,8 +2,8 @@
 
 NixOS + home-manager dotfiles. This file covers the X11 desktop: i3, picom
 (pijulius fork) with animations, and the eww bar, plus its Wayland twins on
-sway and Hyprland (with a Quickshell bar and menus). Also the embeddings and docs index on jedha, and the llama.cpp pin
-it shares with barnard. Keep it in sync when you change how these parts
+sway and Hyprland (with a Quickshell bar and menus). Also the embeddings and docs index on jedha, the llama.cpp pin
+it shares with barnard, and the local models (llama-swap) and pi on barnard. Keep it in sync when you change how these parts
 talk to each other.
 
 ## Files
@@ -234,6 +234,38 @@ docs-mcp list | jq -r '.[] | "\(.name) \(.versions[0].status) \(.versions[0].doc
 ```
 
 The second number must be 0, NaN comes out of the JSON encoder as `null`.
+
+## barnard: llama-swap and pi
+
+| Path | What |
+| --- | --- |
+| `nixos/services/llama-swap/config.yaml` | models, sampling filters, groups (plain YAML, `/etc/llama-swap/config.yaml`) |
+| `nixos/services/llama-swap/default.nix` | the service, llama-cpp and sd-cpp in its PATH |
+| `home/programs/pi/default.nix` | pi's `models.json`, `settings.json`, `web-search.json`, the wrapper |
+| `home/programs/pi/pi-permission.json` | pi-permission-system rules, last match wins |
+| `home/programs/pi/qmd.nix` | qmd (notes search) and its skill |
+
+- Every chat model has three IDs: the base one (instruct), `:Thinking` and
+  `:pi`. The first two get their sampling and `enable_thinking` from
+  llama-swap's `setParamsByID`. `:pi` is an empty entry, only an alias, so
+  pi's own `chat_template_kwargs` and sampling reach llama-server. pi picks
+  sampling by thinking level (`samplingParams`,
+  `samplingParamsByThinkingLevel.off` for instruct). `setParams` (top_k,
+  min_p, gemma's all) still applies to `:pi`.
+- `contextWindow` in pi must match `--ctx-size` in the YAML, nix can't read
+  YAML, so both are written by hand.
+- pi writes `settings.json` itself, so it's a real file: an activation step
+  merges the nix keys over it (`jq '.[0] * .[1]'`), nix wins. `models.json`
+  and the rest are store symlinks, pi only reads them.
+- pi packages are pinned (`npm:name@version`), bump them by hand.
+- `embed` (CPU) is always loaded: preload, `ttl: 0`, a persistent group.
+  pi-memory's `dimensions` must be the model's width (768), a mismatch
+  re-embeds every fact at each session start.
+- `globalTTL` is long on purpose: an unload drops llama-server's prompt
+  cache and the next pi turn reprocesses the whole context.
+- llama-cpp is built with ROCm and Vulkan. llama.cpp drops the second copy
+  of the 7800 XT (same PCI id, ROCm registers first) and skips the iGPU while
+  a discrete GPU is there. `--device Vulkan0` tries the Vulkan path.
 
 ## Conventions
 

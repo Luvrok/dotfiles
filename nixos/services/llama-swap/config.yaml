@@ -5,7 +5,11 @@ logLevel: info
 logToStdout: "both"
 
 healthCheckTimeout: 300
-globalTTL: 60
+# Свапом и так управляет группа main, ttl только решает, когда освободить
+# VRAM в простое. Выгрузка теряет prompt cache llama-server, и следующий
+# ход pi заново обрабатывает весь контекст. 60 с было меньше, чем время
+# на чтение одного ответа.
+globalTTL: 900
 includeAliasesInList: true
 
 macros:
@@ -16,6 +20,17 @@ macros:
     sd-server --listen-ip 127.0.0.1 --listen-port ${PORT} --diffusion-fa
   "kv-q8": "--cache-type-k q8_0 --cache-type-v q8_0"
   "kv-q4": "--cache-type-k q4_0 --cache-type-v q4_0"
+  "embed-model": "${models}/embeddinggemma-2/embeddinggemma-2-BF16.gguf"
+  # Общая часть embed и embed-vision. --batch-size нужен вместе с
+  # --ubatch-size: llama.cpp берёт n_ubatch = min(n_batch, n_ubatch),
+  # а n_batch по умолчанию 2048, так что без него --ubatch-size 8192
+  # молча превращался в 2048.
+  "embed-args": >
+    --embeddings --pooling mean
+    --gpu-layers 0
+    --ctx-size 8192
+    --batch-size 8192
+    --ubatch-size 8192
   # MTP-голова лежит внутри GGUF. KV драфта оставлен f16 намеренно: его
   # квантование память не экономит, а acceptance и скорость режет.
   # --parallel 1: параллельные слоты с MTP пока не оптимизированы.
@@ -25,16 +40,23 @@ macros:
     -m ${models}/qwen3.8-27b-UC/Qwen3.8-27B-GSQ-RCO-IQ3_XXS-Uncensored-v1.1.gguf
     --chat-template-file ${models}/qwen3.8-27b-UC/froggeric-qwen3.8-tool-use.jinja
 
-# ---- Сэмплинг Qwen3.8 (официальные значения Qwen / Unsloth) ----
+# ---- Сэмплинг ----
+# Базовый ID и :Thinking держат параметры на сервере (Open WebUI и т.п.).
+# :pi пустой: это только алиас, чтобы до сервера дошли chat_template_kwargs
+# от pi (базовый ID их перетёр бы). Температуру и прочее для :pi pi
+# выбирает сам по уровню thinking: samplingParams в home/programs/pi.
+# setParams ниже действуют и на :pi.
+
+# Qwen3.8 (официальные значения Qwen / Unsloth)
 x-qwen-params: &qwen-params
   filters:
-    setParams: &qwen-common
+    setParams:
       top_k: 20
       min_p: 0.0
 
     setParamsByID:
       # Instruct (без thinking)
-      "${MODEL_ID}": &qwen-instruct
+      "${MODEL_ID}":
         temperature: 0.7
         top_p: 0.8
         presence_penalty: 1.5
@@ -43,33 +65,14 @@ x-qwen-params: &qwen-params
 
       # Thinking. Шаблон в unsloth GGUF по умолчанию думает на xhigh (у froggeric
       # дефолт medium); если думает слишком долго, добавь reasoning_effort: medium
-      "${MODEL_ID}:Thinking": &qwen-thinking
+      "${MODEL_ID}:Thinking":
         temperature: 1.0
         top_p: 0.95
         presence_penalty: 0.0
         chat_template_kwargs:
           enable_thinking: true
 
-      # pi сам шлёт chat_template_kwargs (уровень thinking), здесь их не трогаем.
-      # Для Qwen3.8 в thinking-режиме temp 1.0 рекомендован и для кода;
-      # 0.6 был советом для 3.5/3.6.
-      "${MODEL_ID}:pi":
-        temperature: 1.0
-        top_p: 0.95
-        presence_penalty: 0.0
-
-# То же для GSQ-кванта: автор карточки ставит temp 0.6 ради надёжности tool calls
-x-qwen-gsq-params: &qwen-gsq-params
-  filters:
-    setParams: *qwen-common
-
-    setParamsByID:
-      "${MODEL_ID}": *qwen-instruct
-      "${MODEL_ID}:Thinking": *qwen-thinking
-      "${MODEL_ID}:pi":
-        temperature: 0.6
-        top_p: 0.95
-        presence_penalty: 0.0
+      "${MODEL_ID}:pi": {}
 
 x-gemma-params: &gemma-params
   filters:
@@ -87,9 +90,7 @@ x-gemma-params: &gemma-params
         chat_template_kwargs:
           enable_thinking: true
 
-      # Значение дублирует setParams, нужен только алиас
-      "${MODEL_ID}:pi":
-        top_k: 64
+      "${MODEL_ID}:pi": {}
 
 x-sd-common: &sd-common
   checkEndpoint: none
@@ -116,17 +117,15 @@ models:
 
   # Веса 9.75 GiB, всё на GPU. Abliterated, MTP.
   # VRAM = веса + KV на весь --ctx-size + контекст MTP + compute-буферы,
-  # поэтому влезаемость решают тип KV и размер контекста.
-  # q4_0 KV: конфиг из карточки модели (196K на свободных 16 GB).
-  # 98304 при ~14 GB свободных: оценка, проверь по логу загрузки.
-  # Не влезло или упала скорость: 65536, либо назад на ${kv-q8} + 65536.
-  # --ctx-size дублируется в ctx в default.nix.
+  # поэтому влезаемость решают тип KV и размер контекста. Больше контекста:
+  # ${kv-q4} (карточка модели даёт 196K на свободных 16 GB), проверь по логу.
+  # Автор карточки ставит temp 0.6 ради надёжности tool calls: это в pi.
+  # --ctx-size дублируется в ctx в home/programs/pi/default.nix.
   "qwen-uncensored":
     description: "Qwen3.8 27B GSQ-RCO IQ3_XXS abliterated, fully on GPU. MTP."
     cmd: |
       ${llama}
       ${qwen-uc}
-      --jinja
       --ctx-size 65536
       --gpu-layers all
       -fa on
@@ -135,7 +134,7 @@ models:
       --spec-draft-backend-sampling
       ${kv-q8}
       ${mtp}
-    <<: *qwen-gsq-params
+    <<: *qwen-params
 
   # То же + vision projector (~0.9 GB VRAM). Контекст меньше, чтобы всё влезло;
   # раскладку слоёв решает --fit.
@@ -148,7 +147,7 @@ models:
       --ctx-size 65536
       ${kv-q8}
       ${mtp}
-    <<: *qwen-gsq-params
+    <<: *qwen-params
 
   # ~12 GB, fit целиком кладёт в VRAM. Самая быстрая, простые задачи и поиск.
   "gpt-oss":
@@ -169,9 +168,7 @@ models:
             reasoning_effort: medium
 
         # Для pi: reasoning_effort приходит от pi (low/medium/high).
-        # Значение дублирует setParams, нужен только алиас.
-        "${MODEL_ID}:pi":
-          top_k: 0
+        "${MODEL_ID}:pi": {}
 
   # ~6.7 GB, fully on GPU. Быстрые задачи, поиск (хороший tool use).
   # Она же консолидирует память pi (settings.json: memory.consolidationModel).
@@ -283,22 +280,17 @@ models:
       -H 1024
     <<: *sd-common
 
-  # ---- Эмбеддинги (CPU, всегда загружена) ----
+  # ---- Эмбеддинги (CPU) ----
   # Open WebUI RAG + поиск по памяти pi (settings.json: memory.embedding).
-  # --batch-size нужен вместе с --ubatch-size: llama.cpp берёт
-  # n_ubatch = min(n_batch, n_ubatch), а n_batch по умолчанию 2048,
-  # так что без него --ubatch-size 8192 молча превращался в 2048.
+  # Вектор 768 (EmbeddingGemma 2), pi-memory держит то же число.
+  # Всегда загружена: preload + ttl 0 + persistent-группа.
   "embed":
     description: "EmbeddingGemma 2 BF16, CPU. pi-memory"
     cmd: |
       llama-server --port ${PORT} --threads 8
-      -m ${models}/embeddinggemma-2/embeddinggemma-2-BF16.gguf
-      --embeddings --pooling mean
-      --gpu-layers 0
-      --ctx-size 8192
-      --batch-size 8192
-      --ubatch-size 8192
-    ttl: 600
+      -m ${embed-model}
+      ${embed-args}
+    ttl: 0
 
   # Та же EmbeddingGemma 2 + энкодеры картинок/видео/аудио (mmproj).
   # Пространство векторов общее с embed: текст из embed можно
@@ -308,13 +300,9 @@ models:
     description: "EmbeddingGemma 2 BF16 + mmproj, CPU. Image/audio/video embeddings."
     cmd: |
       llama-server --port ${PORT} --threads 8
-      -m ${models}/embeddinggemma-2-BF16.gguf
+      -m ${embed-model}
       --mmproj ${models}/embeddinggemma-2/mmproj-BF16.gguf
-      --embeddings --pooling mean
-      --gpu-layers 0
-      --ctx-size 8192
-      --batch-size 8192
-      --ubatch-size 8192
+      ${embed-args}
     ttl: 600
 
 # Без этого embed грузится только при первом запросе
@@ -323,30 +311,32 @@ hooks:
     preload:
       - embed
 
-# Legacy-ключ, пока работает. Каноничное место в новых версиях:
-# routing.router.settings.groups (смешивать два стиля нельзя).
-groups:
-  # Всё, что занимает GPU: одновременно живёт только одна модель.
-  "main":
-    swap: true
-    exclusive: false
-    members:
-      - Qwen-Benchmark
-      - qwen-uncensored
-      - qwen-uncensored-vision
-      - gpt-oss
-      - gemma-12b
-      - gemma-26b
-      - qwen-fast
-      - qwen-code
-      - z-image
-      - flux2-klein
-      - qwen-image
-      - qwen-image-2.1
-  "embed":
-    swap: false
-    exclusive: false
-    persistent: true
-    members:
-      - embed
-      - embed-vision
+routing:
+  router:
+    use: group
+    settings:
+      groups:
+        # Всё, что занимает GPU: одновременно живёт только одна модель.
+        "main":
+          swap: true
+          exclusive: false
+          members:
+            - Qwen-Benchmark
+            - qwen-uncensored
+            - qwen-uncensored-vision
+            - gpt-oss
+            - gemma-12b
+            - gemma-26b
+            - qwen-fast
+            - qwen-code
+            - z-image
+            - flux2-klein
+            - qwen-image
+            - qwen-image-2.1
+        "embed":
+          swap: false
+          exclusive: false
+          persistent: true
+          members:
+            - embed
+            - embed-vision

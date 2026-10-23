@@ -8,8 +8,24 @@ let
   llamaSwapHost = "http://localhost:11434";
   searxngUrl = "http://127.0.0.1:11433";
 
+  # Qwen3.8 sampling per thinking level (official Qwen / Unsloth values).
+  # llama-swap forces top_k and min_p, the :pi alias leaves the rest to pi.
+  # Thinking temp 1.0 is meant for code too on 3.8, 0.6 was 3.5/3.6 advice.
+  qwenThinking = {
+    temperature = 1.0;
+    top_p = 0.95;
+    presence_penalty = 0.0;
+  };
+  qwenInstruct = {
+    temperature = 0.7;
+    top_p = 0.8;
+    presence_penalty = 1.5;
+  };
+
   families = {
     qwen = {
+      samplingParams = qwenThinking;
+      samplingParamsByThinkingLevel.off = qwenInstruct;
       thinkingLevelMap = {
         off = "none";
         minimal = null;
@@ -51,7 +67,11 @@ let
       ctx,
       family ? null, # null = no pi-controlled thinking
       vision ? false, # true only for entries started with --mmproj
+      sampling ? { }, # merged over the family's samplingParams
     }:
+    let
+      fam = families.${family};
+    in
     {
       inherit id name;
       input = [ "text" ] ++ lib.optional vision "image";
@@ -59,19 +79,31 @@ let
       maxTokens = lib.min 32768 (ctx / 2);
       reasoning = family != null;
     }
-    // lib.optionalAttrs (family != null) {
-      inherit (families.${family}) thinkingLevelMap;
-      compat.chatTemplateKwargs = families.${family}.chatTemplateKwargs;
-    };
+    // lib.optionalAttrs (family != null) (
+      {
+        inherit (fam) thinkingLevelMap;
+        compat.chatTemplateKwargs = fam.chatTemplateKwargs;
+      }
+      // lib.optionalAttrs (fam ? samplingParams || sampling != { }) {
+        samplingParams = (fam.samplingParams or { }) // sampling;
+      }
+      // lib.optionalAttrs (fam ? samplingParamsByThinkingLevel) {
+        inherit (fam) samplingParamsByThinkingLevel;
+      }
+    );
 
   mkPiModel = m: mkModel (m // { id = "${m.id}:pi"; });
 
+  # The GSQ quant's card asks for temp 0.6 for reliable tool calls
+  gsqSampling.temperature = 0.6;
+
+  # ctx must match --ctx-size in nixos/services/llama-swap/config.yaml
   models =
     map mkPiModel [
       {
         id = "qwen-fast";
         name = "Qwen 27B Q3 fast";
-        ctx = 32768;
+        ctx = 65536;
         family = "qwen";
       }
       {
@@ -79,6 +111,7 @@ let
         name = "Qwen 27B IQ3 uncensored";
         ctx = 65536;
         family = "qwen";
+        sampling = gsqSampling;
       }
       {
         id = "qwen-uncensored-vision";
@@ -86,6 +119,7 @@ let
         ctx = 65536;
         family = "qwen";
         vision = true;
+        sampling = gsqSampling;
       }
       {
         id = "gpt-oss";
@@ -135,17 +169,20 @@ let
     defaultProvider = "llama-swap";
     defaultModel = "qwen-fast:pi";
     defaultThinkingLevel = "low";
+    # Pinned: extensions run with full user rights, and pi-permission-system
+    # ships breaking majors. Bump by hand after reading the changelog.
     packages = [
-      "npm:pi-web-access"
-      "npm:@samfp/pi-memory"
-      "npm:@juicesharp/rpiv-todo"
-      "npm:@gotgenes/pi-permission-system"
-      "npm:@juicesharp/rpiv-ask-user-question"
+      "npm:pi-web-access@0.44.0"
+      "npm:@samfp/pi-memory@1.6.1"
+      "npm:@juicesharp/rpiv-todo@2.13.10"
+      "npm:@gotgenes/pi-permission-system@41.0.0"
+      "npm:@juicesharp/rpiv-ask-user-question@2.13.10"
     ];
     memory = {
       # Passed verbatim to `pi --model`; trailing ":off" is the thinking level.
       # The whole run has a hard 45 s timeout and fails silently, so keep
-      # this a small, fast, fully-on-GPU model.
+      # this a small, fast, fully-on-GPU model. It runs at session end and
+      # swaps the main model out of VRAM (same llama-swap group).
       consolidationModel = "llama-swap/gemma-12b:pi:off";
       # One memory dump at session start instead of a new block every turn.
       # The per-turn block is not kept in history, so each new turn would
@@ -157,7 +194,9 @@ let
         type = "openai-compatible";
         baseUrl = llamaSwapHost;
         model = "embed";
-        dimensions = 1024; # Qwen3-Embedding-0.6B output width
+        # EmbeddingGemma 2 output width. A mismatch makes pi-memory re-embed
+        # every stored fact at each session start.
+        dimensions = 768;
       };
     };
   };
@@ -166,16 +205,22 @@ let
   webSearch = {
     searxngBaseUrl = searxngUrl;
     # Strict: only SearXNG. With "auto" it silently falls back to Exa etc.
+    # A loopback searxngBaseUrl passes the SSRF guard on its own, no
+    # ssrf.allowRanges: that would let fetch_content reach every local
+    # service (llama-swap's api too) from a prompt-injected page.
     provider = "searxng";
-    # Raw results straight to the model. The default curator opens a browser
-    # window and drafts summaries with a separate model.
+    # Raw results straight to the model, no curator window or summary model
     workflow = "none";
-    # SSRF guard blocks loopback by default; allow only localhost for SearXNG
-    ssrf.allowRanges = [ "127.0.0.1/32" ];
     # Not needed without Gemini keys; avoids pointless fallback attempts
     youtube.enabled = false;
     video.enabled = false;
   };
+
+  # pi writes settings.json itself (/model and /thinking Ctrl+S,
+  # lastChangelogVersion), a store symlink makes every write fail. So it's a
+  # real file: nix keys are merged over it on each switch and win, the rest
+  # of what pi saved stays.
+  piSettingsFile = pkgs.writeText "pi-settings.json" (builtins.toJSON piSettings);
 
   # ~/.local/share/pi/npm instead of the read-only store, node available.
   # Done without an overlay so it works with home-manager.useGlobalPkgs = true.
@@ -203,7 +248,6 @@ in
 
   home.file = {
     ".pi/agent/models.json".text = builtins.toJSON piModels;
-    ".pi/agent/settings.json".text = builtins.toJSON piSettings;
     ".pi/web-search.json".text = builtins.toJSON webSearch;
     # Kept as a literal JSON file: rules are last-match-wins and
     # builtins.toJSON would sort the keys alphabetically.
@@ -213,4 +257,18 @@ in
       recursive = true;
     };
   };
+
+  # after linkGeneration, so the old store symlink is already gone
+  home.activation.piSettings = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    f=${config.home.homeDirectory}/.pi/agent/settings.json
+    run mkdir -p "$(dirname "$f")"
+    if [ -L "$f" ]; then run rm "$f"; fi
+    if [ -s "$f" ] && ${lib.getExe pkgs.jq} -e . "$f" >/dev/null 2>&1; then
+      tmp=$(mktemp)
+      ${lib.getExe pkgs.jq} -s '.[0] * .[1]' "$f" ${piSettingsFile} >"$tmp"
+      run mv "$tmp" "$f"
+    else
+      run install -m 644 ${piSettingsFile} "$f"
+    fi
+  '';
 }
