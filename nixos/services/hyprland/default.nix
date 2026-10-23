@@ -128,9 +128,10 @@
   };
 
   # gtk on wayland reads theme, icons, font and cursor from dconf, like in
-  # the sway module. it's there already when sway is on
+  # the sway module (locked like there). it's there already when sway is on
   programs.dconf.profiles.user.databases = lib.mkIf (!config.programs.sway.enable) [
     {
+      lockAll = true;
       settings."org/gnome/desktop/interface" = {
         gtk-theme = "gruvbox-flat";
         icon-theme = "Gruvbox-Plus-Dark";

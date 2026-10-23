@@ -405,7 +405,9 @@ home-manager. Same tags, binds, scratchpads and bar, no animations.
 - GTK3 on Wayland with `GTK_USE_PORTAL=1` reads theme, icons, font and cursor
   from the settings portal (dconf) and skips `settings.ini`, so the sway
   module puts the `settings.ini` values in dconf too. X11 GTK doesn't read
-  them.
+  them. The keys are locked (`lockAll`): the user db beats the system one,
+  and home-manager's old `gtk` module left `gtk-theme=gruvbox-dark` there,
+  a theme that's gone, so GTK apps fell back to plain Adwaita.
 - The sway module turns on `runXdgAutostartIfNone`, which would start XDG
   autostart files in i3. `default.nix` turns it off again.
 - The sway module writes `sway-portals.conf`, it replaces `portals.conf`
