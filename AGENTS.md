@@ -353,7 +353,8 @@ Hyprland Lua, QML and shell, no nix in them.
 | `nixos/services/hyprland/quickshell/cava.conf`, `nixos/services/hyprland/proxychains.conf` | the visualizer's cava, the run menu's proxychains (`/etc/proxychains-xray.conf`) |
 | `nixos/services/hyprland/quickshell/Menu.qml` | rofi -dmenu: the menu window, filter, list, keys, built from `widgets/` |
 | `nixos/services/hyprland/quickshell/widgets/` | the menu parts: `MenuHead` (icon, title, status, pulse), `SearchField` (the text line), `MenuRow`, `KeyHints`, `Meter` and `Threads` (the system menu's bars), `Fader` (a mixer line), `Tile` (a big square of tools and switches), `Visualizer` (cava's bars) |
-| `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass. And System (a small btop), Processes, Calendar, Notifications, Windows, Player, Nix (nixos builds), Dmenu (hypr-dmenu), and Tools with Emoji, Calc, Units (systemd) and Switches |
+| `nixos/services/hyprland/quickshell/menus/` | one menu per rofi script: Run, Clip, Librewolf, Power, Bluetooth, Pass, Kill, Audio, Translate, Wifi, Record, Askpass. And System (a small btop), Processes, Calendar, Notifications, Windows, Player, Nix (nixos builds), Dmenu (hypr-dmenu), Keys (the cheat sheet), and Tools with Emoji, Calc, Units (systemd) and Switches |
+| `nixos/services/hyprland/quickshell/keys.conf` | the keys menu's pages: hyprland, librewolf, nvim, the format of the eww one |
 | `nixos/services/hyprland/TODO.md` | what's left to do here, a plain list |
 | `nixos/services/hyprland/quickshell/scripts/` | `record` (wf-recorder + ffmpeg), `bt-pair` (expect, bluetoothctl agent), `wifi` (iwd over d-bus, the menu's networks and the bar's signal), `apps` (the kill menu's apps), `sysmon` (the system menu's numbers), `route` (the audio menu's wires), `units` (systemctl and journalctl for the systemd menu), `nixrun` (the nix menu's commands into its terminal), `proxied` (run's xray mode), `revive` (run's apps that hide in the background), `savefile` (`hypr-savefile`, "save as" through the file chooser portal), `dmenu` (`hypr-dmenu`), `askpass` and `pinentry` (`hypr-askpass`, `hypr-pinentry` in PATH) |
 
@@ -520,6 +521,18 @@ Hyprland Lua, QML and shell, no nix in them.
   notification says how it went, the sudo password goes there too. One
   that still runs isn't typed into (anything in its foreground besides
   the shell, `kitty @ ls`), a notification says so. t shows or hides it.
+- Keys ($mod+/) is the i3 eww keys menu in the menus' look: the pages of
+  `keys.conf` (hyprland, librewolf, nvim, the eww `keys.conf` format plus
+  `~word` for a part of the title, kitty names its window after what runs
+  in it) as tabs, the rows as keycaps in 3 columns. The sections fill them
+  in order, the tallest column as short as it gets, the width and height
+  are the biggest page's, so a flip doesn't resize it. It opens on the
+  page of the focused window. h/l, tab, 1-9, the wheel or a click flip
+  pages (a 6% slide like the calendar), q or esc close. `/` searches every
+  page (section, keys, what), the tabs count the matches, a page with none
+  goes to one that has some and a flip skips it. The search line sits
+  above the pages (`bodyUnder` in Menu). Keep `keys.conf` in sync with
+  hyprland.lua, `home/programs/librewolf` and `home/programs/neovim`.
 - Windows ($mod+x): every window of every tag, the one focused before
   first like alt-tab (`focusHistoryID`), the tag in the dim column
   (`Hypr.tagName`, the bar's names live in `Hypr.labels`). Enter focuses

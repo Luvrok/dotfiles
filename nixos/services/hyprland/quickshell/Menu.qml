@@ -37,8 +37,10 @@ PanelWindow {
     // dim text under the head, like what pinentry asks for
     property string note: ""
     // more under the head, above the text line: the system menu's meters,
-    // the calendar
+    // the calendar. bodyUnder puts it under the text line, the keys menu's
+    // search sits on top of its pages
     property Component body: null
+    property bool bodyUnder: false
     // the cursor starts on the first row. false: on none until j/k, for a
     // list that sorts itself every second
     property bool startOnFirst: true
@@ -419,7 +421,7 @@ PanelWindow {
             }
 
             Loader {
-                active: root.body !== null
+                active: root.body !== null && !root.bodyUnder
                 visible: active
                 width: parent.width
                 sourceComponent: root.body
@@ -435,6 +437,13 @@ PanelWindow {
                 font: metrics.font
                 onEdited: root.filter()
                 onPressed: e => root.handleKey(e)
+            }
+
+            Loader {
+                active: root.body !== null && root.bodyUnder
+                visible: active
+                width: parent.width
+                sourceComponent: root.body
             }
 
             ListView {

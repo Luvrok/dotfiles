@@ -426,6 +426,8 @@ hl.bind(mod .. " + n", qs("menu open notifications"))
 hl.bind(mod .. " + a", qs("menu open tools"))
 -- every window of every tag, like alt-tab
 hl.bind(mod .. " + x", qs("menu open windows"))
+-- the keys of hyprland, librewolf and nvim (quickshell/keys.conf)
+hl.bind(mod .. " + slash", qs("menu open keys"))
 hl.bind(mod .. " + SHIFT + n", qs("notifications close"))
 hl.bind(mod .. " + o", hl.dsp.exec_cmd("kitty --class movies -e yazi /media/outer-1"))
 
