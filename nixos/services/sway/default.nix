@@ -79,9 +79,12 @@ in
 
   # gtk on wayland takes theme, icons, font and cursor from dconf through the
   # settings portal and skips settings.ini, so the same as
-  # nixos/modules/gtk/settings.ini goes here. x11 gtk doesn't read these
+  # nixos/modules/gtk/settings.ini goes here. x11 gtk doesn't read these.
+  # locked: a value in the user db (home-manager's old gtk module left
+  # gtk-theme=gruvbox-dark there, a theme that's gone) would win otherwise
   programs.dconf.profiles.user.databases = [
     {
+      lockAll = true;
       settings."org/gnome/desktop/interface" = {
         gtk-theme = "gruvbox-flat";
         icon-theme = "Gruvbox-Plus-Dark";

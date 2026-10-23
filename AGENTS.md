@@ -2,8 +2,8 @@
 
 NixOS + home-manager dotfiles. This file covers the X11 desktop: i3, picom
 (pijulius fork) with animations, and the eww bar, plus its Wayland twins on
-sway and Hyprland (with a Quickshell bar and menus). Also the embeddings and docs index on jedha, and the llama.cpp pin
-it shares with barnard. Keep it in sync when you change how these parts
+sway and Hyprland (with a Quickshell bar and menus). Also the embeddings and docs index on jedha, the llama.cpp pin
+it shares with barnard, and the local models (llama-swap) and pi on barnard. Keep it in sync when you change how these parts
 talk to each other.
 
 ## Files
@@ -123,6 +123,10 @@ An unmapped window can only animate again after a real map, so a window that
 
 ## jedha: embeddings and docs index
 
+Both are off now (commented out in `hosts/jedha/default.nix`), docs-mcp
+moved to barnard (see there). The files stay until they're removed by hand,
+what follows is how they worked on jedha.
+
 jedha is a small box: i5-7300U (2 cores, AVX2, no AVX-512), 4 GB RAM, zram
 swap. Both services listen on 127.0.0.1 only, exposing them (nginx on
 mos-eisley, xray) lives elsewhere.
@@ -235,6 +239,87 @@ docs-mcp list | jq -r '.[] | "\(.name) \(.versions[0].status) \(.versions[0].doc
 
 The second number must be 0, NaN comes out of the JSON encoder as `null`.
 
+## barnard: llama-swap and pi
+
+| Path | What |
+| --- | --- |
+| `nixos/services/llama-swap/config.yaml` | models, sampling filters, groups (plain YAML, `/etc/llama-swap/config.yaml`) |
+| `nixos/services/llama-swap/default.nix` | the service, llama-cpp and sd-cpp in its PATH |
+| `home/programs/pi/default.nix` | pi's `models.json`, `settings.json`, `web-search.json`, the wrapper |
+| `home/programs/pi/pi-permission.json` | pi-permission-system rules, last match wins |
+| `home/programs/pi/qmd.nix` | qmd (notes search) and its skill |
+| `nixos/services/docs-mcp/default.nix` | docs-mcp-server container, read-only MCP on `127.0.0.1:6280/mcp`, `docs-mcp` cli, sync and refresh timers (barnard only, `hosts/barnard/env.nix`) |
+| `nixos/services/docs-mcp/sources.nix` | the docs to index, by kind: devdocs, github, local, web |
+| `nixos/services/docs-mcp/sync.sh`, `dedupe.py` | `docs-mcp-sync`, and the step that drops repeated sections |
+
+- Every chat model has three IDs: the base one (instruct), `:Thinking` and
+  `:pi`. The first two get their sampling and `enable_thinking` from
+  llama-swap's `setParamsByID`. `:pi` is an empty entry, only an alias, so
+  pi's own `chat_template_kwargs` and sampling reach llama-server. pi picks
+  sampling by thinking level (`samplingParams`,
+  `samplingParamsByThinkingLevel.off` for instruct). `setParams` (top_k,
+  min_p, gemma's all) still applies to `:pi`.
+- `contextWindow` in pi must match `--ctx-size` in the YAML, nix can't read
+  YAML, so both are written by hand.
+- pi writes `settings.json` itself, so it's a real file: an activation step
+  merges the nix keys over it (`jq '.[0] * .[1]'`), nix wins. `models.json`
+  and the rest are store symlinks, pi only reads them.
+- pi packages are pinned (`npm:name@version`), bump them by hand.
+- `embed` runs on the CPU and is always loaded: preload, `ttl: 0`, a
+  persistent group. On the GPU its VRAM (weights plus the compute buffer
+  of a 8192 ubatch) stayed taken, and `qwen-uncensored` (`--fit off`, all
+  on the GPU) died with `CUBLAS_STATUS_ALLOC_FAILED` on its first request.
+  pi-memory's `dimensions` must be the model's width (768), a mismatch
+  re-embeds every fact at each session start.
+- `globalTTL` is long on purpose: an unload drops llama-server's prompt
+  cache and the next pi turn reprocesses the whole context.
+- llama-cpp is built with ROCm and Vulkan. llama.cpp drops the second copy
+  of the 7800 XT (same PCI id, ROCm registers first) and skips the iGPU while
+  a discrete GPU is there. `--device Vulkan0` tries the Vulkan path.
+
+### docs-mcp
+
+The jedha setup (server, cli, sync, state, see there) on barnard, scrapes
+through xray's `127.0.0.1:10808` like there, no public url. Vectors come from llama-swap's `embed`
+under its alias `embeddinggemma-2-bf16`: docs-mcp keys the index on the
+model name, so a new embedding model or quant needs a new alias in both
+places, then the confirmation by hand (see jedha). The container waits for
+`/upstream/<alias>/health`, which loads embed if it's down.
+
+pi talks to it with its built-in MCP client (`~/.pi/agent/mcp.json`,
+merged like `settings.json`): server `docs`, `direct` exposure (a local
+model calls declared tools more reliably than codemode scripts), `fetch_url`
+hidden (pi-web-access does that), `mcp` rules allow `docs` and ask for any
+other server. The `docs` skill lists the library names from `sources.nix`
+and says when to search, so the model knows what's indexed without
+`list_libraries`. Both only exist where the container does (`osConfig`).
+
+What made the index junk, and what's done about it:
+
+- A github tree url takes every text file docs-mcp knows in that dir:
+  nix.dev's `conf.py`, css, html templates and `contributors.yaml`,
+  llama.cpp's csv tables and a pdf. github sources take `*.md`, `*.mdx`,
+  `*.rst` only (`--include-pattern`), `include` adds more.
+- An include pattern keeps docs-mcp's default excludes (changelogs, tests,
+  `old/`, `i18n/xx`...), any `--exclude-pattern` replaces all of them. So
+  sources narrow with includes, and local ones take files out before the
+  scrape (`drop`).
+- The nix manual has 68 release-notes pages (`drop`), and each of the 97
+  `nix3-*` pages repeats the common option sections, search came back with
+  the same chunk from every command. `dedupe` keeps those h2 sections (by
+  id) in the first page only.
+- HTML nav, sidebars, footers and toc are already stripped by docs-mcp's
+  sanitizer, mdbook pages come out clean.
+- docs-mcp sends no task prefix, EmbeddingGemma works without one, a bit
+  worse than with it. Search is hybrid (full text plus vectors) anyway.
+
+Test without the container: `npm install @arabold/docs-mcp-server@<tag>`,
+a wrapper named `docs-mcp` that sets `DOCS_MCP_STORE_PATH`,
+`DOCS_MCP_CONFIG` and `OPENAI_API_BASE` (a fake OpenAI embeddings server is
+enough) and runs `sync.sh` on a hand-made sources json. `mcp` needs
+`DOCS_MCP_PROTOCOL=http` outside the image (the image sets it, `auto` picks
+stdio without a terminal and exits). `pi mcp list` checks pi's side.
+
 ## Conventions
 
 - Code comments: short, casual, lowercase, simple American English, no
@@ -320,7 +405,9 @@ home-manager. Same tags, binds, scratchpads and bar, no animations.
 - GTK3 on Wayland with `GTK_USE_PORTAL=1` reads theme, icons, font and cursor
   from the settings portal (dconf) and skips `settings.ini`, so the sway
   module puts the `settings.ini` values in dconf too. X11 GTK doesn't read
-  them.
+  them. The keys are locked (`lockAll`): the user db beats the system one,
+  and home-manager's old `gtk` module left `gtk-theme=gruvbox-dark` there,
+  a theme that's gone, so GTK apps fell back to plain Adwaita.
 - The sway module turns on `runXdgAutostartIfNone`, which would start XDG
   autostart files in i3. `default.nix` turns it off again.
 - The sway module writes `sway-portals.conf`, it replaces `portals.conf`
