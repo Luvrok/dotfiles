@@ -265,7 +265,10 @@ The second number must be 0, NaN comes out of the JSON encoder as `null`.
   merges the nix keys over it (`jq '.[0] * .[1]'`), nix wins. `models.json`
   and the rest are store symlinks, pi only reads them.
 - pi packages are pinned (`npm:name@version`), bump them by hand.
-- `embed` (CPU) is always loaded: preload, `ttl: 0`, a persistent group.
+- `embed` runs on the GPU and is always loaded: preload, `ttl: 0`, a
+  persistent group. Its VRAM (weights plus the compute buffer of a 8192
+  ubatch) stays taken, main models with `--fit` adapt, `qwen-uncensored`
+  (`--fit off`) may not fit then, `--ubatch-size 4096` halves the buffer.
   pi-memory's `dimensions` must be the model's width (768), a mismatch
   re-embeds every fact at each session start.
 - `globalTTL` is long on purpose: an unload drops llama-server's prompt
@@ -276,8 +279,8 @@ The second number must be 0, NaN comes out of the JSON encoder as `null`.
 
 ### docs-mcp
 
-The jedha setup (server, cli, sync, state, see there) on barnard, without
-the xray proxy and the public url. Vectors come from llama-swap's `embed`
+The jedha setup (server, cli, sync, state, see there) on barnard, scrapes
+through xray's `127.0.0.1:10808` like there, no public url. Vectors come from llama-swap's `embed`
 under its alias `embeddinggemma-2-bf16`: docs-mcp keys the index on the
 model name, so a new embedding model or quant needs a new alias in both
 places, then the confirmation by hand (see jedha). The container waits for

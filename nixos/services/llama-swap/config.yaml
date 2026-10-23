@@ -24,10 +24,15 @@ macros:
   # Общая часть embed и embed-vision. --batch-size нужен вместе с
   # --ubatch-size: llama.cpp берёт n_ubatch = min(n_batch, n_ubatch),
   # а n_batch по умолчанию 2048, так что без него --ubatch-size 8192
-  # молча превращался в 2048.
+  # молча превращался в 2048. Весь вход должен влезть в один ubatch.
+  # На GPU: веса (размер gguf) + compute-буфер под ubatch 8192 висят в VRAM
+  # постоянно (группа embed не выгружается). Модели main с --fit
+  # подстраиваются сами, qwen-uncensored с --fit off может не влезть:
+  # смотри "compute buffer size" в логе. Мало места: --ubatch-size 4096
+  # (docs-mcp режет куски до 5000 символов, pi-memory до 12000).
   "embed-args": >
     --embeddings --pooling mean
-    --gpu-layers 0
+    --gpu-layers all
     --ctx-size 8192
     --batch-size 8192
     --ubatch-size 8192
@@ -280,7 +285,7 @@ models:
       -H 1024
     <<: *sd-common
 
-  # ---- Эмбеддинги (CPU) ----
+  # ---- Эмбеддинги (GPU) ----
   # Open WebUI RAG + поиск по памяти pi (settings.json: memory.embedding).
   # Вектор 768 (EmbeddingGemma 2), pi-memory держит то же число.
   # Всегда загружена: preload + ttl 0 + persistent-группа.
@@ -288,7 +293,7 @@ models:
   # в индексе. Другая модель или квант = новый алиас там и здесь, иначе
   # старые и новые векторы смешаются.
   "embed":
-    description: "EmbeddingGemma 2 BF16, CPU. pi-memory, docs-mcp"
+    description: "EmbeddingGemma 2 BF16, GPU. pi-memory, docs-mcp"
     cmd: |
       llama-server --port ${PORT} --threads 8
       -m ${embed-model}
@@ -302,7 +307,7 @@ models:
   # сравнивать с картинками отсюда. Грузится по запросу.
   # Медиа только через нативный /embeddings, /v1 пока текст.
   "embed-vision":
-    description: "EmbeddingGemma 2 BF16 + mmproj, CPU. Image/audio/video embeddings."
+    description: "EmbeddingGemma 2 BF16 + mmproj, GPU. Image/audio/video embeddings."
     cmd: |
       llama-server --port ${PORT} --threads 8
       -m ${embed-model}

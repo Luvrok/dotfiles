@@ -1,6 +1,6 @@
 # docs-mcp-server: docs in a sqlite index, read-only search over MCP for pi
 # (home/programs/pi). the docs are in sources.nix, the sync timers scrape
-# them with the cli. vectors come from llama-swap's embed (CPU)
+# them with the cli. vectors come from llama-swap's embed (GPU)
 {
   config,
   lib,
@@ -31,7 +31,7 @@ let
       inherit embeddingModel;
     };
     scraper.security.fileAccess.allowedRoots = [ filesMount ];
-    # embed is one llama-server on the CPU, pi-memory uses it too
+    # embed is one llama-server, pi-memory uses it too
     embeddings.requestTimeoutMs = 300000;
   };
 
@@ -166,7 +166,10 @@ let
 
   syncService = mode: {
     wants = [ "podman-docs-mcp.service" ];
-    after = [ "podman-docs-mcp.service" ];
+    after = [
+      "podman-docs-mcp.service"
+      "xray.service"
+    ];
     # a first scrape takes a while, a restart on switch would wait for it.
     # the timers start these instead
     restartIfChanged = false;
