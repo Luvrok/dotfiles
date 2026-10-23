@@ -18,6 +18,7 @@ let
   # this name, so a new embedding model or quant gets a new name there and
   # here, else old and new vectors would mix
   embeddingModel = "embeddinggemma-2-bf16";
+  proxy = "http://127.0.0.1:10808";
   sources = import ./sources.nix { inherit pkgs config; };
   # devdocs and local sources are copied here as plain html first
   filesDir = "/var/lib/docs-mcp-sync/files";
@@ -41,6 +42,12 @@ let
     DOCS_MCP_CONFIG = "/etc/docs-mcp/config.json";
     OPENAI_API_BASE = "${llamaSwap}/v1";
     OPENAI_API_KEY = "none";
+  }
+  // lib.optionalAttrs (proxy != null) {
+    # axios (all page fetches) reads these, llama-server stays direct
+    HTTPS_PROXY = proxy;
+    HTTP_PROXY = proxy;
+    NO_PROXY = "127.0.0.1,localhost";
   };
 
   volumes = [
@@ -178,7 +185,9 @@ let
       DOCS_MCP_UNIT = "docs-mcp-${mode}";
       DOCS_MCP_FILES = filesDir;
       DOCS_MCP_DEDUPE = "${./dedupe.py}";
-    };
+    }
+    # devdocs downloads go through xray too
+    // lib.optionalAttrs (proxy != null) { https_proxy = proxy; };
   };
 in
 {
