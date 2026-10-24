@@ -83,13 +83,16 @@ let
       inherit id name;
       input = [ "text" ] ++ lib.optional vision "image";
       contextWindow = ctx;
-      maxTokens = lib.min 32768 (ctx / 2);
+      # thinking and the answer share it
+      maxTokens = ctx / 2;
       reasoning = true;
       inherit (fam) thinkingLevelMap;
       compat.chatTemplateKwargs = fam.chatTemplateKwargs;
     }
     // lib.optionalAttrs (fam.thinkingLevelMap.off or "" != null) {
-      # budget 0: llama-server closes a <think> the model opens anyway
+      # budget 0: llama-server closes a <think> the model opens anyway.
+      # The other levels have no cap, reasoning_effort only asks
+      # the model to think less or more
       samplingParamsByThinkingLevel.off = (fam.off or { }) // {
         thinking_budget_tokens = 0;
       };
@@ -145,10 +148,6 @@ let
       compat = {
         supportsDeveloperRole = false;
         thinkingFormat = "chat-template";
-        # a hard cap per level (thinkingBudgets: low 2k, medium 8k, high 16k).
-        # reasoning_effort is only an instruction in the prompt, a model
-        # (the abliterated one above all) may ignore it
-        thinkingTokenBudgetField = "thinking_budget_tokens";
       };
       inherit models;
     };

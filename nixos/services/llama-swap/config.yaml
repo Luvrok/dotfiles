@@ -2,7 +2,7 @@
 # Docs: https://github.com/mostlygeek/llama-swap/blob/main/docs/config.example.yaml
 #
 # Один ID на модель. Сэмплинг в cmd — только дефолт, запрос его перекрывает:
-# pi сам шлёт thinking, его лимит и сэмплинг под уровень (home/programs/pi).
+# pi сам шлёт thinking и сэмплинг под уровень (home/programs/pi).
 # :think / :no-think — для клиентов без переключателя thinking.
 #
 # VRAM: --fit у llama-server включён по умолчанию и оставляет 1 GiB
