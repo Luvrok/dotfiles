@@ -6,11 +6,20 @@
 }:
 
 let
+  cfg = config.services.llama-swap;
   sd-cpp = pkgs.stable-diffusion-cpp.override { vulkanSupport = true; };
+
+  # kept as yaml for the anchors and macros. checked at build time, the way
+  # the upstream module checks its generated config
+  configFile =
+    pkgs.runCommandLocal "llama-swap-config.yaml" { nativeBuildInputs = [ cfg.package ]; }
+      ''
+        llama-swap -validate -config ${./config.yaml}
+        cp ${./config.yaml} $out
+      '';
 in
 {
   environment.systemPackages = [ sd-cpp ];
-  environment.etc."llama-swap/config.yaml".source = ./config.yaml;
 
   services.llama-swap = {
     enable = true;
@@ -23,14 +32,12 @@ in
       sd-cpp
     ];
 
-    restartTriggers = [ config.environment.etc."llama-swap/config.yaml".source ];
-
     serviceConfig = {
       ExecStart = lib.mkForce (
         lib.escapeShellArgs [
-          (lib.getExe config.services.llama-swap.package)
-          "--listen=${config.services.llama-swap.listenAddress}:${toString config.services.llama-swap.port}"
-          "--config=/etc/llama-swap/config.yaml"
+          (lib.getExe cfg.package)
+          "--listen=${cfg.listenAddress}:${toString cfg.port}"
+          "--config=${configFile}"
         ]
       );
 
@@ -39,7 +46,6 @@ in
         "video"
       ];
 
-      PrivateDevices = lib.mkForce false;
       MemoryDenyWriteExecute = lib.mkForce false;
       MemorySwapMax = "0";
     };

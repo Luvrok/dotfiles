@@ -38,7 +38,7 @@ IDLE_NEED=${QWEN_IDLE:-4}        # сек подряд без генерации
 IDLE_MAX=${QWEN_IDLE_MAX:-900}   # сек: дольше не ждём, запускаем как есть
 DELAY=${QWEN_DELAY:-20}          # сек: простая пауза, если занятость LLM узнать нельзя (нет curl, нет /slots)
 # llama-swap models that hold no vram (cpu only): not waited for, not unloaded. space separated
-KEEP=${QWEN_KEEP:-embed}
+KEEP=${QWEN_KEEP:-embed embed-vision}
 
 SELF=$(readlink -f -- "${BASH_SOURCE[0]}")
 
