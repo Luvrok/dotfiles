@@ -7,6 +7,8 @@ in
   # admin password stays out of the store; couchdb hashes it on first start
   # and writes the hash into local.ini, which is read last and wins.
   # after changing the secret drop [admins] from /var/lib/couchdb/local.ini
+  sops.secrets.couchdb_admin_password = { };
+
   sops.templates."couchdb-admin.ini" = {
     owner = cfg.user;
     group = cfg.group;
