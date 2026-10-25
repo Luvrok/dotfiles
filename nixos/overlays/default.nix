@@ -111,12 +111,11 @@ in
       llama-cpp =
         (prev.llama-cpp.override {
           rocmSupport = true;
+          # the only backend that works on the nvidia host
           vulkanSupport = true;
-          # Enable BLAS for optimized CPU layer performance (OpenBLAS)
           blasSupport = true;
         }).overrideAttrs
           (oldAttrs: {
-            # Enable native CPU optimizations (AVX, AVX2, etc.)
             cmakeFlags = (oldAttrs.cmakeFlags or [ ]) ++ [
               "-DGGML_NATIVE=ON"
               "-DLLAMA_BUILD_TESTS=OFF" # later -D wins

@@ -21,49 +21,44 @@ let
     lib.sort lib.lessThan (lib.concatMap builtins.attrNames (builtins.attrValues docsSources))
   );
 
-  # Qwen3.8 sampling per thinking level (official Qwen / Unsloth values).
-  # llama-swap forces top_k and min_p, the :pi alias leaves the rest to pi.
-  # Thinking temp 1.0 is meant for code too on 3.8, 0.6 was 3.5/3.6 advice.
-  qwenThinking = {
-    temperature = 1.0;
-    top_p = 0.95;
-    presence_penalty = 0.0;
-  };
-  qwenInstruct = {
-    temperature = 0.7;
-    top_p = 0.8;
-    presence_penalty = 1.5;
-  };
-
+  # Thinking per model family. llama-swap starts each model with its own
+  # sampling defaults, pi only sends what a thinking level changes.
   families = {
     qwen = {
-      samplingParams = qwenThinking;
-      samplingParamsByThinkingLevel.off = qwenInstruct;
+      # the template knows low, medium and xhigh (its default)
       thinkingLevelMap = {
-        off = "none";
         minimal = null;
-        low = "low";
-        medium = "medium";
         high = "xhigh";
       };
       chatTemplateKwargs = {
         enable_thinking."$var" = "thinking.enabled";
-        reasoning_effort."$var" = "thinking.effort";
+        reasoning_effort = {
+          "$var" = "thinking.effort";
+          omitWhenOff = true;
+        };
+        # else the template drops old thinking after each user message, the
+        # prompt changes and llama.cpp re-reads it from that point
+        preserve_thinking = true;
+      };
+      # Qwen's non-thinking values
+      off = {
+        temperature = 0.7;
+        top_p = 0.8;
+        presence_penalty = 1.5;
       };
     };
 
-    # Gemma 4 template is on/off only, so expose just "off" and "low".
+    # the template is on/off only
     gemma = {
       thinkingLevelMap = {
         minimal = null;
-        medium = null;
+        low = null;
         high = null;
       };
       chatTemplateKwargs.enable_thinking."$var" = "thinking.enabled";
     };
 
-    # gpt-oss takes reasoning_effort = low | medium | high and cannot stop
-    # thinking, so "off" is hidden. low/medium/high pass through unchanged.
+    # reasoning_effort low | medium | high, can't stop thinking
     gpt-oss = {
       thinkingLevelMap = {
         off = null;
@@ -77,10 +72,9 @@ let
     {
       id,
       name,
+      family,
       ctx,
-      family ? null, # null = no pi-controlled thinking
-      vision ? false, # true only for entries started with --mmproj
-      sampling ? { }, # merged over the family's samplingParams
+      vision ? false, # only for models started with --mmproj
     }:
     let
       fam = families.${family};
@@ -89,78 +83,61 @@ let
       inherit id name;
       input = [ "text" ] ++ lib.optional vision "image";
       contextWindow = ctx;
-      maxTokens = lib.min 32768 (ctx / 2);
-      reasoning = family != null;
+      # thinking and the answer share it
+      maxTokens = ctx / 2;
+      reasoning = true;
+      inherit (fam) thinkingLevelMap;
+      compat.chatTemplateKwargs = fam.chatTemplateKwargs;
     }
-    // lib.optionalAttrs (family != null) (
-      {
-        inherit (fam) thinkingLevelMap;
-        compat.chatTemplateKwargs = fam.chatTemplateKwargs;
-      }
-      // lib.optionalAttrs (fam ? samplingParams || sampling != { }) {
-        samplingParams = (fam.samplingParams or { }) // sampling;
-      }
-      // lib.optionalAttrs (fam ? samplingParamsByThinkingLevel) {
-        inherit (fam) samplingParamsByThinkingLevel;
-      }
-    );
+    // lib.optionalAttrs (fam.thinkingLevelMap.off or "" != null) {
+      # budget 0: llama-server closes a <think> the model opens anyway.
+      # The other levels have no cap, reasoning_effort only asks
+      # the model to think less or more
+      samplingParamsByThinkingLevel.off = (fam.off or { }) // {
+        thinking_budget_tokens = 0;
+      };
+    };
 
-  mkPiModel = m: mkModel (m // { id = "${m.id}:pi"; });
-
-  # The GSQ quant's card asks for temp 0.6 for reliable tool calls
-  gsqSampling.temperature = 0.6;
-
-  # ctx must match --ctx-size in nixos/services/llama-swap/config.yaml
-  models =
-    map mkPiModel [
-      {
-        id = "qwen-fast";
-        name = "Qwen 27B Q3 fast";
-        ctx = 65536;
-        family = "qwen";
-      }
-      {
-        id = "qwen-uncensored";
-        name = "Qwen 27B IQ3 uncensored";
-        ctx = 65536;
-        family = "qwen";
-        sampling = gsqSampling;
-      }
-      {
-        id = "qwen-uncensored-vision";
-        name = "Qwen 27B IQ3 uncensored vision";
-        ctx = 65536;
-        family = "qwen";
-        vision = true;
-        sampling = gsqSampling;
-      }
-      {
-        id = "gpt-oss";
-        name = "gpt-oss 20B";
-        ctx = 65536;
-        family = "gpt-oss";
-      }
-      {
-        id = "gemma-26b";
-        name = "Gemma 4 26B-A4B";
-        ctx = 65536;
-        family = "gemma";
-      }
-      {
-        id = "gemma-12b";
-        name = "Gemma 4 12B";
-        ctx = 65536;
-        family = "gemma";
-      }
-    ]
-    ++ [
-      # Thinking is fixed server-side for this one
-      (mkModel {
-        id = "Qwen-Benchmark";
-        name = "Qwen 27B IQ3_XXS benchmark";
-        ctx = 32768;
-      })
-    ];
+  # ctx = --ctx-size in nixos/services/llama-swap/config.yaml
+  models = map mkModel [
+    {
+      id = "qwen";
+      name = "Qwen3.8 27B";
+      family = "qwen";
+      ctx = 131072;
+    }
+    {
+      id = "qwen-uncensored";
+      name = "Qwen3.8 27B uncensored";
+      family = "qwen";
+      ctx = 131072;
+    }
+    {
+      id = "qwen-uncensored-vision";
+      name = "Qwen3.8 27B uncensored vision";
+      family = "qwen";
+      ctx = 65536;
+      vision = true;
+    }
+    {
+      id = "gemma-26b";
+      name = "Gemma 4 26B-A4B";
+      family = "gemma";
+      ctx = 131072;
+    }
+    {
+      id = "gemma-12b";
+      name = "Gemma 4 12B";
+      family = "gemma";
+      ctx = 131072;
+    }
+    {
+      id = "gpt-oss";
+      name = "gpt-oss 20B";
+      family = "gpt-oss";
+      ctx = 131072;
+    }
+  ];
 
   piModels = {
     providers.llama-swap = {
@@ -170,8 +147,6 @@ let
       apiKey = "none"; # required even though llama-swap ignores it
       compat = {
         supportsDeveloperRole = false;
-        supportsReasoningEffort = false;
-        # chat_template_kwargs come from each model's compat.chatTemplateKwargs
         thinkingFormat = "chat-template";
       };
       inherit models;
@@ -180,7 +155,7 @@ let
 
   piSettings = {
     defaultProvider = "llama-swap";
-    defaultModel = "qwen-fast:pi";
+    defaultModel = "qwen";
     defaultThinkingLevel = "low";
     # Pinned: extensions run with full user rights, and pi-permission-system
     # ships breaking majors. Bump by hand after reading the changelog.
@@ -196,7 +171,7 @@ let
       # The whole run has a hard 45 s timeout and fails silently, so keep
       # this a small, fast, fully-on-GPU model. It runs at session end and
       # swaps the main model out of VRAM (same llama-swap group).
-      consolidationModel = "llama-swap/gemma-12b:pi:off";
+      consolidationModel = "llama-swap/gemma-12b:off";
       # One memory dump at session start instead of a new block every turn.
       # The per-turn block is not kept in history, so each new turn would
       # make llama.cpp re-process the whole previous turn.
