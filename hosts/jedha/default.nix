@@ -14,6 +14,7 @@
     ./libretranslate
     ./kiss-worker.nix
     ./subtitle-translator
+    ./obsidian-livesync.nix
     # ./embeddings.nix
     # ./docs-mcp
   ];
