@@ -40,11 +40,14 @@ macros:
     --chat-template-file ${models}/qwen3.8-27b-UC/froggeric-qwen3.8-tool-use.jinja
     --temp 0.6
   # CPU: embed не выгружается, на GPU он отнимал бы VRAM у LLM.
+  # --gpu-layers 0 тут мало: GPU остаётся устройством модели, и llama.cpp
+  # гонит на нём матмулы батчей с буфером ~1 GB. --device none — совсем
+  # без GPU, mmproj у embed-vision тоже.
   # n_ubatch = min(n_batch, n_ubatch), а вход должен влезть в один ubatch
   embed-args: >
     ${llama}
     -m ${models}/embeddinggemma-2/embeddinggemma-2-BF16.gguf
-    --embeddings --pooling mean --gpu-layers 0
+    --embeddings --pooling mean --device none
     --ctx-size 8192 --batch-size 8192 --ubatch-size 8192
 
 x-qwen-filters: &qwen-filters
