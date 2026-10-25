@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
 
 let
-  proxy = null;
+  proxy = "http://127.0.0.1:10808";
   inbox = "/var/lib/media/inbox";
   uid = toString config.users.users.metube.uid;
 
