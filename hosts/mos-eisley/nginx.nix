@@ -75,6 +75,7 @@ in
         betanin.vxrnt.ru       web;
         metube.vxrnt.ru        web;
         docs.vxrnt.ru          web;
+        obsidian.vxrnt.ru      web;
         default                xray;
       }
 
@@ -135,6 +136,21 @@ in
       "metube.vxrnt.ru" = mkHost "metube.vxrnt.ru" 8081 // {
         basicAuthFile = config.sops.secrets.metube_htpasswd.path;
       };
+
+      # couchdb for obsidian-livesync, auth and cors are on couchdb's side
+      "obsidian.vxrnt.ru" =
+        let
+          base = mkHost "obsidian.vxrnt.ru" 5984;
+        in
+        base
+        // {
+          locations."/" = base.locations."/" // {
+            extraConfig = base.locations."/".extraConfig + ''
+              # fetch stalls with buffering on
+              proxy_buffering off;
+            '';
+          };
+        };
 
       "docs.vxrnt.ru" = mkHost "docs.vxrnt.ru" 6280 // {
         basicAuthFile = config.sops.secrets.docs_mcp_htpasswd.path;
