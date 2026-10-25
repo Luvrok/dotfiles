@@ -14,7 +14,7 @@ logLevel: info
 logToStdout: both
 healthCheckTimeout: 300
 # выгрузка теряет prompt cache, и следующий ход pi заново читает весь контекст
-globalTTL: 900
+globalTTL: 120
 includeAliasesInList: true
 
 macros:
@@ -72,7 +72,7 @@ x-gemma-filters: &gemma-filters
 
 x-sd: &sd
   checkEndpoint: none
-  ttl: 600
+  ttl: 120
 
 models:
   "qwen":
@@ -209,7 +209,7 @@ models:
     cmd: |
       ${embed-args}
       --mmproj ${models}/embeddinggemma-2/mmproj-BF16.gguf
-    ttl: 600
+    ttl: 120
 
 hooks:
   on_startup:
