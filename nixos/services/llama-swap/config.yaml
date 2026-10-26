@@ -1,55 +1,41 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/mostlygeek/llama-swap/refs/heads/main/config-schema.json
-# Docs: https://github.com/mostlygeek/llama-swap/blob/main/docs/config.example.yaml
-#
-# Один ID на модель. Сэмплинг в cmd — только дефолт, запрос его перекрывает:
-# pi сам шлёт thinking и сэмплинг под уровень (home/programs/pi).
-# :think / :no-think — для клиентов без переключателя thinking.
-#
-# VRAM: --fit у llama-server включён по умолчанию и оставляет 1 GiB
-# свободным под Hyprland, а что не влезло, кладёт в RAM (слои плотной
-# модели, эксперты MoE). С --fit off VRAM забивалась под край, и рабочий
-# стол тормозил. --ctx-size каждой LLM повторён в home/programs/pi.
+# docs: https://github.com/mostlygeek/llama-swap/blob/main/docs/config.example.yaml
 
 logLevel: info
 logToStdout: both
 healthCheckTimeout: 300
-# выгрузка теряет prompt cache, и следующий ход pi заново читает весь контекст
+# unloading drops the prompt cache, so pi's next turn reads the whole context again
 globalTTL: 120
 includeAliasesInList: true
 
+# sampling in cmd is only a default, pi sends its own per thinking level
 macros:
   models: /var/lib/models
+  # the default --fit keeps 1 GiB vram free, --fit off filled it and the desktop lagged
   llama: llama-server --port ${PORT} --threads 8
-  # pi работает один: весь контекст одному слоту
+  # pi is the only client, so one slot gets the whole context
   chat: ${llama} -np 1
   sd: sd-server --listen-ip 127.0.0.1 --listen-port ${PORT} --diffusion-fa
-  # Qwen3.8 27B: KV есть только у 16 слоёв из 64, так что 128K в q4_0
-  # (llama.cpp квантует его с вращением Адамара) стоят ~2.3 GiB.
-  # MTP-голова лежит в GGUF, ngram-mod ускоряет повторы (правки кода,
-  # который pi только что прочитал). Сэмплинг — режим thinking (Qwen).
+  # only 16 of 64 layers keep kv, so 128k in q4_0 is ~2.3 GiB. ngram-mod speeds up re-typed code
   qwen-args: >
     ${chat}
     -fa on --cache-type-k q4_0 --cache-type-v q4_0
     --spec-type draft-mtp,ngram-mod --spec-draft-n-max 2
     --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0 --presence-penalty 0
-  # abliterated квант RentedNoodle, шаблон froggeric для него обязателен.
-  # temp 0.6 — с карточки, ради надёжных tool calls
+  # this quant needs the froggeric template, temp 0.6 is from its card for steady tool calls
   qwen-uc-args: >
     ${qwen-args}
     -m ${models}/qwen3.8-27b-UC/Qwen3.8-27B-GSQ-RCO-IQ3_XXS-Uncensored-v1.1.gguf
     --chat-template-file ${models}/qwen3.8-27b-UC/froggeric-qwen3.8-tool-use.jinja
     --temp 0.6
-  # CPU: embed не выгружается, на GPU он отнимал бы VRAM у LLM.
-  # --gpu-layers 0 тут мало: GPU остаётся устройством модели, и llama.cpp
-  # гонит на нём матмулы батчей с буфером ~1 GB. --device none — совсем
-  # без GPU, mmproj у embed-vision тоже.
-  # n_ubatch = min(n_batch, n_ubatch), а вход должен влезть в один ubatch
+  # --device none, since --gpu-layers 0 still runs batches on the gpu with a ~1 GB buffer
   embed-args: >
     ${llama}
     -m ${models}/embeddinggemma-2/embeddinggemma-2-BF16.gguf
     --embeddings --pooling mean --device none
     --ctx-size 8192 --batch-size 8192 --ubatch-size 8192
 
+# :think and :no-think are for clients without a thinking switch
 x-qwen-filters: &qwen-filters
   filters:
     setParamsByID:
@@ -70,10 +56,12 @@ x-gemma-filters: &gemma-filters
         chat_template_kwargs:
           enable_thinking: true
 
+# sd-server flags like --cfg-scale and --steps are only request defaults
 x-sd: &sd
   checkEndpoint: none
   ttl: 120
 
+# each llm's --ctx-size is repeated as contextWindow in pi/models.json
 models:
   "qwen":
     description: "Qwen3.8 27B UD-IQ3_XXS, on GPU, 128K. Coding and agents."
@@ -90,7 +78,7 @@ models:
       --ctx-size 131072
     <<: *qwen-filters
 
-  # mmproj ~0.9 GB, --fit учитывает и его
+  # --fit counts the ~0.9 GB mmproj too
   "qwen-uncensored-vision":
     description: "Qwen3.8 27B GSQ-RCO IQ3_XXS abliterated with image input, 64K."
     cmd: |
@@ -99,7 +87,7 @@ models:
       --ctx-size 65536
     <<: *qwen-filters
 
-  # MoE, 4B active: эксперты, что не влезли, --fit отдаёт CPU почти без потери скорости
+  # moe with 4b active, so the experts --fit moves to the cpu cost little speed
   "gemma-26b":
     description: "Gemma 4 26B-A4B QAT UD-Q4_K_XL. MoE, fast everyday model."
     cmd: |
@@ -109,7 +97,6 @@ models:
       --temp 1.0 --top-p 0.95 --top-k 64 --min-p 0
     <<: *gemma-filters
 
-  # консолидирует память pi (settings.json: memory.consolidationModel)
   "gemma-12b":
     description: "Gemma 4 12B QAT UD-Q4_K_XL, on GPU. Fast, web search."
     cmd: |
@@ -119,7 +106,7 @@ models:
       --temp 1.0 --top-p 0.95 --top-k 64 --min-p 0
     <<: *gemma-filters
 
-  # thinking не выключается, reasoning_effort low/medium/high (по умолчанию medium)
+  # thinking can't be turned off, only reasoning_effort low, medium or high
   "gpt-oss":
     description: "gpt-oss-20b MXFP4. MoE, fast, web search."
     cmd: |
@@ -128,10 +115,7 @@ models:
       --ctx-size 131072
       --temp 1.0 --top-p 1.0 --top-k 0 --min-p 0
 
-  # ---- Картинки: stable-diffusion.cpp (sd-server), /v1/images/generations ----
-  # --cfg-scale, --steps и т.п. при старте становятся дефолтами запросов.
-
-  # Turbo-дистиллят: cfg 1.0 и 8 шагов (с cfg 1.0 negative prompt не работает)
+  # turbo distill: cfg 1.0 and 8 steps, so a negative prompt does nothing
   "z-image":
     description: "Z-Image-Turbo Q8_0. Fast text-to-image, photorealism."
     cmd: |
@@ -144,7 +128,7 @@ models:
       --steps 8
     <<: *sd
 
-  # генерация и правка по референсу (image в запросе). Дистиллят: cfg 1.0, 4 шага
+  # also edits a reference image from the request, distill so cfg 1.0 and 4 steps
   "flux2-klein":
     description: "FLUX.2-klein-4B Q8_0. Text-to-image and image editing."
     cmd: |
@@ -158,7 +142,7 @@ models:
       --steps 4
     <<: *sd
 
-  # 20B, DiT 13.2 GB + энкодер на CPU, медленная. Родное разрешение 1328x1328
+  # 20b and slow, the encoder runs on the cpu. native size is 1328x1328
   "qwen-image":
     description: "Qwen-Image-2512 Q4_K_M. Best text rendering, slow."
     cmd: |
@@ -175,7 +159,7 @@ models:
       --steps 30
     <<: *sd
 
-  # sd.cpp сам подбирает flow-shift под разрешение. Стороны кратны 32
+  # sd.cpp picks flow-shift for the size itself, sides must be multiples of 32
   "qwen-image-2.1":
     description: "Qwen-Image-2.1 Q4_K_M (unsloth). Text-to-image, text rendering, RGBA."
     cmd: |
@@ -191,10 +175,7 @@ models:
       -H 1024
     <<: *sd
 
-  # ---- Эмбеддинги (CPU), вектор 768 ----
-  # pi-memory и docs-mcp. docs-mcp хранит имя модели в индексе и ходит по
-  # алиасу: другая модель или квант = новый алиас здесь и в
-  # nixos/services/docs-mcp, иначе старые и новые векторы смешаются.
+  # docs-mcp keys its index on the alias, so a new model or quant needs a new alias here and in docs-mcp
   "embed":
     description: "EmbeddingGemma 2 BF16, CPU. pi-memory, docs-mcp."
     cmd: ${embed-args}
@@ -202,8 +183,7 @@ models:
       - embeddinggemma-2-bf16
     ttl: 0
 
-  # та же модель + энкодеры картинок/аудио/видео, векторы сравнимы с embed.
-  # Медиа только через нативный /embeddings, /v1 пока только текст
+  # vectors match embed, media works only on native /embeddings, /v1 is text only
   "embed-vision":
     description: "EmbeddingGemma 2 BF16 + mmproj, CPU. Image/audio/video embeddings."
     cmd: |
@@ -221,7 +201,7 @@ routing:
     use: group
     settings:
       groups:
-        # всё, что на GPU: одновременно живёт одна модель
+        # everything on the gpu, one model at a time
         "main":
           swap: true
           exclusive: false

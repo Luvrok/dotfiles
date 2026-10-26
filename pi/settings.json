@@ -1,0 +1,23 @@
+{
+  "defaultProvider": "llama-swap",
+  "defaultModel": "qwen",
+  "defaultThinkingLevel": "high",
+  "packages": [
+    "npm:pi-web-access@0.44.0",
+    "npm:@juicesharp/rpiv-todo@2.13.10",
+    "npm:@gotgenes/pi-permission-system@41.0.0",
+    "npm:@juicesharp/rpiv-ask-user-question@2.13.10"
+  ],
+  "compaction": {
+    "enabled": true,
+    "reserveTokens": 65536,
+    "keepRecentTokens": 24576,
+    "modelOverrides": {
+      "llama-swap/qwen-uncensored-vision": {
+        "reserveTokens": 24576,
+        "keepRecentTokens": 12288
+      }
+    }
+  },
+  "httpIdleTimeoutMs": 900000
+}

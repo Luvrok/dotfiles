@@ -1,0 +1,12 @@
+{
+  "searxngBaseUrl": "http://127.0.0.1:11433",
+  "provider": "searxng",
+  "proxy": "http://127.0.0.1:10808",
+  "workflow": "none",
+  "youtube": {
+    "enabled": false
+  },
+  "video": {
+    "enabled": false
+  }
+}
