@@ -9,7 +9,22 @@
 }:
 
 let
-  kodi = pkgs.kodi-wayland;
+  # the provider breaks tmdb: kodi's own downloads (posters, curl takes
+  # the proxy from the environment when kodi's setting is off) and the
+  # scrapers' (python's urllib) go through xray's mixed inbound
+  # (hosts/barnard/xray.nix). no internet in kodi while xray is off
+  proxy = "http://127.0.0.1:10808";
+  kodi = pkgs.symlinkJoin {
+    name = "kodi-xray";
+    paths = [ pkgs.kodi-wayland ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/kodi \
+        --set http_proxy ${proxy} \
+        --set https_proxy ${proxy} \
+        --set no_proxy localhost,127.0.0.1,::1
+    '';
+  };
 in
 {
   home-manager.users.${username} =
@@ -18,10 +33,10 @@ in
     let
       datadir = config.programs.kodi.datadir;
       # kodi puts its libraries (rtmpdump, libnfs...) in LD_LIBRARY_PATH,
-      # mpv shouldn't load them over its own. -- for a file that starts
-      # with a dash
+      # mpv shouldn't load them over its own, nor take kodi's proxy. --
+      # for a file that starts with a dash
       mpv = pkgs.writeShellScript "kodi-mpv" ''
-        unset LD_LIBRARY_PATH
+        unset LD_LIBRARY_PATH http_proxy https_proxy no_proxy
         exec ${config.programs.mpv.finalPackage}/bin/mpv -- "$1"
       '';
       movies = "/media/outer-1/movies/";
@@ -61,7 +76,9 @@ in
 
       home.file = {
         # kodi takes this one over its own estuary (./skin.nix)
-        "${datadir}/addons/skin.estuary".source = pkgs.callPackage ./skin.nix { inherit kodi; };
+        "${datadir}/addons/skin.estuary".source = pkgs.callPackage ./skin.nix {
+          kodi = pkgs.kodi-wayland;
+        };
 
         # torrent names the scraper finds
         "${datadir}/userdata/advancedsettings.xml".source = ./advancedsettings.xml;
