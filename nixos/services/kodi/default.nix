@@ -24,6 +24,8 @@ in
         unset LD_LIBRARY_PATH
         exec ${config.programs.mpv.finalPackage}/bin/mpv -- "$1"
       '';
+      movies = "/media/outer-1/movies/";
+      series = "/media/outer-1/series/";
     in
     {
       programs.kodi = {
@@ -34,12 +36,12 @@ in
         sources.video.source = [
           {
             name = "Movies";
-            path = "/media/outer-1/movies/";
+            path = movies;
             allowsharing = "true";
           }
           {
             name = "Series";
-            path = "/media/outer-1/series/";
+            path = series;
             allowsharing = "true";
           }
         ];
@@ -82,6 +84,42 @@ in
             </rules>
           </playercorefactory>
         '';
+      };
+
+      # kodi looks for new files when it starts. while it runs, this asks it
+      # every 10 minutes if something on the disk changed since the last
+      # time. kodi skips what it has already, a show it didn't find it
+      # searches again
+      systemd.user.services.kodi-update = {
+        Unit.Description = "Kodi library update when the sources change";
+        Service = {
+          Type = "oneshot";
+          ExecStart = lib.getExe (
+            pkgs.writeShellApplication {
+              name = "kodi-update";
+              runtimeInputs = [
+                pkgs.procps
+                pkgs.findutils
+                pkgs.coreutils
+                kodi
+              ];
+              text = ''
+                pgrep -u "$USER" -x kodi.bin >/dev/null || exit 0
+                stamp=''${XDG_STATE_HOME:-$HOME/.local/state}/kodi-update
+                if [ -e "$stamp" ] && [ -z "$(find ${movies} ${series} -newer "$stamp" -print -quit 2>/dev/null)" ]; then
+                  exit 0
+                fi
+                mkdir -p "$(dirname "$stamp")"
+                touch "$stamp"
+                kodi-send -a "UpdateLibrary(video)" >/dev/null
+              '';
+            }
+          );
+        };
+      };
+      systemd.user.timers.kodi-update = {
+        Timer.OnCalendar = "*:0/10";
+        Install.WantedBy = [ "timers.target" ];
       };
 
       # new files show up when kodi starts, no dialog while it looks. no

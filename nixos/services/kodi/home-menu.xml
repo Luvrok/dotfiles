@@ -1,8 +1,7 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- estuary's xml/Startup.xml. the first start hides the home menu's items
-     for what's not on /media/outer-1: music, tv, radio, games, pictures,
-     weather, favourites. once, the skin settings bring them back -->
-<window>
+<!-- goes into estuary's xml/Startup.xml before what it does. the first
+     start hides the home menu's items for what's not on /media/outer-1:
+     music, tv, radio, games, pictures, weather, favourites. once, the skin
+     settings bring them back -->
 	<onload condition="!Skin.HasSetting(barnard_menu)">Skin.SetBool(HomeMenuNoMusicButton)</onload>
 	<onload condition="!Skin.HasSetting(barnard_menu)">Skin.SetBool(HomeMenuNoMusicVideoButton)</onload>
 	<onload condition="!Skin.HasSetting(barnard_menu)">Skin.SetBool(HomeMenuNoTVButton)</onload>
@@ -12,6 +11,3 @@
 	<onload condition="!Skin.HasSetting(barnard_menu)">Skin.SetBool(HomeMenuNoWeatherButton)</onload>
 	<onload condition="!Skin.HasSetting(barnard_menu)">Skin.SetBool(HomeMenuNoFavButton)</onload>
 	<onload condition="!Skin.HasSetting(barnard_menu)">Skin.SetBool(barnard_menu)</onload>
-	<onload>ReplaceWindow($INFO[System.StartupWindow])</onload>
-	<controls />
-</window>
