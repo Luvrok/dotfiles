@@ -20,12 +20,13 @@ runCommand "kodi-skin-estuary-barnard" { nativeBuildInputs = [ imagemagick ]; } 
   cp ${./colors.xml} colors/defaults.xml
   cp ${./Startup.xml} xml/Startup.xml
 
-  # no animation on a scroll or a focus. a list scrolled 200-500 ms on every
-  # wheel step, the item under the mouse zoomed and faded in, so the focus
-  # jumped around under the cursor while the list moved. an animation that
-  # hides something on focus still does, at once
+  # a short scroll and no focus animation. a list scrolled 200-500 ms on
+  # every wheel step, the item under the mouse zoomed and faded in, so the
+  # focus jumped around under the cursor while the list moved. with no
+  # scroll at all fast wheeling jumped instead. an animation that hides
+  # something on focus still does, at once
   sed -i -E \
-    -e 's#(<scrolltime[^>]*>)[0-9]+#\10#' \
+    -e 's#(<scrolltime[^>]*>)[0-9]+#\1150#' \
     -e '/>(Focus|Unfocus)<\/animation>/s#time="[0-9]+"#time="0"#' \
     xml/*.xml
 

@@ -61,6 +61,9 @@ in
         # kodi takes this one over its own estuary (./skin.nix)
         "${datadir}/addons/skin.estuary".source = pkgs.callPackage ./skin.nix { inherit kodi; };
 
+        # torrent names the scraper finds
+        "${datadir}/userdata/advancedsettings.xml".source = ./advancedsettings.xml;
+
         # every video goes to mpv. kodi runs it through sh with the path in
         # double quotes, a " $ ` or \ in a file name breaks it. mpv resumes
         # where it was (save-position-on-quit), kodi marks it watched after

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- how kodi reads the names of what comes from torrents, so the scraper
+     finds it with no renaming. a show is searched by its folder's name with
+     the junk cut off: kodi cuts at the first 1080p, web-dl and so on, but
+     not at a season, "The.Rookie.S01.1080p.TVShows" was "The Rookie S01"
+     and tmdb had nothing. the regexps are kodi's, case insensitive -->
+<advancedsettings version="1.0">
+	<video>
+		<!-- the name ends at a season too: .S01. (Season 1) .2.сезон.
+		     .The.Complete.Series. -->
+		<cleanstrings action="append">
+			<regexp>[ _\,\.\(\)\[\]\-](s[0-9]{1,2}|season[ _.]?[0-9]+|([0-9]+[ _.-]?)?(сезон|Сезон)|(the[ _.])?complete[ _.](series|season))([ _\,\.\(\)\[\]\-]|$)</regexp>
+		</cleanstrings>
+	</video>
+	<!-- anime numbers its episodes with no season: "Show - 01 [1080p].mkv"
+	     is season 1 episode 1. after kodi's own, an S01E01 still wins -->
+	<tvshowmatching action="append">
+		<regexp defaultseason="1">[ _.]-[ _.]()([0-9]{1,4})(?:v[0-9])?([^\\/0-9][^\\/]*)$</regexp>
+	</tvshowmatching>
+</advancedsettings>

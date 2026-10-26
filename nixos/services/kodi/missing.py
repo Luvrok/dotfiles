@@ -1,7 +1,8 @@
 # kodi-missing: the videos on the sources that aren't in kodi's library, a
 # movie or an episode the scraper didn't find. kodi only says so in its
-# debug log. reads the newest MyVideos*.db, run it with kodi closed or
-# open, it only reads
+# debug log. a line a show folder (kodi searches a show by that name) or a
+# movie file, with how many videos aren't there. reads the newest
+# MyVideos*.db, run it with kodi closed or open, it only reads
 import glob
 import os
 import sqlite3
@@ -30,10 +31,15 @@ known = {
 sources = ET.parse(os.path.join(datadir, "userdata/sources.xml"))
 for source in sources.iterfind("video/source"):
     root = source.findtext("path")
+    missing = {}
     for dir, _, names in os.walk(root):
-        for name in sorted(names):
+        for name in names:
             file = os.path.join(dir, name)
             ext = os.path.splitext(name)[1].lower()
             # kodi skips samples the same way
             if ext in videos and "sample" not in name.lower() and file not in known:
-                print(file)
+                # the first folder under the source, or the file itself
+                top = os.path.relpath(file, root).split(os.sep)[0]
+                missing[top] = missing.get(top, 0) + 1
+    for top, count in sorted(missing.items()):
+        print(f"{source.findtext('name')}: {top}" + (f"  ({count} files)" if count > 1 else ""))
