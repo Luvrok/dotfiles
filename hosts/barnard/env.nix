@@ -9,6 +9,8 @@
     # wayland sessions next to i3
     ../../nixos/services/sway
     ../../nixos/services/hyprland
+    # the movies and series of /media/outer-1, played in mpv
+    ../../nixos/services/kodi
   ];
 
   services.displayManager.sddm.setupScript = ''
