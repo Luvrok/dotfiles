@@ -29,7 +29,7 @@ ln -s $d/skills/* ~/.pi/agent/skills/
 
 - The `docs` entry in `mcp.json` and `skills/docs` need the docs-mcp container (`nixos/services/docs-mcp`). Remove both on Debian.
 - `skills/qwen-generate` needs `qwen-batch` and the models in `/var/lib/models`.
-- `web-search.json` sends web requests through xray on `127.0.0.1:10808`. Drop `proxy` if it isn't running.
+- `web-search.json` sends web requests through xray on `127.0.0.1:10808`. Drop `proxy` and `ssrf` if it isn't running.
 
 ## Notes
 
@@ -44,6 +44,7 @@ ln -s $d/skills/* ~/.pi/agent/skills/
 - Qwen's template knows low, medium and xhigh, so high maps to xhigh. Gemma's template is on/off only. gpt-oss can't stop thinking.
 - `mcp.json`: `direct` exposure because a local model calls declared tools more reliably than codemode scripts. `fetch_url` is hidden, pi-web-access's `fetch_content` does that. `timeout` is 120 s because embedding a query waits while embed is busy with a sync.
 - `web-search.json`: `provider` is `searxng` only, `auto` would silently fall back to Exa. Loopback SearXNG passes the SSRF guard alone, so no `ssrf.allowRanges` that would let `fetch_content` reach local services. YouTube and video are off without Gemini keys.
+- Web traffic goes only through xray: `fetch_content` uses `proxy` with no direct fallback, `ssrf.trustEnvProxy` skips the local DNS lookup so hostnames resolve on the proxy side, and SearXNG has `outgoing.proxies` in `nixos/services/llama-swap/searxng.nix`. With xray down, search and fetch fail instead of going direct.
 
 ## Permissions
 
