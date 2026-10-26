@@ -47,6 +47,16 @@ in
         addonSettings."service.xbmc.versioncheck".versioncheck_enable = "false";
       };
 
+      # what the scraper didn't find (./missing.py)
+      home.packages = [
+        (pkgs.writers.writePython3Bin "kodi-missing" {
+          flakeIgnore = [
+            "E203"
+            "E501"
+          ];
+        } (builtins.readFile ./missing.py))
+      ];
+
       home.file = {
         # kodi takes this one over its own estuary (./skin.nix)
         "${datadir}/addons/skin.estuary".source = pkgs.callPackage ./skin.nix { inherit kodi; };
