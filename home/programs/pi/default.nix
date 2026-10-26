@@ -161,32 +161,32 @@ let
     # ships breaking majors. Bump by hand after reading the changelog.
     packages = [
       "npm:pi-web-access@0.44.0"
-      "npm:@samfp/pi-memory@1.6.1"
+      # "npm:@samfp/pi-memory@1.6.1"
       "npm:@juicesharp/rpiv-todo@2.13.10"
-      "npm:@gotgenes/pi-permission-system@41.0.0"
+      # "npm:@gotgenes/pi-permission-system@41.0.0"
       "npm:@juicesharp/rpiv-ask-user-question@2.13.10"
     ];
-    memory = {
-      # Passed verbatim to `pi --model`; trailing ":off" is the thinking level.
-      # The whole run has a hard 45 s timeout and fails silently, so keep
-      # this a small, fast, fully-on-GPU model. It runs at session end and
-      # swaps the main model out of VRAM (same llama-swap group).
-      consolidationModel = "llama-swap/gemma-12b:off";
-      # One memory dump at session start instead of a new block every turn.
-      # The per-turn block is not kept in history, so each new turn would
-      # make llama.cpp re-process the whole previous turn.
-      perTurnInjection = false;
-      # Hybrid search for the memory_search tool via the always-loaded
-      # CPU embedding model. pi-memory appends /v1/embeddings itself.
-      embedding = {
-        type = "openai-compatible";
-        baseUrl = llamaSwapHost;
-        model = "embed";
-        # EmbeddingGemma 2 output width. A mismatch makes pi-memory re-embed
-        # every stored fact at each session start.
-        dimensions = 768;
-      };
-    };
+    # memory = {
+    #   # Passed verbatim to `pi --model`; trailing ":off" is the thinking level.
+    #   # The whole run has a hard 45 s timeout and fails silently, so keep
+    #   # this a small, fast, fully-on-GPU model. It runs at session end and
+    #   # swaps the main model out of VRAM (same llama-swap group).
+    #   consolidationModel = "llama-swap/gemma-12b:off";
+    #   # One memory dump at session start instead of a new block every turn.
+    #   # The per-turn block is not kept in history, so each new turn would
+    #   # make llama.cpp re-process the whole previous turn.
+    #   perTurnInjection = false;
+    #   # Hybrid search for the memory_search tool via the always-loaded
+    #   # CPU embedding model. pi-memory appends /v1/embeddings itself.
+    #   embedding = {
+    #     type = "openai-compatible";
+    #     baseUrl = llamaSwapHost;
+    #     model = "embed";
+    #     # EmbeddingGemma 2 output width. A mismatch makes pi-memory re-embed
+    #     # every stored fact at each session start.
+    #     dimensions = 768;
+    #   };
+    # };
   };
 
   # pi-web-access config (~/.pi/web-search.json)
@@ -301,7 +301,7 @@ in
     ".pi/web-search.json".text = builtins.toJSON webSearch;
     # Kept as a literal JSON file: rules are last-match-wins and
     # builtins.toJSON would sort the keys alphabetically.
-    ".pi/agent/extensions/pi-permission-system/config.json".source = ./pi-permission.json;
+    # ".pi/agent/extensions/pi-permission-system/config.json".source = ./pi-permission.json;
     ".pi/agent/skills" = {
       source = ./pi-skills;
       recursive = true;
