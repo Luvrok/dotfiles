@@ -21,8 +21,22 @@
       "~/.aws/*": "deny"
     },
 
-    "external_directory_read": "allow",
-    "external_directory_write": "ask",
+    "path_write": {
+      "*/extensions/pi-permission-system/*": "deny",
+      "~/.pi/agent/settings.json": "deny",
+      "~/.pi/agent/mcp.json": "deny"
+    },
+
+    "external_directory": {
+      "*": "deny",
+      "~/.pi/*": "allow",
+      "~/.local/share/pi/*": "allow"
+    },
+
+    "external_directory_read": {
+      "/nix/store/*": "allow",
+      "/tmp/pi-*": "allow"
+    },
 
     "mcp": {
       "*": "ask",

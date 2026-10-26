@@ -1,0 +1,160 @@
+{
+  "providers": {
+    "llama-swap": {
+      "name": "llama-swap",
+      "baseUrl": "http://localhost:11434/v1",
+      "api": "openai-completions",
+      "apiKey": "none",
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "chat-template"
+      },
+      "models": [
+        {
+          "id": "qwen",
+          "name": "Qwen3.8 27B",
+          "input": ["text"],
+          "contextWindow": 131072,
+          "maxTokens": 65536,
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "minimal": null,
+            "high": "xhigh"
+          },
+          "compat": {
+            "chatTemplateKwargs": {
+              "enable_thinking": { "$var": "thinking.enabled" },
+              "reasoning_effort": { "$var": "thinking.effort", "omitWhenOff": true },
+              "preserve_thinking": false
+            }
+          },
+          "samplingParamsByThinkingLevel": {
+            "off": {
+              "temperature": 0.7,
+              "top_p": 0.8,
+              "presence_penalty": 1.5,
+              "thinking_budget_tokens": 0
+            }
+          }
+        },
+        {
+          "id": "qwen-uncensored",
+          "name": "Qwen3.8 27B uncensored",
+          "input": ["text"],
+          "contextWindow": 131072,
+          "maxTokens": 65536,
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "minimal": null,
+            "high": "xhigh"
+          },
+          "compat": {
+            "chatTemplateKwargs": {
+              "enable_thinking": { "$var": "thinking.enabled" },
+              "reasoning_effort": { "$var": "thinking.effort", "omitWhenOff": true },
+              "preserve_thinking": false
+            }
+          },
+          "samplingParamsByThinkingLevel": {
+            "off": {
+              "temperature": 0.7,
+              "top_p": 0.8,
+              "presence_penalty": 1.5,
+              "thinking_budget_tokens": 0
+            }
+          }
+        },
+        {
+          "id": "qwen-uncensored-vision",
+          "name": "Qwen3.8 27B uncensored vision",
+          "input": ["text", "image"],
+          "contextWindow": 65536,
+          "maxTokens": 24576,
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "minimal": null,
+            "high": "xhigh"
+          },
+          "compat": {
+            "chatTemplateKwargs": {
+              "enable_thinking": { "$var": "thinking.enabled" },
+              "reasoning_effort": { "$var": "thinking.effort", "omitWhenOff": true },
+              "preserve_thinking": false
+            }
+          },
+          "samplingParamsByThinkingLevel": {
+            "off": {
+              "temperature": 0.7,
+              "top_p": 0.8,
+              "presence_penalty": 1.5,
+              "thinking_budget_tokens": 0
+            }
+          }
+        },
+        {
+          "id": "gemma-26b",
+          "name": "Gemma 4 26B-A4B",
+          "input": ["text"],
+          "contextWindow": 131072,
+          "maxTokens": 65536,
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "minimal": null,
+            "low": null,
+            "high": null
+          },
+          "compat": {
+            "chatTemplateKwargs": {
+              "enable_thinking": { "$var": "thinking.enabled" }
+            }
+          },
+          "samplingParamsByThinkingLevel": {
+            "off": {
+              "thinking_budget_tokens": 0
+            }
+          }
+        },
+        {
+          "id": "gemma-12b",
+          "name": "Gemma 4 12B",
+          "input": ["text"],
+          "contextWindow": 131072,
+          "maxTokens": 65536,
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "minimal": null,
+            "low": null,
+            "high": null
+          },
+          "compat": {
+            "chatTemplateKwargs": {
+              "enable_thinking": { "$var": "thinking.enabled" }
+            }
+          },
+          "samplingParamsByThinkingLevel": {
+            "off": {
+              "thinking_budget_tokens": 0
+            }
+          }
+        },
+        {
+          "id": "gpt-oss",
+          "name": "gpt-oss 20B",
+          "input": ["text"],
+          "contextWindow": 131072,
+          "maxTokens": 65536,
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": null
+          },
+          "compat": {
+            "chatTemplateKwargs": {
+              "reasoning_effort": { "$var": "thinking.effort" }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "docs": {
+      "url": "http://127.0.0.1:6280/mcp",
+      "description": "Search the local documentation index. Call list_libraries first to see what is indexed.",
+      "exposure": "direct",
+      "toolExposure": {
+        "fetch_url": "hidden"
+      },
+      "timeout": 120
+    }
+  }
+}
