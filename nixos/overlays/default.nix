@@ -83,23 +83,21 @@ in
     (self: super: {
       mpv-config = super.stdenvNoCC.mkDerivation {
         pname = "mpv-config";
-        version = "fork-pinned-11.09.2025";
+        version = "fork-pinned-26.10.2026";
         src = super.fetchFromGitHub {
           owner = "Luvrok";
           repo = "mpv-config";
-          rev = "c2a8fed053b01b81df02b2679dbadcf75a7822d4";
-          hash = "sha256-jmeOUKAs3gcEuiXqo6FclTGOMrWMcEQdGZlXFpdJjHs=";
+          rev = "979ba7a84a148595b0b166c141269e041a48a7da";
+          hash = "sha256-e5dSFj0/wuTTOSZREviNfeE4TXfia1lIcIuKFQG6UFI=";
         };
+        # the fork has no mpv.conf and input.conf, they're ./mpv
         installPhase = ''
           set -euo pipefail
 
           mkdir -p "$out"
           cp -r "$src/portable_config/"* "$out/"
 
-          rm -f "$out/mpv.conf"
           install -Dm644 ${mpv} "$out/mpv.conf"
-
-          rm -f "$out/inputs.conf"
           install -Dm644 ${input} "$out/input.conf"
 
           substituteInPlace "$out/script-opts/memo.conf" \
