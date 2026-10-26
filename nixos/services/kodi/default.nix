@@ -87,9 +87,11 @@ in
       };
 
       # kodi looks for new files when it starts. while it runs, this asks it
-      # every 10 minutes if something on the disk changed since the last
-      # time. kodi skips what it has already, a show it didn't find it
-      # searches again
+      # to look again when a video under the sources is new: copied, moved
+      # in or done downloading since the last time. one still being written
+      # (changed in the last 5 minutes) waits for the next run, a torrent
+      # that's downloading would rescan every 10 minutes and the lists would
+      # reload their posters each time
       systemd.user.services.kodi-update = {
         Unit.Description = "Kodi library update when the sources change";
         Service = {
@@ -106,11 +108,17 @@ in
               text = ''
                 pgrep -u "$USER" -x kodi.bin >/dev/null || exit 0
                 stamp=''${XDG_STATE_HOME:-$HOME/.local/state}/kodi-update
-                if [ -e "$stamp" ] && [ -z "$(find ${movies} ${series} -newer "$stamp" -print -quit 2>/dev/null)" ]; then
+                # a window of time, (the last run, now] both 5 minutes back.
+                # ctime, a move or a copy that keeps the mtime counts too
+                settled=$(($(date +%s) - 300))
+                if [ -e "$stamp" ] && [ -z "$(find ${movies} ${series} -type f \
+                  \( -iname '*.mkv' -o -iname '*.mp4' -o -iname '*.avi' -o -iname '*.m4v' \) \
+                  -cnewer "$stamp" ! -newerct "@$settled" -print -quit 2>/dev/null)" ]; then
+                  touch -d "@$settled" "$stamp"
                   exit 0
                 fi
                 mkdir -p "$(dirname "$stamp")"
-                touch "$stamp"
+                touch -d "@$settled" "$stamp"
                 kodi-send -a "UpdateLibrary(video)" >/dev/null
               '';
             }
