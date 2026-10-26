@@ -45,6 +45,7 @@ ln -s $d/skills/* ~/.pi/agent/skills/
 - `mcp.json`: `direct` exposure because a local model calls declared tools more reliably than codemode scripts. `fetch_url` is hidden, pi-web-access's `fetch_content` does that. `timeout` is 120 s because embedding a query waits while embed is busy with a sync.
 - `web-search.json`: `provider` is `searxng` only, `auto` would silently fall back to Exa. Loopback SearXNG passes the SSRF guard alone, so no `ssrf.allowRanges` that would let `fetch_content` reach local services. YouTube and video are off without Gemini keys.
 - Web traffic goes only through xray: `fetch_content` uses `proxy` with no direct fallback, `ssrf.trustEnvProxy` skips the local DNS lookup so hostnames resolve on the proxy side, and SearXNG has `outgoing.proxies` in `nixos/services/llama-swap/searxng.nix`. With xray down, search and fetch fail instead of going direct.
+- `shellCommandPrefix` exports the proxy variables before every bash command of the agent, so curl, wget, git, npm, pip, python and go go through xray, and node `fetch` with `NODE_USE_ENV_PROXY`. Loopback stays direct. It only works for programs that read these variables, and the agent can unset them. ssh, nc, ping and plain DNS ignore them. pi's own requests are not affected.
 
 ## Permissions
 

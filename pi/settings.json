@@ -20,5 +20,6 @@
     }
   },
   "httpIdleTimeoutMs": 900000,
+  "shellCommandPrefix": "export http_proxy=http://127.0.0.1:10808 https_proxy=http://127.0.0.1:10808 HTTP_PROXY=http://127.0.0.1:10808 HTTPS_PROXY=http://127.0.0.1:10808 ALL_PROXY=http://127.0.0.1:10808 all_proxy=http://127.0.0.1:10808 no_proxy=localhost,127.0.0.1,::1 NO_PROXY=localhost,127.0.0.1,::1 NODE_USE_ENV_PROXY=1",
   "lastChangelogVersion": "1.3.0"
 }
