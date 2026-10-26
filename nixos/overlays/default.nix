@@ -87,8 +87,8 @@ in
         src = super.fetchFromGitHub {
           owner = "Luvrok";
           repo = "mpv-config";
-          rev = "979ba7a84a148595b0b166c141269e041a48a7da";
-          hash = "sha256-e5dSFj0/wuTTOSZREviNfeE4TXfia1lIcIuKFQG6UFI=";
+          rev = "71f841edc758f389fb79ad2e83663bb6ecd61099";
+          hash = "sha256-CiZ8f1FzkzMRz5fCziTCXFqBAnmc1vxqvXFbebV6JWo=";
         };
         # the fork has no mpv.conf and input.conf, they're ./mpv
         installPhase = ''
