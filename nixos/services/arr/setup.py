@@ -152,24 +152,30 @@ def tag(api, label):
 
 
 # the qualities a release may be, the best last, the profile in this
-# order: a bdrip 1080p, then 4k (not hdr, below), then a web 1080p, then
-# 720p. a 720p gets replaced by a 1080p or 4k once there is one (cutoff),
-# a web 1080p or 4k stays
+# order: a bdrip 1080p, then 4k (not hdr, below), then a web-dl 1080p,
+# then 720p. their groups taken apart: a webrip (a stream recorded and
+# encoded again) isn't, a web-dl (the stream's own file) is. a 720p gets
+# replaced by a 1080p or 4k once there is one (cutoff), a web-dl 1080p or
+# 4k stays
 QUALITIES = {
-    "radarr": ["WEB 720p", "Bluray-720p", "WEB 1080p", "WEB 2160p", "Remux-2160p", "Bluray-2160p", "Bluray-1080p"],
+    "radarr": ["WEBDL-720p", "Bluray-720p", "WEBDL-1080p", "WEBDL-2160p", "Remux-2160p", "Bluray-2160p", "Bluray-1080p"],
     "sonarr": [
-        "HDTV-1080p",
-        "WEB 720p",
+        "WEBDL-720p",
         "Bluray-720p",
-        "WEB 1080p",
-        "WEB 2160p",
+        "HDTV-1080p",
+        "WEBDL-1080p",
+        "WEBDL-2160p",
         "Bluray-2160p Remux",
         "Bluray-2160p",
         "Bluray-1080p",
     ],
 }
-CUTOFF = "WEB 1080p"
+CUTOFF = "WEBDL-1080p"
 PROFILE = "BDRip 1080p"
+# the least a release may be, MB a minute of the film or episode: below
+# are the encodes that show on a big screen (a 2 GB 1080p film). a web-dl
+# 1080p is 30 to 60, a 2 h film at 25 is 3.6 GB
+MIN_SIZE = {"720p": 12, "1080p": 25, "2160p": 60}
 # custom formats: name, its kind, what it looks for, its score. among
 # equal qualities a russian dub wins (rutracker's titles get "RUS",
 # below), no upgrade for it alone: cutoffFormatScore 0. hdr, as its title
@@ -206,16 +212,16 @@ def profile(api, app):
     if p is None:
         p = api.get("/qualityprofile/schema")
     allowed = QUALITIES[app]
-    label = lambda item: item.get("name") or item["quality"]["name"]
-    cutoff = None
-    for item in p["items"]:
-        item["allowed"] = label(item) in allowed
-        for sub in item.get("items", []):
-            sub["allowed"] = item["allowed"]
-        if label(item) == CUTOFF:
-            cutoff = item.get("id") or item["quality"]["id"]
-    # the rank is the order, the best last: the rest, then the allowed ones
-    p["items"] = sorted(p["items"], key=lambda item: allowed.index(label(item)) if label(item) in allowed else -1)
+    # no groups, a quality each; the rank is the order, the best last: the
+    # rest, then the allowed ones
+    items = [
+        {"quality": q["quality"], "items": [], "allowed": q["quality"]["name"] in allowed}
+        for item in p["items"]
+        for q in (item["items"] or [item])
+    ]
+    rank = lambda item: allowed.index(item["quality"]["name"]) if item["allowed"] else -1
+    p["items"] = sorted(items, key=rank)
+    cutoff = next(item["quality"]["id"] for item in items if item["quality"]["name"] == CUTOFF)
     scores = {f["format"]: f["score"] for f in p.get("formatItems", [])}
     p.update(
         name=PROFILE,
@@ -240,6 +246,17 @@ def profile(api, app):
         api.put(f"/qualityprofile/{p['id']}", p)
     else:
         api.post("/qualityprofile", p)
+
+
+def sizes(api, app):
+    changed = []
+    for d in api.get("/qualitydefinition"):
+        name = d["quality"]["name"]
+        least = next((n for r, n in MIN_SIZE.items() if r in name), None)
+        if name in QUALITIES[app] and least is not None and d.get("minSize") != least:
+            changed.append(dict(d, minSize=least))
+    if changed:
+        api.put("/qualitydefinition/update", changed)
 
 
 def servarr(app):
@@ -273,6 +290,7 @@ def servarr(app):
             else api.post("/rootfolder", {"path": C["library"][app]})
         ),
         "profile": lambda: profile(api, app),
+        "sizes": lambda: sizes(api, app),
         # names kodi finds on tmdb with no search: the id in {tmdb-...}
         "names": lambda: updated(
             api,
