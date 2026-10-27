@@ -16,10 +16,25 @@
 			<u mod="ctrl">PageUp</u>
 			<q>Back</q>
 			<f>UpdateLibrary(video)</f>
+			<!-- majan's home tabs, 01 home, 02 movies, 03 tv shows, from any
+			     window. number keys were for typing numbers in lists, a text
+			     field still takes them -->
+			<one>ActivateWindowAndFocus(Home,9001,0)</one>
+			<two>ActivateWindowAndFocus(Home,9002,0)</two>
+			<three>ActivateWindowAndFocus(Home,9003,0)</three>
 			<!-- majan's search, the home screen's search icon opens it -->
 			<forwardslash>ActivateWindow(1150)</forwardslash>
 		</keyboard>
 	</global>
+	<!-- on home itself kodi doesn't activate it again, the tab only takes
+	     the focus -->
+	<Home>
+		<keyboard>
+			<one>SetFocus(9001)</one>
+			<two>SetFocus(9002)</two>
+			<three>SetFocus(9003)</three>
+		</keyboard>
+	</Home>
 	<!-- typing: a key that maps to moving around moves instead of typing
 	     its letter, noop lets kodi type it -->
 	<VirtualKeyboard>
