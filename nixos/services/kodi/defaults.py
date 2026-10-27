@@ -1,5 +1,5 @@
 # kodi's settings the first time, kodi's own after: a setting still at
-# kodi's default gets ours (the psp's sounds, majan), a file that isn't
+# kodi's default gets ours (majan, its font), a file that isn't
 # there yet gets written (iptv simple's channel lists). kodi writes
 # guisettings.xml when it quits, over ours: with kodi on, the next switch
 # does it. defaults.py DATADIR DEFAULTS.json

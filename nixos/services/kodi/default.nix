@@ -1,8 +1,9 @@
 # kodi: the library of /media/outer-1, posters and plots from tmdb (its
 # scrapers come with kodi). a video plays in mpv, in mpv's own window with
 # mpv's config, scripts and keys, tv and streams in kodi's player. majan,
-# tmdb helper, the downloads of ../arr in the menu of a film or a show, the
-# psp's sounds, tv channels (./addons.nix), other add-ons from inside kodi.
+# tmdb helper, the downloads of ../arr in the menu of a film or a show and
+# on enter in tmdb helper, tv channels (./addons.nix), other add-ons from
+# inside kodi.
 # barnard only, its env.nix imports this
 {
   lib,
@@ -55,17 +56,27 @@ let
       <setting id="m3uUrl">${channels.${name}}</setting>
     </settings>
   '';
+  player =
+    action: name: priority:
+    let
+      run =
+        query: "executebuiltin://RunPlugin(plugin://plugin.video.moviepipe/?action=${action}&${query})";
+    in
+    builtins.toJSON {
+      name = "Movie pipe: ${name}";
+      plugin = "plugin.video.moviepipe";
+      inherit priority;
+      is_resolvable = "false";
+      play_movie = run "type=movie&tmdb={tmdb}";
+      play_episode = run "type=episode&tmdb={tmdb}&season={season}&episode={episode}";
+    };
+
   defaults = pkgs.writeText "kodi-defaults.json" (
     builtins.toJSON {
       settings = {
         "lookandfeel.skin" = "skin.majan";
         # ./majan.nix's, majan's own have no cyrillic
         "lookandfeel.font" = "JetBrains Mono";
-        "lookandfeel.soundskin" = "resource.uisounds.psp";
-        # settings -> system -> audio -> keep audio device alive: always
-        # (minutes, kodi's "always"). by default kodi closes the device after
-        # a minute of quiet, the next menu sound waits up to a second for it
-        "audiooutput.streamsilence" = "153722867";
       };
       files = builtins.listToAttrs (
         lib.imap1 (n: name: {
@@ -113,6 +124,15 @@ in
       home.file = {
         # vim keys (./keyboard.xml)
         "${datadir}/userdata/keymaps/keyboard.xml".source = ./keyboard.xml;
+
+        # enter on a film or an episode in tmdb helper asks which player:
+        # these two, ./moviepipe's actions. tmdb helper fills {tmdb} (the
+        # show's for an episode), {season} and {episode}
+        "${datadir}/userdata/addon_data/plugin.video.themoviedb.helper/players/moviepipe-pick.json".text =
+          player "pick" "Выбрать раздачу…"
+            1;
+        "${datadir}/userdata/addon_data/plugin.video.themoviedb.helper/players/moviepipe-download.json".text =
+          player "download" "Скачать" 2;
 
         # torrent names the scraper finds
         "${datadir}/userdata/advancedsettings.xml".source = ./advancedsettings.xml;

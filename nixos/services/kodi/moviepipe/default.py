@@ -1,6 +1,8 @@
 # video add-ons -> Movie pipe: what radarr and sonarr are downloading, how
 # far, why one is stuck. enter on one: another release for it (this one
-# goes to the blocklist and they search again) or take it away
+# goes to the blocklist and they search again) or take it away.
+# ?action=pick|download&type=movie|episode&tmdb=...: ./actions.py for tmdb
+# helper's players (../default.nix), enter on a film there
 import sys
 import urllib.parse
 
@@ -8,6 +10,7 @@ import xbmc
 import xbmcgui
 import xbmcplugin
 
+from actions import movie, show
 from arr import Api, Error, error, gb
 
 HANDLE = int(sys.argv[1])
@@ -83,7 +86,7 @@ def listing():
     xbmcplugin.endOfDirectory(HANDLE, cacheToDisc=False)
 
 
-def action():
+def queued():
     i = xbmcgui.Dialog().select(QUERY["name"], ["Другая раздача", "Убрать загрузку"])
     if i < 0:
         return
@@ -101,7 +104,21 @@ def action():
     xbmc.executebuiltin("Container.Refresh")
 
 
-if "ids" in QUERY:
-    action()
+def player():
+    pick = QUERY["action"] == "pick"
+    tmdb = int(QUERY["tmdb"])
+    try:
+        if QUERY["type"] == "movie":
+            movie(tmdb, pick)
+        else:
+            show(tmdb, QUERY["type"], int(QUERY["season"]), int(QUERY["episode"]), pick)
+    except Error as e:
+        error(e)
+
+
+if "action" in QUERY:
+    player()
+elif "ids" in QUERY:
+    queued()
 else:
     listing()

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <!-- radarr and sonarr in kodi (../../arr): "Скачать" and "Выбрать раздачу…"
-     in the menu (c) of a film or a show that tmdb helper shows, its
-     downloads in video add-ons, kodi's library scanned when one is in.
-     ../addons.nix builds it -->
+     in the menu (c) of a film or a show that tmdb helper shows and on
+     enter there (tmdb helper's players, ../default.nix), its downloads in
+     video add-ons, kodi's library scanned when one is in. ../addons.nix
+     builds it -->
 <addon id="plugin.video.moviepipe" name="Movie pipe" version="1.0.0" provider-name="barnard">
 	<requires>
 		<import addon="xbmc.python" version="3.0.1"/>

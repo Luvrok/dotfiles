@@ -1,6 +1,6 @@
 # the add-ons kodi gets: majan (./majan.nix), tmdb helper (films, shows
 # and people from tmdb, with the menu of ./moviepipe on them), Movie pipe,
-# the psp's sounds (./uisounds), iptv simple with its tv channels. the
+# iptv simple with its tv channels. the
 # github ones are flake inputs like the skins: nix flake update
 # kodi-tmdbhelper kodi-jurialmunkey kodi-infotagger
 {
@@ -94,22 +94,10 @@ let
       } $out/share/kodi/addons/plugin.video.moviepipe/arr.json
     '';
   };
-
-  uisounds = buildKodiAddon {
-    pname = "uisounds-psp";
-    namespace = "resource.uisounds.psp";
-    version = "1.0.0";
-    src = ./uisounds;
-    postInstall = ''
-      cp ${../../../home/local/media/soundeffect}/snd_*.wav \
-        $out/share/kodi/addons/resource.uisounds.psp/resources/
-    '';
-  };
 in
 [
   (callPackage ./majan.nix { inherit inputs jurialmunkey infotagger; })
   tmdbhelper
   moviepipe
-  uisounds
   pvr-iptvsimple
 ]
