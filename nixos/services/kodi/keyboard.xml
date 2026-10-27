@@ -26,7 +26,7 @@
 			     the library), 6 what downloads (../arr) -->
 			<four>ActivateWindow(TVChannels)</four>
 			<five>ActivateWindow(Videos,plugin://plugin.video.themoviedb.helper/,return)</five>
-			<six>ActivateWindow(Videos,plugin://plugin.video.moviepipe/,return)</six>
+			<six>RunPlugin(plugin://plugin.video.moviepipe/?action=downloads)</six>
 			<!-- majan's search, the home screen's search icon opens it -->
 			<forwardslash>ActivateWindow(1150)</forwardslash>
 		</keyboard>

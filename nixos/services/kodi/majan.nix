@@ -53,5 +53,15 @@ buildKodiAddon {
     substituteInPlace 1080i/Custom_1153_PlayCurtain.xml --replace-fail \
       '<visible>[Player.HasVideo | [Player.HasMedia + !Player.HasAudio]] + !Window.IsActive(fullscreenvideo) + String.IsEmpty(Window(Home).Property(majan.fsseen)) + !System.IdleTime(8)</visible>' \
       '<visible>false</visible>'
+    # the number before a page's name is the key that opens it
+    # (./keyboard.xml): 04 tv (majan's 10), 05 tmdb helper (02, the videos
+    # window's), / search (05). 06, the downloads, is ./moviepipe's
+    substituteInPlace 1080i/Includes_Misc.xml --replace-fail \
+      '<param name="index" value="10"/>' '<param name="index" value="04"/>'
+    substituteInPlace 1080i/Includes_Views_Video.xml --replace-fail \
+      '<variable name="VidView_Index">' \
+      '<variable name="VidView_Index"><value condition="String.StartsWith(Container.FolderPath,plugin://plugin.video.themoviedb.helper/)">05</value>'
+    substituteInPlace 1080i/Custom_1150_Search.xml --replace-fail \
+      '<param name="index" value="05"/>' '<param name="index" value="/"/>'
   '';
 }

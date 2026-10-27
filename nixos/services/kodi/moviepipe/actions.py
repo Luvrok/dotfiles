@@ -8,7 +8,8 @@ import time
 
 import xbmcgui
 
-from arr import Api, Error, choose, notify, waiting
+from arr import Api, Error, notify, waiting
+from windows import choose
 
 
 def movie(tmdb, pick):

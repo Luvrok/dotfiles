@@ -1,0 +1,463 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 6, what radarr and sonarr download (../../../../windows.py,
+     Downloads), a row each: what it is, then its state, how far, how fast,
+     the seeders it has (of the swarm's), how long yet, quality, sdr or hdr,
+     tracker. qbittorrent's numbers, every 2 s. under the list the release
+     of the one in focus and what's wrong with it. majan's fonts, colours
+     and textures; the two layouts of a row are the same but for the focus -->
+<window>
+	<defaultcontrol always="true">50</defaultcontrol>
+	<controls>
+		<control type="image">
+			<width>1920</width>
+			<height>1080</height>
+			<texture colordiffuse="dim_dialog">common/white.png</texture>
+		</control>
+		<control type="group">
+			<left>60</left>
+			<top>50</top>
+			<animation effect="fade" start="0" end="100" time="150">WindowOpen</animation>
+			<animation effect="fade" start="100" end="0" time="100">WindowClose</animation>
+			<control type="image">
+				<width>1800</width>
+				<height>980</height>
+				<texture colordiffuse="bg">common/white.png</texture>
+			</control>
+			<control type="image">
+				<width>1800</width>
+				<height>980</height>
+				<texture border="10" colordiffuse="hairline_strong">common/rect_outline_1.png</texture>
+			</control>
+			<control type="label">
+				<left>40</left>
+				<top>22</top>
+				<width>40</width>
+				<height>30</height>
+				<font>mono_14</font>
+				<textcolor>$VAR[ColorAccent]</textcolor>
+				<label>[UPPERCASE]06[/UPPERCASE]</label>
+			</control>
+			<control type="label">
+				<left>84</left>
+				<width>1200</width>
+				<height>72</height>
+				<font>title_28_bold</font>
+				<textcolor>text_primary</textcolor>
+				<label>Загрузки</label>
+			</control>
+			<control type="label">
+				<right>40</right>
+				<width>300</width>
+				<height>72</height>
+				<align>right</align>
+				<font>num_16</font>
+				<textcolor>$VAR[ColorAccent]</textcolor>
+				<label>$INFO[Container(50).CurrentItem]$INFO[Container(50).NumItems, / ]</label>
+			</control>
+			<control type="label">
+				<right>200</right>
+				<width>1000</width>
+				<height>72</height>
+				<align>right</align>
+				<font>small_16</font>
+				<textcolor>accent_amber</textcolor>
+				<label>$INFO[Window.Property(trouble)]</label>
+			</control>
+			<control type="image">
+				<top>72</top>
+				<width>1800</width>
+				<height>1</height>
+				<texture colordiffuse="hairline_strong">common/hairline.png</texture>
+			</control>
+			<!-- the columns of the rows' second line -->
+			<control type="group">
+				<left>24</left>
+				<top>84</top>
+				<control type="label">
+					<left>48</left>
+					<top>0</top>
+					<width>190</width>
+					<height>24</height>
+					<font>mono_13</font>
+					<textcolor>text_tertiary</textcolor>
+					<label>состояние</label>
+				</control>
+				<control type="label">
+					<left>460</left>
+					<top>0</top>
+					<width>70</width>
+					<height>24</height>
+					<align>right</align>
+					<font>mono_13</font>
+					<textcolor>text_tertiary</textcolor>
+					<label>%</label>
+				</control>
+				<control type="label">
+					<left>550</left>
+					<top>0</top>
+					<width>220</width>
+					<height>24</height>
+					<font>mono_13</font>
+					<textcolor>text_tertiary</textcolor>
+					<label>скачано</label>
+				</control>
+				<control type="label">
+					<left>780</left>
+					<top>0</top>
+					<width>120</width>
+					<height>24</height>
+					<align>right</align>
+					<font>mono_13</font>
+					<textcolor>text_tertiary</textcolor>
+					<label>скорость</label>
+				</control>
+				<control type="label">
+					<left>920</left>
+					<top>0</top>
+					<width>110</width>
+					<height>24</height>
+					<align>right</align>
+					<font>mono_13</font>
+					<textcolor>text_tertiary</textcolor>
+					<label>сиды</label>
+				</control>
+				<control type="label">
+					<left>1050</left>
+					<top>0</top>
+					<width>130</width>
+					<height>24</height>
+					<align>right</align>
+					<font>mono_13</font>
+					<textcolor>text_tertiary</textcolor>
+					<label>осталось</label>
+				</control>
+				<control type="label">
+					<left>1210</left>
+					<top>0</top>
+					<width>170</width>
+					<height>24</height>
+					<font>mono_13</font>
+					<textcolor>text_tertiary</textcolor>
+					<label>качество</label>
+				</control>
+				<control type="label">
+					<left>1390</left>
+					<top>0</top>
+					<width>120</width>
+					<height>24</height>
+					<font>mono_13</font>
+					<textcolor>text_tertiary</textcolor>
+					<label>sdr / hdr</label>
+				</control>
+				<control type="label">
+					<left>1520</left>
+					<top>0</top>
+					<width>200</width>
+					<height>24</height>
+					<font>mono_13</font>
+					<textcolor>text_tertiary</textcolor>
+					<label>трекер</label>
+				</control>
+			</control>
+			<control type="list" id="50">
+				<left>24</left>
+				<top>112</top>
+				<width>1752</width>
+				<height>672</height>
+				<onup>50</onup>
+				<ondown>50</ondown>
+				<scrolltime tween="cubic" easing="out">150</scrolltime>
+				<itemlayout width="1752" height="56">
+					<control type="image">
+						<bottom>0</bottom>
+						<width>1752</width>
+						<height>1</height>
+						<texture colordiffuse="hairline">common/hairline.png</texture>
+					</control>
+					<control type="label">
+						<left>16</left>
+						<top>2</top>
+						<width>28</width>
+						<height>26</height>
+						<font>small_19_bold</font>
+						<textcolor>accent_amber</textcolor>
+						<label>$INFO[ListItem.Property(mark)]</label>
+					</control>
+					<control type="label">
+						<left>48</left>
+						<top>2</top>
+						<width>1690</width>
+						<height>26</height>
+						<font>small_19_bold</font>
+						<textcolor>text_primary</textcolor>
+						<label>$INFO[ListItem.Label]</label>
+					</control>
+					<control type="label">
+						<left>48</left>
+						<top>32</top>
+						<width>190</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(state)]</label>
+					</control>
+					<control type="image">
+						<left>250</left>
+						<top>40</top>
+						<width>200</width>
+						<height>6</height>
+						<texture colordiffuse="$VAR[ColorAccent]">$INFO[ListItem.Property(bar)]</texture>
+					</control>
+					<control type="label">
+						<left>460</left>
+						<top>32</top>
+						<width>70</width>
+						<height>22</height>
+						<align>right</align>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(percent)]</label>
+					</control>
+					<control type="label">
+						<left>550</left>
+						<top>32</top>
+						<width>220</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(done)]</label>
+					</control>
+					<control type="label">
+						<left>780</left>
+						<top>32</top>
+						<width>120</width>
+						<height>22</height>
+						<align>right</align>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(speed)]</label>
+					</control>
+					<control type="label">
+						<left>920</left>
+						<top>32</top>
+						<width>110</width>
+						<height>22</height>
+						<align>right</align>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(seeders)]</label>
+					</control>
+					<control type="label">
+						<left>1050</left>
+						<top>32</top>
+						<width>130</width>
+						<height>22</height>
+						<align>right</align>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(eta)]</label>
+					</control>
+					<control type="label">
+						<left>1210</left>
+						<top>32</top>
+						<width>170</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(quality)]</label>
+					</control>
+					<control type="label">
+						<left>1390</left>
+						<top>32</top>
+						<width>120</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(range)]</label>
+					</control>
+					<control type="label">
+						<left>1520</left>
+						<top>32</top>
+						<width>200</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(tracker)]</label>
+					</control>
+				</itemlayout>
+				<focusedlayout width="1752" height="56">
+					<control type="image">
+						<bottom>0</bottom>
+						<width>1752</width>
+						<height>1</height>
+						<texture colordiffuse="hairline">common/hairline.png</texture>
+					</control>
+					<control type="image">
+						<width>1752</width>
+						<height>56</height>
+						<texture colordiffuse="bg_raised">common/white.png</texture>
+						<visible>Control.HasFocus(50)</visible>
+					</control>
+					<control type="image">
+						<width>1752</width>
+						<height>56</height>
+						<texture border="16" colordiffuse="$VAR[ColorAccent]">$VAR[FocusFrameAlways]</texture>
+						<visible>Control.HasFocus(50)</visible>
+					</control>
+					<control type="label">
+						<left>16</left>
+						<top>2</top>
+						<width>28</width>
+						<height>26</height>
+						<font>small_19_bold</font>
+						<textcolor>accent_amber</textcolor>
+						<label>$INFO[ListItem.Property(mark)]</label>
+					</control>
+					<control type="label">
+						<left>48</left>
+						<top>2</top>
+						<width>1690</width>
+						<height>26</height>
+						<font>small_19_bold</font>
+						<textcolor>text_primary</textcolor>
+						<label>$INFO[ListItem.Label]</label>
+					</control>
+					<control type="label">
+						<left>48</left>
+						<top>32</top>
+						<width>190</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(state)]</label>
+					</control>
+					<control type="image">
+						<left>250</left>
+						<top>40</top>
+						<width>200</width>
+						<height>6</height>
+						<texture colordiffuse="$VAR[ColorAccent]">$INFO[ListItem.Property(bar)]</texture>
+					</control>
+					<control type="label">
+						<left>460</left>
+						<top>32</top>
+						<width>70</width>
+						<height>22</height>
+						<align>right</align>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(percent)]</label>
+					</control>
+					<control type="label">
+						<left>550</left>
+						<top>32</top>
+						<width>220</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(done)]</label>
+					</control>
+					<control type="label">
+						<left>780</left>
+						<top>32</top>
+						<width>120</width>
+						<height>22</height>
+						<align>right</align>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(speed)]</label>
+					</control>
+					<control type="label">
+						<left>920</left>
+						<top>32</top>
+						<width>110</width>
+						<height>22</height>
+						<align>right</align>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(seeders)]</label>
+					</control>
+					<control type="label">
+						<left>1050</left>
+						<top>32</top>
+						<width>130</width>
+						<height>22</height>
+						<align>right</align>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(eta)]</label>
+					</control>
+					<control type="label">
+						<left>1210</left>
+						<top>32</top>
+						<width>170</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(quality)]</label>
+					</control>
+					<control type="label">
+						<left>1390</left>
+						<top>32</top>
+						<width>120</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(range)]</label>
+					</control>
+					<control type="label">
+						<left>1520</left>
+						<top>32</top>
+						<width>200</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(tracker)]</label>
+					</control>
+				</focusedlayout>
+			</control>
+			<control type="label">
+				<left>72</left>
+				<top>128</top>
+				<width>1600</width>
+				<height>26</height>
+				<font>small_19</font>
+				<textcolor>text_tertiary</textcolor>
+				<label>$INFO[Window.Property(empty)]</label>
+			</control>
+			<control type="image">
+				<top>796</top>
+				<width>1800</width>
+				<height>1</height>
+				<texture colordiffuse="hairline_strong">common/hairline.png</texture>
+			</control>
+			<control type="textbox">
+				<left>40</left>
+				<top>812</top>
+				<width>1720</width>
+				<height>84</height>
+				<font>small_19</font>
+				<textcolor>text_primary</textcolor>
+				<label>$INFO[Container(50).ListItem.Property(release)]</label>
+			</control>
+			<control type="textbox">
+				<left>40</left>
+				<top>898</top>
+				<width>1720</width>
+				<height>44</height>
+				<font>small_16</font>
+				<textcolor>accent_amber</textcolor>
+				<label>$INFO[Container(50).ListItem.Property(why)]</label>
+			</control>
+			<control type="label">
+				<left>40</left>
+				<top>944</top>
+				<width>1720</width>
+				<height>24</height>
+				<font>mono_13</font>
+				<textcolor>text_tertiary</textcolor>
+				<label>enter — другая раздача или убрать    esc — закрыть</label>
+			</control>
+		</control>
+	</controls>
+</window>

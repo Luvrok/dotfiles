@@ -81,17 +81,25 @@ let
     version = "1.0.0";
     src = ./moviepipe;
     postInstall = ''
+      d=$out/share/kodi/addons/plugin.video.moviepipe
       cp ${
         writeText "arr.json" (
           builtins.toJSON {
-            inherit (arr) radarr sonarr keys;
+            inherit (arr)
+              radarr
+              sonarr
+              qbittorrent
+              keys
+              ;
             library = {
               radarr = arr.movies;
               sonarr = arr.series;
             };
           }
         )
-      } $out/share/kodi/addons/plugin.video.moviepipe/arr.json
+      } $d/arr.json
+      mkdir -p $d/resources/skins/Default/media/bars
+      ${kodi.pythonPackages.python.interpreter} ${./moviepipe-bars.py} $d/resources/skins/Default/media/bars
     '';
   };
 in

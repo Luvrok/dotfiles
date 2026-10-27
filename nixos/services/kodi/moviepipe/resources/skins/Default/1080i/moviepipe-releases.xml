@@ -1,0 +1,406 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- "Выбрать раздачу…": the trackers' releases (../../../../windows.py,
+     Releases), a row each: its title, then quality, sdr or hdr, size,
+     seeders, tracker, release group, language, age. under the list the
+     whole title of the one in focus and why radarr or sonarr wouldn't take
+     it. majan's fonts, colours and textures, the skin it's made for. the
+     two layouts of a row are the same but for the focus -->
+<window>
+	<defaultcontrol always="true">50</defaultcontrol>
+	<controls>
+		<control type="image">
+			<width>1920</width>
+			<height>1080</height>
+			<texture colordiffuse="dim_dialog">common/white.png</texture>
+		</control>
+		<control type="group">
+			<left>60</left>
+			<top>50</top>
+			<animation effect="fade" start="0" end="100" time="150">WindowOpen</animation>
+			<animation effect="fade" start="100" end="0" time="100">WindowClose</animation>
+			<control type="image">
+				<width>1800</width>
+				<height>980</height>
+				<texture colordiffuse="bg">common/white.png</texture>
+			</control>
+			<control type="image">
+				<width>1800</width>
+				<height>980</height>
+				<texture border="10" colordiffuse="hairline_strong">common/rect_outline_1.png</texture>
+			</control>
+			<control type="label">
+				<left>40</left>
+				<width>1400</width>
+				<height>72</height>
+				<font>title_28_bold</font>
+				<textcolor>text_primary</textcolor>
+				<label>$INFO[Window.Property(heading)]</label>
+			</control>
+			<control type="label">
+				<right>40</right>
+				<width>300</width>
+				<height>72</height>
+				<align>right</align>
+				<font>num_16</font>
+				<textcolor>$VAR[ColorAccent]</textcolor>
+				<label>$INFO[Container(50).CurrentItem]$INFO[Container(50).NumItems, / ]</label>
+			</control>
+			<control type="image">
+				<top>72</top>
+				<width>1800</width>
+				<height>1</height>
+				<texture colordiffuse="hairline_strong">common/hairline.png</texture>
+			</control>
+			<!-- the columns of the rows' second line -->
+			<control type="group">
+				<left>24</left>
+				<top>84</top>
+				<control type="label">
+					<left>48</left>
+					<width>180</width>
+					<height>24</height>
+					<font>mono_13</font>
+					<textcolor>text_tertiary</textcolor>
+					<label>качество</label>
+				</control>
+				<control type="label">
+					<left>240</left>
+					<width>130</width>
+					<height>24</height>
+					<font>mono_13</font>
+					<textcolor>text_tertiary</textcolor>
+					<label>sdr / hdr</label>
+				</control>
+				<control type="label">
+					<left>380</left>
+					<width>110</width>
+					<height>24</height>
+					<align>right</align>
+					<font>mono_13</font>
+					<textcolor>text_tertiary</textcolor>
+					<label>размер</label>
+				</control>
+				<control type="label">
+					<left>510</left>
+					<width>80</width>
+					<height>24</height>
+					<align>right</align>
+					<font>mono_13</font>
+					<textcolor>text_tertiary</textcolor>
+					<label>сиды</label>
+				</control>
+				<control type="label">
+					<left>620</left>
+					<width>180</width>
+					<height>24</height>
+					<font>mono_13</font>
+					<textcolor>text_tertiary</textcolor>
+					<label>трекер</label>
+				</control>
+				<control type="label">
+					<left>810</left>
+					<width>230</width>
+					<height>24</height>
+					<font>mono_13</font>
+					<textcolor>text_tertiary</textcolor>
+					<label>группа</label>
+				</control>
+				<control type="label">
+					<left>1050</left>
+					<width>140</width>
+					<height>24</height>
+					<font>mono_13</font>
+					<textcolor>text_tertiary</textcolor>
+					<label>язык</label>
+				</control>
+				<control type="label">
+					<left>1200</left>
+					<width>110</width>
+					<height>24</height>
+					<align>right</align>
+					<font>mono_13</font>
+					<textcolor>text_tertiary</textcolor>
+					<label>возраст</label>
+				</control>
+			</control>
+			<control type="list" id="50">
+				<left>24</left>
+				<top>112</top>
+				<width>1752</width>
+				<height>672</height>
+				<onup>50</onup>
+				<ondown>50</ondown>
+				<scrolltime tween="cubic" easing="out">150</scrolltime>
+				<itemlayout width="1752" height="56">
+					<control type="image">
+						<bottom>0</bottom>
+						<width>1752</width>
+						<height>1</height>
+						<texture colordiffuse="hairline">common/hairline.png</texture>
+					</control>
+					<control type="label">
+						<left>16</left>
+						<top>2</top>
+						<width>28</width>
+						<height>26</height>
+						<font>small_19_bold</font>
+						<textcolor>$VAR[ColorAccent]</textcolor>
+						<label>$INFO[ListItem.Property(mark)]</label>
+					</control>
+					<control type="label">
+						<left>48</left>
+						<top>2</top>
+						<width>1690</width>
+						<height>26</height>
+						<font>small_19_bold</font>
+						<textcolor>text_primary</textcolor>
+						<label>$INFO[ListItem.Label]</label>
+						<visible>String.IsEmpty(ListItem.Property(why))</visible>
+					</control>
+					<control type="label">
+						<left>48</left>
+						<top>2</top>
+						<width>1690</width>
+						<height>26</height>
+						<font>small_19_bold</font>
+						<textcolor>text_tertiary</textcolor>
+						<label>$INFO[ListItem.Label]</label>
+						<visible>!String.IsEmpty(ListItem.Property(why))</visible>
+					</control>
+					<control type="label">
+						<left>48</left>
+						<top>32</top>
+						<width>180</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(quality)]</label>
+					</control>
+					<control type="label">
+						<left>240</left>
+						<top>32</top>
+						<width>130</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(range)]</label>
+					</control>
+					<control type="label">
+						<left>380</left>
+						<top>32</top>
+						<width>110</width>
+						<height>22</height>
+						<align>right</align>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(size)]</label>
+					</control>
+					<control type="label">
+						<left>510</left>
+						<top>32</top>
+						<width>80</width>
+						<height>22</height>
+						<align>right</align>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(seeders)]</label>
+					</control>
+					<control type="label">
+						<left>620</left>
+						<top>32</top>
+						<width>180</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(tracker)]</label>
+					</control>
+					<control type="label">
+						<left>810</left>
+						<top>32</top>
+						<width>230</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(group)]</label>
+					</control>
+					<control type="label">
+						<left>1050</left>
+						<top>32</top>
+						<width>140</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(language)]</label>
+					</control>
+					<control type="label">
+						<left>1200</left>
+						<top>32</top>
+						<width>110</width>
+						<height>22</height>
+						<align>right</align>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(age)]</label>
+					</control>
+				</itemlayout>
+				<focusedlayout width="1752" height="56">
+					<control type="image">
+						<bottom>0</bottom>
+						<width>1752</width>
+						<height>1</height>
+						<texture colordiffuse="hairline">common/hairline.png</texture>
+					</control>
+					<control type="image">
+						<width>1752</width>
+						<height>56</height>
+						<texture colordiffuse="bg_raised">common/white.png</texture>
+						<visible>Control.HasFocus(50)</visible>
+					</control>
+					<control type="image">
+						<width>1752</width>
+						<height>56</height>
+						<texture border="16" colordiffuse="$VAR[ColorAccent]">$VAR[FocusFrameAlways]</texture>
+						<visible>Control.HasFocus(50)</visible>
+					</control>
+					<control type="label">
+						<left>16</left>
+						<top>2</top>
+						<width>28</width>
+						<height>26</height>
+						<font>small_19_bold</font>
+						<textcolor>$VAR[ColorAccent]</textcolor>
+						<label>$INFO[ListItem.Property(mark)]</label>
+					</control>
+					<control type="label">
+						<left>48</left>
+						<top>2</top>
+						<width>1690</width>
+						<height>26</height>
+						<font>small_19_bold</font>
+						<textcolor>text_primary</textcolor>
+						<label>$INFO[ListItem.Label]</label>
+						<visible>String.IsEmpty(ListItem.Property(why))</visible>
+					</control>
+					<control type="label">
+						<left>48</left>
+						<top>2</top>
+						<width>1690</width>
+						<height>26</height>
+						<font>small_19_bold</font>
+						<textcolor>text_tertiary</textcolor>
+						<label>$INFO[ListItem.Label]</label>
+						<visible>!String.IsEmpty(ListItem.Property(why))</visible>
+					</control>
+					<control type="label">
+						<left>48</left>
+						<top>32</top>
+						<width>180</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(quality)]</label>
+					</control>
+					<control type="label">
+						<left>240</left>
+						<top>32</top>
+						<width>130</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(range)]</label>
+					</control>
+					<control type="label">
+						<left>380</left>
+						<top>32</top>
+						<width>110</width>
+						<height>22</height>
+						<align>right</align>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(size)]</label>
+					</control>
+					<control type="label">
+						<left>510</left>
+						<top>32</top>
+						<width>80</width>
+						<height>22</height>
+						<align>right</align>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(seeders)]</label>
+					</control>
+					<control type="label">
+						<left>620</left>
+						<top>32</top>
+						<width>180</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(tracker)]</label>
+					</control>
+					<control type="label">
+						<left>810</left>
+						<top>32</top>
+						<width>230</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(group)]</label>
+					</control>
+					<control type="label">
+						<left>1050</left>
+						<top>32</top>
+						<width>140</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(language)]</label>
+					</control>
+					<control type="label">
+						<left>1200</left>
+						<top>32</top>
+						<width>110</width>
+						<height>22</height>
+						<align>right</align>
+						<font>small_16</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Property(age)]</label>
+					</control>
+				</focusedlayout>
+			</control>
+			<control type="image">
+				<top>796</top>
+				<width>1800</width>
+				<height>1</height>
+				<texture colordiffuse="hairline_strong">common/hairline.png</texture>
+			</control>
+			<control type="textbox">
+				<left>40</left>
+				<top>812</top>
+				<width>1720</width>
+				<height>84</height>
+				<font>small_19</font>
+				<textcolor>text_primary</textcolor>
+				<label>$INFO[Container(50).ListItem.Label]</label>
+			</control>
+			<control type="textbox">
+				<left>40</left>
+				<top>898</top>
+				<width>1720</width>
+				<height>44</height>
+				<font>small_16</font>
+				<textcolor>accent_amber</textcolor>
+				<label>$INFO[Container(50).ListItem.Property(why)]</label>
+			</control>
+			<control type="label">
+				<left>40</left>
+				<top>944</top>
+				<width>1720</width>
+				<height>24</height>
+				<font>mono_13</font>
+				<textcolor>text_tertiary</textcolor>
+				<label>$INFO[Window.Property(hint)]</label>
+			</control>
+		</control>
+	</controls>
+</window>

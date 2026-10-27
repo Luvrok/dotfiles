@@ -8,6 +8,7 @@ import os
 from datetime import datetime, timezone
 
 import xbmc
+import xbmcaddon
 import xbmcvfs
 
 from arr import Api, Error, notify
@@ -102,6 +103,17 @@ class Pipe:
         )
 
 
+def players():
+    # tmdb helper plays a second of its dummy.mp4 before a player that
+    # isn't a file (ours, ../default.nix), and a file plays in mpv: only
+    # its strm files get the dummy
+    try:
+        xbmcaddon.Addon("plugin.video.themoviedb.helper").setSettingBool("only_resolve_strm", True)
+    except RuntimeError:
+        pass
+
+
+players()
 monitor = xbmc.Monitor()
 pipe = Pipe()
 ticks = 0

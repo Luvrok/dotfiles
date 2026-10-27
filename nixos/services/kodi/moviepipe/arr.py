@@ -1,6 +1,6 @@
-# radarr and sonarr for the add-on: their apis with the keys arr-keys made
-# (../../arr), the dialogs around them. arr.json, its ports and paths, is
-# ../../arr/shared.nix (../addons.nix)
+# radarr, sonarr and qbittorrent for the add-on: their apis with the keys
+# arr-keys made (../../arr), the dialogs around them. arr.json, its ports
+# and paths, is ../../arr/shared.nix (../addons.nix)
 import json
 import os
 import threading
@@ -122,35 +122,11 @@ def gb(size):
     return f"{size / 1024 ** 3:.1f} ГБ"
 
 
-def describe(r):
-    # a release's second line: quality, size, seeders, tracker, dub, why
-    # radarr or sonarr wouldn't take it themselves
-    parts = [r["quality"]["quality"]["name"], gb(r["size"])]
-    if r.get("protocol") == "torrent":
-        parts.append(f"{r.get('seeders') or 0} сид")
-    parts.append(r["indexer"].replace(" (Prowlarr)", ""))
-    if any(lang["name"] == "Russian" for lang in r.get("languages", [])):
-        parts.append("RU")
-    line = " · ".join(parts)
-    if r.get("rejected"):
-        line += "  ✗ " + "; ".join(r.get("rejections", []))[:120]
-    return line
-
-
-def choose(api, title, **query):
-    # the releases the trackers have, best first as radarr or sonarr rank
-    # them; the one picked is downloaded even when they'd reject it
-    releases = waiting(title, "Ищу раздачи на трекерах…", lambda: api.get("/release", timeout=300, **query))
-    if releases is None:
-        return None
-    if not releases:
-        notify(title, "Раздач нет")
-        return None
-    items = [xbmcgui.ListItem(label=r["title"], label2=describe(r)) for r in releases]
-    i = xbmcgui.Dialog().select(f"{title}: раздачи", items, useDetails=True)
-    if i < 0:
-        return None
-    r = releases[i]
-    api.post("/release", {"guid": r["guid"], "indexerId": r["indexerId"]}, timeout=120)
-    notify(title, f"Качаю: {r['quality']['quality']['name']}, {gb(r['size'])}")
-    return r
+def qbittorrent(path, **query):
+    # its web ui on 127.0.0.1, no login from this machine
+    url = f"http://127.0.0.1:{C['qbittorrent']}/api/v2{path}?" + urllib.parse.urlencode(query)
+    try:
+        with OPENER.open(url, timeout=5) as r:
+            return json.loads(r.read())
+    except (OSError, ValueError):
+        raise Error("qbittorrent не отвечает")
