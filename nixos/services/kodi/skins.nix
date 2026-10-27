@@ -28,15 +28,21 @@ let
   # changes to a skin, in its folder. a line they replace that's gone
   # after an update fails the build
   fixes = {
-    # its grotesk and display fonts have no cyrillic: jetbrains mono nl,
-    # the quickshell font, in their files, the same weights. its black
-    # curtain over kodi while a video plays waits for a frame of kodi's own
-    # player, mpv plays in its own window: off
+    # its grotesk and display fonts have no cyrillic: a third font in
+    # kodi's settings -> interface -> skin -> fonts, "JetBrains Mono" (nl,
+    # the quickshell font), majan's with jetbrains in place of both. its
+    # black curtain over kodi while a video plays waits for a frame of
+    # kodi's own player, mpv plays in its own window: off
     "skin.majan" = ''
-      for w in Regular Medium SemiBold Bold ExtraBold; do
-        cp ${jetbrains}-$w.ttf fonts/HankenGrotesk-$w.ttf
-      done
-      cp ${jetbrains}-ExtraBold.ttf fonts/MajanDisplay-ExtraBold.ttf
+      cp ${jetbrains}-{Regular,Medium,SemiBold,Bold,ExtraBold}.ttf fonts/
+      sed -n '/<fontset id="Default"/,/<\/fontset>/p' 1080i/Font.xml | sed \
+        -e 's#<fontset id="Default" idloc="31900">#<fontset id="JetBrains Mono" unicode="true">#' \
+        -e 's#HankenGrotesk-#JetBrainsMonoNLNerdFont-#g' \
+        -e 's#MajanDisplay-ExtraBold#JetBrainsMonoNLNerdFont-ExtraBold#g' > jetbrains.xml
+      grep -q '<fontset id="JetBrains Mono"' jetbrains.xml
+      sed -i -e '/<\/fonts>/{r jetbrains.xml' -e 'd}' 1080i/Font.xml
+      echo '</fonts>' >> 1080i/Font.xml
+      rm jetbrains.xml
       substituteInPlace 1080i/Custom_1153_PlayCurtain.xml --replace-fail \
         '<visible>[Player.HasVideo | [Player.HasMedia + !Player.HasAudio]] + !Window.IsActive(fullscreenvideo) + String.IsEmpty(Window(Home).Property(majan.fsseen)) + !System.IdleTime(8)</visible>' \
         '<visible>false</visible>'
