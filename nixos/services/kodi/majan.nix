@@ -63,5 +63,18 @@ buildKodiAddon {
       '<variable name="VidView_Index"><value condition="String.StartsWith(Container.FolderPath,plugin://plugin.video.themoviedb.helper/)">05</value>'
     substituteInPlace 1080i/Custom_1150_Search.xml --replace-fail \
       '<param name="index" value="05"/>' '<param name="index" value="/"/>'
+    # its rows of posters run to the screen's edge, 1920: with the skin
+    # zoomed out (settings -> interface -> skin -> zoom) they stop short of
+    # it, past the page's right margin. they end at the margin, 1824. the
+    # home row's focused poster (lifted, zoomed) went 3 px under the
+    # screen's bottom with no zoom: 6 px up
+    substituteInPlace 1080i/Includes_Home.xml \
+      --replace-fail '<width>1836</width>' '<width>1740</width>' \
+      --replace-fail '<constant name="home_hub_list_w">1608</constant>' \
+      '<constant name="home_hub_list_w">1512</constant>' \
+      --replace-fail '<constant name="home_newest_list_y">44</constant>' \
+      '<constant name="home_newest_list_y">38</constant>'
+    substituteInPlace 1080i/Includes_Search.xml --replace-fail \
+      '<width>1836</width>' '<width>1740</width>'
   '';
 }
