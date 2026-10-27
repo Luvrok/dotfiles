@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<!-- radarr and sonarr in kodi (../../arr): "Скачать" and "Выбрать раздачу…"
+<!-- radarr and sonarr in kodi (../../arr): "Download" and "Pick a release…"
      in the menu (c) of a film or a show that tmdb helper shows and on
      enter there (tmdb helper's players, ../default.nix), the window of
      its downloads (6, or video add-ons), kodi's library scanned when one is
@@ -17,11 +17,11 @@
 	<extension point="kodi.context.item">
 		<menu id="kodi.core.main">
 			<item library="context.py" args="download">
-				<label>Скачать</label>
+				<label>Download</label>
 				<visible>[String.IsEqual(ListItem.DBType,movie) + String.IsEmpty(ListItem.DBID) + !String.IsEmpty(ListItem.UniqueID(tmdb))] | [String.IsEqual(ListItem.DBType,tvshow) + !String.IsEmpty(ListItem.UniqueID(tmdb))] | [[String.IsEqual(ListItem.DBType,season) | String.IsEqual(ListItem.DBType,episode)] + !String.IsEmpty(ListItem.UniqueID(tvshow.tmdb))]</visible>
 			</item>
 			<item library="context.py" args="pick">
-				<label>Выбрать раздачу…</label>
+				<label>Pick a release…</label>
 				<visible>[String.IsEqual(ListItem.DBType,movie) + String.IsEmpty(ListItem.DBID) + !String.IsEmpty(ListItem.UniqueID(tmdb))] | [String.IsEqual(ListItem.DBType,tvshow) + !String.IsEmpty(ListItem.UniqueID(tmdb))] | [[String.IsEqual(ListItem.DBType,season) | String.IsEqual(ListItem.DBType,episode)] + !String.IsEmpty(ListItem.UniqueID(tvshow.tmdb))]</visible>
 			</item>
 		</menu>

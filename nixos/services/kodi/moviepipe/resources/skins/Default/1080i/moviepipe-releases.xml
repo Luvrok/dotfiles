@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- "Выбрать раздачу…": the trackers' releases (../../../../windows.py,
+<!-- "Pick a release…": the trackers' releases (../../../../windows.py,
      Releases), a row each: its title, then quality, sdr or hdr, size,
      seeders, tracker, release group, language, age, why radarr or sonarr
      wouldn't take it. the columns' names are buttons: enter sorts by one,
-     again the other way; "поиск" keeps the rows with a text. under the
+     again the other way; "search" keeps the rows with a text. under the
      list the whole title of the one in focus and why. majan's fonts,
      colours and textures, the skin it's made for; the two layouts of a
      row are the same but for the focus -->

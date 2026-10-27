@@ -45,7 +45,7 @@ let
   # iptv simple's lists, iptv-org's free channels: tv -> channels, by group.
   # an instance per list, its settings in kodi after the first time
   channels = {
-    "Россия" = "https://iptv-org.github.io/iptv/countries/ru.m3u";
+    "Russia" = "https://iptv-org.github.io/iptv/countries/ru.m3u";
     "News" = "https://iptv-org.github.io/iptv/categories/news.m3u";
   };
   instance = name: ''
@@ -129,10 +129,10 @@ in
         # these two, ./moviepipe's actions. tmdb helper fills {tmdb} (the
         # show's for an episode), {season} and {episode}
         "${datadir}/userdata/addon_data/plugin.video.themoviedb.helper/players/moviepipe-pick.json".text =
-          player "pick" "Выбрать раздачу…"
+          player "pick" "Pick a release…"
             1;
         "${datadir}/userdata/addon_data/plugin.video.themoviedb.helper/players/moviepipe-download.json".text =
-          player "download" "Скачать" 2;
+          player "download" "Download" 2;
 
         # torrent names the scraper finds
         "${datadir}/userdata/advancedsettings.xml".source = ./advancedsettings.xml;

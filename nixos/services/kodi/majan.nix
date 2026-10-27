@@ -97,8 +97,10 @@ buildKodiAddon {
       --replace-fail '<constant name="home_row_y">760</constant>' '<constant name="home_row_y">716</constant>' \
       --replace-fail '<constant name="topbar_item_top">36</constant>' '<constant name="topbar_item_top">52</constant>' \
       --replace-fail '<constant name="topbar_icon_top">47</constant>' '<constant name="topbar_icon_top">63</constant>'
-    # the film page with tmdb helper and movie pipe: the cast, "похожие",
-    # "режиссёр" (./majan-moviepipe.xml)
+    # the film page with tmdb helper and movie pipe: the cast, "similar"
+    # (./majan-moviepipe.xml). "more by director", kodi's button 13, was the
+    # library's films: its own id, the director's on tmdb
+    # (./moviepipe/director.py)
     cp ${./majan-moviepipe.xml} 1080i/Includes_MoviePipe.xml
     substituteInPlace 1080i/Includes.xml --replace-fail \
       '<include file="Includes_CustomRows.xml"/>' \
@@ -106,6 +108,8 @@ buildKodiAddon {
     substituteInPlace 1080i/Includes_VideoInfo.xml \
       --replace-fail '<onback>9010</onback>' '<onback>9010</onback><include>MoviePipe_MoreButtons</include>' \
       --replace-fail '<description>16px left / 14px top inner padding so the 5% zoom + focus frame are not clipped</description>' \
-      '<include>MoviePipe_CastList</include>'
+      '<include>MoviePipe_CastList</include>' \
+      --replace-fail '<param name="id" value="13"/>' \
+      '<param name="id" value="9151"/><param name="onclick" value="RunPlugin(plugin://plugin.video.moviepipe/?action=director&amp;name=$ESCINFO[ListItem.Director])"/>'
   '';
 }

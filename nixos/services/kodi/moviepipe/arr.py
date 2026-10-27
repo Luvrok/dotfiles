@@ -46,7 +46,7 @@ class Api:
             with open(f"{C['keys']}/{self.app}") as f:
                 key = f.read().strip()
         except OSError:
-            raise Error(f"{self.app}: нет ключа в {C['keys']}")
+            raise Error(f"{self.app}: no key in {C['keys']}")
         url = self.base + path + ("?" + urllib.parse.urlencode(query) if query else "")
         data = json.dumps(body).encode() if body is not None else None
         req = urllib.request.Request(url, data, {"X-Api-Key": key, "Content-Type": "application/json"}, method=method)
@@ -57,8 +57,8 @@ class Api:
             raise Error(f"{self.app}: {reason(e.read())}")
         except OSError as e:
             if isinstance(e, TimeoutError) or isinstance(getattr(e, "reason", None), TimeoutError):
-                raise Error(f"{self.app} не ответил за {timeout} с")
-            raise Error(f"{self.app} не отвечает")
+                raise Error(f"{self.app} didn't answer in {timeout} s")
+            raise Error(f"{self.app} doesn't answer")
         return json.loads(raw) if raw.strip() else None
 
     def get(self, path, timeout=60, **query):
@@ -113,7 +113,7 @@ def waiting(title, text, work):
             return None
         xbmc.sleep(250)
         seconds += 0.25
-        progress.update(min(99, int(seconds)), f"{text} {int(seconds)} с")
+        progress.update(min(99, int(seconds)), f"{text} {int(seconds)} s")
     progress.close()
     if "error" in out:
         raise out["error"]
@@ -121,7 +121,7 @@ def waiting(title, text, work):
 
 
 def gb(size):
-    return f"{size / 1024 ** 3:.1f} ГБ"
+    return f"{size / 1024 ** 3:.1f} GB"
 
 
 def qbittorrent(path, form=None, **query):
@@ -134,7 +134,7 @@ def qbittorrent(path, form=None, **query):
     except urllib.error.HTTPError as e:
         raise Error(f"qbittorrent: {path}: {e.code}")
     except OSError:
-        raise Error("qbittorrent не отвечает")
+        raise Error("qbittorrent doesn't answer")
     try:
         return json.loads(raw) if raw.strip() else None
     except ValueError:

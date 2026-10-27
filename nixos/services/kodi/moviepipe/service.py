@@ -78,11 +78,11 @@ class Pipe:
                     continue
                 seen.add(key)
                 if event == "grabbed":
-                    notify("Качаю", f"{name(app, r)}, {r['quality']['quality']['name']}")
+                    notify("Downloading", f"{name(app, r)}, {r['quality']['quality']['name']}")
                 elif event == "downloadFolderImported":
-                    notify("Скачано", name(app, r))
+                    notify("Downloaded", name(app, r))
                 elif event == "downloadFailed":
-                    notify("Не скачалось", name(app, r))
+                    notify("Download failed", name(app, r))
             self.state[app] = max(records, key=lambda r: parse(r["date"]))["date"]
             self.save()
 

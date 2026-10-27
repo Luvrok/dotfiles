@@ -1,5 +1,5 @@
 # the add-on's two windows, majan-like (resources/skins/Default/1080i):
-# the releases to pick one of ("Выбрать раздачу…", ./actions.py) and what
+# the releases to pick one of ("Pick a release…", ./actions.py) and what
 # downloads (6, ./default.py). a row: its name, then columns
 import os
 import re
@@ -38,7 +38,7 @@ def color(text, argb):
 
 
 def dynamic(title, qname):
-    # sdr or hdr as the title says, and its place in "сначала SDR": "DV"
+    # sdr or hdr as the title says, and its place in "SDR first": "DV"
     # alone is dolby vision with no hdr10 under it. a title with neither:
     # sdr up to 1080p (a blu-ray, so a bdrip, is sdr; hdr is uhd
     # blu-ray's), a 2160p one may be either
@@ -72,27 +72,27 @@ def quality(name):
 
 # why radarr or sonarr wouldn't take a release, short
 REASONS = [
-    (r"not wanted in profile", "качество не из профиля"),
-    (r"^Unknown (Movie|Series)", "не узнал фильм"),
-    (r"^Wrong ", "другой фильм"),
-    (r"Not enough seeders", "мало сидов"),
-    (r"blocklisted", "в чёрном списке"),
-    (r"in queue", "уже качается"),
-    (r"^Existing file", "уже скачан"),
-    (r"grab event in history", "уже брал раньше"),
-    (r"considered available", "ещё не вышел"),
-    (r"not monitored", "не отслеживается"),
-    (r"^Indexer .* blocked", "трекер на паузе"),
-    (r"smaller than minimum", "слишком маленькая"),
-    (r"larger than maximum", "слишком большая"),
+    (r"not wanted in profile", "quality not in profile"),
+    (r"^Unknown (Movie|Series)", "unknown title"),
+    (r"^Wrong ", "wrong title"),
+    (r"Not enough seeders", "few seeders"),
+    (r"blocklisted", "blocklisted"),
+    (r"in queue", "already downloading"),
+    (r"^Existing file", "already downloaded"),
+    (r"grab event in history", "grabbed before"),
+    (r"considered available", "not out yet"),
+    (r"not monitored", "not monitored"),
+    (r"^Indexer .* blocked", "tracker paused"),
+    (r"smaller than minimum", "too small"),
+    (r"larger than maximum", "too big"),
     (r"Custom Formats? .*\bHDR\b.* below", "HDR"),
-    (r"Custom Formats? .* below", "низкая оценка"),
-    (r"is wanted, but found", "не тот язык"),
-    (r"Hardcode subs", "вшитые субтитры"),
-    (r"^Sample", "сэмпл"),
-    (r"^Raw ", "образ диска"),
-    (r"terms", "фильтр слов"),
-    (r"minutes old", "слишком свежая"),
+    (r"Custom Formats? .* below", "low score"),
+    (r"is wanted, but found", "wrong language"),
+    (r"Hardcode subs", "hardcoded subs"),
+    (r"^Sample", "sample"),
+    (r"^Raw ", "disc image"),
+    (r"terms", "word filter"),
+    (r"minutes old", "too new"),
 ]
 
 
@@ -109,12 +109,12 @@ def age(days):
     if days is None:
         return ""
     if days < 1:
-        return "сегодня"
+        return "today"
     if days < 60:
-        return f"{days} дн"
+        return f"{days} d"
     if days < 730:
-        return f"{days // 30} мес"
-    return f"{days // 365} г"
+        return f"{days // 30} mo"
+    return f"{days // 365} y"
 
 
 class Window(xbmcgui.WindowXMLDialog):
@@ -133,15 +133,15 @@ def window(cls, xml, **attrs):
 # name, how its rows sort, which way first (True: the most first). ties
 # keep radarr's or sonarr's order
 COLUMNS = {
-    101: ("качество", lambda e: e["weight"], True),
+    101: ("quality", lambda e: e["weight"], True),
     102: ("sdr / hdr", lambda e: e["rank"], False),
-    103: ("размер", lambda e: e["size"], True),
-    104: ("сиды", lambda e: e["seeders"], True),
-    105: ("трекер", lambda e: e["tracker"].casefold(), False),
-    106: ("группа", lambda e: (not e["group"], e["group"].casefold()), False),
-    107: ("язык", lambda e: (" RU" not in f" {e['language']}", e["language"]), False),
-    108: ("возраст", lambda e: e["age"], False),
-    109: ("почему ✗", lambda e: e["order"], False),
+    103: ("size", lambda e: e["size"], True),
+    104: ("seeds", lambda e: e["seeders"], True),
+    105: ("tracker", lambda e: e["tracker"].casefold(), False),
+    106: ("group", lambda e: (not e["group"], e["group"].casefold()), False),
+    107: ("language", lambda e: (" RU" not in f" {e['language']}", e["language"]), False),
+    108: ("age", lambda e: e["age"], False),
+    109: ("why ✗", lambda e: e["order"], False),
 }
 SEARCH = 110
 
@@ -169,9 +169,9 @@ class Releases(Window):
             arrow = (" ↓" if self.most else " ↑") if cid == self.sorted else ""
             self.setProperty(f"h{cid}", name + arrow)
         self.setProperty("sorted", str(self.sorted))
-        self.setProperty(f"h{SEARCH}", f"поиск: {self.text}" if self.text else "поиск")
+        self.setProperty(f"h{SEARCH}", f"search: {self.text}" if self.text else "search")
         self.setProperty("filter", f"«{self.text}»" if self.text else "")
-        self.setProperty("empty", "" if shown else "Ничего не нашлось")
+        self.setProperty("empty", "" if shown else "Nothing found")
         self.rows().reset()
         self.rows().addItems([e["item"] for e in shown])
         self.rows().selectItem(0)
@@ -184,7 +184,7 @@ class Releases(Window):
                 self.sorted, self.most = control, COLUMNS[control][2]
             self.show()
         elif control == SEARCH:
-            self.text = xbmcgui.Dialog().input("Поиск: название, группа, трекер", self.text).strip()
+            self.text = xbmcgui.Dialog().input("Search: title, group, tracker", self.text).strip()
             self.show()
         elif control == 50:
             at = self.rows().getSelectedPosition()
@@ -243,11 +243,11 @@ def choose(api, title, **query):
     # last (the trackers are searched with no year, ../../arr/setup.py).
     # the one picked is downloaded even when they'd reject it, for this
     # film or show (query's ids)
-    found = waiting(title, "Ищу раздачи на трекерах…", lambda: api.get("/release", timeout=300, **query))
+    found = waiting(title, "Searching the trackers…", lambda: api.get("/release", timeout=300, **query))
     if found is None:
         return None
     if not found:
-        notify(title, "Раздач нет")
+        notify(title, "No releases")
         return None
     mapped = [r for r in found if r.get("mappedMovieId", r.get("mappedSeriesId")) is not None]
     others = [r for r in found if r not in mapped]
@@ -256,8 +256,8 @@ def choose(api, title, **query):
     w = window(
         Releases,
         "moviepipe-releases.xml",
-        heading=f"{title}: раздачи",
-        hint=f"enter — скачать    ↑ на названия колонок: сортировка, поиск    ● — {app} взял бы её сам    ✗ — не взял бы    esc — ничего",
+        heading=f"{title}: releases",
+        hint=f"enter — download    ↑ to the column names — sort, search    ● — {app} would grab it itself    ✗ — it wouldn't    esc — cancel",
         entries=[entry(r, n, r in others) for n, r in enumerate(ranked)],
         picked=None,
     )
@@ -268,7 +268,7 @@ def choose(api, title, **query):
         return None
     ids = {k: v for k, v in query.items() if k in ("movieId", "seriesId", "episodeId")}
     api.post("/release", {"guid": r["guid"], "indexerId": r["indexerId"], **ids}, timeout=120)
-    notify(title, f"Качаю: {r['quality']['quality']['name']}, {gb(r['size'])}")
+    notify(title, f"Downloading: {r['quality']['quality']['name']}, {gb(r['size'])}")
     return r
 
 
@@ -276,31 +276,31 @@ def choose(api, title, **query):
 # sonarr's queues, qbittorrent's numbers for their torrents. a season in
 # one torrent is a record per episode in sonarr's queue, a row here
 QBT_STATES = {
-    "downloading": "качается",
-    "forcedDL": "качается",
-    "metaDL": "метаданные",
-    "forcedMetaDL": "метаданные",
-    "stalledDL": color("нет пиров", AMBER),
-    "queuedDL": "в очереди",
-    "pausedDL": "на паузе",
-    "stoppedDL": "на паузе",
-    "checkingDL": "проверка",
-    "checkingResumeData": "проверка",
-    "moving": "переносится",
-    "error": color("ошибка", ROSE),
-    "missingFiles": color("нет файлов", ROSE),
+    "downloading": "downloading",
+    "forcedDL": "downloading",
+    "metaDL": "metadata",
+    "forcedMetaDL": "metadata",
+    "stalledDL": color("no peers", AMBER),
+    "queuedDL": "queued",
+    "pausedDL": "paused",
+    "stoppedDL": "paused",
+    "checkingDL": "checking",
+    "checkingResumeData": "checking",
+    "moving": "moving",
+    "error": color("error", ROSE),
+    "missingFiles": color("files missing", ROSE),
 }
 LOADING = ("downloading", "forcedDL", "stalledDL", "metaDL", "forcedMetaDL")
 STOPPED = ("pausedDL", "stoppedDL", "pausedUP", "stoppedUP")
 ARR_STATES = {
-    "queued": "в очереди",
-    "paused": "на паузе",
-    "delay": "ждёт",
-    "downloading": "качается",
-    "completed": color("скачано", GREEN),
-    "warning": color("проблема", AMBER),
-    "failed": color("ошибка", ROSE),
-    "downloadClientUnavailable": color("qbittorrent не отвечает", ROSE),
+    "queued": "queued",
+    "paused": "paused",
+    "delay": "waiting",
+    "downloading": "downloading",
+    "completed": color("downloaded", GREEN),
+    "warning": color("problem", AMBER),
+    "failed": color("error", ROSE),
+    "downloadClientUnavailable": color("qbittorrent is down", ROSE),
 }
 
 
@@ -311,7 +311,7 @@ def name(app, records):
     if app == "sonarr" and "series" in q and "episode" in q:
         if len(records) > 1:
             seasons = sorted({r["episode"]["seasonNumber"] for r in records})
-            return f"{q['series']['title']}, сезон {', '.join(map(str, seasons))} ({len(records)} серий)"
+            return f"{q['series']['title']}, season {', '.join(map(str, seasons))} ({len(records)} episodes)"
         return f"{q['series']['title']} S{q['episode']['seasonNumber']:02}E{q['episode']['episodeNumber']:02}"
     return q["title"]
 
@@ -320,12 +320,12 @@ def duration(seconds):
     if seconds is None or seconds >= 8640000:
         return "∞"
     if seconds < 60:
-        return f"{seconds} с"
+        return f"{seconds} s"
     if seconds < 3600:
-        return f"{seconds // 60} мин"
+        return f"{seconds // 60} min"
     if seconds < 86400:
-        return f"{seconds // 3600} ч {seconds % 3600 // 60:02} мин"
-    return f"{seconds // 86400} д {seconds % 86400 // 3600} ч"
+        return f"{seconds // 3600} h {seconds % 3600 // 60:02} min"
+    return f"{seconds // 86400} d {seconds % 86400 // 3600} h"
 
 
 def timeleft(text):
@@ -339,8 +339,8 @@ def timeleft(text):
 
 def speed(rate):
     if rate >= 1024**2:
-        return f"{rate / 1024 ** 2:.1f} МБ/с"
-    return f"{rate // 1024} КБ/с"
+        return f"{rate / 1024 ** 2:.1f} MB/s"
+    return f"{rate // 1024} KB/s"
 
 
 def row(app, records, torrent):
@@ -353,7 +353,7 @@ def row(app, records, torrent):
         size = torrent["size"] or size
         left = size - int(torrent["progress"] * size)
         seconds = torrent["eta"]
-        state = QBT_STATES.get(torrent["state"], color("скачано", GREEN))
+        state = QBT_STATES.get(torrent["state"], color("downloaded", GREEN))
         if torrent["state"] in LOADING:
             rate = speed(torrent["dlspeed"])
             # connected, of the swarm's
@@ -362,11 +362,11 @@ def row(app, records, torrent):
         state = ARR_STATES.get(q.get("status"), q.get("status", ""))
     tracked = q.get("trackedDownloadState")
     if tracked in ("importPending", "importing"):
-        state = color("в библиотеку", GREEN)
+        state = color("importing", GREEN)
     elif tracked == "importBlocked":
-        state = color("не переносится", AMBER)
+        state = color("import blocked", AMBER)
     elif tracked in ("failedPending", "failed"):
-        state = color("ошибка", ROSE)
+        state = color("error", ROSE)
     problems = [q["errorMessage"]] if q.get("errorMessage") else []
     problems += [m for s in q.get("statusMessages", []) for m in s.get("messages", [])]
     percent = int(100 * (size - left) / size) if size else 0
@@ -377,7 +377,7 @@ def row(app, records, torrent):
         "state": state,
         "bar": os.path.join(BARS, f"{percent // 5 * 5}.png"),
         "percent": f"{percent}%",
-        "done": f"{gb(size - left)} из {gb(size)}",
+        "done": f"{gb(size - left)} of {gb(size)}",
         "speed": rate,
         "seeders": seeders,
         "eta": duration(seconds) if left else "",
@@ -462,7 +462,7 @@ class Downloads(Window):
                 li.setLabel(props.pop("label"))
                 li.setProperties(props)
             self.setProperty("trouble", "; ".join(trouble))
-            self.setProperty("empty", "" if found or trouble else "Ничего не качается")
+            self.setProperty("empty", "" if found or trouble else "Nothing downloads")
 
     def onAction(self, action):
         a = action.getId()
@@ -501,17 +501,17 @@ class Downloads(Window):
             return
         records = self.records[key]
         torrent = self.torrents.get(key)
-        actions = ["Другая раздача", "Убрать загрузку"]
+        actions = ["Another release", "Remove"]
         if torrent:
-            actions.insert(0, "Продолжить" if torrent["state"] in STOPPED else "Пауза")
+            actions.insert(0, "Resume" if torrent["state"] in STOPPED else "Pause")
         i = xbmcgui.Dialog().select(name(key[0], records), actions)
         if i < 0:
             return
-        if actions[i] in ("Продолжить", "Пауза"):
+        if actions[i] in ("Resume", "Pause"):
             self.toggle(key)
             return
         # another: this one to the blocklist, they search again
-        another = actions[i] == "Другая раздача"
+        another = actions[i] == "Another release"
         try:
             Api(key[0]).call(
                 "DELETE",

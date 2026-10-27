@@ -1,4 +1,4 @@
-# "Скачать" and "Выбрать раздачу…": the film goes to radarr, the show to
+# "Download" and "Pick a release…": the film goes to radarr, the show to
 # sonarr. download: they search and take the best release themselves
 # (arr/setup.py's profile). pick: the trackers' releases in a list, the
 # one picked is downloaded; nothing picked, nothing is added. the menu of
@@ -23,7 +23,7 @@ def movie(tmdb, pick):
     if have:
         m = have[0]
     else:
-        m = waiting("Radarr", "Ищу фильм…", lambda: radarr.get("/movie/lookup/tmdb", timeout=LOOKUP, tmdbId=tmdb))
+        m = waiting("Radarr", "Looking up the film…", lambda: radarr.get("/movie/lookup/tmdb", timeout=LOOKUP, tmdbId=tmdb))
         if m is None:
             return
         # wanted from the day it's announced, the profile keeps cams out
@@ -37,15 +37,15 @@ def movie(tmdb, pick):
             radarr.delete(f"/movie/{m['id']}")
         return
     if added:
-        notify(title, "Ищу раздачу")
+        notify(title, "Searching for a release")
     elif m.get("hasFile"):
-        notify(title, "Уже скачан")
+        notify(title, "Already downloaded")
     else:
         if not m["monitored"]:
             m["monitored"] = True
             radarr.put(f"/movie/{m['id']}", m)
         radarr.command("MoviesSearch", movieIds=[m["id"]])
-        notify(title, "Ищу раздачу")
+        notify(title, "Searching for a release")
 
 
 def episodes(sonarr, series):
@@ -55,29 +55,29 @@ def episodes(sonarr, series):
         if found:
             return found
         time.sleep(1)
-    raise Error("sonarr: у сериала нет серий")
+    raise Error("sonarr: the show has no episodes")
 
 
 def show(tmdb, kind, season, episode, pick):
     sonarr = Api("sonarr")
-    found = waiting("Sonarr", "Ищу сериал…", lambda: sonarr.get("/series/lookup", timeout=LOOKUP, term=f"tmdb:{tmdb}"))
+    found = waiting("Sonarr", "Looking up the show…", lambda: sonarr.get("/series/lookup", timeout=LOOKUP, term=f"tmdb:{tmdb}"))
     if found is None:
         return
     if not found:
-        raise Error("sonarr не нашёл сериал")
+        raise Error("sonarr didn't find the show")
     s = found[0]
     title = s["title"]
 
     numbers = [x["seasonNumber"] for x in s["seasons"] if x["seasonNumber"] > 0]
     if kind == "tvshow":
-        labels = [f"Сезон {n}" for n in numbers]
+        labels = [f"Season {n}" for n in numbers]
         if pick:
-            i = xbmcgui.Dialog().select(f"{title}: сезон", labels)
+            i = xbmcgui.Dialog().select(f"{title}: season", labels)
             if i < 0:
                 return
             chosen = [numbers[i]]
         else:
-            picked = xbmcgui.Dialog().multiselect(f"{title}: сезоны", labels, preselect=list(range(len(numbers))))
+            picked = xbmcgui.Dialog().multiselect(f"{title}: seasons", labels, preselect=list(range(len(numbers))))
             if not picked:
                 return
             chosen = [numbers[i] for i in picked]
@@ -112,18 +112,18 @@ def show(tmdb, kind, season, episode, pick):
         name = f"{title} S{season:02}E{episode:02}"
         ep = next((e for e in episodes(sonarr, s["id"]) if (e["seasonNumber"], e["episodeNumber"]) == (season, episode)), None)
         if ep is None:
-            raise Error(f"sonarr: нет серии {name}")
+            raise Error(f"sonarr: no episode {name}")
         sonarr.put("/episode/monitor", {"episodeIds": [ep["id"]], "monitored": True})
         if pick:
             if choose(sonarr, name, episodeId=ep["id"]) is None and added:
                 sonarr.delete(f"/series/{s['id']}")
         else:
             sonarr.command("EpisodeSearch", episodeIds=[ep["id"]])
-            notify(name, "Ищу раздачу")
+            notify(name, "Searching for a release")
         return
 
     if pick:
-        name = f"{title}, сезон {chosen[0]}"
+        name = f"{title}, season {chosen[0]}"
         episodes(sonarr, s["id"])
         if choose(sonarr, name, seriesId=s["id"], seasonNumber=chosen[0]) is None and added:
             sonarr.delete(f"/series/{s['id']}")
@@ -131,4 +131,4 @@ def show(tmdb, kind, season, episode, pick):
     if not added:
         for n in chosen:
             sonarr.command("SeasonSearch", seriesId=s["id"], seasonNumber=n)
-    notify(title, "Ищу раздачи: " + ", ".join(f"сезон {n}" for n in chosen))
+    notify(title, "Searching for releases: " + ", ".join(f"season {n}" for n in chosen))

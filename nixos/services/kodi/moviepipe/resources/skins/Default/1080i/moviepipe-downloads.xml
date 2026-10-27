@@ -47,7 +47,7 @@
 				<height>72</height>
 				<font>title_28_bold</font>
 				<textcolor>text_primary</textcolor>
-				<label>Загрузки</label>
+				<label>Downloads</label>
 			</control>
 			<control type="label">
 				<right>40</right>
@@ -84,7 +84,7 @@
 					<height>24</height>
 					<font>mono_13</font>
 					<textcolor>text_tertiary</textcolor>
-					<label>состояние</label>
+					<label>state</label>
 				</control>
 				<control type="label">
 					<left>460</left>
@@ -103,7 +103,7 @@
 					<height>24</height>
 					<font>mono_13</font>
 					<textcolor>text_tertiary</textcolor>
-					<label>скачано</label>
+					<label>done</label>
 				</control>
 				<control type="label">
 					<left>780</left>
@@ -113,7 +113,7 @@
 					<align>right</align>
 					<font>mono_13</font>
 					<textcolor>text_tertiary</textcolor>
-					<label>скорость</label>
+					<label>speed</label>
 				</control>
 				<control type="label">
 					<left>920</left>
@@ -123,7 +123,7 @@
 					<align>right</align>
 					<font>mono_13</font>
 					<textcolor>text_tertiary</textcolor>
-					<label>сиды</label>
+					<label>seeds</label>
 				</control>
 				<control type="label">
 					<left>1050</left>
@@ -133,7 +133,7 @@
 					<align>right</align>
 					<font>mono_13</font>
 					<textcolor>text_tertiary</textcolor>
-					<label>осталось</label>
+					<label>left</label>
 				</control>
 				<control type="label">
 					<left>1210</left>
@@ -142,7 +142,7 @@
 					<height>24</height>
 					<font>mono_13</font>
 					<textcolor>text_tertiary</textcolor>
-					<label>качество</label>
+					<label>quality</label>
 				</control>
 				<control type="label">
 					<left>1390</left>
@@ -160,7 +160,7 @@
 					<height>24</height>
 					<font>mono_13</font>
 					<textcolor>text_tertiary</textcolor>
-					<label>трекер</label>
+					<label>tracker</label>
 				</control>
 			</control>
 			<control type="list" id="50">
@@ -503,7 +503,7 @@
 				<height>24</height>
 				<font>mono_13</font>
 				<textcolor>text_tertiary</textcolor>
-				<label>→ на кнопку паузы и enter, или пробел — пауза и старт    enter на строке — пауза, другая раздача, убрать    esc — закрыть</label>
+				<label>→ to the pause button and enter, or space — pause, resume    enter on a row — pause, another release, remove    esc — close</label>
 			</control>
 		</control>
 	</controls>
