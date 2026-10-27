@@ -287,7 +287,7 @@ def prowlarr(sec):
     # gets them from indexers.prowlarr.com: its list on every look, their
     # files when it starts. it started before the proxy was set: again
     def definitions():
-        wanted = {"uindex", "thepiratebay", "1337x"}
+        wanted = {"uindex", "thepiratebay", "1337x"} | ({"rutracker-proxy"} if sec.get("rutracker_username") else set())
         have = lambda: {x["definitionName"] for x in api.get("/indexer/schema")}
         if wanted - have():
             command(api, "IndexerDefinitionUpdate")
@@ -300,7 +300,7 @@ def prowlarr(sec):
     steps = {
         "proxy": lambda: proxy(api),
         "definitions": definitions,
-        # cloudflare's checks for rutracker, 1337x and uindex: a chromium
+        # cloudflare's checks for 1337x and uindex: a chromium
         # passes them, a tracker with the tag gets its cookies. prowlarr
         # tests it with prowlarr.servarr.com (journalctl -u flaresolverr
         # when it fails), through the proxy too
@@ -350,24 +350,27 @@ def prowlarr(sec):
         )
 
     if sec.get("rutracker_username"):
-        # its titles are russian / english [year, country, genre, quality]:
-        # russian letters out, the [] after the name, "RUS" for the dub.
-        # cloudflare's "just a moment" stands before its login and search
+        # through rutracker-proxy (./default.nix), cloudflare is its job.
+        # titles are russian / english [year, country, genre, quality]: the
+        # russian name out, "RUS" when there's a russian track. a captcha on
+        # login shows in prowlarr: indexers -> RuTracker -> test
         steps["rutracker"] = tracker(
-            "RuTracker.org",
-            "RuTracker.org",
+            "RuTracker",
+            "rutracker-proxy",
             1,
             {
                 "username": sec["rutracker_username"],
                 "password": str(sec.get("rutracker_password", "")),
-                "russianLetters": True,
-                "addRussianToTitle": True,
-                "moveFirstTagsToEndOfReleaseTitle": True,
+                "stripcyrillic": True,
+                "addrus": True,
             },
-            tags=[flaresolverr],
         )
     else:
         log("prowlarr: no rutracker_username in secrets/arr.yaml, rutracker skipped")
+    # prowlarr's own rutracker: cloudflare doesn't let it in
+    steps["old rutracker"] = lambda: [
+        api.call("DELETE", f"/indexer/{x['id']}") for x in api.get("/indexer") if x["implementation"] == "RuTracker"
+    ]
     steps["uindex"] = tracker("Uindex", "uindex", 2, tags=[flaresolverr])
     steps["thepiratebay"] = tracker("The Pirate Bay", "thepiratebay", 3)
     steps["1337x"] = tracker("1337x", "1337x", 4, tags=[flaresolverr])

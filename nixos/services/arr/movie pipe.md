@@ -10,8 +10,10 @@ tags: [nixos, kodi, barnard]
 flowchart LR
   K[Kodi<br>TMDb Helper] -- "c → Скачать /<br>Выбрать раздачу…" --> R[Radarr / Sonarr]
   R -- поиск --> P[Prowlarr]
-  P --> T1[rutracker] & T2[uindex] & T3[thepiratebay] & T4[1337x]
+  P --> T2[uindex] & T3[thepiratebay] & T4[1337x]
   P -. Cloudflare .-> F[FlareSolverr]
+  P --> RP[rutracker-proxy] --> T1[rutracker]
+  RP -. кука .-> F
   R -- торрент --> Q[qBittorrent<br>без GUI]
   Q -- "/media/outer-1/downloads" --> R
   R -- "хардлинк, переименование" --> L["/media/outer-1/movies, series"]
@@ -30,7 +32,8 @@ flowchart LR
 | Sonarr | http://127.0.0.1:8989 | сериалы, то же для `series` |
 | Prowlarr | http://127.0.0.1:9696 | трекеры, отдаёт их Radarr и Sonarr |
 | Bazarr | http://127.0.0.1:6767 | субтитры ru и en |
-| FlareSolverr | 127.0.0.1:8191 | проходит проверку Cloudflare («Just a moment…») для rutracker, 1337x и uindex |
+| FlareSolverr | 127.0.0.1:8191 | проходит проверку Cloudflare («Just a moment…») для 1337x и uindex, даёт куку rutracker-proxy |
+| rutracker-proxy | 127.0.0.1:8150 | rutracker через Cloudflare: [rutracker-cf-proxy](https://github.com/rofl3228/rutracker-cf-proxy), в Prowlarr — «RuTracker» |
 
 Все веб-интерфейсы только на `127.0.0.1`, снаружи их не видно. В файрволе открыт только порт пиров qBittorrent (51413 TCP/UDP).
 
@@ -69,7 +72,7 @@ sudo nixos-rebuild switch --flake .#barnard
 После смены файла `arr-setup` перезапускается сам и вписывает логины в Prowlarr и Bazarr.
 
 > [!note] RuTracker
-> Если rutracker попросит капчу при входе, Prowlarr покажет ошибку у индексатора. Зайди на rutracker в браузере с этой же машины и потом в Prowlarr → Indexers → RuTracker → Test.
+> rutracker закрыт проверкой Cloudflare, туда ходит `rutracker-proxy` (кука от FlareSolverr, запросы как от того же Chrome). Если сам rutracker попросит капчу при входе, Prowlarr покажет её картинкой в Indexers → RuTracker → Test. Или войди один раз на rutracker в браузере с barnard.
 
 ## Каждый день
 
@@ -142,7 +145,8 @@ ls /var/lib/arr/subtitles        # очередь перевода
 journalctl -u radarr -f          # поиск и импорт фильмов
 ```
 
-- Ничего не находит — Prowlarr → Indexers → Test all. Красный rutracker — неверный логин или Cloudflare ужесточил проверку до капчи, которую FlareSolverr не проходит (в `journalctl -u flaresolverr` будет «Error solving the challenge»); красные rutracker/1337x/uindex вместе — FlareSolverr; всё красное — xray (v2rayN) выключен.
+- Ничего не находит — Prowlarr → Indexers → Test all. Красные 1337x/uindex — FlareSolverr (`journalctl -u flaresolverr`); всё красное — xray (v2rayN) выключен.
+- Красный RuTracker — `curl -s 127.0.0.1:8150/health` (есть ли кука Cloudflare, `last_error`) и `journalctl -u rutracker-proxy`. Капчу на входе Prowlarr показывает картинкой: Indexers → RuTracker → Test, ввести код. Или один раз войти на rutracker в браузере с barnard.
 - Скачалось, но нет в Kodi — Radarr → Activity → Queue (ошибка импорта), или `f` в Kodi.
 - Нет субтитров — Bazarr → Wanted / History.
 - Переводчик: `curl -s http://127.0.0.1:5390/subtitle-translator/api/languages` должен вернуть список языков. `LibreTranslate unreachable` — на jedha лежит LibreTranslate (`systemctl status libretranslate`).

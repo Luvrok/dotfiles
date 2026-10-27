@@ -517,12 +517,30 @@
         "nixpkgs-pinned": "nixpkgs-pinned",
         "picom-pijulius": "picom-pijulius",
         "qmd": "qmd",
+        "rutracker-cf-proxy": "rutracker-cf-proxy",
         "slock": "slock",
         "sops-nix": "sops-nix",
         "st": "st",
         "textfoxy": "textfoxy",
         "voidsddm": "voidsddm",
         "zapret-discord-youtube": "zapret-discord-youtube"
+      }
+    },
+    "rutracker-cf-proxy": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1789378105,
+        "narHash": "sha256-Cb5+PhAP79U6EAn5l2odC95DUzx0HQzXLWVy7qH2DKU=",
+        "ref": "refs/heads/main",
+        "rev": "3dc9f7a0a612382ba8bbca1eb4520086fb1fbcb5",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/rofl3228/rutracker-cf-proxy"
+      },
+      "original": {
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/rofl3228/rutracker-cf-proxy"
       }
     },
     "slock": {

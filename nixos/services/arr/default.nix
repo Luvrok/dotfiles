@@ -15,6 +15,7 @@
   config,
   lib,
   pkgs,
+  inputs,
   username,
   ...
 }:
@@ -38,6 +39,25 @@ let
   secrets = if hasSecrets then config.sops.secrets.arr.path else null;
 
   python = pkgs.python3.withPackages (ps: [ ps.pyyaml ]);
+
+  # rutracker answers anything but a browser with cloudflare's "just a
+  # moment", prowlarr's own rutracker and its flaresolverr retry included.
+  # this proxy gets cloudflare's cookie from flaresolverr and goes to
+  # rutracker with it as the same chrome would (curl_cffi), prowlarr reads
+  # rutracker from it (its definition, "RuTracker (proxy)", ./setup.py).
+  # github.com/rofl3228/rutracker-cf-proxy, nix flake update
+  # rutracker-cf-proxy brings new versions
+  rutrackerProxy = pkgs.python3Packages.buildPythonApplication {
+    pname = "rutracker-proxy";
+    version = inputs.rutracker-cf-proxy.shortRev;
+    src = inputs.rutracker-cf-proxy;
+    pyproject = true;
+    build-system = [ pkgs.python3Packages.setuptools ];
+    dependencies = with pkgs.python3Packages; [
+      aiohttp
+      curl-cffi
+    ];
+  };
   apps = [
     "radarr"
     "sonarr"
@@ -201,12 +221,52 @@ in
     inherit (servarr "prowlarr") settings environmentFiles;
   };
 
-  # cloudflare's checks for prowlarr (1337x, uindex)
+  # cloudflare's checks for prowlarr (1337x, uindex) and rutrackerProxy
   services.flaresolverr = {
     enable = true;
     port = s.flaresolverr;
   };
   systemd.services.flaresolverr.environment.HOST = "127.0.0.1";
+
+  # straight from this ip, not through xray: cloudflare's cookie holds for
+  # the ip flaresolverr got it from, and flaresolverr goes straight when
+  # this asks it. chrome as flaresolverr's chromium
+  systemd.services.rutracker-proxy = {
+    description = "RuTracker past cloudflare for prowlarr";
+    wantedBy = [ "multi-user.target" ];
+    wants = [
+      "flaresolverr.service"
+      "network-online.target"
+    ];
+    after = [
+      "flaresolverr.service"
+      "network-online.target"
+    ];
+    environment = {
+      HOST = "127.0.0.1";
+      PORT = toString s.rutracker;
+      BYPARR_URL = "http://127.0.0.1:${toString s.flaresolverr}/v1";
+      IMPERSONATE = "chrome";
+      IP_FAMILY = "4";
+      CLEARANCE_FILE = "/var/lib/rutracker-proxy/clearance.json";
+    };
+    serviceConfig = {
+      ExecStart = "${rutrackerProxy}/bin/rutracker-proxy";
+      DynamicUser = true;
+      StateDirectory = "rutracker-proxy";
+      Restart = "on-failure";
+      RestartSec = 10;
+    };
+  };
+  # its definition in prowlarr's Definitions/Custom, pointed at it
+  systemd.services.prowlarr.serviceConfig.ExecStartPre = [
+    (pkgs.writeShellScript "prowlarr-rutracker" ''
+      ${pkgs.coreutils}/bin/mkdir -p /var/lib/prowlarr/Definitions/Custom
+      DEFINITION_DIR=/var/lib/prowlarr/Definitions/Custom \
+        PUBLIC_URL=http://127.0.0.1:${toString s.rutracker}/ \
+        exec ${rutrackerProxy}/bin/rutracker-proxy install-definition
+    '')
+  ];
 
   # the settings that don't need secrets, over its own on every start.
   # languages, providers and logins: ./setup.py

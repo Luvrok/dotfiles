@@ -7,6 +7,8 @@ rec {
   prowlarr = 9696;
   bazarr = 6767;
   flaresolverr = 8191;
+  # rutracker past cloudflare (./default.nix)
+  rutracker = 8150;
   # qbittorrent's own port for peers, open in the firewall
   torrenting = 51413;
 

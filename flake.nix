@@ -46,6 +46,10 @@
     kodi-infotagger.url = "git+https://github.com/jurialmunkey/script.module.infotagger?shallow=1";
     kodi-infotagger.flake = false;
 
+    # rutracker through cloudflare for prowlarr (nixos/services/arr)
+    rutracker-cf-proxy.url = "git+https://github.com/rofl3228/rutracker-cf-proxy?shallow=1";
+    rutracker-cf-proxy.flake = false;
+
     picom-pijulius.url = "github:pijulius/picom";
     picom-pijulius.flake = false;
 
