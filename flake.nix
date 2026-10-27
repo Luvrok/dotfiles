@@ -32,6 +32,13 @@
 
     qmd.url = "github:tobi/qmd";
 
+    # kodi skins (nixos/services/kodi/skins.nix), nix flake update
+    # kodi-skins kodi-skinvariables brings new versions
+    kodi-skins.url = "git+https://github.com/KarmaMole/kodi-skins?shallow=1";
+    kodi-skins.flake = false;
+    kodi-skinvariables.url = "git+https://github.com/jurialmunkey/script.skinvariables?ref=nexus&shallow=1";
+    kodi-skinvariables.flake = false;
+
     picom-pijulius.url = "github:pijulius/picom";
     picom-pijulius.flake = false;
 

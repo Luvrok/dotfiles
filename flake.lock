@@ -195,6 +195,41 @@
         "type": "github"
       }
     },
+    "kodi-skins": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792951658,
+        "narHash": "sha256-hTfK30RV/1oDDdQiFmuEE+81uOWR6ZEqG+NaGa2bLhw=",
+        "ref": "refs/heads/main",
+        "rev": "0f6a3246f1aa41e82f895366709d2bcaaa87e6fc",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/KarmaMole/kodi-skins"
+      },
+      "original": {
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/KarmaMole/kodi-skins"
+      }
+    },
+    "kodi-skinvariables": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792583550,
+        "narHash": "sha256-4vHDrSYEmNjrW15FOl9CV/JcoqwH7yf4HbFeuEYk3/o=",
+        "ref": "nexus",
+        "rev": "9c20ea9bcf67fcb4370a5771da08b6cf7bdb676e",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/jurialmunkey/script.skinvariables"
+      },
+      "original": {
+        "ref": "nexus",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/jurialmunkey/script.skinvariables"
+      }
+    },
     "lazygit": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -419,6 +454,8 @@
         "dwm": "dwm",
         "dwmblocks": "dwmblocks",
         "home-manager": "home-manager",
+        "kodi-skins": "kodi-skins",
+        "kodi-skinvariables": "kodi-skinvariables",
         "lazygit": "lazygit",
         "llama-cpp": "llama-cpp",
         "nixpkgs": "nixpkgs_4",
