@@ -2,8 +2,9 @@
 <!-- 6, what radarr and sonarr download (../../../../windows.py,
      Downloads), a row each: what it is, then its state, how far, how fast,
      the seeders it has (of the swarm's), how long yet, quality, sdr or hdr,
-     tracker. qbittorrent's numbers, every 2 s. under the list the release
-     of the one in focus and what's wrong with it. majan's fonts, colours
+     tracker. qbittorrent's numbers, every 2 s; enter: pause or go on, another
+     release, away. under the list the release of the one in focus and
+     what's wrong with it. majan's fonts, colours
      and textures; the two layouts of a row are the same but for the focus -->
 <window>
 	<defaultcontrol always="true">50</defaultcontrol>
@@ -16,6 +17,8 @@
 		<control type="group">
 			<left>60</left>
 			<top>50</top>
+			<width>1800</width>
+			<height>980</height>
 			<animation effect="fade" start="0" end="100" time="150">WindowOpen</animation>
 			<animation effect="fade" start="100" end="0" time="100">WindowClose</animation>
 			<control type="image">
@@ -456,7 +459,7 @@
 				<height>24</height>
 				<font>mono_13</font>
 				<textcolor>text_tertiary</textcolor>
-				<label>enter — другая раздача или убрать    esc — закрыть</label>
+				<label>enter — пауза или продолжить, другая раздача, убрать    esc — закрыть</label>
 			</control>
 		</control>
 	</controls>

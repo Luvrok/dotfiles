@@ -55,7 +55,9 @@ class Api:
                 raw = r.read()
         except urllib.error.HTTPError as e:
             raise Error(f"{self.app}: {reason(e.read())}")
-        except OSError:
+        except OSError as e:
+            if isinstance(e, TimeoutError) or isinstance(getattr(e, "reason", None), TimeoutError):
+                raise Error(f"{self.app} не ответил за {timeout} с")
             raise Error(f"{self.app} не отвечает")
         return json.loads(raw) if raw.strip() else None
 
@@ -122,11 +124,18 @@ def gb(size):
     return f"{size / 1024 ** 3:.1f} ГБ"
 
 
-def qbittorrent(path, **query):
-    # its web ui on 127.0.0.1, no login from this machine
+def qbittorrent(path, form=None, **query):
+    # its web ui on 127.0.0.1, no login from this machine. form: a POST
     url = f"http://127.0.0.1:{C['qbittorrent']}/api/v2{path}?" + urllib.parse.urlencode(query)
+    data = urllib.parse.urlencode(form).encode() if form is not None else None
     try:
-        with OPENER.open(url, timeout=5) as r:
-            return json.loads(r.read())
-    except (OSError, ValueError):
+        with OPENER.open(urllib.request.Request(url, data), timeout=5) as r:
+            raw = r.read()
+    except urllib.error.HTTPError as e:
+        raise Error(f"qbittorrent: {path}: {e.code}")
+    except OSError:
         raise Error("qbittorrent не отвечает")
+    try:
+        return json.loads(raw) if raw.strip() else None
+    except ValueError:
+        return raw.decode(errors="replace")

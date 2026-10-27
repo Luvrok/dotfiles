@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- "Выбрать раздачу…": the trackers' releases (../../../../windows.py,
      Releases), a row each: its title, then quality, sdr or hdr, size,
-     seeders, tracker, release group, language, age. under the list the
-     whole title of the one in focus and why radarr or sonarr wouldn't take
-     it. majan's fonts, colours and textures, the skin it's made for. the
-     two layouts of a row are the same but for the focus -->
+     seeders, tracker, release group, language, age, why radarr or sonarr
+     wouldn't take it. the columns' names are buttons: enter sorts by one,
+     again the other way; "поиск" keeps the rows with a text. under the
+     list the whole title of the one in focus and why. majan's fonts,
+     colours and textures, the skin it's made for; the two layouts of a
+     row are the same but for the focus -->
 <window>
 	<defaultcontrol always="true">50</defaultcontrol>
 	<controls>
@@ -15,22 +17,24 @@
 		</control>
 		<control type="group">
 			<left>60</left>
-			<top>50</top>
+			<top>65</top>
+			<width>1800</width>
+			<height>950</height>
 			<animation effect="fade" start="0" end="100" time="150">WindowOpen</animation>
 			<animation effect="fade" start="100" end="0" time="100">WindowClose</animation>
 			<control type="image">
 				<width>1800</width>
-				<height>980</height>
+				<height>950</height>
 				<texture colordiffuse="bg">common/white.png</texture>
 			</control>
 			<control type="image">
 				<width>1800</width>
-				<height>980</height>
+				<height>950</height>
 				<texture border="10" colordiffuse="hairline_strong">common/rect_outline_1.png</texture>
 			</control>
 			<control type="label">
 				<left>40</left>
-				<width>1400</width>
+				<width>1200</width>
 				<height>72</height>
 				<font>title_28_bold</font>
 				<textcolor>text_primary</textcolor>
@@ -38,21 +42,12 @@
 			</control>
 			<control type="label">
 				<right>40</right>
-				<width>300</width>
+				<width>600</width>
 				<height>72</height>
 				<align>right</align>
 				<font>num_16</font>
 				<textcolor>$VAR[ColorAccent]</textcolor>
-				<label>$INFO[Container(50).CurrentItem]$INFO[Container(50).NumItems, / ]</label>
-			</control>
-			<control type="label">
-				<right>200</right>
-				<width>900</width>
-				<height>72</height>
-				<align>right</align>
-				<font>mono_13</font>
-				<textcolor>text_tertiary</textcolor>
-				<label>$INFO[Window.Property(sort)]</label>
+				<label>$INFO[Window.Property(filter),,    ]$INFO[Container(50).CurrentItem]$INFO[Container(50).NumItems, / ]</label>
 			</control>
 			<control type="image">
 				<top>72</top>
@@ -60,84 +55,185 @@
 				<height>1</height>
 				<texture colordiffuse="hairline_strong">common/hairline.png</texture>
 			</control>
-			<!-- the columns of the rows' second line -->
+			<!-- the columns of the rows' second line, buttons -->
 			<control type="group">
 				<left>24</left>
-				<top>84</top>
-				<control type="label">
-					<left>48</left>
-					<width>180</width>
-					<height>24</height>
+				<top>80</top>
+				<width>1752</width>
+				<height>28</height>
+				<control type="button" id="101">
+					<left>40</left>
+					<width>196</width>
+					<height>28</height>
+					<aligny>center</aligny>
+					<textoffsetx>8</textoffsetx>
 					<font>mono_13</font>
 					<textcolor>text_tertiary</textcolor>
-					<label>качество</label>
+					<focusedcolor>$VAR[ColorAccent]</focusedcolor>
+					<texturefocus colordiffuse="bg_raised">common/white.png</texturefocus>
+					<texturenofocus />
+					<label>$INFO[Window.Property(h101)]</label>
+					<onleft>110</onleft>
+					<onright>102</onright>
+					<onup>noop</onup>
+					<ondown>50</ondown>
 				</control>
-				<control type="label">
-					<left>240</left>
-					<width>130</width>
-					<height>24</height>
+				<control type="button" id="102">
+					<left>232</left>
+					<width>146</width>
+					<height>28</height>
+					<aligny>center</aligny>
+					<textoffsetx>8</textoffsetx>
 					<font>mono_13</font>
 					<textcolor>text_tertiary</textcolor>
-					<label>sdr / hdr</label>
+					<focusedcolor>$VAR[ColorAccent]</focusedcolor>
+					<texturefocus colordiffuse="bg_raised">common/white.png</texturefocus>
+					<texturenofocus />
+					<label>$INFO[Window.Property(h102)]</label>
+					<onleft>101</onleft>
+					<onright>103</onright>
+					<onup>noop</onup>
+					<ondown>50</ondown>
 				</control>
-				<control type="label">
-					<left>380</left>
-					<width>110</width>
-					<height>24</height>
+				<control type="button" id="103">
+					<left>372</left>
+					<width>126</width>
+					<height>28</height>
 					<align>right</align>
+					<aligny>center</aligny>
+					<textoffsetx>8</textoffsetx>
 					<font>mono_13</font>
 					<textcolor>text_tertiary</textcolor>
-					<label>размер</label>
+					<focusedcolor>$VAR[ColorAccent]</focusedcolor>
+					<texturefocus colordiffuse="bg_raised">common/white.png</texturefocus>
+					<texturenofocus />
+					<label>$INFO[Window.Property(h103)]</label>
+					<onleft>102</onleft>
+					<onright>104</onright>
+					<onup>noop</onup>
+					<ondown>50</ondown>
 				</control>
-				<control type="label">
-					<left>510</left>
-					<width>80</width>
-					<height>24</height>
+				<control type="button" id="104">
+					<left>502</left>
+					<width>96</width>
+					<height>28</height>
 					<align>right</align>
+					<aligny>center</aligny>
+					<textoffsetx>8</textoffsetx>
 					<font>mono_13</font>
 					<textcolor>text_tertiary</textcolor>
-					<label>сиды</label>
+					<focusedcolor>$VAR[ColorAccent]</focusedcolor>
+					<texturefocus colordiffuse="bg_raised">common/white.png</texturefocus>
+					<texturenofocus />
+					<label>$INFO[Window.Property(h104)]</label>
+					<onleft>103</onleft>
+					<onright>105</onright>
+					<onup>noop</onup>
+					<ondown>50</ondown>
 				</control>
-				<control type="label">
-					<left>620</left>
-					<width>180</width>
-					<height>24</height>
+				<control type="button" id="105">
+					<left>612</left>
+					<width>196</width>
+					<height>28</height>
+					<aligny>center</aligny>
+					<textoffsetx>8</textoffsetx>
 					<font>mono_13</font>
 					<textcolor>text_tertiary</textcolor>
-					<label>трекер</label>
+					<focusedcolor>$VAR[ColorAccent]</focusedcolor>
+					<texturefocus colordiffuse="bg_raised">common/white.png</texturefocus>
+					<texturenofocus />
+					<label>$INFO[Window.Property(h105)]</label>
+					<onleft>104</onleft>
+					<onright>106</onright>
+					<onup>noop</onup>
+					<ondown>50</ondown>
 				</control>
-				<control type="label">
-					<left>810</left>
-					<width>230</width>
-					<height>24</height>
+				<control type="button" id="106">
+					<left>802</left>
+					<width>246</width>
+					<height>28</height>
+					<aligny>center</aligny>
+					<textoffsetx>8</textoffsetx>
 					<font>mono_13</font>
 					<textcolor>text_tertiary</textcolor>
-					<label>группа</label>
+					<focusedcolor>$VAR[ColorAccent]</focusedcolor>
+					<texturefocus colordiffuse="bg_raised">common/white.png</texturefocus>
+					<texturenofocus />
+					<label>$INFO[Window.Property(h106)]</label>
+					<onleft>105</onleft>
+					<onright>107</onright>
+					<onup>noop</onup>
+					<ondown>50</ondown>
 				</control>
-				<control type="label">
-					<left>1050</left>
-					<width>140</width>
-					<height>24</height>
+				<control type="button" id="107">
+					<left>1042</left>
+					<width>156</width>
+					<height>28</height>
+					<aligny>center</aligny>
+					<textoffsetx>8</textoffsetx>
 					<font>mono_13</font>
 					<textcolor>text_tertiary</textcolor>
-					<label>язык</label>
+					<focusedcolor>$VAR[ColorAccent]</focusedcolor>
+					<texturefocus colordiffuse="bg_raised">common/white.png</texturefocus>
+					<texturenofocus />
+					<label>$INFO[Window.Property(h107)]</label>
+					<onleft>106</onleft>
+					<onright>108</onright>
+					<onup>noop</onup>
+					<ondown>50</ondown>
 				</control>
-				<control type="label">
-					<left>1200</left>
-					<width>110</width>
-					<height>24</height>
+				<control type="button" id="108">
+					<left>1192</left>
+					<width>126</width>
+					<height>28</height>
 					<align>right</align>
+					<aligny>center</aligny>
+					<textoffsetx>8</textoffsetx>
 					<font>mono_13</font>
 					<textcolor>text_tertiary</textcolor>
-					<label>возраст</label>
+					<focusedcolor>$VAR[ColorAccent]</focusedcolor>
+					<texturefocus colordiffuse="bg_raised">common/white.png</texturefocus>
+					<texturenofocus />
+					<label>$INFO[Window.Property(h108)]</label>
+					<onleft>107</onleft>
+					<onright>109</onright>
+					<onup>noop</onup>
+					<ondown>50</ondown>
 				</control>
-				<control type="label">
-					<left>1340</left>
-					<width>400</width>
-					<height>24</height>
+				<control type="button" id="109">
+					<left>1332</left>
+					<width>256</width>
+					<height>28</height>
+					<aligny>center</aligny>
+					<textoffsetx>8</textoffsetx>
 					<font>mono_13</font>
 					<textcolor>text_tertiary</textcolor>
-					<label>почему ✗</label>
+					<focusedcolor>$VAR[ColorAccent]</focusedcolor>
+					<texturefocus colordiffuse="bg_raised">common/white.png</texturefocus>
+					<texturenofocus />
+					<label>$INFO[Window.Property(h109)]</label>
+					<onleft>108</onleft>
+					<onright>110</onright>
+					<onup>noop</onup>
+					<ondown>50</ondown>
+				</control>
+				<control type="button" id="110">
+					<left>1592</left>
+					<width>152</width>
+					<height>28</height>
+					<align>right</align>
+					<aligny>center</aligny>
+					<textoffsetx>8</textoffsetx>
+					<font>mono_13</font>
+					<textcolor>text_tertiary</textcolor>
+					<focusedcolor>$VAR[ColorAccent]</focusedcolor>
+					<texturefocus colordiffuse="bg_raised">common/white.png</texturefocus>
+					<texturenofocus />
+					<label>$INFO[Window.Property(h110)]</label>
+					<onleft>109</onleft>
+					<onright>101</onright>
+					<onup>noop</onup>
+					<ondown>50</ondown>
 				</control>
 			</control>
 			<control type="list" id="50">
@@ -145,8 +241,18 @@
 				<top>112</top>
 				<width>1752</width>
 				<height>672</height>
-				<onup>50</onup>
+				<onup condition="String.IsEqual(Window.Property(sorted),101)">101</onup>
+				<onup condition="String.IsEqual(Window.Property(sorted),102)">102</onup>
+				<onup condition="String.IsEqual(Window.Property(sorted),103)">103</onup>
+				<onup condition="String.IsEqual(Window.Property(sorted),104)">104</onup>
+				<onup condition="String.IsEqual(Window.Property(sorted),105)">105</onup>
+				<onup condition="String.IsEqual(Window.Property(sorted),106)">106</onup>
+				<onup condition="String.IsEqual(Window.Property(sorted),107)">107</onup>
+				<onup condition="String.IsEqual(Window.Property(sorted),108)">108</onup>
+				<onup condition="String.IsEqual(Window.Property(sorted),109)">109</onup>
 				<ondown>50</ondown>
+				<onleft>noop</onleft>
+				<onright>noop</onright>
 				<scrolltime tween="cubic" easing="out">150</scrolltime>
 				<itemlayout width="1752" height="56">
 					<control type="image">
@@ -262,7 +368,7 @@
 					<control type="label">
 						<left>1340</left>
 						<top>32</top>
-						<width>400</width>
+						<width>240</width>
 						<height>22</height>
 						<font>small_16</font>
 						<textcolor>text_tertiary</textcolor>
@@ -395,7 +501,7 @@
 					<control type="label">
 						<left>1340</left>
 						<top>32</top>
-						<width>400</width>
+						<width>240</width>
 						<height>22</height>
 						<font>small_16</font>
 						<textcolor>text_tertiary</textcolor>
@@ -403,33 +509,34 @@
 					</control>
 				</focusedlayout>
 			</control>
+			<control type="label">
+				<left>72</left>
+				<top>128</top>
+				<width>1600</width>
+				<height>26</height>
+				<font>small_19</font>
+				<textcolor>text_tertiary</textcolor>
+				<label>$INFO[Window.Property(empty)]</label>
+			</control>
 			<control type="image">
 				<top>796</top>
 				<width>1800</width>
 				<height>1</height>
 				<texture colordiffuse="hairline_strong">common/hairline.png</texture>
 			</control>
+			<!-- the title, then why not: one box, no gap between -->
 			<control type="textbox">
 				<left>40</left>
-				<top>812</top>
+				<top>806</top>
 				<width>1720</width>
-				<height>84</height>
+				<height>90</height>
 				<font>small_19</font>
 				<textcolor>text_primary</textcolor>
-				<label>$INFO[Container(50).ListItem.Label]</label>
-			</control>
-			<control type="textbox">
-				<left>40</left>
-				<top>898</top>
-				<width>1720</width>
-				<height>44</height>
-				<font>small_16</font>
-				<textcolor>accent_amber</textcolor>
-				<label>$INFO[Container(50).ListItem.Property(why)]</label>
+				<label>$INFO[Container(50).ListItem.Label]$INFO[Container(50).ListItem.Property(whyline),[CR]]</label>
 			</control>
 			<control type="label">
 				<left>40</left>
-				<top>944</top>
+				<top>906</top>
 				<width>1720</width>
 				<height>24</height>
 				<font>mono_13</font>

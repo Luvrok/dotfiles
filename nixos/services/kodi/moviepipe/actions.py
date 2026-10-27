@@ -11,6 +11,10 @@ import xbmcgui
 from arr import Api, Error, notify, waiting
 from windows import choose
 
+# s: a film or a show looked up or added, radarr and sonarr wait for their
+# servers of metadata (skyhook) up to 100 s
+LOOKUP = 150
+
 
 def movie(tmdb, pick):
     radarr = Api("radarr")
@@ -19,13 +23,13 @@ def movie(tmdb, pick):
     if have:
         m = have[0]
     else:
-        m = waiting("Radarr", "Ищу фильм…", lambda: radarr.get("/movie/lookup/tmdb", tmdbId=tmdb))
+        m = waiting("Radarr", "Ищу фильм…", lambda: radarr.get("/movie/lookup/tmdb", timeout=LOOKUP, tmdbId=tmdb))
         if m is None:
             return
         # wanted from the day it's announced, the profile keeps cams out
         m.update(radarr.new(), monitored=True, minimumAvailability="announced")
         m["addOptions"] = {"searchForMovie": not pick}
-        m = radarr.post("/movie", m)
+        m = radarr.post("/movie", m, timeout=LOOKUP)
     title = f"{m['title']} ({m['year']})"
     if pick:
         if choose(radarr, title, movieId=m["id"]) is None and added:
@@ -56,7 +60,7 @@ def episodes(sonarr, series):
 
 def show(tmdb, kind, season, episode, pick):
     sonarr = Api("sonarr")
-    found = waiting("Sonarr", "Ищу сериал…", lambda: sonarr.get("/series/lookup", term=f"tmdb:{tmdb}"))
+    found = waiting("Sonarr", "Ищу сериал…", lambda: sonarr.get("/series/lookup", timeout=LOOKUP, term=f"tmdb:{tmdb}"))
     if found is None:
         return
     if not found:
@@ -94,7 +98,7 @@ def show(tmdb, kind, season, episode, pick):
         )
         # episodes as their seasons, those searched right away
         s["addOptions"] = {"monitor": "skip", "searchForMissingEpisodes": whole and not pick}
-        s = sonarr.post("/series", s)
+        s = sonarr.post("/series", s, timeout=LOOKUP)
     else:
         s = sonarr.get(f"/series/{s['id']}")
         wanted = all(x["monitored"] for x in s["seasons"] if x["seasonNumber"] in chosen)

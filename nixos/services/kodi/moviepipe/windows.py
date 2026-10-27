@@ -83,7 +83,8 @@ REASONS = [
     (r"considered available", "ещё не вышел"),
     (r"not monitored", "не отслеживается"),
     (r"^Indexer .* blocked", "трекер на паузе"),
-    (r"larger than maximum|smaller than minimum", "не тот размер"),
+    (r"smaller than minimum", "слишком маленькая"),
+    (r"larger than maximum", "слишком большая"),
     (r"Custom Formats? .*\bHDR\b.* below", "HDR"),
     (r"Custom Formats? .* below", "низкая оценка"),
     (r"is wanted, but found", "не тот язык"),
@@ -128,38 +129,68 @@ def window(cls, xml, **attrs):
     return w
 
 
+# the releases' columns (moviepipe-releases.xml): the button of each, its
+# name, how its rows sort, which way first (True: the most first). ties
+# keep radarr's or sonarr's order
+COLUMNS = {
+    101: ("качество", lambda e: e["weight"], True),
+    102: ("sdr / hdr", lambda e: e["rank"], False),
+    103: ("размер", lambda e: e["size"], True),
+    104: ("сиды", lambda e: e["seeders"], True),
+    105: ("трекер", lambda e: e["tracker"].casefold(), False),
+    106: ("группа", lambda e: (not e["group"], e["group"].casefold()), False),
+    107: ("язык", lambda e: (" RU" not in f" {e['language']}", e["language"]), False),
+    108: ("возраст", lambda e: e["age"], False),
+    109: ("почему ✗", lambda e: e["order"], False),
+}
+SEARCH = 110
+
+
 class Releases(Window):
-    # left and right: the next sort. those of another film or show stay
-    # last in each
+    # enter on a column's name sorts by it, again the other way. those of
+    # another film or show stay last
     def onInit(self):
         if self.rows().size():
             return
         self.setProperty("heading", self.heading)
         self.setProperty("hint", self.hint)
-        self.show(0)
+        self.sorted, self.most, self.text = 102, False, ""
+        self.show()
         self.setFocusId(50)
 
-    def show(self, mode):
-        self.mode = mode % len(self.sorts)
-        name, key = self.sorts[self.mode]
-        self.order = sorted(self.entries, key=lambda e: (e["other"], key(e)))
-        self.setProperty("sort", f"← {name} →")
+    def show(self):
+        _, key, _ = COLUMNS[self.sorted]
+        text = self.text.casefold()
+        shown = [e for e in self.entries if text in e["text"]]
+        shown.sort(key=key, reverse=self.most)
+        shown.sort(key=lambda e: e["other"])
+        self.order = shown
+        for cid, (name, _, _) in COLUMNS.items():
+            arrow = (" ↓" if self.most else " ↑") if cid == self.sorted else ""
+            self.setProperty(f"h{cid}", name + arrow)
+        self.setProperty("sorted", str(self.sorted))
+        self.setProperty(f"h{SEARCH}", f"поиск: {self.text}" if self.text else "поиск")
+        self.setProperty("filter", f"«{self.text}»" if self.text else "")
+        self.setProperty("empty", "" if shown else "Ничего не нашлось")
         self.rows().reset()
-        self.rows().addItems([e["item"] for e in self.order])
+        self.rows().addItems([e["item"] for e in shown])
         self.rows().selectItem(0)
 
-    def onAction(self, action):
-        a = action.getId()
-        if a in (xbmcgui.ACTION_PREVIOUS_MENU, xbmcgui.ACTION_NAV_BACK):
-            self.close()
-        elif a in (xbmcgui.ACTION_MOVE_LEFT, xbmcgui.ACTION_MOVE_RIGHT) and self.getFocusId() == 50:
-            self.show(self.mode + (1 if a == xbmcgui.ACTION_MOVE_RIGHT else -1))
-
     def onClick(self, control):
-        at = self.rows().getSelectedPosition()
-        if control == 50 and 0 <= at < len(self.order):
-            self.picked = self.order[at]["release"]
-            self.close()
+        if control in COLUMNS:
+            if control == self.sorted:
+                self.most = not self.most
+            else:
+                self.sorted, self.most = control, COLUMNS[control][2]
+            self.show()
+        elif control == SEARCH:
+            self.text = xbmcgui.Dialog().input("Поиск: название, группа, трекер", self.text).strip()
+            self.show()
+        elif control == 50:
+            at = self.rows().getSelectedPosition()
+            if 0 <= at < len(self.order):
+                self.picked = self.order[at]["release"]
+                self.close()
 
 
 def entry(r, n, other):
@@ -167,19 +198,23 @@ def entry(r, n, other):
     qname = r["quality"]["quality"]["name"]
     range_, rank = dynamic(r["title"], qname)
     rejections = r.get("rejections", []) if r.get("rejected") else []
+    tracker = r["indexer"].replace(" (Prowlarr)", "")
+    group = r.get("releaseGroup") or ""
+    language = " ".join(LANGUAGES.get(x["name"], x["name"][:2].upper()) for x in r.get("languages", []) if x.get("id", 0) > 0)
     li = xbmcgui.ListItem(r["title"])
     li.setProperties(
         {
             "mark": color("✗", GREY) if rejections else "●" if n == 0 else "",
             "why": "; ".join(rejections),
+            "whyline": color("; ".join(rejections), AMBER) if rejections else "",
             "reason": color(reason(rejections), AMBER),
             "quality": quality(qname),
             "range": range_,
             "size": gb(r["size"]) if r.get("size") else "—",
             "seeders": str(r.get("seeders") or 0) if r.get("protocol") == "torrent" else "",
-            "tracker": r["indexer"].replace(" (Prowlarr)", ""),
-            "group": r.get("releaseGroup") or "",
-            "language": " ".join(LANGUAGES.get(x["name"], x["name"][:2].upper()) for x in r.get("languages", []) if x.get("id", 0) > 0),
+            "tracker": tracker,
+            "group": group,
+            "language": language,
             "age": age(r.get("age")),
         }
     )
@@ -187,11 +222,16 @@ def entry(r, n, other):
         "release": r,
         "item": li,
         "order": n,
-        "rank": rank,
         "other": other,
+        "rank": rank,
+        "weight": r.get("qualityWeight") or 0,
         "seeders": r.get("seeders") or 0,
         "size": r.get("size") or 0,
         "age": r.get("ageMinutes", r.get("age")) or 0,
+        "tracker": tracker,
+        "group": group,
+        "language": language,
+        "text": " ".join((r["title"], group, tracker, qname)).casefold(),
     }
 
 
@@ -217,15 +257,8 @@ def choose(api, title, **query):
         Releases,
         "moviepipe-releases.xml",
         heading=f"{title}: раздачи",
-        hint=f"enter — скачать    ← → — сортировка    ● — {app} взял бы её сам    ✗ — не взял бы, почему — справа    esc — ничего",
+        hint=f"enter — скачать    ↑ на названия колонок: сортировка, поиск    ● — {app} взял бы её сам    ✗ — не взял бы    esc — ничего",
         entries=[entry(r, n, r in others) for n, r in enumerate(ranked)],
-        sorts=[
-            ("сначала SDR", lambda e: (e["rank"], e["order"])),
-            (f"как {app}", lambda e: e["order"]),
-            ("по сидам", lambda e: -e["seeders"]),
-            ("по размеру", lambda e: -e["size"]),
-            ("по свежести", lambda e: e["age"]),
-        ],
         picked=None,
     )
     w.doModal()
@@ -258,6 +291,7 @@ QBT_STATES = {
     "missingFiles": color("нет файлов", ROSE),
 }
 LOADING = ("downloading", "forcedDL", "stalledDL", "metaDL", "forcedMetaDL")
+STOPPED = ("pausedDL", "stoppedDL", "pausedUP", "stoppedUP")
 ARR_STATES = {
     "queued": "в очереди",
     "paused": "на паузе",
@@ -356,7 +390,7 @@ def row(app, records, torrent):
 
 
 def downloads():
-    # [(key, records, row)], what didn't answer
+    # [(key, records, its torrent, row)], what didn't answer
     found, trouble = {}, []
     for app, include in (
         ("radarr", {"includeMovie": "true"}),
@@ -376,7 +410,10 @@ def downloads():
             torrents = {t["hash"].upper(): t for t in qbittorrent("/torrents/info", hashes=hashes)}
         except Error as e:
             trouble.append(str(e))
-    rows = [(key, records, row(key[0], records, torrents.get(key[1].upper()))) for key, records in found.items()]
+    rows = []
+    for key, records in found.items():
+        torrent = torrents.get(key[1].upper())
+        rows.append((key, records, torrent, row(key[0], records, torrent)))
     return rows, trouble
 
 
@@ -402,7 +439,7 @@ class Downloads(Window):
             found, trouble = downloads()
             if self.done.is_set():
                 return
-            keys = [key for key, _, _ in found]
+            keys = [key for key, _, _, _ in found]
             control = self.rows()
             if keys != self.keys:
                 # one came or went: the list again, the focus where it was
@@ -414,8 +451,9 @@ class Downloads(Window):
                 if at in keys:
                     control.selectItem(keys.index(at))
                 self.keys = keys
-            self.records = {key: records for key, records, _ in found}
-            for li, (_, _, props) in zip(self.items, found):
+            self.records = {key: records for key, records, _, _ in found}
+            self.torrents = {key: torrent for key, _, torrent, _ in found}
+            for li, (_, _, _, props) in zip(self.items, found):
                 li.setLabel(props.pop("label"))
                 li.setProperties(props)
             self.setProperty("trouble", "; ".join(trouble))
@@ -427,19 +465,29 @@ class Downloads(Window):
             return
         key = self.keys[at]
         records = self.records[key]
-        i = xbmcgui.Dialog().select(name(key[0], records), ["Другая раздача", "Убрать загрузку"])
+        torrent = self.torrents.get(key)
+        actions = ["Другая раздача", "Убрать загрузку"]
+        if torrent:
+            stopped = torrent["state"] in STOPPED
+            actions.insert(0, "Продолжить" if stopped else "Пауза")
+        i = xbmcgui.Dialog().select(name(key[0], records), actions)
         if i < 0:
             return
         try:
-            # another: this one to the blocklist, they search again
-            Api(key[0]).call(
-                "DELETE",
-                "/queue/bulk",
-                {"ids": [r["id"] for r in records]},
-                removeFromClient="true",
-                blocklist="true" if i == 0 else "false",
-                skipRedownload="false" if i == 0 else "true",
-            )
+            if actions[i] in ("Продолжить", "Пауза"):
+                # qbittorrent 5's names, 4's were resume and pause
+                qbittorrent("/torrents/start" if stopped else "/torrents/stop", {"hashes": torrent["hash"]})
+            else:
+                # another: this one to the blocklist, they search again
+                another = actions[i] == "Другая раздача"
+                Api(key[0]).call(
+                    "DELETE",
+                    "/queue/bulk",
+                    {"ids": [r["id"] for r in records]},
+                    removeFromClient="true",
+                    blocklist="true" if another else "false",
+                    skipRedownload="false" if another else "true",
+                )
         except Error as e:
             error(e)
         self.refresh()
@@ -453,6 +501,7 @@ def show_downloads():
         keys=[],
         items=[],
         records={},
+        torrents={},
         lock=threading.RLock(),
         done=threading.Event(),
     )
