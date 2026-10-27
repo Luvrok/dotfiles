@@ -374,8 +374,24 @@ def prowlarr(sec):
     steps["uindex"] = tracker("Uindex", "uindex", 2, tags=[flaresolverr])
     steps["thepiratebay"] = tracker("The Pirate Bay", "thepiratebay", 3)
     steps["1337x"] = tracker("1337x", "1337x", 4, tags=[flaresolverr])
-    steps["sync"] = lambda: api.post("/command", {"name": "ApplicationIndexerSync"})
+    # waited for: radarr's trackers are there for years() after
+    steps["sync"] = lambda: command(api, "ApplicationIndexerSync")
     return run("prowlarr", steps)
+
+
+def years():
+    # a film's year on a tracker is often the one it was first shown in (a
+    # festival, imdb's year), tmdb's the one it came out in, and radarr
+    # asks for "title year" with tmdb's. its title alone: radarr takes a
+    # release of either year (its secondary year, the premiere's) and
+    # throws away the films of the same name. prowlarr's sync keeps the
+    # field once it's set
+    api = Api("radarr", C["radarr"], "/v3")
+    for x in api.get("/indexer"):
+        field = next((f for f in x["fields"] if f["name"] == "removeYear"), None)
+        if field is not None and field.get("value") is not True:
+            field["value"] = True
+            api.put(f"/indexer/{x['id']}?forceSave=true", x)
 
 
 def bazarr(sec):
@@ -429,7 +445,13 @@ def run(app, steps):
 
 sec = secrets()
 failed = 0
-for setup in (lambda: servarr("radarr"), lambda: servarr("sonarr"), lambda: prowlarr(sec), lambda: bazarr(sec)):
+for setup in (
+    lambda: servarr("radarr"),
+    lambda: servarr("sonarr"),
+    lambda: prowlarr(sec),
+    lambda: run("radarr", {"years": years}),
+    lambda: bazarr(sec),
+):
     try:
         failed += setup()
     except Exception as e:

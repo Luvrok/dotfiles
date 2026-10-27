@@ -120,15 +120,23 @@ def release(r, first):
 def choose(api, title, **query):
     # the releases the trackers have, those radarr or sonarr would take
     # first, in their order (quality, their score, the tracker's priority,
-    # seeders): the first is the one they'd download themselves. the one
-    # picked is downloaded even when they'd reject it
+    # seeders): the first is the one they'd download themselves. then those
+    # they wouldn't, last the ones they took for another film or show (the
+    # trackers are searched with no year, ../../arr/setup.py). the one
+    # picked is downloaded even when they'd reject it, for this film or
+    # show (query's ids)
     found = waiting(title, "Ищу раздачи на трекерах…", lambda: api.get("/release", timeout=300, **query))
     if found is None:
         return None
     if not found:
         notify(title, "Раздач нет")
         return None
-    found = [r for r in found if not r.get("rejected")] + [r for r in found if r.get("rejected")]
+    mapped = [r for r in found if r.get("mappedMovieId", r.get("mappedSeriesId")) is not None]
+    found = (
+        [r for r in mapped if not r.get("rejected")]
+        + [r for r in mapped if r.get("rejected")]
+        + [r for r in found if r not in mapped]
+    )
     app = api.app.capitalize()
     w = window(
         Releases,
@@ -144,7 +152,8 @@ def choose(api, title, **query):
     if picked < 0:
         return None
     r = found[picked]
-    api.post("/release", {"guid": r["guid"], "indexerId": r["indexerId"]}, timeout=120)
+    ids = {k: v for k, v in query.items() if k in ("movieId", "seriesId", "episodeId")}
+    api.post("/release", {"guid": r["guid"], "indexerId": r["indexerId"], **ids}, timeout=120)
     notify(title, f"Качаю: {r['quality']['quality']['name']}, {gb(r['size'])}")
     return r
 
