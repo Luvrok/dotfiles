@@ -1,7 +1,7 @@
 # kodi: the library of /media/outer-1, posters and plots from tmdb (its
 # scrapers come with kodi). a video plays in mpv, in mpv's own window with
-# mpv's config, scripts and keys, kodi waits under it. estuary in the
-# quickshell colors (./skin.nix). barnard only, its env.nix imports this
+# mpv's config, scripts and keys. kodi's own skin and settings, skins and
+# add-ons come from inside kodi. barnard only, its env.nix imports this
 {
   pkgs,
   username,
@@ -9,27 +9,31 @@
 }:
 
 let
-  # the provider breaks tmdb: kodi's own downloads (posters, curl takes
-  # the proxy from the environment when kodi's setting is off) and the
-  # scrapers' (python's urllib) go through xray's mixed inbound
-  # (hosts/barnard/xray.nix). no internet in kodi while xray is off
+  # tmdb through xray's mixed inbound (hosts/barnard/xray.nix) when the
+  # provider breaks it: kodi's curl (posters) and the scrapers' urllib
+  # take the proxy from the environment. no internet in kodi while xray
+  # is off
+  useProxy = false;
   proxy = "http://127.0.0.1:10808";
-  kodi = pkgs.symlinkJoin {
-    name = "kodi-xray";
-    paths = [ pkgs.kodi-wayland ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram $out/bin/kodi \
-        --set http_proxy ${proxy} \
-        --set https_proxy ${proxy} \
-        --set no_proxy localhost,127.0.0.1,::1
-    '';
-  };
+  kodi =
+    if useProxy then
+      pkgs.symlinkJoin {
+        name = "kodi-xray";
+        paths = [ pkgs.kodi-wayland ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postBuild = ''
+          wrapProgram $out/bin/kodi \
+            --set http_proxy ${proxy} \
+            --set https_proxy ${proxy} \
+            --set no_proxy localhost,127.0.0.1,::1
+        '';
+      }
+    else
+      pkgs.kodi-wayland;
 in
 {
   home-manager.users.${username} =
-    # home-manager's lib, it has lib.hm
-    { config, lib, ... }:
+    { config, ... }:
     let
       datadir = config.programs.kodi.datadir;
       # kodi puts its libraries (rtmpdump, libnfs...) in LD_LIBRARY_PATH,
@@ -39,8 +43,6 @@ in
         unset LD_LIBRARY_PATH http_proxy https_proxy no_proxy
         exec ${config.programs.mpv.finalPackage}/bin/mpv -- "$1"
       '';
-      movies = "/media/outer-1/movies/";
-      series = "/media/outer-1/series/";
     in
     {
       programs.kodi = {
@@ -51,35 +53,18 @@ in
         sources.video.source = [
           {
             name = "Movies";
-            path = movies;
+            path = "/media/outer-1/movies/";
             allowsharing = "true";
           }
           {
             name = "Series";
-            path = series;
+            path = "/media/outer-1/series/";
             allowsharing = "true";
           }
         ];
-        # nixos updates kodi, not its own check
-        addonSettings."service.xbmc.versioncheck".versioncheck_enable = "false";
       };
 
-      # what the scraper didn't find (./missing.py)
-      home.packages = [
-        (pkgs.writers.writePython3Bin "kodi-missing" {
-          flakeIgnore = [
-            "E203"
-            "E501"
-          ];
-        } (builtins.readFile ./missing.py))
-      ];
-
       home.file = {
-        # kodi takes this one over its own estuary (./skin.nix)
-        "${datadir}/addons/skin.estuary".source = pkgs.callPackage ./skin.nix {
-          kodi = pkgs.kodi-wayland;
-        };
-
         # torrent names the scraper finds
         "${datadir}/userdata/advancedsettings.xml".source = ./advancedsettings.xml;
 
@@ -102,60 +87,5 @@ in
           </playercorefactory>
         '';
       };
-
-      # kodi doesn't watch the folders. while it runs, this asks it to look
-      # when a video under the sources is new: copied, moved in or done
-      # downloading since the last run, kodi closed or not, so what came
-      # while it was closed shows up in 10 minutes. one still being written
-      # (changed in the last 5 minutes) waits for the next run, a torrent
-      # that's downloading would rescan every 10 minutes and the lists would
-      # reload their posters each time
-      systemd.user.services.kodi-update = {
-        Unit.Description = "Kodi library update when the sources change";
-        Service = {
-          Type = "oneshot";
-          ExecStart = lib.getExe (
-            pkgs.writeShellApplication {
-              name = "kodi-update";
-              runtimeInputs = [
-                pkgs.procps
-                pkgs.findutils
-                pkgs.coreutils
-                kodi
-              ];
-              text = ''
-                pgrep -u "$USER" -x kodi.bin >/dev/null || exit 0
-                stamp=''${XDG_STATE_HOME:-$HOME/.local/state}/kodi-update
-                # a window of time, (the last run, now] both 5 minutes back.
-                # ctime, a move or a copy that keeps the mtime counts too
-                settled=$(($(date +%s) - 300))
-                if [ -e "$stamp" ] && [ -z "$(find ${movies} ${series} -type f \
-                  \( -iname '*.mkv' -o -iname '*.mp4' -o -iname '*.avi' -o -iname '*.m4v' \) \
-                  -cnewer "$stamp" ! -newerct "@$settled" -print -quit 2>/dev/null)" ]; then
-                  touch -d "@$settled" "$stamp"
-                  exit 0
-                fi
-                mkdir -p "$(dirname "$stamp")"
-                touch -d "@$settled" "$stamp"
-                kodi-send -a "UpdateLibrary(video)" >/dev/null
-              '';
-            }
-          );
-        };
-      };
-      systemd.user.timers.kodi-update = {
-        Timer.OnCalendar = "*:0/10";
-        Install.WantedBy = [ "timers.target" ];
-      };
-
-      # no scan on start (kodi-update does it when there's something new, a
-      # scan blocks "i" and searches tmdb again for every show it didn't
-      # find), no dialog while it looks, no clicks on every key
-      home.activation.kodiSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        run ${pkgs.python3}/bin/python3 ${./guisettings.py} ${datadir}/userdata/guisettings.xml \
-          videolibrary.updateonstartup=false \
-          videolibrary.backgroundupdate=true \
-          lookandfeel.soundskin=
-      '';
     };
 }
