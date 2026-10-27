@@ -22,6 +22,11 @@
 			<one>ActivateWindowAndFocus(Home,9001,0)</one>
 			<two>ActivateWindowAndFocus(Home,9002,0)</two>
 			<three>ActivateWindowAndFocus(Home,9003,0)</three>
+			<!-- 4 the tv channels, 5 tmdb helper (films, shows, people not in
+			     the library), 6 what downloads (../arr) -->
+			<four>ActivateWindow(TVChannels)</four>
+			<five>ActivateWindow(Videos,plugin://plugin.video.themoviedb.helper/,return)</five>
+			<six>ActivateWindow(Videos,plugin://plugin.video.moviepipe/,return)</six>
 			<!-- majan's search, the home screen's search icon opens it -->
 			<forwardslash>ActivateWindow(1150)</forwardslash>
 		</keyboard>
