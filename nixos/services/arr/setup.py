@@ -119,7 +119,8 @@ def updated(api, path, **values):
 
 def proxy(api):
     # the provider's blocks: xray's mixed inbound (hosts/barnard/xray.nix)
-    # when ./default.nix turns it on, 127.0.0.1 and the lan go straight
+    # when ./default.nix turns it on, 127.0.0.1, the lan and its direct
+    # hosts go straight
     p = C["proxy"]
     updated(
         api,
@@ -128,6 +129,7 @@ def proxy(api):
         proxyType="http",
         proxyHostname=p["host"] if p else "",
         proxyPort=p["port"] if p else 8080,
+        proxyBypassFilter=",".join(p["direct"]) if p else "",
         proxyBypassLocalAddresses=True,
     )
 
