@@ -79,20 +79,24 @@ buildKodiAddon {
       '<constant name="home_hub_list_w">1512</constant>'
     substituteInPlace 1080i/Includes_Search.xml --replace-fail \
       '<width>1836</width>' '<width>1740</width>'
-    # home: the spotlight 40 px up, nearer the bar, its column ending 12 px
+    # home: the spotlight 40 px up, nearer the bar, its column ending 20 px
     # over the newest row's rule (a 3-line title pushed the play button's
-    # frame onto it), the rule 28 px up (760 -> 732). the row's posters 10
-    # px up (826 -> 816): the focused one's frame, lifted and zoomed, went
-    # 3 px under the screen's bottom with no zoom. the row's name gets the
-    # room between
+    # frame onto it), the rule 44 px up (760 -> 716). the row's posters 36
+    # px up (826 -> 790): the focused one's frame, lifted and zoomed, went
+    # under the screen's bottom, now 30 px over it
     substituteInPlace 1080i/Includes_Home.xml \
       --replace-fail '<visible>Integer.IsGreater(Container(9101).NumItems,0)</visible>' \
       '<top>-40</top><visible>Integer.IsGreater(Container(9101).NumItems,0)</visible>' \
-      --replace-fail '<height>592</height>' '<height>580</height>' \
+      --replace-fail '<height>592</height>' '<height>568</height>' \
       --replace-fail '<constant name="home_newest_list_y">44</constant>' \
-      '<constant name="home_newest_list_y">62</constant>'
-    substituteInPlace 1080i/Constants.xml --replace-fail \
-      '<constant name="home_row_y">760</constant>' '<constant name="home_row_y">732</constant>'
+      '<constant name="home_newest_list_y">52</constant>'
+    # its top bar: the menu, page names, clock and icons 16 px down, the
+    # rule under them stays (the pages below it don't move). the active
+    # tab's underline 20 px over the rule, was 32
+    substituteInPlace 1080i/Constants.xml \
+      --replace-fail '<constant name="home_row_y">760</constant>' '<constant name="home_row_y">716</constant>' \
+      --replace-fail '<constant name="topbar_item_top">36</constant>' '<constant name="topbar_item_top">52</constant>' \
+      --replace-fail '<constant name="topbar_icon_top">47</constant>' '<constant name="topbar_icon_top">63</constant>'
     # the film page with tmdb helper and movie pipe: the cast, "похожие",
     # "режиссёр" (./majan-moviepipe.xml)
     cp ${./majan-moviepipe.xml} 1080i/Includes_MoviePipe.xml
