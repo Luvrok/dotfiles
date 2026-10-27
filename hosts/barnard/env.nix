@@ -11,6 +11,8 @@
     ../../nixos/services/hyprland
     # the movies and series of /media/outer-1, played in mpv
     ../../nixos/services/kodi
+    # their downloads: radarr, sonarr, qbittorrent, subtitles
+    ../../nixos/services/arr
   ];
 
   services.displayManager.sddm.setupScript = ''

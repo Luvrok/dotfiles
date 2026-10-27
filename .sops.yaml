@@ -12,6 +12,12 @@ creation_rules:
           - *barnard
           - *jedha
 
+  # barnard's downloads (nixos/services/arr)
+  - path_regex: secrets/arr\.yaml$
+    key_groups:
+      - age:
+          - *barnard
+
   - path_regex: secrets/kessel\.yaml$
     key_groups:
       - age:
