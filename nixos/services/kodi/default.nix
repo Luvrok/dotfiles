@@ -62,6 +62,10 @@ let
         # ./majan.nix's, majan's own have no cyrillic
         "lookandfeel.font" = "JetBrains Mono";
         "lookandfeel.soundskin" = "resource.uisounds.psp";
+        # settings -> system -> audio -> keep audio device alive: always
+        # (minutes, kodi's "always"). by default kodi closes the device after
+        # a minute of quiet, the next menu sound waits up to a second for it
+        "audiooutput.streamsilence" = "153722867";
       };
       files = builtins.listToAttrs (
         lib.imap1 (n: name: {
