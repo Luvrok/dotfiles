@@ -79,15 +79,19 @@ buildKodiAddon {
       '<constant name="home_hub_list_w">1512</constant>'
     substituteInPlace 1080i/Includes_Search.xml --replace-fail \
       '<width>1836</width>' '<width>1740</width>'
-    # home: the spotlight 40 px up, nearer the bar, its column ending 20 px
-    # over the newest row's rule (a 3-line title pushed the play button's
-    # frame onto it), the rule 44 px up (760 -> 716). the row's posters 36
-    # px up (826 -> 790): the focused one's frame, lifted and zoomed, went
-    # under the screen's bottom, now 30 px over it
+    # home: the spotlight 40 px up, nearer the bar, the newest row's rule 44
+    # px up (760 -> 716). its column (a grouplist, it clips) to the rule, the
+    # gaps in it 14 -> 10 and the title over it 4 px up with them: the
+    # tallest, a 3-line title and a 3-line plot, ends 15 px over the rule
+    # with the play button's frame (cut under 2 lines and 2 lines before).
+    # the row's posters 36 px up (826 -> 790): the focused one's frame,
+    # lifted and zoomed, went under the screen's bottom, now 30 px over it
     substituteInPlace 1080i/Includes_Home.xml \
       --replace-fail '<visible>Integer.IsGreater(Container(9101).NumItems,0)</visible>' \
       '<top>-40</top><visible>Integer.IsGreater(Container(9101).NumItems,0)</visible>' \
-      --replace-fail '<height>592</height>' '<height>568</height>' \
+      --replace-fail '<height>592</height>' '<height>588</height>' \
+      --replace-fail '<itemgap>14</itemgap>' '<itemgap>10</itemgap>' \
+      --replace-fail '<top>202</top>' '<top>198</top>' \
       --replace-fail '<constant name="home_newest_list_y">44</constant>' \
       '<constant name="home_newest_list_y">52</constant>'
     # its top bar: the menu, page names, clock and icons 16 px down, the
