@@ -120,7 +120,7 @@ Bazarr ищет для каждого нового фильма и серии **
 
 ## Прокси
 
-Если провайдер заблокирует трекеры: в `nixos/services/arr/default.nix` `useProxy = true;` → Radarr, Sonarr, Prowlarr и Bazarr ходят через xray (`127.0.0.1:10808`), qBittorrent — никогда. Пока xray выключен, поиск не работает. Для самого Kodi (постеры TMDb) — свой `useProxy` в `nixos/services/kodi/default.nix`.
+Radarr, Sonarr, Prowlarr и Bazarr ходят в интернет через xray (`127.0.0.1:10808`), qBittorrent — никогда, локальная сеть и `127.0.0.1` напрямую. Причина: серверы Prowlarr (описания трекеров, проверка FlareSolverr), Radarr и Sonarr стоят за Cloudflare, а провайдер его режет — напрямую Prowlarr не мог скачать описания uindex, TPB и 1337x. Пока xray выключен, поиск не работает. Выключить: `useProxy = false;` в `nixos/services/arr/default.nix`. Для самого Kodi (постеры TMDb) — свой `useProxy` в `nixos/services/kodi/default.nix`.
 
 ## ТВ
 
@@ -136,13 +136,13 @@ Bazarr ищет для каждого нового фильма и серии **
 
 ```sh
 systemctl status arr-setup radarr sonarr prowlarr bazarr qbittorrent flaresolverr
-journalctl -u arr-setup -b       # что настроилось, что нет (повторится на следующем switch)
+journalctl -u arr-setup -b       # что настроилось, что нет; при ошибке сам повторит через 30 мин
 journalctl -u arr-subtitles -f   # перевод субтитров
 ls /var/lib/arr/subtitles        # очередь перевода
 journalctl -u radarr -f          # поиск и импорт фильмов
 ```
 
-- Ничего не находит — Prowlarr → Indexers → Test all. Красный rutracker — логин/капча; красные 1337x/uindex — FlareSolverr.
+- Ничего не находит — Prowlarr → Indexers → Test all. Красный rutracker — логин/капча; красные 1337x/uindex — FlareSolverr (`journalctl -u flaresolverr`); всё красное — xray выключен.
 - Скачалось, но нет в Kodi — Radarr → Activity → Queue (ошибка импорта), или `f` в Kodi.
 - Нет субтитров — Bazarr → Wanted / History.
 - Настройки из веб-интерфейсов не трогаются, кроме тех, что задаёт `setup.py` (профиль, клиент загрузок, именование, трекеры, языки Bazarr) — их он вернёт на следующем запуске.

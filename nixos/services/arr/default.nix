@@ -22,10 +22,12 @@
 let
   s = import ./shared.nix;
 
-  # the provider's blocks: radarr, sonarr, prowlarr and bazarr through
-  # xray's mixed inbound (hosts/barnard/xray.nix), qbittorrent never. no
-  # searches while xray is off
-  useProxy = false;
+  # radarr, sonarr, prowlarr and bazarr through xray's mixed inbound
+  # (hosts/barnard/xray.nix), qbittorrent never: prowlarr's servers
+  # (tracker definitions, flaresolverr's test) and radarr's and sonarr's
+  # are behind cloudflare, the provider stalls it. 127.0.0.1 and the lan go
+  # straight. no searches while xray is off
+  useProxy = true;
   proxy = {
     host = "127.0.0.1";
     port = 10808;
@@ -272,6 +274,9 @@ in
       RemainAfterExit = true;
       TimeoutStartSec = "10min";
       ExecStart = "${python}/bin/python3 ${./setup.py} ${setupConfig}";
+      # a step that failed (no network, xray off) again in half an hour
+      Restart = "on-failure";
+      RestartSec = "30min";
     };
   };
 

@@ -87,7 +87,9 @@ def provider(api, path, name, match, fields, **attrs):
     # then turned on
     item = next((x for x in api.get(path) if x["name"] == name), None)
     if item is None:
-        item = next(x for x in api.get(path + "/schema") if match(x))
+        item = next((x for x in api.get(path + "/schema") if match(x)), None)
+    if item is None:
+        raise RuntimeError(f"{api.name} has no {name} to make")
     item = dict(item, name=name, **attrs)
     item.pop("presets", None)
     have = {f["name"]: f for f in item["fields"]}
@@ -128,6 +130,17 @@ def proxy(api):
         proxyPort=p["port"] if p else 8080,
         proxyBypassLocalAddresses=True,
     )
+
+
+def command(api, name):
+    # a command of theirs, waited for
+    c = api.post("/command", {"name": name})
+    for _ in range(150):
+        c = api.get(f"/command/{c['id']}")
+        if c["status"] not in ("queued", "started"):
+            return c
+        time.sleep(2)
+    return c
 
 
 def tag(api, label):
@@ -209,6 +222,8 @@ def servarr(app):
     api = Api(app, C[app], "/v3")
     api.wait()
     steps = {
+        # first: the rest may need it
+        "proxy": lambda: proxy(api),
         # qbittorrent, in its own folder of downloads (the category). a
         # torrent goes away once it seeded enough (qbittorrent's share
         # limits), its files stay in the library as hardlinks
@@ -256,7 +271,6 @@ def servarr(app):
         ),
         # subtitles that come in the torrent go next to the video too
         "extras": lambda: updated(api, "/config/mediamanagement", importExtraFiles=True, extraFileExtensions="srt,ass,ssa"),
-        "proxy": lambda: proxy(api),
     }
     return run(app, steps)
 
@@ -265,9 +279,27 @@ def prowlarr(sec):
     api = Api("prowlarr", C["prowlarr"], "/v1")
     api.wait()
     flaresolverr = tag(api, "flaresolverr")
+
+    # uindex, thepiratebay and 1337x are cardigann definitions, prowlarr
+    # gets them from indexers.prowlarr.com: its list on every look, their
+    # files when it starts. it started before the proxy was set: again
+    def definitions():
+        wanted = {"uindex", "thepiratebay", "1337x"}
+        have = lambda: {x["definitionName"] for x in api.get("/indexer/schema")}
+        if wanted - have():
+            command(api, "IndexerDefinitionUpdate")
+        if missing := wanted - have():
+            raise RuntimeError(
+                f"no definitions of {', '.join(sorted(missing))}: indexers.prowlarr.com doesn't answer"
+                " (journalctl -u prowlarr, useProxy in nixos/services/arr/default.nix)"
+            )
+
     steps = {
+        "proxy": lambda: proxy(api),
+        "definitions": definitions,
         # cloudflare's checks for 1337x and uindex, a tracker with the tag
-        # goes through it
+        # goes through it. prowlarr tests it with prowlarr.servarr.com
+        # (journalctl -u flaresolverr when it fails), through the proxy too
         "flaresolverr": lambda: provider(
             api,
             "/indexerProxy",
@@ -334,7 +366,6 @@ def prowlarr(sec):
     steps["thepiratebay"] = tracker("The Pirate Bay", "thepiratebay", 3)
     steps["1337x"] = tracker("1337x", "1337x", 4, tags=[flaresolverr])
     steps["sync"] = lambda: api.post("/command", {"name": "ApplicationIndexerSync"})
-    steps["proxy"] = lambda: proxy(api)
     return run("prowlarr", steps)
 
 
@@ -383,7 +414,7 @@ def run(app, steps):
             log(f"{app}: {name}")
         except Exception as e:
             failed += 1
-            log(f"{app}: {name} failed: {e}")
+            log(f"{app}: {name} failed: {e or type(e).__name__}")
     return failed
 
 
