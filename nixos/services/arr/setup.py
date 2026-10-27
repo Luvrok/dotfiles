@@ -151,49 +151,71 @@ def tag(api, label):
     return tags.get(label) or api.post("/tag", {"label": label})["id"]
 
 
-# the qualities a release may be, the best last as in their lists: a bdrip
-# 1080p, then a web one, then 720p. a 720p gets replaced by a 1080p once
-# there is one (cutoff), a web 1080p stays
+# the qualities a release may be, the best last, the profile in this
+# order: a bdrip 1080p, then 4k (not hdr, below), then a web 1080p, then
+# 720p. a 720p gets replaced by a 1080p or 4k once there is one (cutoff),
+# a web 1080p or 4k stays
 QUALITIES = {
-    "radarr": ["WEB 720p", "Bluray-720p", "WEB 1080p", "Bluray-1080p"],
-    "sonarr": ["HDTV-1080p", "WEB 720p", "Bluray-720p", "WEB 1080p", "Bluray-1080p"],
+    "radarr": ["WEB 720p", "Bluray-720p", "WEB 1080p", "WEB 2160p", "Remux-2160p", "Bluray-2160p", "Bluray-1080p"],
+    "sonarr": [
+        "HDTV-1080p",
+        "WEB 720p",
+        "Bluray-720p",
+        "WEB 1080p",
+        "WEB 2160p",
+        "Bluray-2160p Remux",
+        "Bluray-2160p",
+        "Bluray-1080p",
+    ],
 }
 CUTOFF = "WEB 1080p"
 PROFILE = "BDRip 1080p"
-# among equal qualities a russian dub wins (rutracker's titles get "RUS",
-# below). no upgrade for it alone: cutoffFormatScore 0
-RUSSIAN = 11
-RUSSIAN_SCORE = 10
+# custom formats: name, its kind, what it looks for, its score. among
+# equal qualities a russian dub wins (rutracker's titles get "RUS",
+# below), no upgrade for it alone: cutoffFormatScore 0. hdr, as its title
+# says it, never: below minFormatScore 0. a 4k title that says nothing
+# may still be hdr (kodi's add-on shows "HDR?")
+FORMATS = [
+    ("Russian", "LanguageSpecification", 11, 10),
+    ("HDR", "ReleaseTitleSpecification", r"\b(HDR|HDR10|HDR10Plus|HDR10P|DV|DoVi|HLG)\b|Dolby[ ._-]?Vision", -10000),
+]
 
 
-def profile(api, app):
-    formats = api.get("/customformat")
-    cf = next((f for f in formats if f["name"] == "Russian"), None)
-    spec = next(s for s in api.get("/customformat/schema") if s["implementation"] == "LanguageSpecification")
-    spec = dict(spec, name="Russian", negate=False, required=False)
+def custom_format(api, name, implementation, value):
+    have = next((f for f in api.get("/customformat") if f["name"] == name), None)
+    spec = next(s for s in api.get("/customformat/schema") if s["implementation"] == implementation)
+    spec = dict(spec, name=name, negate=False, required=False)
     spec.pop("presets", None)
     for f in spec["fields"]:
         if f["name"] == "value":
-            f["value"] = RUSSIAN
-    body = {"name": "Russian", "includeCustomFormatWhenRenaming": False, "specifications": [spec]}
-    if cf is None:
+            f["value"] = value
+    body = {"name": name, "includeCustomFormatWhenRenaming": False, "specifications": [spec]}
+    if have is None:
         api.post("/customformat", body)
-        formats = api.get("/customformat")
     else:
-        api.put(f"/customformat/{cf['id']}", dict(body, id=cf["id"]))
+        api.put(f"/customformat/{have['id']}", dict(body, id=have["id"]))
+
+
+def profile(api, app):
+    for name, implementation, value, _ in FORMATS:
+        custom_format(api, name, implementation, value)
+    formats = api.get("/customformat")
+    wanted = {name: score for name, _, _, score in FORMATS}
 
     p = next((p for p in api.get("/qualityprofile") if p["name"] == PROFILE), None)
     if p is None:
         p = api.get("/qualityprofile/schema")
     allowed = QUALITIES[app]
+    label = lambda item: item.get("name") or item["quality"]["name"]
     cutoff = None
     for item in p["items"]:
-        label = item.get("name") or item["quality"]["name"]
-        item["allowed"] = label in allowed
+        item["allowed"] = label(item) in allowed
         for sub in item.get("items", []):
             sub["allowed"] = item["allowed"]
-        if label == CUTOFF:
+        if label(item) == CUTOFF:
             cutoff = item.get("id") or item["quality"]["id"]
+    # the rank is the order, the best last: the rest, then the allowed ones
+    p["items"] = sorted(p["items"], key=lambda item: allowed.index(label(item)) if label(item) in allowed else -1)
     scores = {f["format"]: f["score"] for f in p.get("formatItems", [])}
     p.update(
         name=PROFILE,
@@ -206,7 +228,7 @@ def profile(api, app):
             {
                 "format": f["id"],
                 "name": f["name"],
-                "score": RUSSIAN_SCORE if f["name"] == "Russian" else scores.get(f["id"], 0),
+                "score": wanted.get(f["name"], scores.get(f["id"], 0)),
             }
             for f in formats
         ],

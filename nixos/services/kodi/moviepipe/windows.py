@@ -84,6 +84,7 @@ REASONS = [
     (r"not monitored", "не отслеживается"),
     (r"^Indexer .* blocked", "трекер на паузе"),
     (r"larger than maximum|smaller than minimum", "не тот размер"),
+    (r"Custom Formats? .*\bHDR\b.* below", "HDR"),
     (r"Custom Formats? .* below", "низкая оценка"),
     (r"is wanted, but found", "не тот язык"),
     (r"Hardcode subs", "вшитые субтитры"),
