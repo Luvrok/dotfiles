@@ -119,8 +119,9 @@ def updated(api, path, **values):
 
 def proxy(api):
     # the provider's blocks: xray's mixed inbound (hosts/barnard/xray.nix)
-    # when ./default.nix turns it on, 127.0.0.1, the lan and its direct
-    # hosts go straight
+    # when ./default.nix turns it on, 127.0.0.1 and the lan go straight.
+    # everything else through it, cloudflare's clearance from flaresolverr
+    # (that goes through it too) holds for that ip only
     p = C["proxy"]
     updated(
         api,
@@ -129,7 +130,7 @@ def proxy(api):
         proxyType="http",
         proxyHostname=p["host"] if p else "",
         proxyPort=p["port"] if p else 8080,
-        proxyBypassFilter=",".join(p["direct"]) if p else "",
+        proxyBypassFilter="",
         proxyBypassLocalAddresses=True,
     )
 
@@ -299,9 +300,10 @@ def prowlarr(sec):
     steps = {
         "proxy": lambda: proxy(api),
         "definitions": definitions,
-        # cloudflare's checks for 1337x and uindex, a tracker with the tag
-        # goes through it. prowlarr tests it with prowlarr.servarr.com
-        # (journalctl -u flaresolverr when it fails), through the proxy too
+        # cloudflare's checks for rutracker, 1337x and uindex: a chromium
+        # passes them, a tracker with the tag gets its cookies. prowlarr
+        # tests it with prowlarr.servarr.com (journalctl -u flaresolverr
+        # when it fails), through the proxy too
         "flaresolverr": lambda: provider(
             api,
             "/indexerProxy",
@@ -349,7 +351,8 @@ def prowlarr(sec):
 
     if sec.get("rutracker_username"):
         # its titles are russian / english [year, country, genre, quality]:
-        # russian letters out, the [] after the name, "RUS" for the dub
+        # russian letters out, the [] after the name, "RUS" for the dub.
+        # cloudflare's "just a moment" stands before its login and search
         steps["rutracker"] = tracker(
             "RuTracker.org",
             "RuTracker.org",
@@ -361,6 +364,7 @@ def prowlarr(sec):
                 "addRussianToTitle": True,
                 "moveFirstTagsToEndOfReleaseTitle": True,
             },
+            tags=[flaresolverr],
         )
     else:
         log("prowlarr: no rutracker_username in secrets/arr.yaml, rutracker skipped")

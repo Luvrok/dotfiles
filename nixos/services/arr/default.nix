@@ -31,15 +31,6 @@ let
   proxy = {
     host = "127.0.0.1";
     port = 10808;
-    # straight anyway: rutracker answers xray's exit with 403
-    direct = [
-      "rutracker.org"
-      "*.rutracker.org"
-      "rutracker.net"
-      "*.rutracker.net"
-      "rutracker.nl"
-      "*.rutracker.nl"
-    ];
   };
 
   secretsFile = ../../../secrets/arr.yaml;

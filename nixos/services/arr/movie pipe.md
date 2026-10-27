@@ -30,7 +30,7 @@ flowchart LR
 | Sonarr | http://127.0.0.1:8989 | сериалы, то же для `series` |
 | Prowlarr | http://127.0.0.1:9696 | трекеры, отдаёт их Radarr и Sonarr |
 | Bazarr | http://127.0.0.1:6767 | субтитры ru и en |
-| FlareSolverr | 127.0.0.1:8191 | проходит проверку Cloudflare для 1337x и uindex |
+| FlareSolverr | 127.0.0.1:8191 | проходит проверку Cloudflare («Just a moment…») для rutracker, 1337x и uindex |
 
 Все веб-интерфейсы только на `127.0.0.1`, снаружи их не видно. В файрволе открыт только порт пиров qBittorrent (51413 TCP/UDP).
 
@@ -120,7 +120,7 @@ Bazarr ищет для каждого нового фильма и серии **
 
 ## Прокси
 
-Radarr, Sonarr, Prowlarr и Bazarr ходят в интернет через xray (`127.0.0.1:10808`), qBittorrent — никогда; напрямую ещё локальная сеть, `127.0.0.1` и rutracker (выход xray он отбивает 403). Причина: серверы Prowlarr (описания трекеров, проверка FlareSolverr), Radarr и Sonarr стоят за Cloudflare, а провайдер его режет — напрямую Prowlarr не мог скачать описания uindex, TPB и 1337x. Пока xray выключен, поиск не работает. Выключить: `useProxy = false;` в `nixos/services/arr/default.nix`. Для самого Kodi (постеры TMDb) — свой `useProxy` в `nixos/services/kodi/default.nix`.
+Radarr, Sonarr, Prowlarr и Bazarr ходят в интернет через xray (`127.0.0.1:10808`), qBittorrent — никогда; напрямую только локальная сеть и `127.0.0.1`. Причина: серверы Prowlarr (описания трекеров, проверка FlareSolverr), Radarr и Sonarr стоят за Cloudflare, а провайдер его режет — напрямую Prowlarr не мог скачать описания uindex, TPB и 1337x. Пока xray выключен, поиск не работает. Выключить: `useProxy = false;` в `nixos/services/arr/default.nix`. Для самого Kodi (постеры TMDb) — свой `useProxy` в `nixos/services/kodi/default.nix`.
 
 ## ТВ
 
@@ -142,7 +142,7 @@ ls /var/lib/arr/subtitles        # очередь перевода
 journalctl -u radarr -f          # поиск и импорт фильмов
 ```
 
-- Ничего не находит — Prowlarr → Indexers → Test all. Красный rutracker — логин/капча; красные 1337x/uindex — FlareSolverr (`journalctl -u flaresolverr`); всё красное — xray выключен.
+- Ничего не находит — Prowlarr → Indexers → Test all. Красный rutracker — неверный логин или Cloudflare ужесточил проверку до капчи, которую FlareSolverr не проходит (в `journalctl -u flaresolverr` будет «Error solving the challenge»); красные rutracker/1337x/uindex вместе — FlareSolverr; всё красное — xray (v2rayN) выключен.
 - Скачалось, но нет в Kodi — Radarr → Activity → Queue (ошибка импорта), или `f` в Kodi.
 - Нет субтитров — Bazarr → Wanted / History.
 - Переводчик: `curl -s http://127.0.0.1:5390/subtitle-translator/api/languages` должен вернуть список языков. `LibreTranslate unreachable` — на jedha лежит LibreTranslate (`systemctl status libretranslate`).
