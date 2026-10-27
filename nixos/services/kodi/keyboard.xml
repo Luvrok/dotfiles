@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- vim keys in kodi, over its own (special://xbmc/system/keymaps/keyboard.xml),
+     the same in every skin. h j k l were the pvr windows, q queued an item.
+     f fast-forwarded kodi's own player, mpv plays: it scans the library.
+     shift+letters stay kodi's: jump to that letter in a list, so no G.
+     quickshell's keys menu has them ([kodi] in keys.conf) -->
+<keymap>
+	<global>
+		<keyboard>
+			<h>Left</h>
+			<j>Down</j>
+			<k>Up</k>
+			<l>Right</l>
+			<g>FirstPage</g>
+			<d mod="ctrl">PageDown</d>
+			<u mod="ctrl">PageUp</u>
+			<q>Back</q>
+			<f>UpdateLibrary(video)</f>
+			<!-- majan's search, the home screen's search icon opens it -->
+			<forwardslash>ActivateWindow(1150)</forwardslash>
+		</keyboard>
+	</global>
+	<!-- typing: a key that maps to moving around moves instead of typing
+	     its letter, noop lets kodi type it -->
+	<VirtualKeyboard>
+		<keyboard>
+			<h>noop</h>
+			<j>noop</j>
+			<k>noop</k>
+			<l>noop</l>
+			<g>noop</g>
+			<q>noop</q>
+			<f>noop</f>
+			<forwardslash>noop</forwardslash>
+		</keyboard>
+	</VirtualKeyboard>
+</keymap>

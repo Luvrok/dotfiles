@@ -74,6 +74,9 @@ in
       };
 
       home.file = {
+        # vim keys (./keyboard.xml)
+        "${datadir}/userdata/keymaps/keyboard.xml".source = ./keyboard.xml;
+
         # torrent names the scraper finds
         "${datadir}/userdata/advancedsettings.xml".source = ./advancedsettings.xml;
 

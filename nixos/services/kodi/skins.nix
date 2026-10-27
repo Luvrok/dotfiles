@@ -8,6 +8,7 @@
   buildKodiAddon,
   jurialmunkey,
   infotagger,
+  nerd-fonts,
 }:
 
 let
@@ -22,6 +23,26 @@ let
     ];
   };
 
+  jetbrains = "${nerd-fonts.jetbrains-mono}/share/fonts/truetype/NerdFonts/JetBrainsMono/JetBrainsMonoNLNerdFont";
+
+  # changes to a skin, in its folder. a line they replace that's gone
+  # after an update fails the build
+  fixes = {
+    # its grotesk and display fonts have no cyrillic: jetbrains mono nl,
+    # the quickshell font, in their files, the same weights. its black
+    # curtain over kodi while a video plays waits for a frame of kodi's own
+    # player, mpv plays in its own window: off
+    "skin.majan" = ''
+      for w in Regular Medium SemiBold Bold ExtraBold; do
+        cp ${jetbrains}-$w.ttf fonts/HankenGrotesk-$w.ttf
+      done
+      cp ${jetbrains}-ExtraBold.ttf fonts/MajanDisplay-ExtraBold.ttf
+      substituteInPlace 1080i/Custom_1153_PlayCurtain.xml --replace-fail \
+        '<visible>[Player.HasVideo | [Player.HasMedia + !Player.HasAudio]] + !Window.IsActive(fullscreenvideo) + String.IsEmpty(Window(Home).Property(majan.fsseen)) + !System.IdleTime(8)</visible>' \
+        '<visible>false</visible>'
+    '';
+  };
+
   skin =
     id:
     buildKodiAddon {
@@ -32,7 +53,10 @@ let
       propagatedBuildInputs = [ skinvariables ];
       # _src has the generators of its fonts, textures and xml
       postInstall = ''
-        rm -rf $out/share/kodi/addons/${id}/_src
+        cd $out/share/kodi/addons/${id}
+        chmod -R u+w .
+        rm -rf _src
+        ${fixes.${id} or ""}
       '';
     };
 in
