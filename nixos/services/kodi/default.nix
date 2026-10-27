@@ -103,9 +103,10 @@ in
         '';
       };
 
-      # kodi looks for new files when it starts. while it runs, this asks it
-      # to look again when a video under the sources is new: copied, moved
-      # in or done downloading since the last time. one still being written
+      # kodi doesn't watch the folders. while it runs, this asks it to look
+      # when a video under the sources is new: copied, moved in or done
+      # downloading since the last run, kodi closed or not, so what came
+      # while it was closed shows up in 10 minutes. one still being written
       # (changed in the last 5 minutes) waits for the next run, a torrent
       # that's downloading would rescan every 10 minutes and the lists would
       # reload their posters each time
@@ -147,11 +148,12 @@ in
         Install.WantedBy = [ "timers.target" ];
       };
 
-      # new files show up when kodi starts, no dialog while it looks. no
-      # clicks on every key
+      # no scan on start (kodi-update does it when there's something new, a
+      # scan blocks "i" and searches tmdb again for every show it didn't
+      # find), no dialog while it looks, no clicks on every key
       home.activation.kodiSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         run ${pkgs.python3}/bin/python3 ${./guisettings.py} ${datadir}/userdata/guisettings.xml \
-          videolibrary.updateonstartup=true \
+          videolibrary.updateonstartup=false \
           videolibrary.backgroundupdate=true \
           lookandfeel.soundskin=
       '';
