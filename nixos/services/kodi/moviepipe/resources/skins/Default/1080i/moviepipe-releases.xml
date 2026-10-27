@@ -45,6 +45,15 @@
 				<textcolor>$VAR[ColorAccent]</textcolor>
 				<label>$INFO[Container(50).CurrentItem]$INFO[Container(50).NumItems, / ]</label>
 			</control>
+			<control type="label">
+				<right>200</right>
+				<width>900</width>
+				<height>72</height>
+				<align>right</align>
+				<font>mono_13</font>
+				<textcolor>text_tertiary</textcolor>
+				<label>$INFO[Window.Property(sort)]</label>
+			</control>
 			<control type="image">
 				<top>72</top>
 				<width>1800</width>
@@ -122,6 +131,14 @@
 					<textcolor>text_tertiary</textcolor>
 					<label>возраст</label>
 				</control>
+				<control type="label">
+					<left>1340</left>
+					<width>400</width>
+					<height>24</height>
+					<font>mono_13</font>
+					<textcolor>text_tertiary</textcolor>
+					<label>почему ✗</label>
+				</control>
 			</control>
 			<control type="list" id="50">
 				<left>24</left>
@@ -163,7 +180,7 @@
 						<width>1690</width>
 						<height>26</height>
 						<font>small_19_bold</font>
-						<textcolor>text_tertiary</textcolor>
+						<textcolor>text_secondary</textcolor>
 						<label>$INFO[ListItem.Label]</label>
 						<visible>!String.IsEmpty(ListItem.Property(why))</visible>
 					</control>
@@ -173,7 +190,7 @@
 						<width>180</width>
 						<height>22</height>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(quality)]</label>
 					</control>
 					<control type="label">
@@ -182,7 +199,7 @@
 						<width>130</width>
 						<height>22</height>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(range)]</label>
 					</control>
 					<control type="label">
@@ -192,7 +209,7 @@
 						<height>22</height>
 						<align>right</align>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(size)]</label>
 					</control>
 					<control type="label">
@@ -202,7 +219,7 @@
 						<height>22</height>
 						<align>right</align>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(seeders)]</label>
 					</control>
 					<control type="label">
@@ -211,7 +228,7 @@
 						<width>180</width>
 						<height>22</height>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(tracker)]</label>
 					</control>
 					<control type="label">
@@ -220,7 +237,7 @@
 						<width>230</width>
 						<height>22</height>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(group)]</label>
 					</control>
 					<control type="label">
@@ -229,7 +246,7 @@
 						<width>140</width>
 						<height>22</height>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(language)]</label>
 					</control>
 					<control type="label">
@@ -239,8 +256,17 @@
 						<height>22</height>
 						<align>right</align>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(age)]</label>
+					</control>
+					<control type="label">
+						<left>1340</left>
+						<top>32</top>
+						<width>400</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_tertiary</textcolor>
+						<label>$INFO[ListItem.Property(reason)]</label>
 					</control>
 				</itemlayout>
 				<focusedlayout width="1752" height="56">
@@ -287,7 +313,7 @@
 						<width>1690</width>
 						<height>26</height>
 						<font>small_19_bold</font>
-						<textcolor>text_tertiary</textcolor>
+						<textcolor>text_secondary</textcolor>
 						<label>$INFO[ListItem.Label]</label>
 						<visible>!String.IsEmpty(ListItem.Property(why))</visible>
 					</control>
@@ -297,7 +323,7 @@
 						<width>180</width>
 						<height>22</height>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(quality)]</label>
 					</control>
 					<control type="label">
@@ -306,7 +332,7 @@
 						<width>130</width>
 						<height>22</height>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(range)]</label>
 					</control>
 					<control type="label">
@@ -316,7 +342,7 @@
 						<height>22</height>
 						<align>right</align>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(size)]</label>
 					</control>
 					<control type="label">
@@ -326,7 +352,7 @@
 						<height>22</height>
 						<align>right</align>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(seeders)]</label>
 					</control>
 					<control type="label">
@@ -335,7 +361,7 @@
 						<width>180</width>
 						<height>22</height>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(tracker)]</label>
 					</control>
 					<control type="label">
@@ -344,7 +370,7 @@
 						<width>230</width>
 						<height>22</height>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(group)]</label>
 					</control>
 					<control type="label">
@@ -353,7 +379,7 @@
 						<width>140</width>
 						<height>22</height>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(language)]</label>
 					</control>
 					<control type="label">
@@ -363,8 +389,17 @@
 						<height>22</height>
 						<align>right</align>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(age)]</label>
+					</control>
+					<control type="label">
+						<left>1340</left>
+						<top>32</top>
+						<width>400</width>
+						<height>22</height>
+						<font>small_16</font>
+						<textcolor>text_tertiary</textcolor>
+						<label>$INFO[ListItem.Property(reason)]</label>
 					</control>
 				</focusedlayout>
 			</control>

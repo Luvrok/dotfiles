@@ -198,7 +198,7 @@
 						<width>190</width>
 						<height>22</height>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(state)]</label>
 					</control>
 					<control type="image">
@@ -215,7 +215,7 @@
 						<height>22</height>
 						<align>right</align>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(percent)]</label>
 					</control>
 					<control type="label">
@@ -224,7 +224,7 @@
 						<width>220</width>
 						<height>22</height>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(done)]</label>
 					</control>
 					<control type="label">
@@ -234,7 +234,7 @@
 						<height>22</height>
 						<align>right</align>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(speed)]</label>
 					</control>
 					<control type="label">
@@ -244,7 +244,7 @@
 						<height>22</height>
 						<align>right</align>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(seeders)]</label>
 					</control>
 					<control type="label">
@@ -254,7 +254,7 @@
 						<height>22</height>
 						<align>right</align>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(eta)]</label>
 					</control>
 					<control type="label">
@@ -263,7 +263,7 @@
 						<width>170</width>
 						<height>22</height>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(quality)]</label>
 					</control>
 					<control type="label">
@@ -272,7 +272,7 @@
 						<width>120</width>
 						<height>22</height>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(range)]</label>
 					</control>
 					<control type="label">
@@ -281,7 +281,7 @@
 						<width>200</width>
 						<height>22</height>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(tracker)]</label>
 					</control>
 				</itemlayout>
@@ -328,7 +328,7 @@
 						<width>190</width>
 						<height>22</height>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(state)]</label>
 					</control>
 					<control type="image">
@@ -345,7 +345,7 @@
 						<height>22</height>
 						<align>right</align>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(percent)]</label>
 					</control>
 					<control type="label">
@@ -354,7 +354,7 @@
 						<width>220</width>
 						<height>22</height>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(done)]</label>
 					</control>
 					<control type="label">
@@ -364,7 +364,7 @@
 						<height>22</height>
 						<align>right</align>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(speed)]</label>
 					</control>
 					<control type="label">
@@ -374,7 +374,7 @@
 						<height>22</height>
 						<align>right</align>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(seeders)]</label>
 					</control>
 					<control type="label">
@@ -384,7 +384,7 @@
 						<height>22</height>
 						<align>right</align>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(eta)]</label>
 					</control>
 					<control type="label">
@@ -393,7 +393,7 @@
 						<width>170</width>
 						<height>22</height>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(quality)]</label>
 					</control>
 					<control type="label">
@@ -402,7 +402,7 @@
 						<width>120</width>
 						<height>22</height>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(range)]</label>
 					</control>
 					<control type="label">
@@ -411,7 +411,7 @@
 						<width>200</width>
 						<height>22</height>
 						<font>small_16</font>
-						<textcolor>text_secondary</textcolor>
+						<textcolor>text_tertiary</textcolor>
 						<label>$INFO[ListItem.Property(tracker)]</label>
 					</control>
 				</focusedlayout>

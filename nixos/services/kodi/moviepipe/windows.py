@@ -12,10 +12,13 @@ from arr import HERE, Api, Error, error, gb, notify, qbittorrent, waiting
 
 # 0.png .. 100.png, a bar per 5% (../addons.nix)
 BARS = os.path.join(HERE, "resources", "skins", "Default", "media", "bars")
-# majan's accent_amber, accent_mint, accent_rose
-AMBER = "ffffb020"
-MINT = "ff3ddc97"
-ROSE = "ffff5c8a"
+# majan's accent_amber, accent_mint and accent_rose halfway to its grey,
+# its text_primary and text_tertiary
+AMBER = "ffc69e53"
+GREEN = "ff65b48e"
+ROSE = "ffc67488"
+WHITE = "ffecebe7"
+GREY = "ff8d8b85"
 LANGUAGES = {
     "Russian": "RU",
     "English": "EN",
@@ -34,10 +37,11 @@ def color(text, argb):
     return f"[COLOR {argb}]{text}[/COLOR]"
 
 
-def dynamic(title, quality):
-    # sdr or hdr, as the title says. "DV" alone is dolby vision with no
-    # hdr10 under it. a title with neither: sdr up to 1080p, a 2160p one
-    # may be either
+def dynamic(title, qname):
+    # sdr or hdr as the title says, and its place in "сначала SDR": "DV"
+    # alone is dolby vision with no hdr10 under it. a title with neither:
+    # sdr up to 1080p (a blu-ray, so a bdrip, is sdr; hdr is uhd
+    # blu-ray's), a 2160p one may be either
     t = re.sub(r"[._\[\](),/]", " ", title)
     found = []
     if re.search(r"\b(dv|dovi|dolby ?vision)\b", t, re.I):
@@ -51,10 +55,52 @@ def dynamic(title, quality):
     if re.search(r"\bhlg\b", t, re.I):
         found.append("HLG")
     if found:
-        return color("+".join(found), AMBER)
-    if re.search(r"\bsdr\b", t, re.I) or "2160" not in quality:
-        return color("SDR", MINT)
-    return color("HDR?", AMBER)
+        return color("+".join(found), AMBER), 2
+    if re.search(r"\bsdr\b", t, re.I) or "2160" not in qname:
+        return color("SDR", GREEN), 0
+    return color("HDR?", AMBER), 1
+
+
+def quality(name):
+    # radarr's and sonarr's names as on the trackers: a bdrip up to 1080p,
+    # the profile's best, stands out
+    shown = re.sub(r"-(\d+p)$", r" \1", re.sub(r"^Bluray-", "BDRip-", name.replace("WEBDL-", "WEB-DL-")))
+    if name in ("Bluray-1080p", "Bluray-720p"):
+        return color(shown, WHITE)
+    return shown
+
+
+# why radarr or sonarr wouldn't take a release, short
+REASONS = [
+    (r"not wanted in profile", "качество не из профиля"),
+    (r"^Unknown (Movie|Series)", "не узнал фильм"),
+    (r"^Wrong ", "другой фильм"),
+    (r"Not enough seeders", "мало сидов"),
+    (r"blocklisted", "в чёрном списке"),
+    (r"in queue", "уже качается"),
+    (r"^Existing file", "уже скачан"),
+    (r"grab event in history", "уже брал раньше"),
+    (r"considered available", "ещё не вышел"),
+    (r"not monitored", "не отслеживается"),
+    (r"^Indexer .* blocked", "трекер на паузе"),
+    (r"larger than maximum|smaller than minimum", "не тот размер"),
+    (r"Custom Formats? .* below", "низкая оценка"),
+    (r"is wanted, but found", "не тот язык"),
+    (r"Hardcode subs", "вшитые субтитры"),
+    (r"^Sample", "сэмпл"),
+    (r"^Raw ", "образ диска"),
+    (r"terms", "фильтр слов"),
+    (r"minutes old", "слишком свежая"),
+]
+
+
+def reason(rejections):
+    out = []
+    for text in rejections:
+        short = next((ru for rx, ru in REASONS if re.search(rx, text, re.I)), text[:40])
+        if short not in out:
+            out.append(short)
+    return ", ".join(out)
 
 
 def age(days):
@@ -82,30 +128,52 @@ def window(cls, xml, **attrs):
 
 
 class Releases(Window):
+    # left and right: the next sort. those of another film or show stay
+    # last in each
     def onInit(self):
         if self.rows().size():
             return
         self.setProperty("heading", self.heading)
         self.setProperty("hint", self.hint)
-        self.rows().addItems(self.items)
+        self.show(0)
         self.setFocusId(50)
 
+    def show(self, mode):
+        self.mode = mode % len(self.sorts)
+        name, key = self.sorts[self.mode]
+        self.order = sorted(self.entries, key=lambda e: (e["other"], key(e)))
+        self.setProperty("sort", f"← {name} →")
+        self.rows().reset()
+        self.rows().addItems([e["item"] for e in self.order])
+        self.rows().selectItem(0)
+
+    def onAction(self, action):
+        a = action.getId()
+        if a in (xbmcgui.ACTION_PREVIOUS_MENU, xbmcgui.ACTION_NAV_BACK):
+            self.close()
+        elif a in (xbmcgui.ACTION_MOVE_LEFT, xbmcgui.ACTION_MOVE_RIGHT) and self.getFocusId() == 50:
+            self.show(self.mode + (1 if a == xbmcgui.ACTION_MOVE_RIGHT else -1))
+
     def onClick(self, control):
-        if control == 50:
-            self.picked = self.rows().getSelectedPosition()
+        at = self.rows().getSelectedPosition()
+        if control == 50 and 0 <= at < len(self.order):
+            self.picked = self.order[at]["release"]
             self.close()
 
 
-def release(r, first):
-    quality = r["quality"]["quality"]["name"]
-    why = "; ".join(r.get("rejections", [])) if r.get("rejected") else ""
+def entry(r, n, other):
+    # n: its place in radarr's or sonarr's order, 0 their own pick
+    qname = r["quality"]["quality"]["name"]
+    range_, rank = dynamic(r["title"], qname)
+    rejections = r.get("rejections", []) if r.get("rejected") else []
     li = xbmcgui.ListItem(r["title"])
     li.setProperties(
         {
-            "mark": "✗" if why else "●" if first else "",
-            "why": why,
-            "quality": quality,
-            "range": dynamic(r["title"], quality),
+            "mark": color("✗", GREY) if rejections else "●" if n == 0 else "",
+            "why": "; ".join(rejections),
+            "reason": color(reason(rejections), AMBER),
+            "quality": quality(qname),
+            "range": range_,
             "size": gb(r["size"]) if r.get("size") else "—",
             "seeders": str(r.get("seeders") or 0) if r.get("protocol") == "torrent" else "",
             "tracker": r["indexer"].replace(" (Prowlarr)", ""),
@@ -114,17 +182,26 @@ def release(r, first):
             "age": age(r.get("age")),
         }
     )
-    return li
+    return {
+        "release": r,
+        "item": li,
+        "order": n,
+        "rank": rank,
+        "other": other,
+        "seeders": r.get("seeders") or 0,
+        "size": r.get("size") or 0,
+        "age": r.get("ageMinutes", r.get("age")) or 0,
+    }
 
 
 def choose(api, title, **query):
-    # the releases the trackers have, those radarr or sonarr would take
-    # first, in their order (quality, their score, the tracker's priority,
-    # seeders): the first is the one they'd download themselves. then those
-    # they wouldn't, last the ones they took for another film or show (the
-    # trackers are searched with no year, ../../arr/setup.py). the one
-    # picked is downloaded even when they'd reject it, for this film or
-    # show (query's ids)
+    # the releases the trackers have, sdr first, then as radarr or sonarr
+    # rank them: those they'd take first, in their order (quality, their
+    # score, the tracker's priority, seeders), the first the one they'd
+    # download themselves. the ones they took for another film or show
+    # last (the trackers are searched with no year, ../../arr/setup.py).
+    # the one picked is downloaded even when they'd reject it, for this
+    # film or show (query's ids)
     found = waiting(title, "Ищу раздачи на трекерах…", lambda: api.get("/release", timeout=300, **query))
     if found is None:
         return None
@@ -132,26 +209,29 @@ def choose(api, title, **query):
         notify(title, "Раздач нет")
         return None
     mapped = [r for r in found if r.get("mappedMovieId", r.get("mappedSeriesId")) is not None]
-    found = (
-        [r for r in mapped if not r.get("rejected")]
-        + [r for r in mapped if r.get("rejected")]
-        + [r for r in found if r not in mapped]
-    )
+    others = [r for r in found if r not in mapped]
+    ranked = [r for r in mapped if not r.get("rejected")] + [r for r in mapped if r.get("rejected")] + others
     app = api.app.capitalize()
     w = window(
         Releases,
         "moviepipe-releases.xml",
         heading=f"{title}: раздачи",
-        hint=f"enter — скачать    ● — {app} взял бы её сам    ✗ — {app} не взял бы    esc — ничего",
-        items=[release(r, n == 0) for n, r in enumerate(found)],
-        picked=-1,
+        hint=f"enter — скачать    ← → — сортировка    ● — {app} взял бы её сам    ✗ — не взял бы, почему — справа    esc — ничего",
+        entries=[entry(r, n, r in others) for n, r in enumerate(ranked)],
+        sorts=[
+            ("сначала SDR", lambda e: (e["rank"], e["order"])),
+            (f"как {app}", lambda e: e["order"]),
+            ("по сидам", lambda e: -e["seeders"]),
+            ("по размеру", lambda e: -e["size"]),
+            ("по свежести", lambda e: e["age"]),
+        ],
+        picked=None,
     )
     w.doModal()
-    picked = w.picked
+    r = w.picked
     del w
-    if picked < 0:
+    if r is None:
         return None
-    r = found[picked]
     ids = {k: v for k, v in query.items() if k in ("movieId", "seriesId", "episodeId")}
     api.post("/release", {"guid": r["guid"], "indexerId": r["indexerId"], **ids}, timeout=120)
     notify(title, f"Качаю: {r['quality']['quality']['name']}, {gb(r['size'])}")
@@ -182,7 +262,7 @@ ARR_STATES = {
     "paused": "на паузе",
     "delay": "ждёт",
     "downloading": "качается",
-    "completed": color("скачано", MINT),
+    "completed": color("скачано", GREEN),
     "warning": color("проблема", AMBER),
     "failed": color("ошибка", ROSE),
     "downloadClientUnavailable": color("qbittorrent не отвечает", ROSE),
@@ -238,7 +318,7 @@ def row(app, records, torrent):
         size = torrent["size"] or size
         left = size - int(torrent["progress"] * size)
         seconds = torrent["eta"]
-        state = QBT_STATES.get(torrent["state"], color("скачано", MINT))
+        state = QBT_STATES.get(torrent["state"], color("скачано", GREEN))
         if torrent["state"] in LOADING:
             rate = speed(torrent["dlspeed"])
             # connected, of the swarm's
@@ -247,7 +327,7 @@ def row(app, records, torrent):
         state = ARR_STATES.get(q.get("status"), q.get("status", ""))
     tracked = q.get("trackedDownloadState")
     if tracked in ("importPending", "importing"):
-        state = color("в библиотеку", MINT)
+        state = color("в библиотеку", GREEN)
     elif tracked == "importBlocked":
         state = color("не переносится", AMBER)
     elif tracked in ("failedPending", "failed"):
@@ -255,7 +335,7 @@ def row(app, records, torrent):
     problems = [q["errorMessage"]] if q.get("errorMessage") else []
     problems += [m for s in q.get("statusMessages", []) for m in s.get("messages", [])]
     percent = int(100 * (size - left) / size) if size else 0
-    quality = q["quality"]["quality"]["name"]
+    qname = q["quality"]["quality"]["name"]
     return {
         "label": name(app, records),
         "mark": "!" if problems else "",
@@ -266,8 +346,8 @@ def row(app, records, torrent):
         "speed": rate,
         "seeders": seeders,
         "eta": duration(seconds) if left else "",
-        "quality": quality,
-        "range": dynamic(q["title"], quality),
+        "quality": quality(qname),
+        "range": dynamic(q["title"], qname)[0],
         "tracker": (q.get("indexer") or "").replace(" (Prowlarr)", ""),
         "release": q["title"],
         "why": "; ".join(problems),
