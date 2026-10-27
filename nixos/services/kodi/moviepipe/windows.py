@@ -386,6 +386,7 @@ def row(app, records, torrent):
         "tracker": (q.get("indexer") or "").replace(" (Prowlarr)", ""),
         "release": q["title"],
         "why": "; ".join(problems),
+        "whyline": color("; ".join(problems), AMBER) if problems else "",
         # the row's button, majan's icons: what it does
         "toggle": ("icons/play.png" if torrent["state"] in STOPPED else "icons/pause.png") if torrent else "",
     }

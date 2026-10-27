@@ -33,8 +33,8 @@ buildKodiAddon {
   # _src has the generators of its fonts, textures and xml. its grotesk
   # and display fonts have no cyrillic: a third font in kodi's settings ->
   # interface -> skin -> fonts, "JetBrains Mono" (nl, the quickshell font),
-  # majan's with jetbrains in place of both, 6% smaller: a monospace is
-  # wider. its black curtain over kodi while a video plays waits for a
+  # majan's with jetbrains in place of both, 12% smaller: a monospace is
+  # wider (majan's mono and number fonts stay). its black curtain over kodi while a video plays waits for a
   # frame of kodi's own player, mpv plays in its own window: off. a line
   # they replace that's gone after an update fails the build
   postInstall = ''
@@ -47,9 +47,9 @@ buildKodiAddon {
       -e 's#HankenGrotesk-#JetBrainsMonoNLNerdFont-#g' \
       -e 's#MajanDisplay-ExtraBold#JetBrainsMonoNLNerdFont-ExtraBold#g' |
       awk '{
-        if (match($0, /<size>[0-9]+<\/size>/)) {
+        if (/JetBrainsMonoNLNerdFont-/ && match($0, /<size>[0-9]+<\/size>/)) {
           n = substr($0, RSTART + 6, RLENGTH - 13)
-          $0 = substr($0, 1, RSTART - 1) "<size>" int(n * 0.94 + 0.5) "</size>" substr($0, RSTART + RLENGTH)
+          $0 = substr($0, 1, RSTART - 1) "<size>" int(n * 0.88 + 0.5) "</size>" substr($0, RSTART + RLENGTH)
         }
         print
       }' > jetbrains.xml
@@ -79,16 +79,29 @@ buildKodiAddon {
       '<constant name="home_hub_list_w">1512</constant>'
     substituteInPlace 1080i/Includes_Search.xml --replace-fail \
       '<width>1836</width>' '<width>1740</width>'
-    # home: the spotlight 28 px up, nearer the bar, and the rule of the
-    # newest row with it (760 -> 732). its posters 10 px up (826 -> 816):
-    # the focused one's frame, lifted and zoomed, went 3 px under the
-    # screen's bottom with no zoom. the row's name gets the room between
+    # home: the spotlight 40 px up, nearer the bar, its column ending 12 px
+    # over the newest row's rule (a 3-line title pushed the play button's
+    # frame onto it), the rule 28 px up (760 -> 732). the row's posters 10
+    # px up (826 -> 816): the focused one's frame, lifted and zoomed, went
+    # 3 px under the screen's bottom with no zoom. the row's name gets the
+    # room between
     substituteInPlace 1080i/Includes_Home.xml \
       --replace-fail '<visible>Integer.IsGreater(Container(9101).NumItems,0)</visible>' \
-      '<top>-28</top><visible>Integer.IsGreater(Container(9101).NumItems,0)</visible>' \
+      '<top>-40</top><visible>Integer.IsGreater(Container(9101).NumItems,0)</visible>' \
+      --replace-fail '<height>592</height>' '<height>580</height>' \
       --replace-fail '<constant name="home_newest_list_y">44</constant>' \
       '<constant name="home_newest_list_y">62</constant>'
     substituteInPlace 1080i/Constants.xml --replace-fail \
       '<constant name="home_row_y">760</constant>' '<constant name="home_row_y">732</constant>'
+    # the film page with tmdb helper and movie pipe: the cast, "похожие",
+    # "режиссёр" (./majan-moviepipe.xml)
+    cp ${./majan-moviepipe.xml} 1080i/Includes_MoviePipe.xml
+    substituteInPlace 1080i/Includes.xml --replace-fail \
+      '<include file="Includes_CustomRows.xml"/>' \
+      '<include file="Includes_CustomRows.xml"/><include file="Includes_MoviePipe.xml"/>'
+    substituteInPlace 1080i/Includes_VideoInfo.xml \
+      --replace-fail '<onback>9010</onback>' '<onback>9010</onback><include>MoviePipe_MoreButtons</include>' \
+      --replace-fail '<description>16px left / 14px top inner padding so the 5% zoom + focus frame are not clipped</description>' \
+      '<include>MoviePipe_CastList</include>'
   '';
 }

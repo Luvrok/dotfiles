@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- majan's film page with tmdb helper and movie pipe, its
+     1080i/Includes_MoviePipe.xml (./majan.nix puts it in). the cast row is
+     tmdb helper's cast of the film or show: enter on one is movie pipe's
+     menu of their films and shows on tmdb (./moviepipe/person.py). a
+     collection's row stays its films in the library, enter opens it. the
+     more row gets "похожие" (tmdb's recommendations) and "режиссёр" (the
+     director's films on tmdb, majan's "more by director" is the library's) -->
+<includes>
+	<variable name="MoviePipe_TmdbType">
+		<value condition="String.IsEqual(ListItem.DBType,movie)">movie</value>
+		<value>tv</value>
+	</variable>
+	<variable name="MoviePipe_CastContent">
+		<value condition="String.IsEqual(ListItem.DBType,set)">videodb://movies/sets/$INFO[ListItem.DBID]/?setid=$INFO[ListItem.DBID]</value>
+		<value condition="[String.IsEqual(ListItem.DBType,movie) | String.IsEqual(ListItem.DBType,tvshow)] + !String.IsEmpty(ListItem.UniqueID(tmdb))">plugin://plugin.video.themoviedb.helper/?info=cast&amp;tmdb_type=$VAR[MoviePipe_TmdbType]&amp;tmdb_id=$INFO[ListItem.UniqueID(tmdb)]</value>
+		<value condition="!String.IsEmpty(ListItem.TVShowTitle)">plugin://plugin.video.themoviedb.helper/?info=cast&amp;tmdb_type=tv&amp;query=$INFO[ListItem.TVShowTitle]</value>
+	</variable>
+	<!-- inside the cast list (50): its items, what enter does -->
+	<include name="MoviePipe_CastList">
+		<content target="videos">$VAR[MoviePipe_CastContent]</content>
+		<onclick condition="String.IsEqual(Container(50).ListItem.DBType,movie)">Dialog.Close(all,true)</onclick>
+		<onclick condition="String.IsEqual(Container(50).ListItem.DBType,movie)">ActivateWindow(Videos,videodb://movies/sets/$INFO[Container(50).ListItem.SetId]/?setid=$INFO[Container(50).ListItem.SetId],return)</onclick>
+		<onclick condition="!String.IsEqual(Container(50).ListItem.DBType,movie)">RunPlugin(plugin://plugin.video.moviepipe/?action=person&amp;tmdb=$INFO[Container(50).ListItem.Property(tmdb_id)]&amp;name=$ESCINFO[Container(50).ListItem.Label])</onclick>
+	</include>
+	<!-- the first of the more row (9100) -->
+	<include name="MoviePipe_MoreButtons">
+		<include content="VidInfo_MoreButton">
+			<param name="id" value="9150"/>
+			<param name="label" value="ПОХОЖИЕ"/>
+			<param name="onclick" value="Dialog.Close(all,true)"/>
+			<param name="onclick2" value="ActivateWindow(Videos,plugin://plugin.video.themoviedb.helper/?info=recommendations&amp;tmdb_type=$VAR[MoviePipe_TmdbType]&amp;tmdb_id=$INFO[ListItem.UniqueID(tmdb)],return)"/>
+			<param name="visible" value="[String.IsEqual(ListItem.DBType,movie) | String.IsEqual(ListItem.DBType,tvshow)] + !String.IsEmpty(ListItem.UniqueID(tmdb))"/>
+		</include>
+		<include content="VidInfo_MoreButton">
+			<param name="id" value="9151"/>
+			<param name="label" value="РЕЖИССЁР"/>
+			<param name="onclick" value="RunPlugin(plugin://plugin.video.moviepipe/?action=person&amp;crew=1&amp;name=$ESCINFO[ListItem.Director])"/>
+			<param name="visible" value="!String.IsEmpty(ListItem.Director)"/>
+		</include>
+	</include>
+</includes>

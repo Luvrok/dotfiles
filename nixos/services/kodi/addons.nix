@@ -1,6 +1,6 @@
 # the add-ons kodi gets: majan (./majan.nix), tmdb helper (films, shows
 # and people from tmdb, with the menu of ./moviepipe on them), Movie pipe,
-# iptv simple with its tv channels. the
+# iptv simple with its tv channels, youtube for the trailers. the
 # github ones are flake inputs like the skins: nix flake update
 # kodi-tmdbhelper kodi-jurialmunkey kodi-infotagger
 {
@@ -12,6 +12,7 @@
   requests,
   signals,
   pvr-iptvsimple,
+  youtube,
 }:
 
 let
@@ -108,4 +109,6 @@ in
   tmdbhelper
   moviepipe
   pvr-iptvsimple
+  # trailers: the films' trailers are its plugin:// links (the scrapers')
+  youtube
 ]

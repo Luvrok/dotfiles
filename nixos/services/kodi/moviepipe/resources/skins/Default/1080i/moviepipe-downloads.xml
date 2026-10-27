@@ -17,19 +17,19 @@
 		</control>
 		<control type="group">
 			<left>60</left>
-			<top>50</top>
+			<top>65</top>
 			<width>1800</width>
-			<height>980</height>
+			<height>950</height>
 			<animation effect="fade" start="0" end="100" time="150">WindowOpen</animation>
 			<animation effect="fade" start="100" end="0" time="100">WindowClose</animation>
 			<control type="image">
 				<width>1800</width>
-				<height>980</height>
+				<height>950</height>
 				<texture colordiffuse="bg">common/white.png</texture>
 			</control>
 			<control type="image">
 				<width>1800</width>
-				<height>980</height>
+				<height>950</height>
 				<texture border="10" colordiffuse="hairline_strong">common/rect_outline_1.png</texture>
 			</control>
 			<control type="label">
@@ -486,32 +486,24 @@
 				<height>1</height>
 				<texture colordiffuse="hairline_strong">common/hairline.png</texture>
 			</control>
+			<!-- the release, then what's wrong: one box, no gap between -->
 			<control type="textbox">
 				<left>40</left>
-				<top>812</top>
+				<top>806</top>
 				<width>1720</width>
-				<height>84</height>
+				<height>90</height>
 				<font>small_19</font>
 				<textcolor>text_primary</textcolor>
-				<label>$INFO[Container(50).ListItem.Property(release)]</label>
-			</control>
-			<control type="textbox">
-				<left>40</left>
-				<top>898</top>
-				<width>1720</width>
-				<height>44</height>
-				<font>small_16</font>
-				<textcolor>accent_amber</textcolor>
-				<label>$INFO[Container(50).ListItem.Property(why)]</label>
+				<label>$INFO[Container(50).ListItem.Property(release)]$INFO[Container(50).ListItem.Property(whyline),[CR]]</label>
 			</control>
 			<control type="label">
 				<left>40</left>
-				<top>944</top>
+				<top>906</top>
 				<width>1720</width>
 				<height>24</height>
 				<font>mono_13</font>
 				<textcolor>text_tertiary</textcolor>
-				<label>→ на кнопку ⏸ / ▶ и enter, или пробел — пауза и старт    enter на строке — пауза, другая раздача, убрать    esc — закрыть</label>
+				<label>→ на кнопку паузы и enter, или пробел — пауза и старт    enter на строке — пауза, другая раздача, убрать    esc — закрыть</label>
 			</control>
 		</control>
 	</controls>
