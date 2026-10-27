@@ -386,6 +386,8 @@ def row(app, records, torrent):
         "tracker": (q.get("indexer") or "").replace(" (Prowlarr)", ""),
         "release": q["title"],
         "why": "; ".join(problems),
+        # the row's button, majan's icons: what it does
+        "toggle": ("icons/play.png" if torrent["state"] in STOPPED else "icons/pause.png") if torrent else "",
     }
 
 
@@ -418,6 +420,8 @@ def downloads():
 
 
 class Downloads(Window):
+    # right on a row: its button (pause, go on), left: the row again.
+    # space (kodi's pause) works the button from either
     def onInit(self):
         if self.started:
             return
@@ -459,35 +463,63 @@ class Downloads(Window):
             self.setProperty("trouble", "; ".join(trouble))
             self.setProperty("empty", "" if found or trouble else "Ничего не качается")
 
-    def onClick(self, control):
-        at = self.rows().getSelectedPosition()
-        if control != 50 or not 0 <= at < len(self.keys):
+    def onAction(self, action):
+        a = action.getId()
+        if a in (xbmcgui.ACTION_PREVIOUS_MENU, xbmcgui.ACTION_NAV_BACK):
+            self.close()
+        elif self.getFocusId() != 50:
             return
-        key = self.keys[at]
+        elif a == xbmcgui.ACTION_MOVE_RIGHT:
+            self.setProperty("onbutton", "1")
+        elif a == xbmcgui.ACTION_MOVE_LEFT:
+            self.setProperty("onbutton", "")
+        elif a in (xbmcgui.ACTION_PAUSE, xbmcgui.ACTION_PLAYER_PLAYPAUSE):
+            self.toggle(self.focused())
+
+    def focused(self):
+        at = self.rows().getSelectedPosition()
+        return self.keys[at] if 0 <= at < len(self.keys) else None
+
+    def toggle(self, key):
+        # qbittorrent 5's names, 4's were resume and pause
+        torrent = self.torrents.get(key)
+        if not torrent:
+            return
+        try:
+            qbittorrent("/torrents/start" if torrent["state"] in STOPPED else "/torrents/stop", {"hashes": torrent["hash"]})
+        except Error as e:
+            error(e)
+        self.refresh()
+
+    def onClick(self, control):
+        key = self.focused()
+        if control != 50 or key is None:
+            return
+        if self.getProperty("onbutton"):
+            self.toggle(key)
+            return
         records = self.records[key]
         torrent = self.torrents.get(key)
         actions = ["Другая раздача", "Убрать загрузку"]
         if torrent:
-            stopped = torrent["state"] in STOPPED
-            actions.insert(0, "Продолжить" if stopped else "Пауза")
+            actions.insert(0, "Продолжить" if torrent["state"] in STOPPED else "Пауза")
         i = xbmcgui.Dialog().select(name(key[0], records), actions)
         if i < 0:
             return
+        if actions[i] in ("Продолжить", "Пауза"):
+            self.toggle(key)
+            return
+        # another: this one to the blocklist, they search again
+        another = actions[i] == "Другая раздача"
         try:
-            if actions[i] in ("Продолжить", "Пауза"):
-                # qbittorrent 5's names, 4's were resume and pause
-                qbittorrent("/torrents/start" if stopped else "/torrents/stop", {"hashes": torrent["hash"]})
-            else:
-                # another: this one to the blocklist, they search again
-                another = actions[i] == "Другая раздача"
-                Api(key[0]).call(
-                    "DELETE",
-                    "/queue/bulk",
-                    {"ids": [r["id"] for r in records]},
-                    removeFromClient="true",
-                    blocklist="true" if another else "false",
-                    skipRedownload="false" if another else "true",
-                )
+            Api(key[0]).call(
+                "DELETE",
+                "/queue/bulk",
+                {"ids": [r["id"] for r in records]},
+                removeFromClient="true",
+                blocklist="true" if another else "false",
+                skipRedownload="false" if another else "true",
+            )
         except Error as e:
             error(e)
         self.refresh()

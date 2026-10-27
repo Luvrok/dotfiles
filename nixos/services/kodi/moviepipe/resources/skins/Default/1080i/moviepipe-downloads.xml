@@ -2,8 +2,9 @@
 <!-- 6, what radarr and sonarr download (../../../../windows.py,
      Downloads), a row each: what it is, then its state, how far, how fast,
      the seeders it has (of the swarm's), how long yet, quality, sdr or hdr,
-     tracker. qbittorrent's numbers, every 2 s; enter: pause or go on, another
-     release, away. under the list the release of the one in focus and
+     tracker, a button to pause it or go on (right to it, enter). qbittorrent's
+     numbers, every 2 s; enter on a row: pause or go on, another release,
+     away. under the list the release of the one in focus and
      what's wrong with it. majan's fonts, colours
      and textures; the two layouts of a row are the same but for the focus -->
 <window>
@@ -155,7 +156,7 @@
 				<control type="label">
 					<left>1520</left>
 					<top>0</top>
-					<width>200</width>
+					<width>150</width>
 					<height>24</height>
 					<font>mono_13</font>
 					<textcolor>text_tertiary</textcolor>
@@ -176,6 +177,23 @@
 						<width>1752</width>
 						<height>1</height>
 						<texture colordiffuse="hairline">common/hairline.png</texture>
+					</control>
+					<control type="image">
+						<left>1688</left>
+						<top>10</top>
+						<width>48</width>
+						<height>36</height>
+						<texture border="10" colordiffuse="hairline_strong">common/rect_outline_1.png</texture>
+						<visible>!String.IsEmpty(ListItem.Property(toggle))</visible>
+					</control>
+					<control type="image">
+						<left>1700</left>
+						<top>16</top>
+						<width>24</width>
+						<height>24</height>
+						<aspectratio>keep</aspectratio>
+						<texture colordiffuse="text_secondary">$INFO[ListItem.Property(toggle)]</texture>
+						<visible>!String.IsEmpty(ListItem.Property(toggle))</visible>
 					</control>
 					<control type="label">
 						<left>16</left>
@@ -281,7 +299,7 @@
 					<control type="label">
 						<left>1520</left>
 						<top>32</top>
-						<width>200</width>
+						<width>150</width>
 						<height>22</height>
 						<font>small_16</font>
 						<textcolor>text_tertiary</textcolor>
@@ -307,6 +325,40 @@
 						<texture border="16" colordiffuse="$VAR[ColorAccent]">$VAR[FocusFrameAlways]</texture>
 						<visible>Control.HasFocus(50)</visible>
 					</control>
+					<control type="image">
+						<left>1688</left>
+						<top>10</top>
+						<width>48</width>
+						<height>36</height>
+						<texture border="10" colordiffuse="hairline_strong">common/rect_outline_1.png</texture>
+						<visible>!String.IsEmpty(ListItem.Property(toggle)) + ![Control.HasFocus(50) + String.IsEqual(Window.Property(onbutton),1)]</visible>
+					</control>
+					<control type="image">
+						<left>1700</left>
+						<top>16</top>
+						<width>24</width>
+						<height>24</height>
+						<aspectratio>keep</aspectratio>
+						<texture colordiffuse="text_secondary">$INFO[ListItem.Property(toggle)]</texture>
+						<visible>!String.IsEmpty(ListItem.Property(toggle)) + ![Control.HasFocus(50) + String.IsEqual(Window.Property(onbutton),1)]</visible>
+					</control>
+					<control type="image">
+						<left>1688</left>
+						<top>10</top>
+						<width>48</width>
+						<height>36</height>
+						<texture colordiffuse="$VAR[ColorAccent]">common/white.png</texture>
+						<visible>!String.IsEmpty(ListItem.Property(toggle)) + Control.HasFocus(50) + String.IsEqual(Window.Property(onbutton),1)</visible>
+					</control>
+					<control type="image">
+						<left>1700</left>
+						<top>16</top>
+						<width>24</width>
+						<height>24</height>
+						<aspectratio>keep</aspectratio>
+						<texture colordiffuse="bg">$INFO[ListItem.Property(toggle)]</texture>
+						<visible>!String.IsEmpty(ListItem.Property(toggle)) + Control.HasFocus(50) + String.IsEqual(Window.Property(onbutton),1)</visible>
+					</control>
 					<control type="label">
 						<left>16</left>
 						<top>2</top>
@@ -411,7 +463,7 @@
 					<control type="label">
 						<left>1520</left>
 						<top>32</top>
-						<width>200</width>
+						<width>150</width>
 						<height>22</height>
 						<font>small_16</font>
 						<textcolor>text_tertiary</textcolor>
@@ -459,7 +511,7 @@
 				<height>24</height>
 				<font>mono_13</font>
 				<textcolor>text_tertiary</textcolor>
-				<label>enter — пауза или продолжить, другая раздача, убрать    esc — закрыть</label>
+				<label>→ на кнопку ⏸ / ▶ и enter, или пробел — пауза и старт    enter на строке — пауза, другая раздача, убрать    esc — закрыть</label>
 			</control>
 		</control>
 	</controls>
