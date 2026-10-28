@@ -77,6 +77,9 @@ let
         "lookandfeel.skin" = "skin.majan";
         # ./majan.nix's, majan's own have no cyrillic
         "lookandfeel.font" = "JetBrains Mono";
+        # no ".." first in a list: majan's page showed "Back" over a show's
+        # seasons, back is a key (q)
+        "filelists.showparentdiritems" = "false";
       };
       files = builtins.listToAttrs (
         lib.imap1 (n: name: {

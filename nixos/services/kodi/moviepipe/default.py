@@ -7,6 +7,7 @@
 #   ?action=person&tmdb=...|name=...[&tab=films|tv|directed]  ./person.py,
 #                      a person's page (majan's film page: the cast, "more
 #                      by director")
+#   ?action=trailer&type=movie|tv&tmdb=...  ./trailer.py, majan's film page
 import sys
 import urllib.parse
 
@@ -16,6 +17,7 @@ import xbmcplugin
 from actions import movie, show
 from arr import Error, error
 from person import person
+from trailer import trailer
 from windows import show_downloads
 
 HANDLE = int(sys.argv[1])
@@ -47,5 +49,7 @@ elif action in ("pick", "download"):
     player()
 elif action == "person":
     person(QUERY.get("tmdb"), QUERY.get("name", ""), QUERY.get("tab"))
+elif action == "trailer":
+    trailer(QUERY.get("type", "movie"), QUERY.get("tmdb"))
 else:
     listing()

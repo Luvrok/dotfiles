@@ -104,7 +104,11 @@ buildKodiAddon {
     # the film page with tmdb helper and movie pipe: the cast, "similar"
     # (./majan-moviepipe.xml). "more by director", kodi's button 13, was the
     # library's films: its own id, movie pipe's page of the director
-    # (./moviepipe/person.py)
+    # (./moviepipe/person.py), the name not last (kodi drops a quoted
+    # name="value" at a parameter's end). "trailer", kodi's 11, played
+    # ListItem.Trailer only, tmdb helper's films have none: its own id,
+    # ./moviepipe/trailer.py's, tmdb's first trailer then. 11 in the
+    # row's navigation too
     cp ${./majan-moviepipe.xml} 1080i/Includes_MoviePipe.xml
     substituteInPlace 1080i/Includes.xml --replace-fail \
       '<include file="Includes_CustomRows.xml"/>' \
@@ -114,6 +118,12 @@ buildKodiAddon {
       --replace-fail '<description>16px left / 14px top inner padding so the 5% zoom + focus frame are not clipped</description>' \
       '<include>MoviePipe_CastList</include>' \
       --replace-fail '<param name="id" value="13"/>' \
-      '<param name="id" value="9151"/><param name="onclick" value="RunPlugin(plugin://plugin.video.moviepipe/?action=person&amp;tab=directed&amp;name=$ESCINFO[ListItem.Director])"/>'
+      '<param name="id" value="9151"/><param name="onclick" value="RunPlugin(plugin://plugin.video.moviepipe/?action=person&amp;name=$ESCINFO[ListItem.Director]&amp;tab=directed)"/>' \
+      --replace-fail '<param name="id" value="11"/>' \
+      '<param name="id" value="9152"/><param name="onclick" value="RunPlugin(plugin://plugin.video.moviepipe/?action=trailer&amp;type=$VAR[MoviePipe_TmdbType]&amp;tmdb=$INFO[ListItem.UniqueID(tmdb)])"/>' \
+      --replace-fail '<param name="right1" value="11"/>' '<param name="right1" value="9152"/>' \
+      --replace-fail '<param name="left1" value="11"/>' '<param name="left1" value="9152"/>' \
+      --replace-fail '<expression name="VidInfo_ShowTrailer">$EXP[ShowTrailerButton] + !String.IsEmpty(ListItem.Trailer)</expression>' \
+      '<expression name="VidInfo_ShowTrailer">$EXP[ShowTrailerButton] + [!String.IsEmpty(ListItem.Trailer) | [[String.IsEqual(ListItem.DBType,movie) | String.IsEqual(ListItem.DBType,tvshow)] + !String.IsEmpty(ListItem.UniqueID(tmdb))]]</expression>'
   '';
 }

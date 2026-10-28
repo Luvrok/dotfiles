@@ -112,7 +112,7 @@ def players():
         helper = xbmcaddon.Addon("plugin.video.themoviedb.helper")
         helper.setSettingBool("only_resolve_strm", True)
         helper.setSettingInt("pagemulti_sync", 3)
-    except RuntimeError:
+    except (RuntimeError, TypeError):
         pass
 
 

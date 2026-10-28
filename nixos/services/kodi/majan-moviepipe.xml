@@ -21,12 +21,14 @@
 		<value condition="[String.IsEqual(ListItem.DBType,movie) | String.IsEqual(ListItem.DBType,tvshow)] + !String.IsEmpty(ListItem.UniqueID(tmdb))">plugin://plugin.video.themoviedb.helper/?info=cast&amp;tmdb_type=$VAR[MoviePipe_TmdbType]&amp;tmdb_id=$INFO[ListItem.UniqueID(tmdb)]</value>
 		<value condition="!String.IsEmpty(ListItem.TVShowTitle)">plugin://plugin.video.themoviedb.helper/?info=cast&amp;tmdb_type=tv&amp;query=$INFO[ListItem.TVShowTitle]</value>
 	</variable>
-	<!-- inside the cast list (50): its items, what enter does -->
+	<!-- inside the cast list (50): its items, what enter does. a quoted
+	     name ($ESCINFO) never last: kodi drops a parameter's name="value"
+	     at its end, the value too -->
 	<include name="MoviePipe_CastList">
 		<content target="videos">$VAR[MoviePipe_CastContent]</content>
 		<onclick condition="String.IsEqual(Container(50).ListItem.DBType,movie)">Dialog.Close(all,true)</onclick>
 		<onclick condition="String.IsEqual(Container(50).ListItem.DBType,movie)">ActivateWindow(Videos,videodb://movies/sets/$INFO[Container(50).ListItem.SetId]/?setid=$INFO[Container(50).ListItem.SetId],return)</onclick>
-		<onclick condition="!String.IsEqual(Container(50).ListItem.DBType,movie)">RunPlugin(plugin://plugin.video.moviepipe/?action=person&amp;tmdb=$INFO[Container(50).ListItem.Property(tmdb_id)]&amp;tab=$VAR[MoviePipe_PersonTab]&amp;name=$ESCINFO[Container(50).ListItem.Label])</onclick>
+		<onclick condition="!String.IsEqual(Container(50).ListItem.DBType,movie)">RunPlugin(plugin://plugin.video.moviepipe/?action=person&amp;name=$ESCINFO[Container(50).ListItem.Label]&amp;tmdb=$INFO[Container(50).ListItem.Property(tmdb_id)]&amp;tab=$VAR[MoviePipe_PersonTab])</onclick>
 	</include>
 	<!-- the first of the more row (9100) -->
 	<include name="MoviePipe_MoreButtons">

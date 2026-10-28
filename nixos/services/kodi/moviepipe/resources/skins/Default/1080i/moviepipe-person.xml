@@ -5,9 +5,10 @@
      too). tmdb helper's lists, the paths in the window's properties: 70 the
      details, 71 tmdb's people of a name, 500 the films. enter on one is
      tmdb helper's players (movie pipe's "Download", "Pick a release…"), i
-     its page, c its menu. the tabs (films, tv shows,
-     directed) and the orders (popular, newest, oldest) underlined like
-     majan's pages in its top bar -->
+     its page, c its menu. a show's enter is its page (tmdb helper's would
+     be its seasons in videos). the tabs (films, tv shows, directed) and the
+     orders (popular, newest, oldest) underlined like majan's pages in its
+     top bar -->
 <window>
 	<defaultcontrol always="true">9000</defaultcontrol>
 	<include>Anim_WindowOpenClose</include>
@@ -82,7 +83,7 @@
 				<height>22</height>
 				<font>mono_14</font>
 				<textcolor>$VAR[ColorCaption]</textcolor>
-				<label>ENTER — DOWNLOAD OR PICK A RELEASE   I — INFO</label>
+				<label>ENTER — DOWNLOAD, A SHOW: ITS PAGE   I — INFO</label>
 			</control>
 			<!-- the text column at x 680, as the film page's -->
 			<control type="grouplist">
@@ -271,7 +272,7 @@
 						</control>
 					</control>
 				</control>
-				<!-- the biography, 6 lines, enter: all of it -->
+				<!-- the biography, 6 lines, still, enter: all of it -->
 				<control type="group">
 					<left>16</left>
 					<width>vidview_col_w</width>
@@ -283,7 +284,6 @@
 						<font>body_26</font>
 						<textcolor>text_body</textcolor>
 						<label>$INFO[Window.Property(bio)]</label>
-						<autoscroll delay="6000" time="3000" repeat="10000">true</autoscroll>
 					</control>
 					<control type="button" id="9001">
 						<width>1080</width>
@@ -306,230 +306,130 @@
 			</control>
 			<!-- the tabs and the orders, where the film page's buttons are -->
 			<control type="grouplist" id="9000">
-				<left>673</left>
-				<top>811</top>
-				<width>1165</width>
-				<height>72</height>
+				<left>680</left>
+				<top>826</top>
+				<width>1144</width>
+				<height>subnav_h</height>
 				<orientation>horizontal</orientation>
 				<usecontrolcoords>true</usecontrolcoords>
-				<itemgap>9</itemgap>
+				<itemgap>12</itemgap>
 				<onup condition="Control.IsVisible(9001)">9001</onup>
 				<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
 				<onleft>noop</onleft>
 				<onright>noop</onright>
-				<control type="group">
-					<left>7</left>
-					<top>7</top>
-					<width>130</width>
-					<height>button_h</height>
-					<visible>!String.IsEmpty(Window.Property(films))</visible>
-					<control type="button" id="101">
-						<left>0</left>
-						<top>0</top>
-						<width>130</width>
-						<height>button_h</height>
-						<label>Films</label>
-						<font>button_23_semibold</font>
-						<textcolor>text_primary</textcolor>
-						<focusedcolor>text_primary</focusedcolor>
-						<align>center</align>
-						<textoffsetx>0</textoffsetx>
-						<include condition="Skin.HasSetting(majan.roundedcorners)">Majan_Tex_ButtonSecondary_Round</include>
-						<include condition="!Skin.HasSetting(majan.roundedcorners)">Majan_Tex_ButtonSecondary</include>
-						<onup condition="Control.IsVisible(9001)">9001</onup>
-						<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
-					</control>
-					<!-- the tab or the order shown: majan's underline of the page in its top bar -->
-					<control type="image">
-						<left>18</left>
-						<right>18</right>
-						<top>44</top>
-						<height>3</height>
-						<texture colordiffuse="$VAR[ColorAccent]">common/white.png</texture>
-						<visible>String.IsEqual(Window.Property(tab),films)</visible>
-					</control>
-					<include content="Majan_FocusFrameAlways">
-						<param name="visible" value="Control.HasFocus(101)"/>
-					</include>
+				<control type="togglebutton" id="101">
+					<left>0</left>
+					<width>auto</width>
+					<height>subnav_h</height>
+					<label>FILMS</label>
+					<altlabel>FILMS</altlabel>
+					<font>mono_15</font>
+					<textcolor>text_secondary</textcolor>
+					<focusedcolor>ink</focusedcolor>
+					<textoffsetx>14</textoffsetx>
+					<texturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</texturefocus>
+					<texturenofocus/>
+					<alttexturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</alttexturefocus>
+					<alttexturenofocus border="14,4,14,3" colordiffuse="$VAR[ColorAccent]">moviepipe-underline.png</alttexturenofocus>
+					<usealttexture>String.IsEqual(Window.Property(tab),films)</usealttexture>
+					<onup condition="Control.IsVisible(9001)">9001</onup>
+					<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
+					<visible>!String.IsEmpty(Window.Property(has_films))</visible>
 				</control>
-				<control type="group">
-					<left>7</left>
-					<top>7</top>
-					<width>176</width>
-					<height>button_h</height>
-					<visible>!String.IsEmpty(Window.Property(tv))</visible>
-					<control type="button" id="102">
-						<left>0</left>
-						<top>0</top>
-						<width>176</width>
-						<height>button_h</height>
-						<label>TV shows</label>
-						<font>button_23_semibold</font>
-						<textcolor>text_primary</textcolor>
-						<focusedcolor>text_primary</focusedcolor>
-						<align>center</align>
-						<textoffsetx>0</textoffsetx>
-						<include condition="Skin.HasSetting(majan.roundedcorners)">Majan_Tex_ButtonSecondary_Round</include>
-						<include condition="!Skin.HasSetting(majan.roundedcorners)">Majan_Tex_ButtonSecondary</include>
-						<onup condition="Control.IsVisible(9001)">9001</onup>
-						<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
-					</control>
-					<!-- the tab or the order shown: majan's underline of the page in its top bar -->
-					<control type="image">
-						<left>18</left>
-						<right>18</right>
-						<top>44</top>
-						<height>3</height>
-						<texture colordiffuse="$VAR[ColorAccent]">common/white.png</texture>
-						<visible>String.IsEqual(Window.Property(tab),tv)</visible>
-					</control>
-					<include content="Majan_FocusFrameAlways">
-						<param name="visible" value="Control.HasFocus(102)"/>
-					</include>
+				<control type="togglebutton" id="102">
+					<left>0</left>
+					<width>auto</width>
+					<height>subnav_h</height>
+					<label>TV SHOWS</label>
+					<altlabel>TV SHOWS</altlabel>
+					<font>mono_15</font>
+					<textcolor>text_secondary</textcolor>
+					<focusedcolor>ink</focusedcolor>
+					<textoffsetx>14</textoffsetx>
+					<texturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</texturefocus>
+					<texturenofocus/>
+					<alttexturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</alttexturefocus>
+					<alttexturenofocus border="14,4,14,3" colordiffuse="$VAR[ColorAccent]">moviepipe-underline.png</alttexturenofocus>
+					<usealttexture>String.IsEqual(Window.Property(tab),tv)</usealttexture>
+					<onup condition="Control.IsVisible(9001)">9001</onup>
+					<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
+					<visible>!String.IsEmpty(Window.Property(has_tv))</visible>
 				</control>
-				<control type="group">
-					<left>7</left>
-					<top>7</top>
-					<width>176</width>
-					<height>button_h</height>
-					<visible>!String.IsEmpty(Window.Property(directed))</visible>
-					<control type="button" id="103">
-						<left>0</left>
-						<top>0</top>
-						<width>176</width>
-						<height>button_h</height>
-						<label>Directed</label>
-						<font>button_23_semibold</font>
-						<textcolor>text_primary</textcolor>
-						<focusedcolor>text_primary</focusedcolor>
-						<align>center</align>
-						<textoffsetx>0</textoffsetx>
-						<include condition="Skin.HasSetting(majan.roundedcorners)">Majan_Tex_ButtonSecondary_Round</include>
-						<include condition="!Skin.HasSetting(majan.roundedcorners)">Majan_Tex_ButtonSecondary</include>
-						<onup condition="Control.IsVisible(9001)">9001</onup>
-						<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
-					</control>
-					<!-- the tab or the order shown: majan's underline of the page in its top bar -->
-					<control type="image">
-						<left>18</left>
-						<right>18</right>
-						<top>44</top>
-						<height>3</height>
-						<texture colordiffuse="$VAR[ColorAccent]">common/white.png</texture>
-						<visible>String.IsEqual(Window.Property(tab),directed)</visible>
-					</control>
-					<include content="Majan_FocusFrameAlways">
-						<param name="visible" value="Control.HasFocus(103)"/>
-					</include>
+				<control type="togglebutton" id="103">
+					<left>0</left>
+					<width>auto</width>
+					<height>subnav_h</height>
+					<label>DIRECTED</label>
+					<altlabel>DIRECTED</altlabel>
+					<font>mono_15</font>
+					<textcolor>text_secondary</textcolor>
+					<focusedcolor>ink</focusedcolor>
+					<textoffsetx>14</textoffsetx>
+					<texturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</texturefocus>
+					<texturenofocus/>
+					<alttexturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</alttexturefocus>
+					<alttexturenofocus border="14,4,14,3" colordiffuse="$VAR[ColorAccent]">moviepipe-underline.png</alttexturenofocus>
+					<usealttexture>String.IsEqual(Window.Property(tab),directed)</usealttexture>
+					<onup condition="Control.IsVisible(9001)">9001</onup>
+					<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
+					<visible>!String.IsEmpty(Window.Property(has_directed))</visible>
 				</control>
-				<control type="group">
-					<width>32</width>
-					<height>button_h</height>
-				</control>
-				<control type="group">
-					<left>7</left>
-					<top>7</top>
-					<width>160</width>
-					<height>button_h</height>
+				<control type="togglebutton" id="111">
+					<left>32</left>
+					<width>auto</width>
+					<height>subnav_h</height>
+					<label>POPULAR</label>
+					<altlabel>POPULAR</altlabel>
+					<font>mono_15</font>
+					<textcolor>text_secondary</textcolor>
+					<focusedcolor>ink</focusedcolor>
+					<textoffsetx>14</textoffsetx>
+					<texturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</texturefocus>
+					<texturenofocus/>
+					<alttexturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</alttexturefocus>
+					<alttexturenofocus border="14,4,14,3" colordiffuse="$VAR[ColorAccent]">moviepipe-underline.png</alttexturenofocus>
+					<usealttexture>String.IsEqual(Window.Property(sort),popular)</usealttexture>
+					<onup condition="Control.IsVisible(9001)">9001</onup>
+					<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
 					<visible>true</visible>
-					<control type="button" id="111">
-						<left>0</left>
-						<top>0</top>
-						<width>160</width>
-						<height>button_h</height>
-						<label>Popular</label>
-						<font>button_23_semibold</font>
-						<textcolor>text_primary</textcolor>
-						<focusedcolor>text_primary</focusedcolor>
-						<align>center</align>
-						<textoffsetx>0</textoffsetx>
-						<include condition="Skin.HasSetting(majan.roundedcorners)">Majan_Tex_ButtonSecondary_Round</include>
-						<include condition="!Skin.HasSetting(majan.roundedcorners)">Majan_Tex_ButtonSecondary</include>
-						<onup condition="Control.IsVisible(9001)">9001</onup>
-						<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
-					</control>
-					<!-- the tab or the order shown: majan's underline of the page in its top bar -->
-					<control type="image">
-						<left>18</left>
-						<right>18</right>
-						<top>44</top>
-						<height>3</height>
-						<texture colordiffuse="$VAR[ColorAccent]">common/white.png</texture>
-						<visible>String.IsEqual(Window.Property(sort),popular)</visible>
-					</control>
-					<include content="Majan_FocusFrameAlways">
-						<param name="visible" value="Control.HasFocus(111)"/>
-					</include>
 				</control>
-				<control type="group">
-					<left>7</left>
-					<top>7</top>
-					<width>150</width>
-					<height>button_h</height>
+				<control type="togglebutton" id="112">
+					<left>0</left>
+					<width>auto</width>
+					<height>subnav_h</height>
+					<label>NEWEST</label>
+					<altlabel>NEWEST</altlabel>
+					<font>mono_15</font>
+					<textcolor>text_secondary</textcolor>
+					<focusedcolor>ink</focusedcolor>
+					<textoffsetx>14</textoffsetx>
+					<texturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</texturefocus>
+					<texturenofocus/>
+					<alttexturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</alttexturefocus>
+					<alttexturenofocus border="14,4,14,3" colordiffuse="$VAR[ColorAccent]">moviepipe-underline.png</alttexturenofocus>
+					<usealttexture>String.IsEqual(Window.Property(sort),newest)</usealttexture>
+					<onup condition="Control.IsVisible(9001)">9001</onup>
+					<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
 					<visible>true</visible>
-					<control type="button" id="112">
-						<left>0</left>
-						<top>0</top>
-						<width>150</width>
-						<height>button_h</height>
-						<label>Newest</label>
-						<font>button_23_semibold</font>
-						<textcolor>text_primary</textcolor>
-						<focusedcolor>text_primary</focusedcolor>
-						<align>center</align>
-						<textoffsetx>0</textoffsetx>
-						<include condition="Skin.HasSetting(majan.roundedcorners)">Majan_Tex_ButtonSecondary_Round</include>
-						<include condition="!Skin.HasSetting(majan.roundedcorners)">Majan_Tex_ButtonSecondary</include>
-						<onup condition="Control.IsVisible(9001)">9001</onup>
-						<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
-					</control>
-					<!-- the tab or the order shown: majan's underline of the page in its top bar -->
-					<control type="image">
-						<left>18</left>
-						<right>18</right>
-						<top>44</top>
-						<height>3</height>
-						<texture colordiffuse="$VAR[ColorAccent]">common/white.png</texture>
-						<visible>String.IsEqual(Window.Property(sort),newest)</visible>
-					</control>
-					<include content="Majan_FocusFrameAlways">
-						<param name="visible" value="Control.HasFocus(112)"/>
-					</include>
 				</control>
-				<control type="group">
-					<left>7</left>
-					<top>7</top>
-					<width>150</width>
-					<height>button_h</height>
+				<control type="togglebutton" id="113">
+					<left>0</left>
+					<width>auto</width>
+					<height>subnav_h</height>
+					<label>OLDEST</label>
+					<altlabel>OLDEST</altlabel>
+					<font>mono_15</font>
+					<textcolor>text_secondary</textcolor>
+					<focusedcolor>ink</focusedcolor>
+					<textoffsetx>14</textoffsetx>
+					<texturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</texturefocus>
+					<texturenofocus/>
+					<alttexturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</alttexturefocus>
+					<alttexturenofocus border="14,4,14,3" colordiffuse="$VAR[ColorAccent]">moviepipe-underline.png</alttexturenofocus>
+					<usealttexture>String.IsEqual(Window.Property(sort),oldest)</usealttexture>
+					<onup condition="Control.IsVisible(9001)">9001</onup>
+					<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
 					<visible>true</visible>
-					<control type="button" id="113">
-						<left>0</left>
-						<top>0</top>
-						<width>150</width>
-						<height>button_h</height>
-						<label>Oldest</label>
-						<font>button_23_semibold</font>
-						<textcolor>text_primary</textcolor>
-						<focusedcolor>text_primary</focusedcolor>
-						<align>center</align>
-						<textoffsetx>0</textoffsetx>
-						<include condition="Skin.HasSetting(majan.roundedcorners)">Majan_Tex_ButtonSecondary_Round</include>
-						<include condition="!Skin.HasSetting(majan.roundedcorners)">Majan_Tex_ButtonSecondary</include>
-						<onup condition="Control.IsVisible(9001)">9001</onup>
-						<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
-					</control>
-					<!-- the tab or the order shown: majan's underline of the page in its top bar -->
-					<control type="image">
-						<left>18</left>
-						<right>18</right>
-						<top>44</top>
-						<height>3</height>
-						<texture colordiffuse="$VAR[ColorAccent]">common/white.png</texture>
-						<visible>String.IsEqual(Window.Property(sort),oldest)</visible>
-					</control>
-					<include content="Majan_FocusFrameAlways">
-						<param name="visible" value="Control.HasFocus(113)"/>
-					</include>
 				</control>
 			</control>
 			<!-- the films, where the film page's cast row is -->
@@ -582,6 +482,7 @@
 					<scrolltime tween="cubic" easing="out">200</scrolltime>
 					<content target="videos">$INFO[Window.Property(path)]</content>
 					<onclick condition="String.IsEqual(Container(500).ListItem.Property(specialsort),bottom)">SendClick(310)</onclick>
+					<onclick condition="String.IsEqual(Container(500).ListItem.DBType,tvshow)">Action(Info)</onclick>
 					<onup>9000</onup>
 					<ondown>noop</ondown>
 					<onleft condition="Integer.IsEqual(Container(500).CurrentItem,1) + Integer.IsGreater(Window.Property(page),1)">SendClick(311)</onleft>

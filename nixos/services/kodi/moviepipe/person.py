@@ -72,8 +72,6 @@ class Person(xbmcgui.WindowXML):
         self.bio = ""
         self.setProperty("name", self.name)
         self.setProperty("empty", "Loading…")
-        for tab in TABS:
-            self.setProperty(tab, "1")
         threading.Thread(target=self.load, daemon=True).start()
 
     def wait(self, cid, seconds=30):
@@ -129,9 +127,8 @@ class Person(xbmcgui.WindowXML):
             self.counts[tab] = int(get(f"Property({count})") or 0)
         # the directed: of all they did behind the camera, the tab says
         # if there's none. the others only with some
-        for tab in ("films", "tv"):
-            self.setProperty(tab, "1" if self.counts[tab] or self.tab == tab else "")
-        self.setProperty("directed", "1" if self.counts["directed"] or self.tab == "directed" else "")
+        for tab in TABS:
+            self.setProperty(f"has_{tab}", "1" if self.counts[tab] or self.tab == tab else "")
         self.setProperty("name", self.name)
         self.setProperty("bio", self.bio)
         self.setProperty("kind", KINDS.get(self.department, self.department or "Person"))
@@ -209,6 +206,9 @@ def person(tmdb=None, name="", tab=None):
         sort="popular",
         department="",
     )
+    # every tab till tmdb says which there are: the focus on the first
+    for tab in TABS:
+        w.setProperty(f"has_{tab}", "1")
     w.doModal()
     w.closing = True
     del w
