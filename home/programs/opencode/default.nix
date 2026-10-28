@@ -10,6 +10,8 @@ let
   # all of opencode through xray (127.0.0.1:10808): gemini answers "user
   # location is not supported" to a direct request. its bash commands get
   # the same env, as pi's shellCommandPrefix. loopback stays direct for docs
+  # and searxng. lsp servers and formatters come from nixos/packages.nix, a
+  # downloaded binary doesn't run on nixos
   proxy = "http://127.0.0.1:10808";
   noProxy = "localhost,127.0.0.1,::1";
   opencode = pkgs.symlinkJoin {
@@ -28,7 +30,9 @@ let
         ]} \
         --set no_proxy ${noProxy} \
         --set NO_PROXY ${noProxy} \
-        --set NODE_USE_ENV_PROXY 1
+        --set NODE_USE_ENV_PROXY 1 \
+        --set OPENCODE_DISABLE_LSP_DOWNLOAD true \
+        --prefix PATH : ${lib.makeBinPath [ pkgs.mcp-searxng ]}
     '';
   };
 
@@ -53,5 +57,7 @@ in
   xdg.configFile = {
     "opencode/opencode.json".source = settings;
     "opencode/skills/docs".source = "${repo}/skills/docs";
+    "opencode/AGENTS.md".source = "${repo}/AGENTS.md";
+    "opencode/commands".source = "${repo}/commands";
   };
 }

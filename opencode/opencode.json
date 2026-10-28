@@ -15,6 +15,8 @@
   ],
   "autoupdate": false,
   "share": "disabled",
+  "lsp": true,
+  "formatter": true,
 
   "mcp": {
     "docs": {
@@ -22,6 +24,14 @@
       "url": "http://127.0.0.1:6280/mcp",
       "enabled": true,
       "timeout": 120000
+    },
+    "searxng": {
+      "type": "local",
+      "command": ["mcp-searxng"],
+      "environment": {
+        "SEARXNG_URL": "http://127.0.0.1:11433"
+      },
+      "enabled": true
     }
   },
 
@@ -29,7 +39,9 @@
     "*": "allow",
 
     "docs_fetch_url": "deny",
+    "websearch": "deny",
     "webfetch": "ask",
+    "searxng_web_url_read": "ask",
 
     "read": {
       "*": "allow",
