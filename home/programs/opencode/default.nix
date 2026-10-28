@@ -7,6 +7,31 @@
 let
   repo = ../../../opencode;
 
+  # all of opencode through xray (127.0.0.1:10808): gemini answers "user
+  # location is not supported" to a direct request. its bash commands get
+  # the same env, as pi's shellCommandPrefix. loopback stays direct for docs
+  proxy = "http://127.0.0.1:10808";
+  noProxy = "localhost,127.0.0.1,::1";
+  opencode = pkgs.symlinkJoin {
+    name = "opencode-wrapped";
+    paths = [ pkgs.opencode ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/opencode \
+        ${lib.concatMapStringsSep " " (v: "--set ${v} ${proxy}") [
+          "http_proxy"
+          "https_proxy"
+          "HTTP_PROXY"
+          "HTTPS_PROXY"
+          "ALL_PROXY"
+          "all_proxy"
+        ]} \
+        --set no_proxy ${noProxy} \
+        --set NO_PROXY ${noProxy} \
+        --set NODE_USE_ENV_PROXY 1
+    '';
+  };
+
   # keys from nixos/services/opencode-keys.nix. opencode reads the files
   # itself, they are not in its env, so the agent's commands don't get them
   keys = lib.filterAttrs (n: _: lib.hasPrefix "opencode/" n) (osConfig.sops.secrets or { });
@@ -21,7 +46,7 @@ let
   '';
 in
 {
-  home.packages = [ pkgs.opencode ];
+  home.packages = [ opencode ];
 
   # store files: opencode keeps its state in ~/.local/state/opencode, the
   # config stays read-only, so the agent can't rewrite its own policy
