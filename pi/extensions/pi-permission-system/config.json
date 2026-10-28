@@ -24,7 +24,9 @@
     "path_write": {
       "*/extensions/pi-permission-system/*": "deny",
       "~/.pi/agent/settings.json": "deny",
-      "~/.pi/agent/mcp.json": "deny"
+      "~/.pi/agent/mcp.json": "deny",
+      "*/.git/*": "deny",
+      "*/.pi/*": "deny"
     },
 
     "external_directory": {
@@ -73,11 +75,9 @@
       "fd *": "allow",
 
       "sort *": "allow",
-      "uniq *": "allow",
       "cut *": "allow",
       "tr *": "allow",
       "jq *": "allow",
-      "sed -n *": "allow",
       "diff *": "allow",
       "sha256sum *": "allow",
 
@@ -91,13 +91,6 @@
       "git branch": "allow",
       "git remote -v": "allow",
 
-      "go build *": "allow",
-      "go vet *": "allow",
-      "go test *": "allow",
-      "nix eval *": "allow",
-      "nix flake show *": "allow",
-      "nix flake check *": "allow",
-
       "qmd search *": "allow",
       "qmd vsearch *": "allow",
       "qmd query *": "allow",
@@ -107,7 +100,26 @@
       "qmd ls *": "allow",
       "qmd status": "allow",
       "qmd collection list": "allow",
-      "qmd context list": "allow"
+      "qmd context list": "allow",
+
+      "* > *": "ask",
+      "* >> *": "ask",
+      "* *.env": "ask",
+      "* *.env.*": "ask",
+      "find * -exec*": "ask",
+      "find * -ok*": "ask",
+      "find * -fprint*": "ask",
+      "find * -fls*": "ask",
+      "fd * -x*": "ask",
+      "fd * -X*": "ask",
+      "fd * --exec*": "ask",
+      "rg * --pre*": "ask",
+      "sort * -o*": "ask",
+      "sort * --output*": "ask",
+      "tree * -o*": "ask",
+      "git * --output*": "ask",
+      "git * --ext-diff*": "ask",
+      "git * --textconv*": "ask"
     }
   }
 }
