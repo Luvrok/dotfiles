@@ -1,0 +1,123 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "opencode/deepseek-v4-flash-free",
+  "small_model": "opencode/deepseek-v4-flash-free",
+  "enabled_providers": ["opencode"],
+  "autoupdate": false,
+  "share": "disabled",
+
+  "mcp": {
+    "docs": {
+      "type": "remote",
+      "url": "http://127.0.0.1:6280/mcp",
+      "enabled": true,
+      "timeout": 120000
+    }
+  },
+
+  "permission": {
+    "*": "allow",
+
+    "docs_fetch_url": "deny",
+    "webfetch": "ask",
+
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow",
+      "~/.ssh/**": "deny",
+      "~/.gnupg/**": "deny",
+      "~/.config/sops/**": "deny",
+      "~/.config/sops-nix/**": "deny",
+      "/run/secrets/**": "deny",
+      "/run/secrets.d/**": "deny",
+      "/run/user/*/secrets.d/**": "deny",
+      "~/.netrc": "deny",
+      "~/.config/gh/**": "deny",
+      "~/.aws/**": "deny"
+    },
+
+    "edit": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow",
+      "~/.ssh/**": "deny",
+      "~/.gnupg/**": "deny",
+      "~/.config/sops/**": "deny",
+      "~/.config/sops-nix/**": "deny",
+      "/run/secrets/**": "deny",
+      "/run/secrets.d/**": "deny",
+      "/run/user/*/secrets.d/**": "deny",
+      "~/.netrc": "deny",
+      "~/.config/gh/**": "deny",
+      "~/.aws/**": "deny",
+      "~/.config/opencode/**": "deny",
+      "/nix/store/**": "deny"
+    },
+
+    "external_directory": {
+      "*": "deny",
+      "~/.config/opencode/**": "allow",
+      "~/.local/share/opencode/**": "allow",
+      "/nix/store/**": "allow"
+    },
+
+    "bash": {
+      "*": "ask",
+
+      "cd *": "allow",
+      "pwd": "allow",
+      "echo *": "allow",
+      "which *": "allow",
+      "type *": "allow",
+      "date": "allow",
+      "uname *": "allow",
+      "ps *": "allow",
+
+      "cat *": "allow",
+      "head *": "allow",
+      "tail *": "allow",
+      "ls *": "allow",
+      "tree *": "allow",
+      "stat *": "allow",
+      "file *": "allow",
+      "wc *": "allow",
+      "du *": "allow",
+      "df *": "allow",
+
+      "grep *": "allow",
+      "rg *": "allow",
+      "find *": "allow",
+      "find * -delete*": "ask",
+      "fd *": "allow",
+
+      "sort *": "allow",
+      "uniq *": "allow",
+      "cut *": "allow",
+      "tr *": "allow",
+      "jq *": "allow",
+      "sed -n *": "allow",
+      "diff *": "allow",
+      "sha256sum *": "allow",
+
+      "git status *": "allow",
+      "git diff *": "allow",
+      "git log *": "allow",
+      "git show *": "allow",
+      "git blame *": "allow",
+      "git ls-files *": "allow",
+      "git rev-parse *": "allow",
+      "git branch": "allow",
+      "git remote -v": "allow",
+
+      "go build *": "allow",
+      "go vet *": "allow",
+      "go test *": "allow",
+      "nix eval *": "allow",
+      "nix flake show *": "allow",
+      "nix flake check *": "allow"
+    }
+  }
+}

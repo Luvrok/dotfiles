@@ -14,6 +14,7 @@
     # ./zathura.nix
     ./element-desktop.nix
     ./pi
+    ./opencode
     ./eww
   ];
 }
