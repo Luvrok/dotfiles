@@ -76,7 +76,15 @@
       "~/.config/gh/**": "deny",
       "~/.aws/**": "deny",
       "~/.config/opencode/**": "deny",
-      "/nix/store/**": "deny"
+      "/nix/store/**": "deny",
+      ".git/**": "deny",
+      "*/.git/**": "deny",
+      "opencode.json": "deny",
+      "opencode.jsonc": "deny",
+      "*/opencode.json": "deny",
+      "*/opencode.jsonc": "deny",
+      ".opencode/**": "deny",
+      "*/.opencode/**": "deny"
     },
 
     "external_directory": {
@@ -116,11 +124,9 @@
       "fd *": "allow",
 
       "sort *": "allow",
-      "uniq *": "allow",
       "cut *": "allow",
       "tr *": "allow",
       "jq *": "allow",
-      "sed -n *": "allow",
       "diff *": "allow",
       "sha256sum *": "allow",
 
@@ -134,12 +140,24 @@
       "git branch": "allow",
       "git remote -v": "allow",
 
-      "go build *": "allow",
-      "go vet *": "allow",
-      "go test *": "allow",
-      "nix eval *": "allow",
-      "nix flake show *": "allow",
-      "nix flake check *": "allow"
+      "* > *": "ask",
+      "* >> *": "ask",
+      "* *.env": "ask",
+      "* *.env.*": "ask",
+      "find * -exec*": "ask",
+      "find * -ok*": "ask",
+      "find * -fprint*": "ask",
+      "find * -fls*": "ask",
+      "fd * -x*": "ask",
+      "fd * -X*": "ask",
+      "fd * --exec*": "ask",
+      "rg * --pre*": "ask",
+      "sort * -o*": "ask",
+      "sort * --output*": "ask",
+      "tree * -o*": "ask",
+      "git * --output*": "ask",
+      "git * --ext-diff*": "ask",
+      "git * --textconv*": "ask"
     }
   }
 }
