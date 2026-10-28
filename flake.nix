@@ -32,6 +32,24 @@
 
     qmd.url = "github:tobi/qmd";
 
+    # kodi's add-ons (nixos/services/kodi/addons.nix), nix flake update
+    # kodi-skins kodi-skinvariables kodi-tmdbhelper kodi-jurialmunkey
+    # kodi-infotagger brings new versions
+    kodi-skins.url = "git+https://github.com/KarmaMole/kodi-skins?shallow=1";
+    kodi-skins.flake = false;
+    kodi-skinvariables.url = "git+https://github.com/jurialmunkey/script.skinvariables?ref=nexus&shallow=1";
+    kodi-skinvariables.flake = false;
+    kodi-tmdbhelper.url = "git+https://github.com/jurialmunkey/plugin.video.themoviedb.helper?ref=nexus&shallow=1";
+    kodi-tmdbhelper.flake = false;
+    kodi-jurialmunkey.url = "git+https://github.com/jurialmunkey/script.module.jurialmunkey?shallow=1";
+    kodi-jurialmunkey.flake = false;
+    kodi-infotagger.url = "git+https://github.com/jurialmunkey/script.module.infotagger?shallow=1";
+    kodi-infotagger.flake = false;
+
+    # rutracker through cloudflare for prowlarr (nixos/services/arr)
+    rutracker-cf-proxy.url = "git+https://github.com/rofl3228/rutracker-cf-proxy?shallow=1";
+    rutracker-cf-proxy.flake = false;
+
     picom-pijulius.url = "github:pijulius/picom";
     picom-pijulius.flake = false;
 

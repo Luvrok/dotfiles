@@ -41,7 +41,7 @@ in
       PORT = toString port;
       BASE_PATH = basePath;
       STATIC_DIR = "${app}/public";
-      LT_URL = "http://[::1]:${toString config.services.libretranslate.port}";
+      LT_URL = "http://127.0.0.1:${toString config.services.libretranslate.port}"; # libretranslate's host
       MAX_ACTIVE = "1"; # files translated at once, the rest wait in a queue
       MAX_QUEUE = "20"; # queued files beyond this get "server is busy"
       JOB_TIMEOUT_S = "1800"; # one file, queue wait excluded

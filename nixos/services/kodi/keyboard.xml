@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- vim keys in kodi, over its own (special://xbmc/system/keymaps/keyboard.xml),
+     the same in every skin. h j k l were the pvr windows, q queued an item.
+     f fast-forwarded kodi's own player, mpv plays: it scans the library.
+     shift+letters stay kodi's: jump to that letter in a list, so no G.
+     quickshell's keys menu has them ([kodi] in keys.conf) -->
+<keymap>
+	<global>
+		<keyboard>
+			<h>Left</h>
+			<j>Down</j>
+			<k>Up</k>
+			<l>Right</l>
+			<g>FirstPage</g>
+			<d mod="ctrl">PageDown</d>
+			<u mod="ctrl">PageUp</u>
+			<q>Back</q>
+			<f>UpdateLibrary(video)</f>
+			<!-- majan's home tabs, 01 home, 02 movies, 03 tv shows, from any
+			     window. number keys were for typing numbers in lists, a text
+			     field still takes them -->
+			<one>ActivateWindowAndFocus(Home,9001,0)</one>
+			<two>ActivateWindowAndFocus(Home,9002,0)</two>
+			<three>ActivateWindowAndFocus(Home,9003,0)</three>
+			<!-- 4 the tv channels, 5 tmdb helper (films, shows, people not in
+			     the library), 6 what downloads (../arr) -->
+			<four>ActivateWindow(TVChannels)</four>
+			<five>ActivateWindow(Videos,plugin://plugin.video.themoviedb.helper/,return)</five>
+			<six>RunPlugin(plugin://plugin.video.moviepipe/?action=downloads)</six>
+			<!-- majan's search, the home screen's search icon opens it -->
+			<forwardslash>ActivateWindow(1150)</forwardslash>
+		</keyboard>
+	</global>
+	<!-- on home itself kodi doesn't activate it again, the tab only takes
+	     the focus -->
+	<Home>
+		<keyboard>
+			<one>SetFocus(9001)</one>
+			<two>SetFocus(9002)</two>
+			<three>SetFocus(9003)</three>
+		</keyboard>
+	</Home>
+	<!-- typing: a key that maps to moving around moves instead of typing
+	     its letter, noop lets kodi type it -->
+	<VirtualKeyboard>
+		<keyboard>
+			<h>noop</h>
+			<j>noop</j>
+			<k>noop</k>
+			<l>noop</l>
+			<g>noop</g>
+			<q>noop</q>
+			<f>noop</f>
+			<forwardslash>noop</forwardslash>
+		</keyboard>
+	</VirtualKeyboard>
+</keymap>

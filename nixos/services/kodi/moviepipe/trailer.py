@@ -1,0 +1,40 @@
+# "trailer" on majan's film page (../majan.nix): its own, or tmdb's first
+# trailer (youtube) by tmdb helper's videos of it. tmdb helper's lists
+# leave ListItem.Trailer empty
+import json
+
+import xbmc
+
+from arr import notify
+
+HELPER = "plugin://plugin.video.themoviedb.helper/"
+
+
+def videos(kind, tmdb):
+    # tmdb helper's videos of a film or show, its trailers first
+    found = json.loads(
+        xbmc.executeJSONRPC(
+            json.dumps(
+                {
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "method": "Files.GetDirectory",
+                    "params": {"directory": f"{HELPER}?info=videos&tmdb_type={kind}&tmdb_id={tmdb}", "media": "video"},
+                }
+            )
+        )
+    )
+    return [f["file"] for f in found.get("result", {}).get("files") or [] if f.get("filetype") == "file"]
+
+
+def trailer(kind, tmdb):
+    title = xbmc.getInfoLabel("ListItem.Title")
+    path = xbmc.getInfoLabel("ListItem.Trailer")
+    if not path and tmdb:
+        path = next(iter(videos(kind, tmdb)), "")
+    if not path:
+        notify(title, "No trailer on TMDb")
+        return
+    # what kodi's own did: the page goes, the trailer plays
+    xbmc.executebuiltin("Dialog.Close(all,true)", True)
+    xbmc.executebuiltin(f"PlayMedia({json.dumps(path)},playlist_type_hint=1)")

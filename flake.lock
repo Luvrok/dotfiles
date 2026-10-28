@@ -195,6 +195,93 @@
         "type": "github"
       }
     },
+    "kodi-infotagger": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792275696,
+        "narHash": "sha256-ZIYC5QWd4zW3eJ4rqohwnQf5TbdP7XLy+j8c222YKvA=",
+        "ref": "refs/heads/main",
+        "rev": "0118f53c9cf68a6625794d07af607cac1e920064",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/jurialmunkey/script.module.infotagger"
+      },
+      "original": {
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/jurialmunkey/script.module.infotagger"
+      }
+    },
+    "kodi-jurialmunkey": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1777295778,
+        "narHash": "sha256-3qcLh1vZ4Y7Sf5NHl4j6cmb+n6KodwOBjmBmHLDinCY=",
+        "ref": "refs/heads/main",
+        "rev": "8f42fb5f4698f3e4552f38955964b2f3843dba69",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/jurialmunkey/script.module.jurialmunkey"
+      },
+      "original": {
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/jurialmunkey/script.module.jurialmunkey"
+      }
+    },
+    "kodi-skins": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792951658,
+        "narHash": "sha256-hTfK30RV/1oDDdQiFmuEE+81uOWR6ZEqG+NaGa2bLhw=",
+        "ref": "refs/heads/main",
+        "rev": "0f6a3246f1aa41e82f895366709d2bcaaa87e6fc",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/KarmaMole/kodi-skins"
+      },
+      "original": {
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/KarmaMole/kodi-skins"
+      }
+    },
+    "kodi-skinvariables": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792583550,
+        "narHash": "sha256-4vHDrSYEmNjrW15FOl9CV/JcoqwH7yf4HbFeuEYk3/o=",
+        "ref": "nexus",
+        "rev": "9c20ea9bcf67fcb4370a5771da08b6cf7bdb676e",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/jurialmunkey/script.skinvariables"
+      },
+      "original": {
+        "ref": "nexus",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/jurialmunkey/script.skinvariables"
+      }
+    },
+    "kodi-tmdbhelper": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793106430,
+        "narHash": "sha256-iF5xKbTTseoGVgNiP5IJX+UtRgyLn1Pxw72suxx399M=",
+        "ref": "nexus",
+        "rev": "edae17cb8bfc69d1f614ff44b2490ecd6bd5e9a0",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/jurialmunkey/plugin.video.themoviedb.helper"
+      },
+      "original": {
+        "ref": "nexus",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/jurialmunkey/plugin.video.themoviedb.helper"
+      }
+    },
     "lazygit": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -419,18 +506,41 @@
         "dwm": "dwm",
         "dwmblocks": "dwmblocks",
         "home-manager": "home-manager",
+        "kodi-infotagger": "kodi-infotagger",
+        "kodi-jurialmunkey": "kodi-jurialmunkey",
+        "kodi-skins": "kodi-skins",
+        "kodi-skinvariables": "kodi-skinvariables",
+        "kodi-tmdbhelper": "kodi-tmdbhelper",
         "lazygit": "lazygit",
         "llama-cpp": "llama-cpp",
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-pinned": "nixpkgs-pinned",
         "picom-pijulius": "picom-pijulius",
         "qmd": "qmd",
+        "rutracker-cf-proxy": "rutracker-cf-proxy",
         "slock": "slock",
         "sops-nix": "sops-nix",
         "st": "st",
         "textfoxy": "textfoxy",
         "voidsddm": "voidsddm",
         "zapret-discord-youtube": "zapret-discord-youtube"
+      }
+    },
+    "rutracker-cf-proxy": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1789378105,
+        "narHash": "sha256-Cb5+PhAP79U6EAn5l2odC95DUzx0HQzXLWVy7qH2DKU=",
+        "ref": "refs/heads/main",
+        "rev": "3dc9f7a0a612382ba8bbca1eb4520086fb1fbcb5",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/rofl3228/rutracker-cf-proxy"
+      },
+      "original": {
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/rofl3228/rutracker-cf-proxy"
       }
     },
     "slock": {

@@ -181,6 +181,8 @@ hl.window_rule({ match = { title = "^Picture-in-Picture$" }, float = true, size 
 hl.window_rule({ match = { title = ".*termfilechooser.*" }, float = true, size = { 1000, 700 }, center = true })
 hl.window_rule({ match = { class = "^dragon-drop$" }, float = true, center = true })
 hl.window_rule({ match = { class = "^ffplay$", title = "^android-webcam$" }, float = true })
+-- kodi (nixos/services/kodi) has no border, like a fullscreen window
+hl.window_rule({ match = { class = "^[Kk]odi$" }, border_size = 0 })
 
 -- apps ask to be maximized (kitty after a nixpkgs update): a maximized window
 -- covers the tag like monocle with gaps, the master goes under it, and a
@@ -430,6 +432,8 @@ hl.bind(mod .. " + x", qs("menu open windows"))
 hl.bind(mod .. " + slash", qs("menu open keys"))
 hl.bind(mod .. " + SHIFT + n", qs("notifications close"))
 hl.bind(mod .. " + o", hl.dsp.exec_cmd("kitty --class movies -e yazi /media/outer-1"))
+-- the same folders as a library, kodi
+hl.bind(mod .. " + SHIFT + o", hl.dsp.exec_cmd("kodi"))
 
 -- print: the screenshot (quickshell Shot.qml, frozen like flameshot). $mod+print:
 -- the text of a region to the clipboard, esc in slurp does nothing

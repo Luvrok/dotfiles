@@ -1,0 +1,626 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- a person's page (../../../../person.py), majan's film page's layout
+     (Includes_VideoInfo.xml): the photo, what tmdb knows of them, the films
+     row under it (the page slides up while it has the focus, its cast row
+     too). tmdb helper's lists, the paths in the window's properties: 70 the
+     details, 71 tmdb's people of a name, 500 the films. enter on one is
+     tmdb helper's players (movie pipe's "Download", "Pick a release…"), i
+     its page, c its menu. a show's enter is its page (tmdb helper's would
+     be its seasons in videos). the tabs (films, tv shows, directed) and the
+     orders (popular, newest, oldest) underlined like majan's pages in its
+     top bar -->
+<window>
+	<defaultcontrol always="true">9000</defaultcontrol>
+	<include>Anim_WindowOpenClose</include>
+	<controls>
+		<include>Majan_Background</include>
+		<control type="list" id="70">
+			<left>0</left>
+			<top>0</top>
+			<width>1</width>
+			<height>1</height>
+			<content target="videos">$INFO[Window.Property(details)]</content>
+			<itemlayout width="1" height="1"/>
+			<focusedlayout width="1" height="1"/>
+		</control>
+		<control type="list" id="71">
+			<left>0</left>
+			<top>0</top>
+			<width>1</width>
+			<height>1</height>
+			<content target="videos">$INFO[Window.Property(search)]</content>
+			<itemlayout width="1" height="1"/>
+			<focusedlayout width="1" height="1"/>
+		</control>
+		<control type="button" id="310">
+			<width>1</width>
+			<height>1</height>
+			<texturefocus/>
+			<texturenofocus/>
+			<visible>false</visible>
+		</control>
+		<control type="button" id="311">
+			<width>1</width>
+			<height>1</height>
+			<texturefocus/>
+			<texturenofocus/>
+			<visible>false</visible>
+		</control>
+		<control type="group">
+			<animation type="Conditional" condition="Control.HasFocus(500) + !Skin.HasSetting(majan.reducemotion)" reversible="true">
+				<effect type="slide" start="0,0" end="0,-440" time="200" tween="cubic" easing="out"/>
+			</animation>
+			<animation type="Conditional" condition="Control.HasFocus(500) + Skin.HasSetting(majan.reducemotion)" reversible="true">
+				<effect type="slide" start="0,0" end="0,-440" time="0"/>
+			</animation>
+			<include content="Majan_PageHeader">
+				<param name="index" value="TMDb"/>
+				<param name="title" value="$INFO[Window.Property(kind)]"/>
+			</include>
+			<include>Majan_Clock</include>
+			<include>Majan_TopRule</include>
+			<!-- the photo, 96,168 520x780 -->
+			<control type="group">
+				<left>page_margin</left>
+				<top>content_top</top>
+				<width>vidview_hero_w</width>
+				<height>vidview_hero_h</height>
+				<include content="VidView_ArtFallback">
+					<param name="mask" value="masks/poster_round8_xl.png"/>
+					<param name="label" value="$INFO[Window.Property(name)]"/>
+					<param name="label_visible" value="String.IsEmpty(Container(70).ListItemAbsolute(0).Art(thumb))"/>
+				</include>
+				<include content="VidView_ArtImage">
+					<param name="art" value="$INFO[Container(70).ListItemAbsolute(0).Art(thumb)]"/>
+					<param name="mask" value="masks/poster_round8_xl.png"/>
+					<param name="fade" value="120"/>
+				</include>
+			</control>
+			<control type="label">
+				<left>page_margin</left>
+				<top>966</top>
+				<width>vidview_hero_w</width>
+				<height>22</height>
+				<font>mono_14</font>
+				<textcolor>$VAR[ColorCaption]</textcolor>
+				<label>ENTER — DOWNLOAD, A SHOW: ITS PAGE   I — INFO</label>
+			</control>
+			<!-- the text column at x 680, as the film page's -->
+			<control type="grouplist">
+				<left>664</left>
+				<top>152</top>
+				<width>1176</width>
+				<height>656</height>
+				<orientation>vertical</orientation>
+				<usecontrolcoords>true</usecontrolcoords>
+				<itemgap>16</itemgap>
+				<control type="label">
+					<left>16</left>
+					<top>16</top>
+					<width>vidview_col_w</width>
+					<height>22</height>
+					<font>mono_15</font>
+					<textcolor>$VAR[ColorAccent]</textcolor>
+					<label>[UPPERCASE]$INFO[Window.Property(kicker)][/UPPERCASE]</label>
+				</control>
+				<control type="textbox">
+					<left>16</left>
+					<width>vidview_col_w</width>
+					<height max="198">auto</height>
+					<font>display_92</font>
+					<textcolor>text_primary</textcolor>
+					<label>$INFO[Window.Property(name)]</label>
+				</control>
+				<control type="group">
+					<left>16</left>
+					<width>vidview_col_w</width>
+					<height>vidview_fact_h</height>
+					<include content="Majan_Rule">
+						<param name="top" value="0"/>
+						<param name="left" value="0"/>
+						<param name="width" value="vidview_col_w"/>
+						<param name="color" value="$VAR[ColorRuleStrong]"/>
+					</include>
+					<include content="Majan_Rule">
+						<param name="top" value="95"/>
+						<param name="left" value="0"/>
+						<param name="width" value="vidview_col_w"/>
+						<param name="color" value="$VAR[ColorRuleStrong]"/>
+					</include>
+					<control type="grouplist">
+						<width>vidview_col_w</width>
+						<height>vidview_fact_h</height>
+						<orientation>horizontal</orientation>
+						<itemgap>0</itemgap>
+						<control type="group">
+							<width>230</width>
+							<height>vidview_fact_h</height>
+							<visible>!String.IsEmpty(Window.Property(born))</visible>
+							<control type="label">
+								<left>0</left>
+								<top>16</top>
+								<width>210</width>
+								<height>20</height>
+								<font>mono_13</font>
+								<textcolor>$VAR[ColorCaption]</textcolor>
+								<label>BORN</label>
+							</control>
+							<control type="label">
+								<left>0</left>
+								<top>40</top>
+								<width>210</width>
+								<height>42</height>
+								<font>stat_30</font>
+								<textcolor>text_primary</textcolor>
+								<label>$INFO[Window.Property(born)]</label>
+							</control>
+						</control>
+						<control type="group">
+							<width>230</width>
+							<height>vidview_fact_h</height>
+							<visible>!String.IsEmpty(Window.Property(died))</visible>
+							<control type="label">
+								<left>0</left>
+								<top>16</top>
+								<width>210</width>
+								<height>20</height>
+								<font>mono_13</font>
+								<textcolor>$VAR[ColorCaption]</textcolor>
+								<label>DIED</label>
+							</control>
+							<control type="label">
+								<left>0</left>
+								<top>40</top>
+								<width>210</width>
+								<height>42</height>
+								<font>stat_30</font>
+								<textcolor>text_primary</textcolor>
+								<label>$INFO[Window.Property(died)]</label>
+							</control>
+						</control>
+						<control type="group">
+							<width>110</width>
+							<height>vidview_fact_h</height>
+							<visible>!String.IsEmpty(Window.Property(age))</visible>
+							<control type="label">
+								<left>0</left>
+								<top>16</top>
+								<width>90</width>
+								<height>20</height>
+								<font>mono_13</font>
+								<textcolor>$VAR[ColorCaption]</textcolor>
+								<label>AGE</label>
+							</control>
+							<control type="label">
+								<left>0</left>
+								<top>40</top>
+								<width>90</width>
+								<height>42</height>
+								<font>stat_30</font>
+								<textcolor>text_primary</textcolor>
+								<label>$INFO[Window.Property(age)]</label>
+							</control>
+						</control>
+						<control type="group">
+							<width>344</width>
+							<height>vidview_fact_h</height>
+							<visible>!String.IsEmpty(Window.Property(place))</visible>
+							<control type="label">
+								<left>0</left>
+								<top>16</top>
+								<width>324</width>
+								<height>20</height>
+								<font>mono_13</font>
+								<textcolor>$VAR[ColorCaption]</textcolor>
+								<label>FROM</label>
+							</control>
+							<control type="label">
+								<left>0</left>
+								<top>40</top>
+								<width>324</width>
+								<height>42</height>
+								<font>stat_30</font>
+								<textcolor>text_primary</textcolor>
+								<label>$INFO[Window.Property(place)]</label>
+							</control>
+						</control>
+						<control type="group">
+							<width>110</width>
+							<height>vidview_fact_h</height>
+							<visible>!String.IsEmpty(Window.Property(films))</visible>
+							<control type="label">
+								<left>0</left>
+								<top>16</top>
+								<width>90</width>
+								<height>20</height>
+								<font>mono_13</font>
+								<textcolor>$VAR[ColorCaption]</textcolor>
+								<label>FILMS</label>
+							</control>
+							<control type="label">
+								<left>0</left>
+								<top>40</top>
+								<width>90</width>
+								<height>42</height>
+								<font>stat_30</font>
+								<textcolor>text_primary</textcolor>
+								<label>$INFO[Window.Property(films)]</label>
+							</control>
+						</control>
+						<control type="group">
+							<width>140</width>
+							<height>vidview_fact_h</height>
+							<visible>!String.IsEmpty(Window.Property(tvshows))</visible>
+							<control type="label">
+								<left>0</left>
+								<top>16</top>
+								<width>120</width>
+								<height>20</height>
+								<font>mono_13</font>
+								<textcolor>$VAR[ColorCaption]</textcolor>
+								<label>TV SHOWS</label>
+							</control>
+							<control type="label">
+								<left>0</left>
+								<top>40</top>
+								<width>120</width>
+								<height>42</height>
+								<font>stat_30</font>
+								<textcolor>text_primary</textcolor>
+								<label>$INFO[Window.Property(tvshows)]</label>
+							</control>
+						</control>
+					</control>
+				</control>
+				<!-- the biography, 6 lines, still, enter: all of it -->
+				<control type="group">
+					<left>16</left>
+					<width>vidview_col_w</width>
+					<height>228</height>
+					<visible>!String.IsEmpty(Window.Property(bio))</visible>
+					<control type="textbox">
+						<width>1080</width>
+						<height>228</height>
+						<font>body_26</font>
+						<textcolor>text_body</textcolor>
+						<label>$INFO[Window.Property(bio)]</label>
+					</control>
+					<control type="button" id="9001">
+						<width>1080</width>
+						<height>228</height>
+						<label></label>
+						<texturefocus/>
+						<texturenofocus/>
+						<onup>noop</onup>
+						<ondown>9000</ondown>
+						<onleft>noop</onleft>
+						<onright>noop</onright>
+					</control>
+					<control type="group">
+						<width>1080</width>
+						<height>228</height>
+						<visible>Control.HasFocus(9001)</visible>
+						<include>Majan_FocusFrameAlways</include>
+					</control>
+				</control>
+			</control>
+			<!-- the tabs and the orders, where the film page's buttons are -->
+			<control type="grouplist" id="9000">
+				<left>680</left>
+				<top>826</top>
+				<width>1144</width>
+				<height>subnav_h</height>
+				<orientation>horizontal</orientation>
+				<usecontrolcoords>true</usecontrolcoords>
+				<itemgap>12</itemgap>
+				<onup condition="Control.IsVisible(9001)">9001</onup>
+				<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
+				<onleft>noop</onleft>
+				<onright>noop</onright>
+				<control type="togglebutton" id="101">
+					<left>0</left>
+					<width>auto</width>
+					<height>subnav_h</height>
+					<label>FILMS</label>
+					<altlabel>FILMS</altlabel>
+					<font>mono_15</font>
+					<textcolor>text_secondary</textcolor>
+					<focusedcolor>ink</focusedcolor>
+					<textoffsetx>14</textoffsetx>
+					<texturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</texturefocus>
+					<texturenofocus/>
+					<alttexturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</alttexturefocus>
+					<alttexturenofocus border="14,4,14,3" colordiffuse="$VAR[ColorAccent]">moviepipe-underline.png</alttexturenofocus>
+					<usealttexture>String.IsEqual(Window.Property(tab),films)</usealttexture>
+					<onup condition="Control.IsVisible(9001)">9001</onup>
+					<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
+					<visible>!String.IsEmpty(Window.Property(has_films))</visible>
+				</control>
+				<control type="togglebutton" id="102">
+					<left>0</left>
+					<width>auto</width>
+					<height>subnav_h</height>
+					<label>TV SHOWS</label>
+					<altlabel>TV SHOWS</altlabel>
+					<font>mono_15</font>
+					<textcolor>text_secondary</textcolor>
+					<focusedcolor>ink</focusedcolor>
+					<textoffsetx>14</textoffsetx>
+					<texturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</texturefocus>
+					<texturenofocus/>
+					<alttexturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</alttexturefocus>
+					<alttexturenofocus border="14,4,14,3" colordiffuse="$VAR[ColorAccent]">moviepipe-underline.png</alttexturenofocus>
+					<usealttexture>String.IsEqual(Window.Property(tab),tv)</usealttexture>
+					<onup condition="Control.IsVisible(9001)">9001</onup>
+					<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
+					<visible>!String.IsEmpty(Window.Property(has_tv))</visible>
+				</control>
+				<control type="togglebutton" id="103">
+					<left>0</left>
+					<width>auto</width>
+					<height>subnav_h</height>
+					<label>DIRECTED</label>
+					<altlabel>DIRECTED</altlabel>
+					<font>mono_15</font>
+					<textcolor>text_secondary</textcolor>
+					<focusedcolor>ink</focusedcolor>
+					<textoffsetx>14</textoffsetx>
+					<texturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</texturefocus>
+					<texturenofocus/>
+					<alttexturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</alttexturefocus>
+					<alttexturenofocus border="14,4,14,3" colordiffuse="$VAR[ColorAccent]">moviepipe-underline.png</alttexturenofocus>
+					<usealttexture>String.IsEqual(Window.Property(tab),directed)</usealttexture>
+					<onup condition="Control.IsVisible(9001)">9001</onup>
+					<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
+					<visible>!String.IsEmpty(Window.Property(has_directed))</visible>
+				</control>
+				<control type="togglebutton" id="111">
+					<left>32</left>
+					<width>auto</width>
+					<height>subnav_h</height>
+					<label>POPULAR</label>
+					<altlabel>POPULAR</altlabel>
+					<font>mono_15</font>
+					<textcolor>text_secondary</textcolor>
+					<focusedcolor>ink</focusedcolor>
+					<textoffsetx>14</textoffsetx>
+					<texturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</texturefocus>
+					<texturenofocus/>
+					<alttexturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</alttexturefocus>
+					<alttexturenofocus border="14,4,14,3" colordiffuse="$VAR[ColorAccent]">moviepipe-underline.png</alttexturenofocus>
+					<usealttexture>String.IsEqual(Window.Property(sort),popular)</usealttexture>
+					<onup condition="Control.IsVisible(9001)">9001</onup>
+					<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
+					<visible>true</visible>
+				</control>
+				<control type="togglebutton" id="112">
+					<left>0</left>
+					<width>auto</width>
+					<height>subnav_h</height>
+					<label>NEWEST</label>
+					<altlabel>NEWEST</altlabel>
+					<font>mono_15</font>
+					<textcolor>text_secondary</textcolor>
+					<focusedcolor>ink</focusedcolor>
+					<textoffsetx>14</textoffsetx>
+					<texturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</texturefocus>
+					<texturenofocus/>
+					<alttexturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</alttexturefocus>
+					<alttexturenofocus border="14,4,14,3" colordiffuse="$VAR[ColorAccent]">moviepipe-underline.png</alttexturenofocus>
+					<usealttexture>String.IsEqual(Window.Property(sort),newest)</usealttexture>
+					<onup condition="Control.IsVisible(9001)">9001</onup>
+					<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
+					<visible>true</visible>
+				</control>
+				<control type="togglebutton" id="113">
+					<left>0</left>
+					<width>auto</width>
+					<height>subnav_h</height>
+					<label>OLDEST</label>
+					<altlabel>OLDEST</altlabel>
+					<font>mono_15</font>
+					<textcolor>text_secondary</textcolor>
+					<focusedcolor>ink</focusedcolor>
+					<textoffsetx>14</textoffsetx>
+					<texturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</texturefocus>
+					<texturenofocus/>
+					<alttexturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</alttexturefocus>
+					<alttexturenofocus border="14,4,14,3" colordiffuse="$VAR[ColorAccent]">moviepipe-underline.png</alttexturenofocus>
+					<usealttexture>String.IsEqual(Window.Property(sort),oldest)</usealttexture>
+					<onup condition="Control.IsVisible(9001)">9001</onup>
+					<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
+					<visible>true</visible>
+				</control>
+			</control>
+			<!-- the films, where the film page's cast row is -->
+			<control type="group">
+				<left>page_margin</left>
+				<top>1000</top>
+				<width>1824</width>
+				<height>400</height>
+				<include content="Majan_Rule">
+					<param name="top" value="0"/>
+					<param name="left" value="0"/>
+					<param name="width" value="page_width"/>
+					<param name="color" value="$VAR[ColorRuleStrong]"/>
+				</include>
+				<control type="label">
+					<left>0</left>
+					<top>14</top>
+					<width>1200</width>
+					<height>32</height>
+					<font>section_24</font>
+					<textcolor>text_primary</textcolor>
+					<label>$INFO[Window.Property(rowtitle)]</label>
+				</control>
+				<control type="label">
+					<left>0</left>
+					<top>18</top>
+					<width>page_width</width>
+					<height>26</height>
+					<align>right</align>
+					<font>mono_14</font>
+					<textcolor>$VAR[ColorCaption]</textcolor>
+					<label>[UPPERCASE]$INFO[Window.Property(rowcount)][/UPPERCASE]</label>
+				</control>
+				<control type="label">
+					<left>0</left>
+					<top>140</top>
+					<width>page_width</width>
+					<height>40</height>
+					<font>body_26</font>
+					<textcolor>text_secondary</textcolor>
+					<label>$INFO[Window.Property(empty)]</label>
+				</control>
+				<control type="list" id="500">
+					<left>-16</left>
+					<top>52</top>
+					<width>1840</width>
+					<height>334</height>
+					<orientation>horizontal</orientation>
+					<preloaditems>1</preloaditems>
+					<scrolltime tween="cubic" easing="out">200</scrolltime>
+					<content target="videos">$INFO[Window.Property(path)]</content>
+					<onclick condition="String.IsEqual(Container(500).ListItem.Property(specialsort),bottom)">SendClick(310)</onclick>
+					<onclick condition="String.IsEqual(Container(500).ListItem.DBType,tvshow)">Action(Info)</onclick>
+					<onup>9000</onup>
+					<ondown>noop</ondown>
+					<onleft condition="Integer.IsEqual(Container(500).CurrentItem,1) + Integer.IsGreater(Window.Property(page),1)">SendClick(311)</onleft>
+					<onright>noop</onright>
+					<itemlayout width="poster_m_pitch" height="334">
+					<control type="group">
+						<left>16</left>
+						<top>14</top>
+						<control type="group">
+							<width>poster_m_w</width>
+							<height>poster_m_h</height>
+							<control type="group">
+								<visible>!String.IsEqual(ListItem.Property(specialsort),bottom)</visible>
+								<include content="VidView_ArtFallback">
+									<param name="label_visible" value="String.IsEmpty(ListItem.Art(poster))"/>
+								</include>
+								<include content="VidView_ArtImage">
+									<param name="art" value="$INFO[ListItem.Art(poster)]"/>
+								</include>
+								<include>VidView_Markers</include>
+							</control>
+							<!-- tmdb helper's next page -->
+							<control type="group">
+								<visible>String.IsEqual(ListItem.Property(specialsort),bottom)</visible>
+								<control type="image">
+									<texture colordiffuse="bg_raised">common/white.png</texture>
+								</control>
+								<control type="label">
+									<align>center</align>
+									<aligny>center</aligny>
+									<font>card_21_bold</font>
+									<textcolor>text_primary</textcolor>
+									<label>Next page ›</label>
+								</control>
+							</control>
+						</control>
+						<control type="label">
+							<left>0</left>
+							<top>264</top>
+							<width>poster_m_w</width>
+							<height>28</height>
+							<font>card_21_bold</font>
+							<textcolor>text_primary</textcolor>
+							<label>$INFO[ListItem.Label]</label>
+							<visible>!String.IsEqual(ListItem.Property(specialsort),bottom)</visible>
+						</control>
+						<control type="label">
+							<left>0</left>
+							<top>292</top>
+							<width>poster_m_w</width>
+							<height>24</height>
+							<font>card_21</font>
+							<textcolor>text_secondary</textcolor>
+							<label>$INFO[ListItem.Year]$INFO[ListItem.Property(role), · ,]</label>
+							<visible>!String.IsEqual(ListItem.Property(specialsort),bottom) + !String.IsEqual(ListItem.Property(role),Director)</visible>
+						</control>
+						<control type="label">
+							<left>0</left>
+							<top>292</top>
+							<width>poster_m_w</width>
+							<height>24</height>
+							<font>card_21</font>
+							<textcolor>text_secondary</textcolor>
+							<label>$INFO[ListItem.Year]</label>
+							<visible>!String.IsEqual(ListItem.Property(specialsort),bottom) + String.IsEqual(ListItem.Property(role),Director)</visible>
+						</control>
+					</control>
+					</itemlayout>
+					<focusedlayout width="poster_m_pitch" height="334">
+					<control type="group">
+						<left>16</left>
+						<top>14</top>
+						<control type="group">
+							<width>poster_m_w</width>
+							<height>poster_m_h</height>
+							<include>Anim_FocusZoom</include>
+							<control type="group">
+								<visible>!String.IsEqual(ListItem.Property(specialsort),bottom)</visible>
+								<include content="VidView_ArtFallback">
+									<param name="label_visible" value="String.IsEmpty(ListItem.Art(poster))"/>
+								</include>
+								<include content="VidView_ArtImage">
+									<param name="art" value="$INFO[ListItem.Art(poster)]"/>
+								</include>
+								<include>VidView_Markers</include>
+							</control>
+							<!-- tmdb helper's next page -->
+							<control type="group">
+								<visible>String.IsEqual(ListItem.Property(specialsort),bottom)</visible>
+								<control type="image">
+									<texture colordiffuse="bg_raised">common/white.png</texture>
+								</control>
+								<control type="label">
+									<align>center</align>
+									<aligny>center</aligny>
+									<font>card_21_bold</font>
+									<textcolor>text_primary</textcolor>
+									<label>Next page ›</label>
+								</control>
+							</control>
+							<include content="VidView_PosterFocus">
+								<param name="id" value="500"/>
+							</include>
+						</control>
+						<control type="label">
+							<left>0</left>
+							<top>264</top>
+							<width>poster_m_w</width>
+							<height>28</height>
+							<font>card_21_bold</font>
+							<textcolor>text_primary</textcolor>
+							<label>$INFO[ListItem.Label]</label>
+							<visible>!String.IsEqual(ListItem.Property(specialsort),bottom)</visible>
+						</control>
+						<control type="label">
+							<left>0</left>
+							<top>292</top>
+							<width>poster_m_w</width>
+							<height>24</height>
+							<font>card_21</font>
+							<textcolor>text_secondary</textcolor>
+							<label>$INFO[ListItem.Year]$INFO[ListItem.Property(role), · ,]</label>
+							<visible>!String.IsEqual(ListItem.Property(specialsort),bottom) + !String.IsEqual(ListItem.Property(role),Director)</visible>
+						</control>
+						<control type="label">
+							<left>0</left>
+							<top>292</top>
+							<width>poster_m_w</width>
+							<height>24</height>
+							<font>card_21</font>
+							<textcolor>text_secondary</textcolor>
+							<label>$INFO[ListItem.Year]</label>
+							<visible>!String.IsEqual(ListItem.Property(specialsort),bottom) + String.IsEqual(ListItem.Property(role),Director)</visible>
+						</control>
+					</control>
+					</focusedlayout>
+				</control>
+			</control>
+		</control>
+	</controls>
+</window>

@@ -1,0 +1,134 @@
+# "Download" and "Pick a release…": the film goes to radarr, the show to
+# sonarr. download: they search and take the best release themselves
+# (arr/setup.py's profile). pick: the trackers' releases in a list, the
+# one picked is downloaded; nothing picked, nothing is added. the menu of
+# a film or show (context.py) and tmdb helper's players (../default.nix,
+# default.py) call them
+import time
+
+import xbmcgui
+
+from arr import Api, Error, notify, waiting
+from windows import choose
+
+# s: a film or a show looked up or added, radarr and sonarr wait for their
+# servers of metadata (skyhook) up to 100 s
+LOOKUP = 150
+
+
+def movie(tmdb, pick):
+    radarr = Api("radarr")
+    have = radarr.get("/movie", tmdbId=tmdb)
+    added = not have
+    if have:
+        m = have[0]
+    else:
+        m = waiting("Radarr", "Looking up the film…", lambda: radarr.get("/movie/lookup/tmdb", timeout=LOOKUP, tmdbId=tmdb))
+        if m is None:
+            return
+        # wanted from the day it's announced, the profile keeps cams out
+        m.update(radarr.new(), monitored=True, minimumAvailability="announced")
+        m["addOptions"] = {"searchForMovie": not pick}
+        m = radarr.post("/movie", m, timeout=LOOKUP)
+    title = f"{m['title']} ({m['year']})"
+    if pick:
+        if choose(radarr, title, movieId=m["id"]) is None and added:
+            # radarr would go and find one itself
+            radarr.delete(f"/movie/{m['id']}")
+        return
+    if added:
+        notify(title, "Searching for a release")
+    elif m.get("hasFile"):
+        notify(title, "Already downloaded")
+    else:
+        if not m["monitored"]:
+            m["monitored"] = True
+            radarr.put(f"/movie/{m['id']}", m)
+        radarr.command("MoviesSearch", movieIds=[m["id"]])
+        notify(title, "Searching for a release")
+
+
+def episodes(sonarr, series):
+    # a show just added gets its episodes a few seconds later
+    for _ in range(60):
+        found = sonarr.get("/episode", seriesId=series)
+        if found:
+            return found
+        time.sleep(1)
+    raise Error("sonarr: the show has no episodes")
+
+
+def show(tmdb, kind, season, episode, pick):
+    sonarr = Api("sonarr")
+    found = waiting("Sonarr", "Looking up the show…", lambda: sonarr.get("/series/lookup", timeout=LOOKUP, term=f"tmdb:{tmdb}"))
+    if found is None:
+        return
+    if not found:
+        raise Error("sonarr didn't find the show")
+    s = found[0]
+    title = s["title"]
+
+    numbers = [x["seasonNumber"] for x in s["seasons"] if x["seasonNumber"] > 0]
+    if kind == "tvshow":
+        labels = [f"Season {n}" for n in numbers]
+        if pick:
+            i = xbmcgui.Dialog().select(f"{title}: season", labels)
+            if i < 0:
+                return
+            chosen = [numbers[i]]
+        else:
+            picked = xbmcgui.Dialog().multiselect(f"{title}: seasons", labels, preselect=list(range(len(numbers))))
+            if not picked:
+                return
+            chosen = [numbers[i] for i in picked]
+    else:
+        chosen = [season]
+    # an episode alone: none of its season
+    whole = kind != "episode"
+
+    added = not s.get("id")
+    if added:
+        for x in s["seasons"]:
+            x["monitored"] = whole and x["seasonNumber"] in chosen
+        s.update(
+            sonarr.new(),
+            monitored=True,
+            seasonFolder=True,
+            seriesType="anime" if "Anime" in s.get("genres", []) else "standard",
+        )
+        # episodes as their seasons, those searched right away
+        s["addOptions"] = {"monitor": "skip", "searchForMissingEpisodes": whole and not pick}
+        s = sonarr.post("/series", s, timeout=LOOKUP)
+    else:
+        s = sonarr.get(f"/series/{s['id']}")
+        wanted = all(x["monitored"] for x in s["seasons"] if x["seasonNumber"] in chosen)
+        if (whole and not wanted) or not s["monitored"]:
+            for x in s["seasons"]:
+                x["monitored"] = x["monitored"] or (whole and x["seasonNumber"] in chosen)
+            s["monitored"] = True
+            s = sonarr.put(f"/series/{s['id']}", s)
+
+    if not whole:
+        name = f"{title} S{season:02}E{episode:02}"
+        ep = next((e for e in episodes(sonarr, s["id"]) if (e["seasonNumber"], e["episodeNumber"]) == (season, episode)), None)
+        if ep is None:
+            raise Error(f"sonarr: no episode {name}")
+        sonarr.put("/episode/monitor", {"episodeIds": [ep["id"]], "monitored": True})
+        if pick:
+            if choose(sonarr, name, episodeId=ep["id"]) is None and added:
+                sonarr.delete(f"/series/{s['id']}")
+        else:
+            sonarr.command("EpisodeSearch", episodeIds=[ep["id"]])
+            notify(name, "Searching for a release")
+        return
+
+    if pick:
+        name = f"{title}, season {chosen[0]}"
+        episodes(sonarr, s["id"])
+        if choose(sonarr, name, seriesId=s["id"], seasonNumber=chosen[0]) is None and added:
+            sonarr.delete(f"/series/{s['id']}")
+        return
+    if not added:
+        for n in chosen:
+            sonarr.command("SeasonSearch", seriesId=s["id"], seasonNumber=n)
+    notify(title, "Searching for releases: " + ", ".join(f"season {n}" for n in chosen))
