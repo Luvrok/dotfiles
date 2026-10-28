@@ -15,6 +15,7 @@
     ./kiss-worker.nix
     ./subtitle-translator
     ./obsidian-livesync.nix
+    ./miniflux.nix
     # ./embeddings.nix
     # ./docs-mcp
   ];

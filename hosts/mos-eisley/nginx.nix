@@ -10,6 +10,7 @@ let
     "betanin.vxrnt.ru" = 9393;
     "metube.vxrnt.ru" = 8081;
     "docs.vxrnt.ru" = 6280;
+    "rss.vxrnt.ru" = 8180;
   };
 
   mkHost = host: port: {
@@ -76,6 +77,7 @@ in
         metube.vxrnt.ru        web;
         docs.vxrnt.ru          web;
         obsidian.vxrnt.ru      web;
+        rss.vxrnt.ru           web;
         default                xray;
       }
 
