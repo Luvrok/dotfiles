@@ -2,7 +2,17 @@
   "$schema": "https://opencode.ai/config.json",
   "model": "opencode/deepseek-v4-flash-free",
   "small_model": "opencode/deepseek-v4-flash-free",
-  "enabled_providers": ["opencode"],
+  "enabled_providers": [
+    "opencode",
+    "google",
+    "groq",
+    "nvidia",
+    "openrouter",
+    "cerebras",
+    "mistral",
+    "zai",
+    "github-copilot"
+  ],
   "autoupdate": false,
   "share": "disabled",
 

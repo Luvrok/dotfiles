@@ -13,6 +13,8 @@
     ../../nixos/services/kodi
     # their downloads: radarr, sonarr, qbittorrent, subtitles
     ../../nixos/services/arr
+    # api keys of opencode's free tiers
+    ../../nixos/services/opencode-keys.nix
   ];
 
   services.displayManager.sddm.setupScript = ''
