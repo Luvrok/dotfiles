@@ -4,8 +4,9 @@
 #   ?action=pick|download&type=movie|episode&tmdb=...  ./actions.py for
 #                      tmdb helper's players (../default.nix), enter on a
 #                      film there
-#   ?action=director&name=...  ./director.py, the director's films on tmdb
-#                      (majan's film page)
+#   ?action=person&tmdb=...|name=...[&tab=films|tv|directed]  ./person.py,
+#                      a person's page (majan's film page: the cast, "more
+#                      by director")
 import sys
 import urllib.parse
 
@@ -14,7 +15,7 @@ import xbmcplugin
 
 from actions import movie, show
 from arr import Error, error
-from director import director
+from person import person
 from windows import show_downloads
 
 HANDLE = int(sys.argv[1])
@@ -44,7 +45,7 @@ if action == "downloads":
     show_downloads()
 elif action in ("pick", "download"):
     player()
-elif action == "director":
-    director(QUERY.get("name", ""))
+elif action == "person":
+    person(QUERY.get("tmdb"), QUERY.get("name", ""), QUERY.get("tab"))
 else:
     listing()

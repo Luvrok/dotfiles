@@ -106,9 +106,12 @@ class Pipe:
 def players():
     # tmdb helper plays a second of its dummy.mp4 before a player that
     # isn't a file (ours, ../default.nix), and a file plays in mpv: only
-    # its strm files get the dummy
+    # its strm files get the dummy. its lists of a person's films 60 a
+    # page, not 20 (./person.py)
     try:
-        xbmcaddon.Addon("plugin.video.themoviedb.helper").setSettingBool("only_resolve_strm", True)
+        helper = xbmcaddon.Addon("plugin.video.themoviedb.helper")
+        helper.setSettingBool("only_resolve_strm", True)
+        helper.setSettingInt("pagemulti_sync", 3)
     except RuntimeError:
         pass
 
