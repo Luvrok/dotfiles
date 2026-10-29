@@ -112,6 +112,7 @@ let
 
       existing=$(api GET feeds)
       status=0
+      declare -A added
 
       # newest arrivals on top: by arrival, not publish date, so an hourly feed
       # doesn't sink under one polled every 2 minutes
@@ -130,6 +131,14 @@ let
           action=updated
           request=(PUT "feeds/$id" -d "$settings")
         else
+          # adding a feed fetches it right away, and reddit answers a burst
+          # with 429, so space out new feeds from the same host
+          host=''${url#*://}
+          host=''${host%%/*}
+          if [[ -n ''${added[$host]:-} ]]; then
+            sleep 30
+          fi
+          added[$host]=1
           action="  added"
           request=(POST feeds -d "$(jq -c --arg url "$url" '. + {feed_url: $url}' <<<"$settings")")
         fi
@@ -225,6 +234,13 @@ in
       # same for integrations (ntfy): with the filter on, their client skips
       # the env proxy and goes straight out
       INTEGRATION_ALLOW_PRIVATE_NETWORKS = 1;
+
+      # reddit answers a burst with 429. the scheduler wakes every 5 min and
+      # takes at most one feed per host each time, so reddit's feeds are
+      # spread over the hour. each feed is still polled hourly, that's
+      # SCHEDULER_ROUND_ROBIN_MIN_INTERVAL
+      POLLING_FREQUENCY = 5;
+      POLLING_LIMIT_PER_HOST = 1;
     };
   };
 
