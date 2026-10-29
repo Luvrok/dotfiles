@@ -211,7 +211,9 @@ let
 in
 {
   # ADMIN_USERNAME=... and ADMIN_PASSWORD=... (6+ chars), env file format.
-  # optional NTFY_TOPIC=... turns on ntfy pushes
+  # optional NTFY_TOPIC=... turns on ntfy pushes. MEDIA_PROXY_PRIVATE_KEY=...
+  # signs image links, without it miniflux makes a new key on every start and
+  # images in entries clients already synced break
   sops.secrets."miniflux/admin" = {
     restartUnits = [ "miniflux.service" ];
   };
