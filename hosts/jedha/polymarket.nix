@@ -105,7 +105,7 @@ let
           update --argjson r "$result" '.markets = $r.markets'
 
           while read -r a; do
-            message=$(jq -r '"\(.name): \(.from)% → \(.p)% (\(if .p > .from then "+" else "" end)\(.p - .from | . * 10 | round / 10) п.п. за \(.mins) мин)"' <<<"$a")
+            message=$(jq -r '"\(.name): \(.from)% → \(.p)% (\(if .p > .from then "+" else "" end)\(.p - .from | . * 10 | round / 10) pp in \(.mins) min)"' <<<"$a")
             tag=$(jq -r 'if .p > .from then "chart_with_upwards_trend" else "chart_with_downwards_trend" end' <<<"$a")
             push "$title" "$message" "$(jq .priority <<<"$w")" "$click" "$tag" || status=1
           done < <(jq -c '.alerts[]' <<<"$result")
