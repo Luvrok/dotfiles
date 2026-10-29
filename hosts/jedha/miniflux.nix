@@ -36,9 +36,9 @@ let
       keep_filter_entry_rules = "EntryURL=^https://meduza\\.io/news/";
     };
     ap-world = {
-      url = "https://apnews.com/world-news.rss";
+      # ap has no rss of its own, rsshub scrapes the section page
+      url = "${rsshub}/apnews/nav/world-news?fulltext=true";
       category = "World";
-      crawler = true;
     };
     bbc-world = {
       url = "https://feeds.bbci.co.uk/news/world/rss.xml";
