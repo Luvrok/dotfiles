@@ -194,8 +194,12 @@ let
       jq
     ];
     text = api + ''
-      id=$(api GET feeds | jq -e --arg url "$1" 'first(.[] | select(.feed_url == $url)) | .id')
-      api PUT "feeds/$id/refresh"
+      feed=$(api GET feeds | jq -ce --arg url "$1" 'first(.[] | select(.feed_url == $url))')
+      # a manual refresh ignores "do not refresh this feed" from the ui
+      if jq -e .disabled <<<"$feed" >/dev/null; then
+        exit 0
+      fi
+      api PUT "feeds/$(jq .id <<<"$feed")/refresh"
     '';
   };
 
