@@ -369,7 +369,10 @@ def row(app, records, torrent):
         state = color("error", ROSE)
     problems = [q["errorMessage"]] if q.get("errorMessage") else []
     problems += [m for s in q.get("statusMessages", []) for m in s.get("messages", [])]
-    percent = int(100 * (size - left) / size) if size else 0
+    # 0.png .. 100.png: a queue that counts a bigger size than its own
+    # (sonarr's season pack) went past 100, one written before it moved
+    # past 0
+    percent = max(0, min(100, int(100 * (size - left) / size))) if size else 0
     qname = q["quality"]["quality"]["name"]
     return {
         "label": name(app, records),
@@ -410,7 +413,12 @@ def downloads():
     if found:
         try:
             hashes = "|".join(k.lower() for _, k in found)
-            torrents = {t["hash"].upper(): t for t in qbittorrent("/torrents/info", hashes=hashes)}
+            # qbittorrent 5's hash is the v1 one for a v1 or hybrid torrent,
+            # infohash_v1 the same (a v2-only one has neither as a download)
+            for t in qbittorrent("/torrents/info", hashes=hashes):
+                for hash in (t.get("hash"), t.get("infohash_v1")):
+                    if hash:
+                        torrents[hash.upper()] = t
         except Error as e:
             trouble.append(str(e))
     rows = []
@@ -539,8 +547,8 @@ def show_downloads():
         done=threading.Event(),
     )
     w.doModal()
+    # a refresh in its thread is on the network, maybe 30 s with a dead
+    # radarr: it sees done after that and doesn't touch the window again,
+    # the ui thread doesn't wait for it (it used to, closing the window froze)
     w.done.set()
-    # a refresh in its thread finishes before the window goes
-    with w.lock:
-        pass
     del w

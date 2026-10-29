@@ -6,6 +6,7 @@
 {
   inputs,
   kodi,
+  lib,
   buildKodiAddon,
   callPackage,
   writeText,
@@ -17,6 +18,17 @@
 
 let
   arr = import ../arr/shared.nix;
+
+  # the version an add-on's own addon.xml gives, kodi shows that one: a
+  # derivation's shouldn't drift from it
+  addonVersion =
+    path:
+    let
+      root = builtins.head (
+        builtins.filter (line: lib.hasInfix "<addon " line) (lib.splitString "\n" (builtins.readFile path))
+      );
+    in
+    builtins.head (builtins.match ".*version=\"([^\"]+)\".*" root);
 
   infotagger = buildKodiAddon {
     pname = "infotagger";
@@ -79,7 +91,9 @@ let
   moviepipe = buildKodiAddon {
     pname = "moviepipe";
     namespace = "plugin.video.moviepipe";
-    version = "1.0.0";
+    # its addon.xml has it: kodi shows that one, so it can't drift from the
+    # derivation's
+    version = addonVersion ./moviepipe/addon.xml;
     src = ./moviepipe;
     postInstall = ''
       d=$out/share/kodi/addons/plugin.video.moviepipe

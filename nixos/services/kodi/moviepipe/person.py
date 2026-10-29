@@ -109,10 +109,11 @@ class Person(xbmcgui.WindowXML):
                 self.tab = "directed"
             else:
                 self.tab = next((t for t in ("films", "tv", "directed") if self.counts.get(t)), "films")
-        # the focus on its tab, the first of the row before the tabs came
+        # the focus on its tab, the first of the row before the tabs came:
+        # through kodi, a control's own setFocusId is the ui thread's
         buttons = [v[0] for v in TABS.values()] + [v[0] for v in SORTS.values()]
         if self.getFocusId() in buttons:
-            self.setFocusId(TABS[self.tab][0])
+            xbmc.executebuiltin(f"SetFocus({TABS[self.tab][0]})")
         self.show()
 
     def details(self):
@@ -164,7 +165,11 @@ class Person(xbmcgui.WindowXML):
             return
         self.setProperty("empty", "" if found else "Nothing here" if not self.closing else "")
         if found:
-            self.getControl(ROW).selectItem(0)
+            # a list's own call, off the ui thread: gone with the window
+            try:
+                self.getControl(ROW).selectItem(0)
+            except RuntimeError:
+                pass
 
     def onClick(self, cid):
         tabs = {v[0]: k for k, v in TABS.items()}
@@ -207,8 +212,8 @@ def person(tmdb=None, name="", tab=None):
         department="",
     )
     # every tab till tmdb says which there are: the focus on the first
-    for tab in TABS:
-        w.setProperty(f"has_{tab}", "1")
+    for each in TABS:
+        w.setProperty(f"has_{each}", "1")
     w.doModal()
     w.closing = True
     del w
