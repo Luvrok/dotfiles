@@ -88,6 +88,10 @@ let
         echo "$id"
       }
 
+      # rsshub is node and takes a few seconds to listen after its unit starts
+      curl -fsS --noproxy '*' -o /dev/null --retry 30 --retry-delay 2 --retry-all-errors ${rsshub}/ ||
+        echo "rsshub isn't up, its feeds will fail" >&2
+
       existing=$(api GET feeds)
       status=0
       while read -r feed; do
@@ -205,7 +209,11 @@ in
       description = "Sync miniflux feeds with the nix list";
       wantedBy = [ "multi-user.target" ];
       requires = [ "miniflux.service" ];
-      after = [ "miniflux.service" ];
+      wants = [ "rsshub.service" ];
+      after = [
+        "miniflux.service"
+        "rsshub.service"
+      ];
       # the list is baked into ExecStart, so a changed list reruns it on switch
       serviceConfig = serviceConfig // {
         RemainAfterExit = true;
@@ -219,6 +227,8 @@ in
       wantedBy = [ "multi-user.target" ];
       requires = [ "miniflux.service" ];
       after = [ "miniflux-sync-feeds.service" ];
+      # rerun along with the sync, so feeds it adds later get their pushes too
+      partOf = [ "miniflux-sync-feeds.service" ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
