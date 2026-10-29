@@ -392,6 +392,8 @@ def row(app, records, torrent):
         "whyline": color("; ".join(problems), AMBER) if problems else "",
         # the row's button, majan's icons: what it does
         "toggle": ("icons/play.png" if torrent["state"] in STOPPED else "icons/pause.png") if torrent else "",
+        # internal key for selection tracking
+        "__key": key,
     }
 
 
@@ -431,10 +433,13 @@ def downloads():
 class Downloads(Window):
     # right on a row: its button (pause, go on), left: the row again.
     # space (kodi's pause) works the button from either
+    # v: toggle selection of focused row (vim-like visual mode)
+    # d: delete all selected rows (with confirmation)
     def onInit(self):
         if self.started:
             return
         self.started = True
+        self.selected_keys = set()
         self.refresh()
         self.setFocusId(50)
         threading.Thread(target=self.loop, daemon=True).start()
@@ -468,12 +473,31 @@ class Downloads(Window):
             self.torrents = {key: torrent for key, _, torrent, _ in found}
             for li, (_, _, _, props) in zip(self.items, found):
                 li.setLabel(props.pop("label"))
+                # mark selected rows visually
+                key = props.get("__key")
+                if key and key in self.selected_keys:
+                    props["mark"] = color("✓", GREEN) + " " + (props.get("mark", "") or "")
                 li.setProperties(props)
             self.setProperty("trouble", "; ".join(trouble))
             self.setProperty("empty", "" if found or trouble else "Nothing downloads")
 
     def onAction(self, action):
         a = action.getId()
+        btn = action.getButtonCode()
+        if btn == ord("r"):
+            # manual refresh
+            try:
+                self.refresh()
+            except RuntimeError:
+                pass
+            return
+        # vim-like: v = toggle selection, d = delete selected
+        if btn == ord("v") and self.getFocusId() == 50:
+            self.toggle_selection()
+            return
+        if btn == ord("d") and self.getFocusId() == 50:
+            self.delete_selected()
+            return
         if a in (xbmcgui.ACTION_PREVIOUS_MENU, xbmcgui.ACTION_NAV_BACK):
             self.close()
         elif self.getFocusId() != 50:
@@ -498,6 +522,41 @@ class Downloads(Window):
             qbittorrent("/torrents/start" if torrent["state"] in STOPPED else "/torrents/stop", {"hashes": torrent["hash"]})
         except Error as e:
             error(e)
+        self.refresh()
+
+    def toggle_selection(self):
+        key = self.focused()
+        if not key:
+            return
+        if key in self.selected_keys:
+            self.selected_keys.remove(key)
+        else:
+            self.selected_keys.add(key)
+        self.refresh()
+
+    def delete_selected(self):
+        if not self.selected_keys:
+            return
+        # confirm
+        count = len(self.selected_keys)
+        if not xbmcgui.Dialog().yesno("Delete downloads", f"Remove {count} selected download(s) from queue and client?"):
+            return
+        for key in list(self.selected_keys):
+            records = self.records.get(key)
+            if not records:
+                continue
+            try:
+                Api(key[0]).call(
+                    "DELETE",
+                    "/queue/bulk",
+                    {"ids": [r["id"] for r in records]},
+                    removeFromClient="true",
+                    blocklist="false",
+                    skipRedownload="true",
+                )
+            except Error as e:
+                error(e)
+        self.selected_keys.clear()
         self.refresh()
 
     def onClick(self, control):

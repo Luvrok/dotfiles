@@ -285,6 +285,17 @@
 						<textcolor>text_body</textcolor>
 						<label>$INFO[Window.Property(bio)]</label>
 					</control>
+					<!-- hint that bio is expandable -->
+					<control type="label">
+						<left>1000</left>
+						<top>200</top>
+						<width>80</width>
+						<height>28</height>
+						<align>right</align>
+						<font>mono_13</font>
+						<textcolor>text_tertiary</textcolor>
+						<label>⏎ more</label>
+					</control>
 					<control type="button" id="9001">
 						<width>1080</width>
 						<height>228</height>

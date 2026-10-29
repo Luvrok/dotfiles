@@ -192,7 +192,14 @@ class Person(xbmcgui.WindowXML):
         self.show()
 
     def onAction(self, action):
-        if action.getId() in (xbmcgui.ACTION_NAV_BACK, xbmcgui.ACTION_PREVIOUS_MENU):
+        a = action.getId()
+        btn = action.getButtonCode()
+        if btn == ord("r"):
+            # rescan: reload current tab
+            self.loads += 1
+            threading.Thread(target=self.loaded, args=(self.loads,), daemon=True).start()
+            return
+        if a in (xbmcgui.ACTION_NAV_BACK, xbmcgui.ACTION_PREVIOUS_MENU):
             self.closing = True
             self.close()
 
