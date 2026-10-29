@@ -46,7 +46,8 @@ let
     npr-world = {
       url = "https://feeds.npr.org/1004/rss.xml";
       category = "World";
-      crawler = true;
+      # npr's pages fill images in with js, the crawler gets src="undefined"
+      crawler = false;
     };
     bbc-world = {
       url = "https://feeds.bbci.co.uk/news/world/rss.xml";
