@@ -22,6 +22,11 @@ let
     #   window = 60;
     #   every = 6;
     # };
+    israel-pm = {
+      slug = "who-will-be-the-next-prime-minister-of-israel-after-the-next-election";
+      threshold = 5;
+      every = 12;
+    };
   };
 
   checkEvery = "5min";
