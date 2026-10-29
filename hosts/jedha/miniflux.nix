@@ -17,8 +17,9 @@ let
   # on every switch and boot. a feed dropped from the list stays in miniflux,
   # delete it in the ui. besides url, attrs are api fields
   # (https://miniflux.app/docs/api.html#endpoint-update-feed), except
-  # category, which is a title and gets created if missing, and refresh, a
-  # systemd time span to poll the feed on top of miniflux's hourly round
+  # category, which is a title and gets created if missing, refresh, a
+  # systemd time span to poll the feed on top of miniflux's hourly round, and
+  # ntfy, a push priority 1-5 for new entries (false turns pushes off)
   feeds = {
     ateo = {
       url = "${rsshub}/telegram/channel/Ateobreaking";
@@ -43,6 +44,12 @@ let
       url = "https://feeds.bbci.co.uk/news/world/rss.xml";
       category = "World";
       crawler = true;
+    };
+    badcomedian = {
+      # shorts are filtered out by rsshub
+      url = "${rsshub}/youtube/user/@TheBadComedian";
+      category = "YouTube";
+      ntfy = 5;
     };
     bellingcat = {
       url = "https://www.bellingcat.com/feed/";
@@ -85,7 +92,7 @@ let
       status=0
       while read -r feed; do
         url=$(jq -r .url <<<"$feed")
-        settings=$(jq -c 'del(.url, .refresh)' <<<"$feed")
+        settings=$(jq -c 'del(.url, .refresh, .ntfy)' <<<"$feed")
         if category=$(jq -er '.category // empty' <<<"$settings"); then
           settings=$(jq -c --argjson id "$(category_id "$category")" \
             'del(.category) + {category_id: $id}' <<<"$settings")
@@ -111,6 +118,38 @@ let
     '';
   };
 
+  # the api has no ntfy fields, so they go straight into the database
+  quote = str: "'${lib.replaceStrings [ "'" ] [ "''" ] str}'";
+  ntfyFeeds = lib.filterAttrs (_: feed: feed ? ntfy) feeds;
+  ntfySql = pkgs.writeText "miniflux-ntfy.sql" (
+    lib.concatMapStrings (
+      feed:
+      if feed.ntfy == false then
+        "UPDATE feeds SET ntfy_enabled = false WHERE feed_url = ${quote feed.url};\n"
+      else
+        "UPDATE feeds SET ntfy_enabled = true, ntfy_priority = ${toString feed.ntfy} WHERE feed_url = ${quote feed.url};\n"
+    ) (lib.attrValues ntfyFeeds)
+  );
+
+  syncNtfy = pkgs.writeShellApplication {
+    name = "miniflux-sync-ntfy";
+    runtimeInputs = [ config.services.postgresql.package ];
+    text = ''
+      psql() {
+        command psql -v ON_ERROR_STOP=1 -d miniflux "$@"
+      }
+
+      # NTFY_TOPIC in the admin secret turns the integration on, empty url is ntfy.sh
+      if [[ -n ''${NTFY_TOPIC:-} ]]; then
+        psql -v user="$ADMIN_USERNAME" -v topic="$NTFY_TOPIC" <<'SQL'
+      UPDATE integrations SET ntfy_enabled = true, ntfy_topic = :'topic'
+        WHERE user_id = (SELECT id FROM users WHERE username = :'user');
+      SQL
+      fi
+      psql -f ${ntfySql}
+    '';
+  };
+
   refreshFeed = pkgs.writeShellApplication {
     name = "miniflux-refresh-feed";
     runtimeInputs = with pkgs; [
@@ -130,7 +169,8 @@ let
   };
 in
 {
-  # ADMIN_USERNAME=... and ADMIN_PASSWORD=... (6+ chars), env file format
+  # ADMIN_USERNAME=... and ADMIN_PASSWORD=... (6+ chars), env file format.
+  # optional NTFY_TOPIC=... turns on ntfy pushes
   sops.secrets."miniflux/admin" = {
     restartUnits = [ "miniflux.service" ];
   };
@@ -154,6 +194,9 @@ in
       HTTP_PROXY = proxy;
       HTTPS_PROXY = proxy;
       FETCHER_ALLOW_PRIVATE_NETWORKS = 1;
+      # same for integrations (ntfy): with the filter on, their client skips
+      # the env proxy and goes straight out
+      INTEGRATION_ALLOW_PRIVATE_NETWORKS = 1;
     };
   };
 
@@ -167,6 +210,21 @@ in
       serviceConfig = serviceConfig // {
         RemainAfterExit = true;
         ExecStart = lib.getExe syncFeeds;
+      };
+    };
+
+    # separate unit, so a failed feed in the sync above doesn't skip it
+    miniflux-sync-ntfy = {
+      description = "Sync miniflux ntfy settings with the nix list";
+      wantedBy = [ "multi-user.target" ];
+      requires = [ "miniflux.service" ];
+      after = [ "miniflux-sync-feeds.service" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        User = "postgres";
+        EnvironmentFile = secret;
+        ExecStart = lib.getExe syncNtfy;
       };
     };
   }
