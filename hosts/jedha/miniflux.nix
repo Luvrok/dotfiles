@@ -94,6 +94,12 @@ let
 
       existing=$(api GET feeds)
       status=0
+
+      # newest arrivals on top: by arrival, not publish date, so an hourly feed
+      # doesn't sink under one polled every 2 minutes
+      api PUT "users/$(api GET me | jq .id)" \
+        -d '{"entry_sorting_order": "created_at", "entry_sorting_direction": "desc"}' >/dev/null ||
+        status=1
       while read -r feed; do
         url=$(jq -r .url <<<"$feed")
         settings=$(jq -c 'del(.url, .refresh, .ntfy)' <<<"$feed")
