@@ -1,4 +1,9 @@
-{ config, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   port = 8180;
@@ -6,46 +11,78 @@ let
   proxy = "http://127.0.0.1:10808";
   secret = config.sops.secrets."miniflux/admin".path;
 
-  # feeds to check the proxy and fetch original content, run once by hand
-  testFeeds = [
+  # feeds managed from here: missing ones are added, settings are reapplied
+  # on every switch. a feed dropped from the list stays in miniflux, delete
+  # it in the ui. attrs are api fields
+  # (https://miniflux.app/docs/api.html#endpoint-update-feed), except
+  # category, which is a title and gets created if missing
+  feeds = {
     # blocked in russia, only works through xray
-    "https://meduza.io/rss/all"
+    "https://meduza.io/rss/all" = {
+      category = "News";
+      crawler = true;
+    };
     # summaries only, the full text comes from the crawler
-    "https://feeds.arstechnica.com/arstechnica/index"
-  ];
+    "https://feeds.arstechnica.com/arstechnica/index" = {
+      category = "Tech";
+      crawler = true;
+    };
+  };
 
-  addTestFeeds = pkgs.writeShellApplication {
-    name = "miniflux-add-test-feeds";
+  syncFeeds = pkgs.writeShellApplication {
+    name = "miniflux-sync-feeds";
     runtimeInputs = with pkgs; [
       curl
       jq
     ];
     text = ''
-      # shellcheck disable=SC1091
-      source ${secret}
       api() {
-        local path=$1
-        shift
-        curl -fsS --noproxy '*' -u "$ADMIN_USERNAME:$ADMIN_PASSWORD" \
+        local method=$1 path=$2
+        shift 2
+        curl -fsS --noproxy '*' -X "$method" -u "$ADMIN_USERNAME:$ADMIN_PASSWORD" \
+          -H 'Content-Type: application/json' \
           "http://127.0.0.1:${toString port}/v1/$path" "$@"
       }
 
-      feeds=$(api feeds)
-      for url in ${toString testFeeds}; do
-        if jq -e --arg url "$url" 'any(.feed_url == $url)' <<<"$feeds" >/dev/null; then
-          echo "exists: $url"
-          continue
+      category_id() {
+        local id
+        id=$(api GET categories | jq -e --arg t "$1" 'first(.[] | select(.title == $t)) | .id') ||
+          id=$(api POST categories -d "$(jq -n --arg t "$1" '{title: $t}')" | jq .id)
+        echo "$id"
+      }
+
+      existing=$(api GET feeds)
+      status=0
+      while read -r entry; do
+        url=$(jq -r .key <<<"$entry")
+        settings=$(jq -c .value <<<"$entry")
+        if category=$(jq -er '.category // empty' <<<"$settings"); then
+          settings=$(jq -c --argjson id "$(category_id "$category")" \
+            'del(.category) + {category_id: $id}' <<<"$settings")
         fi
-        api feeds -X POST -H 'Content-Type: application/json' \
-          -d "$(jq -n --arg url "$url" '{feed_url: $url, crawler: true}')"
-        echo " added: $url"
-      done
+
+        if id=$(jq -e --arg url "$url" 'first(.[] | select(.feed_url == $url)) | .id' <<<"$existing"); then
+          action=updated
+          request=(PUT "feeds/$id" -d "$settings")
+        else
+          action="  added"
+          request=(POST feeds -d "$(jq -c --arg url "$url" '. + {feed_url: $url}' <<<"$settings")")
+        fi
+
+        # one dead feed shouldn't stop the rest
+        if api "''${request[@]}" >/dev/null; then
+          echo "$action: $url"
+        else
+          echo " failed: $url" >&2
+          status=1
+        fi
+      done < <(jq -c 'to_entries[]' ${pkgs.writeText "miniflux-feeds.json" (builtins.toJSON feeds)})
+      exit "$status"
     '';
   };
 in
 {
-  # ADMIN_USERNAME=... and ADMIN_PASSWORD=... (6+ chars), env file format.
-  # the seed script sources it too, so no quotes, spaces or $ in the password
+  # ADMIN_USERNAME=... and ADMIN_PASSWORD=... (6+ chars), env file format
   sops.secrets."miniflux/admin" = {
     restartUnits = [ "miniflux.service" ];
   };
@@ -72,5 +109,18 @@ in
     };
   };
 
-  environment.systemPackages = [ addTestFeeds ];
+  systemd.services.miniflux-sync-feeds = {
+    description = "Sync miniflux feeds with the nix list";
+    wantedBy = [ "multi-user.target" ];
+    requires = [ "miniflux.service" ];
+    after = [ "miniflux.service" ];
+    # the list is baked into ExecStart, so a changed list reruns it on switch
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = lib.getExe syncFeeds;
+      EnvironmentFile = secret;
+      DynamicUser = true;
+    };
+  };
 }
