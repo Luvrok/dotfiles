@@ -11,23 +11,61 @@ let
   proxy = "http://127.0.0.1:10808";
   secret = config.sops.secrets."miniflux/admin".path;
 
+  rsshub = "http://127.0.0.1:${toString config.services.rsshub.settings.PORT}";
+
   # feeds managed from here: missing ones are added, settings are reapplied
-  # on every switch. a feed dropped from the list stays in miniflux, delete
-  # it in the ui. attrs are api fields
+  # on every switch and boot. a feed dropped from the list stays in miniflux,
+  # delete it in the ui. besides url, attrs are api fields
   # (https://miniflux.app/docs/api.html#endpoint-update-feed), except
-  # category, which is a title and gets created if missing
+  # category, which is a title and gets created if missing, and refresh, a
+  # systemd time span to poll the feed on top of miniflux's hourly round
   feeds = {
-    # blocked in russia, only works through xray
-    "https://meduza.io/rss/all" = {
-      category = "News";
+    ateo = {
+      url = "${rsshub}/telegram/channel/Ateobreaking";
+      category = "Breaking";
+      refresh = "2min";
+    };
+    meduza = {
+      # blocked in russia, only works through xray
+      url = "https://meduza.io/rss/all";
+      category = "Breaking";
+      refresh = "10min";
+      crawler = true;
+      # news only, no podcasts, features or games
+      keep_filter_entry_rules = "EntryURL=^https://meduza\\.io/news/";
+    };
+    ap-world = {
+      url = "https://apnews.com/world-news.rss";
+      category = "World";
       crawler = true;
     };
-    # summaries only, the full text comes from the crawler
-    "https://feeds.arstechnica.com/arstechnica/index" = {
-      category = "Tech";
+    bbc-world = {
+      url = "https://feeds.bbci.co.uk/news/world/rss.xml";
+      category = "World";
+      crawler = true;
+    };
+    bellingcat = {
+      url = "https://www.bellingcat.com/feed/";
+      category = "Investigations";
+    };
+    icij = {
+      url = "https://www.icij.org/feed/";
+      category = "Investigations";
       crawler = true;
     };
   };
+
+  refreshed = lib.filterAttrs (_: feed: feed ? refresh) feeds;
+
+  api = ''
+    api() {
+      local method=$1 path=$2
+      shift 2
+      curl -fsS --noproxy '*' --max-time 120 -X "$method" -u "$ADMIN_USERNAME:$ADMIN_PASSWORD" \
+        -H 'Content-Type: application/json' \
+        "http://127.0.0.1:${toString port}/v1/$path" "$@"
+    }
+  '';
 
   syncFeeds = pkgs.writeShellApplication {
     name = "miniflux-sync-feeds";
@@ -35,15 +73,7 @@ let
       curl
       jq
     ];
-    text = ''
-      api() {
-        local method=$1 path=$2
-        shift 2
-        curl -fsS --noproxy '*' -X "$method" -u "$ADMIN_USERNAME:$ADMIN_PASSWORD" \
-          -H 'Content-Type: application/json' \
-          "http://127.0.0.1:${toString port}/v1/$path" "$@"
-      }
-
+    text = api + ''
       category_id() {
         local id
         id=$(api GET categories | jq -e --arg t "$1" 'first(.[] | select(.title == $t)) | .id') ||
@@ -53,9 +83,9 @@ let
 
       existing=$(api GET feeds)
       status=0
-      while read -r entry; do
-        url=$(jq -r .key <<<"$entry")
-        settings=$(jq -c .value <<<"$entry")
+      while read -r feed; do
+        url=$(jq -r .url <<<"$feed")
+        settings=$(jq -c 'del(.url, .refresh)' <<<"$feed")
         if category=$(jq -er '.category // empty' <<<"$settings"); then
           settings=$(jq -c --argjson id "$(category_id "$category")" \
             'del(.category) + {category_id: $id}' <<<"$settings")
@@ -76,9 +106,27 @@ let
           echo " failed: $url" >&2
           status=1
         fi
-      done < <(jq -c 'to_entries[]' ${pkgs.writeText "miniflux-feeds.json" (builtins.toJSON feeds)})
+      done < <(jq -c '.[]' ${pkgs.writeText "miniflux-feeds.json" (builtins.toJSON (lib.attrValues feeds))})
       exit "$status"
     '';
+  };
+
+  refreshFeed = pkgs.writeShellApplication {
+    name = "miniflux-refresh-feed";
+    runtimeInputs = with pkgs; [
+      curl
+      jq
+    ];
+    text = api + ''
+      id=$(api GET feeds | jq -e --arg url "$1" 'first(.[] | select(.feed_url == $url)) | .id')
+      api PUT "feeds/$id/refresh"
+    '';
+  };
+
+  serviceConfig = {
+    Type = "oneshot";
+    EnvironmentFile = secret;
+    DynamicUser = true;
   };
 in
 {
@@ -109,18 +157,39 @@ in
     };
   };
 
-  systemd.services.miniflux-sync-feeds = {
-    description = "Sync miniflux feeds with the nix list";
-    wantedBy = [ "multi-user.target" ];
-    requires = [ "miniflux.service" ];
-    after = [ "miniflux.service" ];
-    # the list is baked into ExecStart, so a changed list reruns it on switch
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = lib.getExe syncFeeds;
-      EnvironmentFile = secret;
-      DynamicUser = true;
+  systemd.services = {
+    miniflux-sync-feeds = {
+      description = "Sync miniflux feeds with the nix list";
+      wantedBy = [ "multi-user.target" ];
+      requires = [ "miniflux.service" ];
+      after = [ "miniflux.service" ];
+      # the list is baked into ExecStart, so a changed list reruns it on switch
+      serviceConfig = serviceConfig // {
+        RemainAfterExit = true;
+        ExecStart = lib.getExe syncFeeds;
+      };
     };
-  };
+  }
+  // lib.mapAttrs' (
+    name: feed:
+    lib.nameValuePair "miniflux-refresh-${name}" {
+      description = "Refresh miniflux feed ${name}";
+      requires = [ "miniflux.service" ];
+      after = [ "miniflux-sync-feeds.service" ];
+      serviceConfig = serviceConfig // {
+        ExecStart = "${lib.getExe refreshFeed} ${lib.escapeShellArg feed.url}";
+      };
+    }
+  ) refreshed;
+
+  systemd.timers = lib.mapAttrs' (
+    name: feed:
+    lib.nameValuePair "miniflux-refresh-${name}" {
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "2min";
+        OnUnitActiveSec = feed.refresh;
+      };
+    }
+  ) refreshed;
 }

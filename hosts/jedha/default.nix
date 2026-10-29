@@ -16,6 +16,7 @@
     ./subtitle-translator
     ./obsidian-livesync.nix
     ./miniflux.nix
+    ./rsshub.nix
     # ./embeddings.nix
     # ./docs-mcp
   ];
