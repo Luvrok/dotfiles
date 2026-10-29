@@ -52,7 +52,8 @@ ln -s $d/skills/* ~/.pi/agent/skills/
 `extensions/pi-permission-system/config.json` keeps file access inside the working directory plus `~/.pi` and `~/.local/share/pi`. Rules are last-match-wins, keep the key order.
 
 - Extra read-only paths go in `external_directory_read`: `/nix/store`, and `/tmp/pi-*` where pi saves the full output of truncated tool results.
-- The agent can't write its own policy, `settings.json` or `mcp.json` (`path_write`), since a new package or stdio server runs with full rights.
+- The agent can't write its own policy, `settings.json` or `mcp.json` (`path_write`), since a new package or stdio server runs with full rights. Nor `.git` (hooks, `core.fsmonitor` run on the next `git status`) or a project's `.pi`.
 - File tools (`read`, `write`, `edit`, `grep`, `find`, `ls`) are enforced, symlinks included.
 - Bash is enforced only for paths written in the command line. A program reads and writes wherever it wants: `python x.py`, `make`, `go test`, `nix eval --expr`. Every command not on the allow list asks.
+- The allow list is read-only commands, minus the flags that run code or write files (`find -exec`, `fd -x`, `rg --pre`, `sort -o`, `git --output`, `--ext-diff`), which ask. So do redirects and `.env` in a command. `sed` (its `e` and `w`), `go` (`go test`, `-toolexec`, `-vettool`) and `nix eval` (reads any file) ask as a whole.
 - Network, extensions and MCP servers are not limited by it.

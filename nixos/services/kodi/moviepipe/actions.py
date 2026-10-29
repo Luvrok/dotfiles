@@ -77,7 +77,7 @@ def show(tmdb, kind, season, episode, pick):
                 return
             chosen = [numbers[i]]
         else:
-            picked = xbmcgui.Dialog().multiselect(f"{title}: seasons", labels, preselect=list(range(len(numbers))))
+            picked = xbmcgui.Dialog().multiselect(f"{title}: seasons", labels, preselect=[])
             if not picked:
                 return
             chosen = [numbers[i] for i in picked]

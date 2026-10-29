@@ -4,3 +4,4 @@ hosts/jedha/xray.json filter=git-crypt diff=git-crypt
 hosts/barnard/xray.json filter=git-crypt diff=git-crypt
 hosts/mos-eisley/xray.json filter=git-crypt diff=git-crypt
 secrets/** filter=git-crypt diff=git-crypt
+hosts/barnard/xray-v.json filter=git-crypt diff=git-crypt

@@ -41,7 +41,9 @@
 		</keyboard>
 	</Home>
 	<!-- typing: a key that maps to moving around moves instead of typing
-	     its letter, noop lets kodi type it -->
+	     its letter, noop lets kodi type it. the digits too: they open
+	     home's pages everywhere else (one, two, three, and 4, 5, 6 in
+	     global), typing "1917" in the search should type it -->
 	<VirtualKeyboard>
 		<keyboard>
 			<h>noop</h>
@@ -52,6 +54,16 @@
 			<q>noop</q>
 			<f>noop</f>
 			<forwardslash>noop</forwardslash>
+			<zero>noop</zero>
+			<one>noop</one>
+			<two>noop</two>
+			<three>noop</three>
+			<four>noop</four>
+			<five>noop</five>
+			<six>noop</six>
+			<seven>noop</seven>
+			<eight>noop</eight>
+			<nine>noop</nine>
 		</keyboard>
 	</VirtualKeyboard>
 </keymap>

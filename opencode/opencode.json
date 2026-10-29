@@ -1,0 +1,163 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "opencode/deepseek-v4.1-flash-free",
+  "small_model": "opencode/deepseek-v4.1-flash-free",
+  "enabled_providers": [
+    "opencode",
+    "google",
+    "groq",
+    "nvidia",
+    "openrouter",
+    "cerebras",
+    "mistral",
+    "zai",
+    "github-copilot"
+  ],
+  "autoupdate": false,
+  "share": "disabled",
+  "lsp": true,
+  "formatter": true,
+
+  "mcp": {
+    "docs": {
+      "type": "remote",
+      "url": "http://127.0.0.1:6280/mcp",
+      "enabled": true,
+      "timeout": 120000
+    },
+    "searxng": {
+      "type": "local",
+      "command": ["mcp-searxng"],
+      "environment": {
+        "SEARXNG_URL": "http://127.0.0.1:11433"
+      },
+      "enabled": true
+    }
+  },
+
+  "permission": {
+    "*": "allow",
+
+    "docs_fetch_url": "deny",
+    "websearch": "deny",
+    "webfetch": "ask",
+    "searxng_web_url_read": "ask",
+
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow",
+      "~/.ssh/**": "deny",
+      "~/.gnupg/**": "deny",
+      "~/.config/sops/**": "deny",
+      "~/.config/sops-nix/**": "deny",
+      "/run/secrets/**": "deny",
+      "/run/secrets.d/**": "deny",
+      "/run/user/*/secrets.d/**": "deny",
+      "~/.netrc": "deny",
+      "~/.config/gh/**": "deny",
+      "~/.aws/**": "deny"
+    },
+
+    "edit": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow",
+      "~/.ssh/**": "deny",
+      "~/.gnupg/**": "deny",
+      "~/.config/sops/**": "deny",
+      "~/.config/sops-nix/**": "deny",
+      "/run/secrets/**": "deny",
+      "/run/secrets.d/**": "deny",
+      "/run/user/*/secrets.d/**": "deny",
+      "~/.netrc": "deny",
+      "~/.config/gh/**": "deny",
+      "~/.aws/**": "deny",
+      "~/.config/opencode/**": "deny",
+      "/nix/store/**": "deny",
+      ".git/**": "deny",
+      "*/.git/**": "deny",
+      "opencode.json": "deny",
+      "opencode.jsonc": "deny",
+      "*/opencode.json": "deny",
+      "*/opencode.jsonc": "deny",
+      ".opencode/**": "deny",
+      "*/.opencode/**": "deny"
+    },
+
+    "external_directory": {
+      "*": "deny",
+      "~/.config/opencode/**": "allow",
+      "~/.local/share/opencode/**": "allow",
+      "/nix/store/**": "allow"
+    },
+
+    "bash": {
+      "*": "ask",
+
+      "cd *": "allow",
+      "pwd": "allow",
+      "echo *": "allow",
+      "which *": "allow",
+      "type *": "allow",
+      "date": "allow",
+      "uname *": "allow",
+      "ps *": "allow",
+
+      "cat *": "allow",
+      "head *": "allow",
+      "tail *": "allow",
+      "ls *": "allow",
+      "tree *": "allow",
+      "stat *": "allow",
+      "file *": "allow",
+      "wc *": "allow",
+      "du *": "allow",
+      "df *": "allow",
+
+      "grep *": "allow",
+      "rg *": "allow",
+      "find *": "allow",
+      "find * -delete*": "ask",
+      "fd *": "allow",
+
+      "sort *": "allow",
+      "cut *": "allow",
+      "tr *": "allow",
+      "jq *": "allow",
+      "diff *": "allow",
+      "sha256sum *": "allow",
+
+      "git status *": "allow",
+      "git diff *": "allow",
+      "git log *": "allow",
+      "git show *": "allow",
+      "git blame *": "allow",
+      "git ls-files *": "allow",
+      "git rev-parse *": "allow",
+      "git branch": "allow",
+      "git remote -v": "allow",
+
+      "* > *": "ask",
+      "* >> *": "ask",
+      "* *.env": "ask",
+      "* *.env.*": "ask",
+      "find * -exec*": "ask",
+      "find * -ok*": "ask",
+      "find * -fprint*": "ask",
+      "find * -fls*": "ask",
+      "fd * -x*": "ask",
+      "fd * -X*": "ask",
+      "fd * --exec*": "ask",
+      "rg * --pre*": "ask",
+      "sort * -o*": "ask",
+      "sort * --output*": "ask",
+      "tree * -o*": "ask",
+      "git * --output*": "ask",
+      "git * --ext-diff*": "ask",
+      "git * --textconv*": "ask"
+    }
+  }
+}

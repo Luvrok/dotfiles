@@ -5,16 +5,20 @@
 # in the add-on's data, what came while kodi was off is taken in at start
 import json
 import os
+import threading
 from datetime import datetime, timezone
 
 import xbmc
-import xbmcaddon
 import xbmcvfs
 
 from arr import Api, Error, notify
 
 STATE = xbmcvfs.translatePath("special://profile/addon_data/plugin.video.moviepipe/state.json")
 POLL = 60
+# how often the thread looks at the scan's list, and a request's patience:
+# the history is small, a stuck one shouldn't hold the thread for a minute
+TICK = 5
+TIMEOUT = 20
 INCLUDE = {
     "radarr": {"includeMovie": "true"},
     "sonarr": {"includeSeries": "true", "includeEpisode": "true"},
@@ -22,11 +26,18 @@ INCLUDE = {
 
 
 def parse(date):
-    return datetime.fromisoformat(date.replace("Z", "+00:00"))
+    try:
+        return datetime.fromisoformat(str(date).replace("Z", "+00:00"))
+    except ValueError:
+        return None
 
 
 def now():
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def quality(record):
+    return ((record.get("quality") or {}).get("quality") or {}).get("name", "")
 
 
 def name(app, r):
@@ -35,6 +46,12 @@ def name(app, r):
     if app == "sonarr" and "series" in r:
         return r["series"]["title"]
     return r["sourceTitle"]
+
+
+def folder(app, record):
+    # what the app put in the library, its root, not the download
+    found = (record.get("movie") or record.get("series") or {}).get("path")
+    return found or None
 
 
 class Pipe:
@@ -59,31 +76,34 @@ class Pipe:
         for app in INCLUDE:
             since = self.state[app]
             try:
-                records = Api(app).get("/history/since", date=since, **INCLUDE[app])
+                records = Api(app).get("/history/since", timeout=TIMEOUT, date=since, **INCLUDE[app])
             except Error:
                 continue
-            records = [r for r in records if parse(r["date"]) > parse(since)]
-            if not records:
+            # a record kodi can't read (no date) is not this one's business,
+            # it used to stop the service for good
+            dated = [(parse(r.get("date")), r) for r in records]
+            dated = [(when, r) for when, r in dated if when and when > parse(since)]
+            if not dated:
                 continue
             # a season is a record per episode: a notification per download
             seen = set()
-            for r in sorted(records, key=lambda r: parse(r["date"])):
-                event = r["eventType"]
-                key = (event, r.get("downloadId") or r["id"])
+            for _, r in sorted(dated, key=lambda x: x[0]):
+                event = r.get("eventType")
+                key = (event, r.get("downloadId") or r.get("id"))
                 if event == "downloadFolderImported":
-                    folder = r["movie"]["path"] if app == "radarr" else r["series"]["path"]
-                    if folder not in self.state["scan"]:
-                        self.state["scan"].append(folder)
+                    found = folder(app, r)
+                    if found and found not in self.state["scan"]:
+                        self.state["scan"].append(found)
                 if key in seen:
                     continue
                 seen.add(key)
                 if event == "grabbed":
-                    notify("Downloading", f"{name(app, r)}, {r['quality']['quality']['name']}")
+                    notify("Downloading", f"{name(app, r)}, {quality(r)}")
                 elif event == "downloadFolderImported":
                     notify("Downloaded", name(app, r))
                 elif event == "downloadFailed":
                     notify("Download failed", name(app, r))
-            self.state[app] = max(records, key=lambda r: parse(r["date"]))["date"]
+            self.state[app] = max(dated, key=lambda x: x[0])[1]["date"]
             self.save()
 
     def scan(self):
@@ -103,27 +123,33 @@ class Pipe:
         )
 
 
-def players():
-    # tmdb helper plays a second of its dummy.mp4 before a player that
-    # isn't a file (ours, ../default.nix), and a file plays in mpv: only
-    # its strm files get the dummy. its lists of a person's films 60 a
-    # page, not 20 (./person.py)
-    try:
-        helper = xbmcaddon.Addon("plugin.video.themoviedb.helper")
-        helper.setSettingBool("only_resolve_strm", True)
-        helper.setSettingInt("pagemulti_sync", 3)
-    except (RuntimeError, TypeError):
-        pass
+class Service(threading.Thread):
+    # the requests go here, not in kodi's own thread for the script: kodi
+    # waits for that one on quit, a dead radarr (its 60 s timeout) made it
+    # wait too. a daemon thread is left behind instead
+    def __init__(self, pipe):
+        super().__init__(daemon=True)
+        self.pipe = pipe
+        self.monitor = xbmc.Monitor()
+
+    def run(self):
+        ticks = 0
+        while not self.monitor.abortRequested():
+            # the service is kodi's library and notifications: one bad
+            # record, or one thing radarr says that this didn't expect,
+            # must not end it for the rest of the session
+            try:
+                if ticks % POLL == 0:
+                    self.pipe.poll()
+                self.pipe.scan()
+            except Exception as e:  # noqa: BLE001 - it runs till kodi quits
+                xbmc.log(f"moviepipe: {e}", xbmc.LOGWARNING)
+            ticks += TICK
+            if self.monitor.waitForAbort(TICK):
+                break
 
 
-players()
 monitor = xbmc.Monitor()
-pipe = Pipe()
-ticks = 0
-while not monitor.abortRequested():
-    if ticks % POLL == 0:
-        pipe.poll()
-    pipe.scan()
-    ticks += 5
-    if monitor.waitForAbort(5):
-        break
+Service(Pipe()).start()
+while not monitor.waitForAbort(TICK):
+    pass

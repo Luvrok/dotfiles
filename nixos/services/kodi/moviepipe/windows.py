@@ -369,7 +369,10 @@ def row(app, records, torrent):
         state = color("error", ROSE)
     problems = [q["errorMessage"]] if q.get("errorMessage") else []
     problems += [m for s in q.get("statusMessages", []) for m in s.get("messages", [])]
-    percent = int(100 * (size - left) / size) if size else 0
+    # 0.png .. 100.png: a queue that counts a bigger size than its own
+    # (sonarr's season pack) went past 100, one written before it moved
+    # past 0
+    percent = max(0, min(100, int(100 * (size - left) / size))) if size else 0
     qname = q["quality"]["quality"]["name"]
     return {
         "label": name(app, records),
@@ -389,6 +392,8 @@ def row(app, records, torrent):
         "whyline": color("; ".join(problems), AMBER) if problems else "",
         # the row's button, majan's icons: what it does
         "toggle": ("icons/play.png" if torrent["state"] in STOPPED else "icons/pause.png") if torrent else "",
+        # internal key for selection tracking
+        "__key": key,
     }
 
 
@@ -410,7 +415,12 @@ def downloads():
     if found:
         try:
             hashes = "|".join(k.lower() for _, k in found)
-            torrents = {t["hash"].upper(): t for t in qbittorrent("/torrents/info", hashes=hashes)}
+            # qbittorrent 5's hash is the v1 one for a v1 or hybrid torrent,
+            # infohash_v1 the same (a v2-only one has neither as a download)
+            for t in qbittorrent("/torrents/info", hashes=hashes):
+                for hash in (t.get("hash"), t.get("infohash_v1")):
+                    if hash:
+                        torrents[hash.upper()] = t
         except Error as e:
             trouble.append(str(e))
     rows = []
@@ -423,10 +433,13 @@ def downloads():
 class Downloads(Window):
     # right on a row: its button (pause, go on), left: the row again.
     # space (kodi's pause) works the button from either
+    # v: toggle selection of focused row (vim-like visual mode)
+    # d: delete all selected rows (with confirmation)
     def onInit(self):
         if self.started:
             return
         self.started = True
+        self.selected_keys = set()
         self.refresh()
         self.setFocusId(50)
         threading.Thread(target=self.loop, daemon=True).start()
@@ -460,12 +473,31 @@ class Downloads(Window):
             self.torrents = {key: torrent for key, _, torrent, _ in found}
             for li, (_, _, _, props) in zip(self.items, found):
                 li.setLabel(props.pop("label"))
+                # mark selected rows visually
+                key = props.get("__key")
+                if key and key in self.selected_keys:
+                    props["mark"] = color("✓", GREEN) + " " + (props.get("mark", "") or "")
                 li.setProperties(props)
             self.setProperty("trouble", "; ".join(trouble))
             self.setProperty("empty", "" if found or trouble else "Nothing downloads")
 
     def onAction(self, action):
         a = action.getId()
+        btn = action.getButtonCode()
+        if btn == ord("r"):
+            # manual refresh
+            try:
+                self.refresh()
+            except RuntimeError:
+                pass
+            return
+        # vim-like: v = toggle selection, d = delete selected
+        if btn == ord("v") and self.getFocusId() == 50:
+            self.toggle_selection()
+            return
+        if btn == ord("d") and self.getFocusId() == 50:
+            self.delete_selected()
+            return
         if a in (xbmcgui.ACTION_PREVIOUS_MENU, xbmcgui.ACTION_NAV_BACK):
             self.close()
         elif self.getFocusId() != 50:
@@ -490,6 +522,41 @@ class Downloads(Window):
             qbittorrent("/torrents/start" if torrent["state"] in STOPPED else "/torrents/stop", {"hashes": torrent["hash"]})
         except Error as e:
             error(e)
+        self.refresh()
+
+    def toggle_selection(self):
+        key = self.focused()
+        if not key:
+            return
+        if key in self.selected_keys:
+            self.selected_keys.remove(key)
+        else:
+            self.selected_keys.add(key)
+        self.refresh()
+
+    def delete_selected(self):
+        if not self.selected_keys:
+            return
+        # confirm
+        count = len(self.selected_keys)
+        if not xbmcgui.Dialog().yesno("Delete downloads", f"Remove {count} selected download(s) from queue and client?"):
+            return
+        for key in list(self.selected_keys):
+            records = self.records.get(key)
+            if not records:
+                continue
+            try:
+                Api(key[0]).call(
+                    "DELETE",
+                    "/queue/bulk",
+                    {"ids": [r["id"] for r in records]},
+                    removeFromClient="true",
+                    blocklist="false",
+                    skipRedownload="true",
+                )
+            except Error as e:
+                error(e)
+        self.selected_keys.clear()
         self.refresh()
 
     def onClick(self, control):
@@ -539,8 +606,8 @@ def show_downloads():
         done=threading.Event(),
     )
     w.doModal()
+    # a refresh in its thread is on the network, maybe 30 s with a dead
+    # radarr: it sees done after that and doesn't touch the window again,
+    # the ui thread doesn't wait for it (it used to, closing the window froze)
     w.done.set()
-    # a refresh in its thread finishes before the window goes
-    with w.lock:
-        pass
     del w

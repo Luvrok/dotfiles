@@ -35,6 +35,7 @@ def trailer(kind, tmdb):
     if not path:
         notify(title, "No trailer on TMDb")
         return
-    # what kodi's own did: the page goes, the trailer plays
-    xbmc.executebuiltin("Dialog.Close(all,true)", True)
+    # закрываем только текущий диалог видео-инфо, не все (иначе при
+    # person->film->trailer вспыхивает person page)
+    xbmc.executebuiltin("Dialog.Close(VideoInfo,true)", True)
     xbmc.executebuiltin(f"PlayMedia({json.dumps(path)},playlist_type_hint=1)")
