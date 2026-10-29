@@ -35,10 +35,10 @@ let
       # news only, no podcasts, features or games
       keep_filter_entry_rules = "EntryURL=^https://meduza\\.io/news/";
     };
-    ap-world = {
-      # ap has no rss of its own, rsshub scrapes the section page
-      url = "${rsshub}/apnews/nav/world-news?fulltext=true";
+    npr-world = {
+      url = "https://feeds.npr.org/1004/rss.xml";
       category = "World";
+      crawler = true;
     };
     bbc-world = {
       url = "https://feeds.bbci.co.uk/news/world/rss.xml";
