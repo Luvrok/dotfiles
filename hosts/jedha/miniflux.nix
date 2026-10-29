@@ -13,6 +13,14 @@ let
 
   rsshub = "http://127.0.0.1:${toString config.services.rsshub.settings.PORT}";
 
+  # top posts of a subreddit over t (day, week), cut to the first limit, so a
+  # post shows up once it climbs into them. no crawler, the link is the
+  # comments page
+  reddit = category: sub: t: limit: {
+    url = "https://www.reddit.com/r/${sub}/top/.rss?t=${t}&limit=${toString limit}";
+    inherit category;
+  };
+
   # feeds managed from here: missing ones are added, settings are reapplied
   # on every switch and boot. a feed dropped from the list stays in miniflux,
   # delete it in the ui. besides url, attrs are api fields
@@ -51,6 +59,16 @@ let
       category = "YouTube";
       ntfy = 5;
     };
+    reddit-worldnews = reddit "World" "worldnews" "day" 10;
+    reddit-europe = reddit "World" "europe" "day" 7;
+    reddit-geopolitics = reddit "World" "geopolitics" "day" 7;
+    reddit-news = reddit "US" "news" "day" 10;
+    reddit-politics = reddit "US" "politics" "day" 10;
+    # polls, election maps, charts
+    reddit-fivethirtyeight = reddit "Data" "fivethirtyeight" "day" 5;
+    reddit-dataisbeautiful = reddit "Data" "dataisbeautiful" "day" 5;
+    reddit-mapporn = reddit "Data" "MapPorn" "day" 5;
+    reddit-osint = reddit "Investigations" "OSINT" "week" 5;
     bellingcat = {
       url = "https://www.bellingcat.com/feed/";
       category = "Investigations";
