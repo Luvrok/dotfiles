@@ -8,45 +8,47 @@
 let
   proxy = "http://127.0.0.1:10808";
 
-  # events to watch, slug is the part after polymarket.com/event/.
-  # an alert fires when a market's first outcome (usually Yes) moves by
-  # threshold percentage points within window minutes
+  # events to watch, slug is the part after polymarket.com/event/. each one
+  # takes either or both of:
+  #   threshold  alert when a market's first outcome (usually Yes) moves by
+  #              this many percentage points within window minutes
+  #   every      report the top markets every this many hours, with the
+  #              change since the previous report
+  # null turns a kind off
   watch = {
     # example = {
     #   slug = "some-event-slug";
     #   threshold = 5;
     #   window = 60;
-    #   priority = 4;
+    #   every = 6;
     # };
   };
 
   checkEvery = "5min";
-  # OnCalendar for the summary of all watched events, null turns it off
-  summaryAt = "hourly";
 
   defaults = {
     threshold = 5;
     window = 60;
     priority = 4;
+    every = null;
+    reportPriority = 2;
   };
   watchJson = pkgs.writeText "polymarket-watch.json" (
-    builtins.toJSON (map (w: defaults // w) (lib.attrValues watch))
+    builtins.toJSON (lib.mapAttrsToList (name: w: defaults // w // { inherit name; }) watch)
   );
 
   script = pkgs.writeShellApplication {
     name = "polymarket-watch";
+    # $ in jq programs passed through update()
+    excludeShellChecks = [ "SC2016" ];
     runtimeInputs = with pkgs; [
       curl
       jq
-      util-linux
     ];
     text = ''
-      mode=$1
       : "''${NTFY_TOPIC:?NTFY_TOPIC is missing from the miniflux secret}"
       state=$STATE_DIRECTORY/state.json
-      exec 9>"$STATE_DIRECTORY/lock"
-      flock 9
-      [[ -s $state ]] || echo '{}' >"$state"
+      [[ -s $state ]] || echo '{"markets": {}, "reports": {}}' >"$state"
       now=$(date +%s)
 
       fetch() {
@@ -69,9 +71,14 @@ let
              p: ((.outcomePrices | fromjson)[0] | tonumber * 1000 | round / 10)}]'
       }
 
+      update() {
+        jq "$@" "$state" >"$state.new"
+        mv "$state.new" "$state"
+      }
+
       status=0
-      summary=""
       while read -r w; do
+        name=$(jq -r .name <<<"$w")
         slug=$(jq -r .slug <<<"$w")
         if ! event=$(fetch "$slug"); then
           echo "failed: $slug" >&2
@@ -80,86 +87,73 @@ let
         fi
         title=$(jq -r .title <<<"$event")
         list=$(markets <<<"$event")
+        click=https://polymarket.com/event/$slug
 
-        if [[ $mode == check ]]; then
+        if jq -e '.threshold != null' <<<"$w" >/dev/null; then
           # keep the samples inside the window, a move from the oldest one
           # beyond the threshold alerts and restarts the history
           result=$(jq -c --argjson m "$list" --argjson w "$w" --argjson now "$now" '
-            reduce $m[] as $x ({state: ., alerts: []};
-              (.state[$x.id].hist // [] | map(select(.ts >= $now - $w.window * 60))) as $hist
+            reduce $m[] as $x ({markets: .markets, alerts: []};
+              "\($w.name):\($x.id)" as $key
+              | (.markets[$key].hist // [] | map(select(.ts >= $now - $w.window * 60))) as $hist
               | if ($hist | length) > 0 and (($x.p - $hist[0].p) | fabs) >= $w.threshold then
                   .alerts += [$x + {from: $hist[0].p, mins: (($now - $hist[0].ts) / 60 | round)}]
-                  | .state[$x.id].hist = [{ts: $now, p: $x.p}]
+                  | .markets[$key].hist = [{ts: $now, p: $x.p}]
                 else
-                  .state[$x.id].hist = $hist + [{ts: $now, p: $x.p}]
+                  .markets[$key].hist = $hist + [{ts: $now, p: $x.p}]
                 end)' "$state")
-          jq '.state' <<<"$result" >"$state"
+          update --argjson r "$result" '.markets = $r.markets'
 
           while read -r a; do
-            [[ -n $a ]] || continue
             message=$(jq -r '"\(.name): \(.from)% → \(.p)% (\(if .p > .from then "+" else "" end)\(.p - .from | . * 10 | round / 10) п.п. за \(.mins) мин)"' <<<"$a")
             tag=$(jq -r 'if .p > .from then "chart_with_upwards_trend" else "chart_with_downwards_trend" end' <<<"$a")
-            push "$title" "$message" "$(jq .priority <<<"$w")" "https://polymarket.com/event/$slug" "$tag" ||
-              status=1
+            push "$title" "$message" "$(jq .priority <<<"$w")" "$click" "$tag" || status=1
           done < <(jq -c '.alerts[]' <<<"$result")
-        else
-          # top 5 by price, change since the previous summary
-          lines=$(jq -r --argjson m "$list" '
-            . as $s | $m | sort_by(-.p) | .[:5][]
-            | ($s[.id].sum // null) as $prev
-            | "  \(.name): \(.p)%" + (if $prev == null or $prev == .p then ""
-                else " (\(if .p > $prev then "+" else "" end)\(.p - $prev | . * 10 | round / 10))" end)' "$state")
-          summary+="$title"$'\n'"$lines"$'\n\n'
-          jq --argjson m "$list" 'reduce $m[] as $x (.; .[$x.id].sum = $x.p)' "$state" >"$state.new"
-          mv "$state.new" "$state"
+        fi
+
+        if jq -e --arg name "$name" --argjson w "$w" --argjson now "$now" \
+          '$w.every != null and $now - (.reports[$name].ts // 0) >= $w.every * 3600' "$state" >/dev/null; then
+          # top 5 by price, change since the previous report
+          message=$(jq -r --arg name "$name" --argjson m "$list" '
+            (.reports[$name].p // {}) as $prev | $m | sort_by(-.p) | .[:5][]
+            | $prev[.id] as $was
+            | "\(.name): \(.p)%" + (if $was == null or $was == .p then ""
+                else " (\(if .p > $was then "+" else "" end)\(.p - $was | . * 10 | round / 10))" end)' "$state")
+          # a resolved event has no open markets left
+          if [[ -z $message ]]; then
+            :
+          elif push "$title" "$message" "$(jq .reportPriority <<<"$w")" "$click" "bar_chart"; then
+            update --arg name "$name" --argjson m "$list" --argjson now "$now" \
+              '.reports[$name] = {ts: $now, p: ($m | map({key: .id, value: .p}) | from_entries)}'
+          else
+            status=1
+          fi
         fi
       done < <(jq -c '.[]' ${watchJson})
-
-      if [[ $mode == summary && -n $summary ]]; then
-        push "Polymarket: сводка" "''${summary%$'\n\n'}" 2 "https://polymarket.com" "bar_chart" ||
-          status=1
-      fi
       exit "$status"
     '';
   };
-
-  mkService = mode: {
-    description = "Polymarket watch (${mode})";
+in
+lib.mkIf (watch != { }) {
+  systemd.services.polymarket-watch = {
+    description = "Polymarket price alerts and reports";
     requires = [ "xray.service" ];
     after = [ "xray.service" ];
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = "${lib.getExe script} ${mode}";
+      ExecStart = lib.getExe script;
       # ntfy topic from the miniflux secret
       EnvironmentFile = config.sops.secrets."miniflux/admin".path;
-      # both units share the user and the state
       DynamicUser = true;
-      User = "polymarket-watch";
       StateDirectory = "polymarket-watch";
     };
   };
-in
-lib.mkIf (watch != { }) {
-  systemd.services = {
-    polymarket-watch-check = mkService "check";
-  }
-  // lib.optionalAttrs (summaryAt != null) {
-    polymarket-watch-summary = mkService "summary";
-  };
 
-  systemd.timers = {
-    polymarket-watch-check = {
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnBootSec = "2min";
-        OnUnitActiveSec = checkEvery;
-      };
-    };
-  }
-  // lib.optionalAttrs (summaryAt != null) {
-    polymarket-watch-summary = {
-      wantedBy = [ "timers.target" ];
-      timerConfig.OnCalendar = summaryAt;
+  systemd.timers.polymarket-watch = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "2min";
+      OnUnitActiveSec = checkEvery;
     };
   };
 }
