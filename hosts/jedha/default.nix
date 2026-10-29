@@ -17,6 +17,7 @@
     ./obsidian-livesync.nix
     ./miniflux.nix
     ./rsshub.nix
+    ./polymarket.nix
     # ./embeddings.nix
     # ./docs-mcp
   ];
