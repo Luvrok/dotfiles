@@ -4,13 +4,17 @@
 { pkgs, inputs }:
 
 let
+  # kodi and everything it's built with from its own nixpkgs, pinned in
+  # flake.nix (nixpkgs-kodi): the system's updates don't move it, moving it
+  # is a change of its rev there
+  kodiPkgs = import inputs.nixpkgs-kodi { inherit (pkgs.stdenv.hostPlatform) system; };
+
   # ./kodi-keys.patch: a ru layout's keys are the us ones in the keymaps
   # (./keyboard.xml; kodi gave every cyrillic letter one code), and
   # shift+letter goes through them too (G, the last item; it jumped to the
   # first item with that letter). kodi builds from source then, not from
-  # the cache. a kodi it doesn't apply to fails the build: the patch is
-  # three small hunks, redo them or drop the line (keys on ru stop working)
-  kodi = pkgs.kodi-wayland.overrideAttrs (old: {
+  # the cache: the pin keeps that to the switch that moves it
+  kodi = kodiPkgs.kodi-wayland.overrideAttrs (old: {
     patches = (old.patches or [ ]) ++ [ ./kodi-keys.patch ];
   });
   kodiPackages = kodi.packages;
@@ -27,10 +31,10 @@ in
 {
   package =
     if useProxy then
-      pkgs.symlinkJoin {
+      kodiPkgs.symlinkJoin {
         name = "kodi-xray";
         paths = [ kodiWithAddons ];
-        nativeBuildInputs = [ pkgs.makeWrapper ];
+        nativeBuildInputs = [ kodiPkgs.makeWrapper ];
         postBuild = ''
           wrapProgram $out/bin/kodi \
             --set http_proxy ${proxy} \
