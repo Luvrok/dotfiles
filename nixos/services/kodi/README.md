@@ -14,7 +14,7 @@ movie pipe (radarr/sonarr, см. `../arr/movie pipe.md`), tv через iptv sim
 | Файл | Что |
 | --- | --- |
 | `default.nix` | модуль: пакет, источники библиотеки, импорт `userdata.nix` |
-| `package.nix` | kodi (с `kodi-keys.patch`) + аддоны, `addonIds`, необязательная обёртка с xray-прокси |
+| `package.nix` | kodi из своего nixpkgs (`nixpkgs-kodi`, запинен) с `kodi-keys.patch` + аддоны, `addonIds`, необязательная обёртка с xray-прокси |
 | `kodi-keys.patch` | клавиши на ru-раскладке и `shift+буква` через keymap |
 | `addons.nix` | сами аддоны: majan, tmdb helper, moviepipe, iptv simple, youtube |
 | `userdata.nix` | всё, что kodi читает в `userdata`, и активация home-manager |
@@ -26,7 +26,9 @@ movie pipe (radarr/sonarr, см. `../arr/movie pipe.md`), tv через iptv sim
 | `advancedsettings.xml` | имена торрентов для скрапера, аниме без сезона |
 | `majan-moviepipe.xml` | includes movie pipe в majan: страница фильма, пункты 04–06 верхнего меню, плитка постера, чипы и ряд Discover для окон аддона |
 | `moviepipe-bars.py` | текстуры прогресс-баров и подчёркивания для аддона |
+| `moviepipe-player.json` | плеер TMDb Helper: Enter на фильме → «Download…» |
 | `moviepipe/` | сам аддон: `plugin.video.moviepipe` |
+| `test/` | Kodi из рабочей копии без switch: стенд под Xvfb с моком TMDb/arr или окно на barnard |
 
 ## Что изменено и почему
 
@@ -216,6 +218,82 @@ TMDb Helper в первые минуты после запуска), списо�
 ничего не выбрано, снова не «wanted». Поиск раздач — `DialogProgressBG`,
 не модальный.
 
+### 12. Всё Kodi запинено
+
+`flake.nix`: `nixpkgs-kodi` и пять аддонов (`kodi-skins`, `kodi-tmdbhelper`,
+`kodi-skinvariables`, `kodi-jurialmunkey`, `kodi-infotagger`) с `rev=` в URL.
+`nix flake update` их не трогает; сдвинуть — поменять rev и `nix flake lock`.
+`package.nix` берёт kodi и всё, с чем он собран, из `nixpkgs-kodi`, поэтому
+системные обновления Kodi не пересобирают и патчи (`kodi-keys.patch`,
+`majan-patches.nix`) не ломаются неожиданно.
+
+### 13. Верхняя полоса и 04 / 05 / 06
+
+- Пункты серые, белые в фокусе (и под мышью), показанный раздел белый и
+  подчёркнут. Рамку акцентом убрал — на одном пункте получалось три метки.
+- Номера `04`–`06` показывались как `..`: строка из одних цифр для Kodi —
+  id локализованной строки (`$LOCALIZE[4]`), Majan оборачивает свои в
+  `[UPPERCASE]`, теперь и мои.
+- Как у разделов Majan, фокус на пункте через 300 мс показывает под полосой
+  его ряды (`MoviePipe_Hubs`): 04 — каналы и недавние, 05 — тренды фильмов и
+  сериалов, 06 — что качается (`?action=queue`, каталог аддона). Enter —
+  окно раздела, ↓ — в ряды.
+
+### 14. Discover заново
+
+- Раскладка хабов Majan: сверху инфо о плитке в фокусе (ряд, название,
+  «год · 2h 16m · 7.7 / 10 · жанры», описание ровно по строкам, картинка
+  справа), снизу ровно два ряда. Ряды в grouplist высотой ровно в два ряда:
+  он прокручивает до целого ряда, ряд больше не режется полосой сверху.
+- Ряды от левого края экрана, плитки с x 328: рамка первой больше не
+  обрезается клипом grouplist'а (было `left = page_margin`).
+- Инфо сверху привязано к ряду (`Window.Property(row)`, ставит поток окна по
+  фокусу), а не к фокусу: когда фокус на чипах, там последний постер, а не
+  пусто. После возврата со страницы человека фокус там, где был
+  (`defaultcontrol` без `always`).
+- Чипы перенесены в полосу заголовка, освободили место рядам.
+- Счётчик в ряду убран.
+
+### 15. Next page
+
+Kodi не хранит `specialsort` как свойство элемента (`ListItem::setProperty`
+уводит его в `SetSpecialSort`), поэтому `ListItem.Property(specialsort)`
+всегда пуст — плитка TMDb Helper «Next page» нигде не распознавалась: на
+Discover в ряду людей она открывалась как человек «Next page», на странице
+человека тоже не листала. Узнаётся по иконке (`nextpage.png`,
+`MoviePipe_IsNext`). Плитка — как «See all» Majan (рамка, шеврон, NEXT),
+Enter листает ряд на месте, ← на первой — назад. Клик в `<content>`-списке до
+python не доходит, поэтому `SendClick` в скрытые кнопки 41–48 / 51–58 окна
+(python получает клик только контрола, который в окне есть).
+
+### 16. Обрезанные строки
+
+Набор «JetBrains Mono» — копия «Default» Majan с размерами ×0.88, а
+`linespacing` оставался от Majan: строка JetBrains выходила ~28 px вместо 33,
+на которые рассчитаны все высоты Majan (2 строки описания в хабе = 66), и
+из‑под низа выглядывала третья. `majan-patch.py` теперь считает высоту
+строки каждого шрифта по таблице `hhea` (`ascender − descender + lineGap`, то
+же, что FreeType отдаёт Kodi) и ставит JetBrains такой `linespacing`, чтобы
+строка была той же высоты, что у шрифта Majan. Чинит все текстбоксы Majan
+разом, не только мои.
+
+### 17. Звёздочка и «02:16:00 min»
+
+Строку метаданных собирал сам: `★` в JetBrains Mono NL нет (квадрат),
+`ListItem.Duration` — это `чч:мм:сс`. Теперь как у Majan: `7.7 / 10`,
+`Duration(h)`/`Duration(m)` → `2h 16m`.
+
+### 18. Стенд (`test/`)
+
+`test/run.sh start` собирает Kodi из рабочей копии (аддоны, скин, патчи — те
+же `addons.nix`, `majan-patches.nix`) и запускает с отдельным домом
+(`$STATE`, `/tmp/kodi-test`). По умолчанию — под Xvfb с `test/mock.py` (TMDb,
+Radarr, Sonarr, qBittorrent; постеры рисуются с номером), `shot`, `key`,
+`type` — скриншоты и клавиши через xdotool: так всё в этом PR проверено в
+облачной сессии без интернета. `LIVE=1 test/run.sh start` на barnard —
+окно с настоящим TMDb и arr: попробовать правку XML/питона без
+`nixos-rebuild`, `stop` и `start` снова.
+
 ## Что осталось нерешённым
 
 ### Кавычки в имени файла и внешний плеер mpv
@@ -239,13 +317,10 @@ TMDb Helper в первые минуты после запуска), списо�
 
 ### Discover: что не вошло
 
-- Метки «качается» на постерах в обычных рядах (нужно проверить, раскрывает
-  ли Kodi `$INFO` во втором аргументе `String.Contains` внутри layout).
-  Пока есть только ряд *Downloading* первым.
-- Ряды TMDb Helper на главной Majan (Skin settings → Custom rows) — руками,
-  если нужны.
-- Раскладка окна (`moviepipe-discover.xml`) собрана из includes Majan и
-  проверена только парсером и резолвом includes, не глазами.
+- Метки «качается» на постерах в обычных рядах. Есть ряд Downloading первым
+  и хаб 06.
+- Ряды TMDb Helper на главной Majan (Skin settings → Custom rows) — есть хаб
+  05 под полосой.
 
 ## Как проверить
 
