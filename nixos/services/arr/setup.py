@@ -375,9 +375,10 @@ def prowlarr(sec):
     }
 
     # the trackers by priority, 1 first: of two equal releases radarr and
-    # sonarr take the one of the tracker before. magnets hang in "downloading
-    # metadata" here: no udp, dht finds no peers. a .torrent has its files
-    # already, so prefer the torrent url everywhere
+    # sonarr take the one of the tracker before. a .torrent has its files
+    # already, a magnet gets them from peers: no udp here, no dht, only the
+    # http trackers qbittorrent adds to it (./default.nix). so the torrent
+    # url everywhere, the trackers with .torrent first
     def tracker(name, definition, priority, fields=None, tags=(), enable=True):
         return lambda: provider(
             api,
@@ -413,16 +414,17 @@ def prowlarr(sec):
     steps["old rutracker"] = lambda: [
         api.call("DELETE", f"/indexer/{x['id']}") for x in api.get("/indexer") if x["implementation"] == "RuTracker"
     ]
-    # magnet only, no .torrent on the site: sonarr and radarr would hand
-    # qbittorrent a magnet and it would wait for metadata forever. off
-    steps["uindex"] = tracker("Uindex", "uindex", 2, tags=[flaresolverr], enable=False)
-    steps["thepiratebay"] = tracker("The Pirate Bay", "thepiratebay", 3, enable=False)
+    # magnets only, no .torrent on the site: last, a release of theirs
+    # only when no tracker with .torrent has as good a one. they have what
+    # the others don't (a new season's episodes)
+    steps["uindex"] = tracker("Uindex", "uindex", 20, tags=[flaresolverr])
+    steps["thepiratebay"] = tracker("The Pirate Bay", "thepiratebay", 25)
     # primary and fallback to itorrents' .torrent, the definition's default
     # is the magnet
     steps["1337x"] = tracker(
         "1337x",
         "1337x",
-        4,
+        2,
         {
             "primarydownloadlink": 0,
             "fallbackdownloadlink": 0,

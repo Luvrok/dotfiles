@@ -23,7 +23,7 @@ flowchart LR
   L -- "скан папки" --> K
 ```
 
-uindex и thepiratebay отдают только magnet-ссылки, поэтому выключены (`setup.py`): qBittorrent с ними навсегда висел бы на «Downloading metadata» — UDP и DHT здесь не работают. Остались rutracker и 1337x, оба отдают `.torrent`.
+rutracker и 1337x отдают `.torrent`, uindex и thepiratebay — только magnet. Magnet-трекеры последние по приоритету (`setup.py`): их раздача берётся, только если у трекеров с `.torrent` нет такой же хорошей. Метаданные magnet'а qBittorrent тянет у пиров, которых находят публичные HTTP-трекеры: он добавляет их к каждой новой публичной раздаче (`default.nix`), потому что UDP и DHT здесь не работают.
 
 ## Что где
 
@@ -139,7 +139,7 @@ Kodi показывает уведомления: «Downloading…», «Download
 
 HDR — по названию раздачи: `HDR`, `HDR10`, `HDR10+`, `DV` / `Dolby Vision`, `HLG` (пользовательский формат «HDR», оценка −10000 при минимуме 0). 4K без пометок пройдёт, хотя может оказаться HDR — в окне выбора у него `HDR?`. 4K-рипы и ремуксы с UHD Blu-ray почти всегда HDR, так что 4K SDR — в основном WEB или раздачи с пометкой `SDR`.
 
-Среди одинаковых по качеству выигрывает русская озвучка (+10 к оценке), потом трекер по приоритету: rutracker → 1337x, потом больше сидов. Скачанные WEB-DL 1080p и 4K уже не меняются на BDRip 1080p. uindex и thepiratebay выключены: у них только magnet.
+Среди одинаковых по качеству выигрывает русская озвучка (+10 к оценке), потом трекер по приоритету: rutracker → 1337x → uindex → thepiratebay (magnet-трекеры последние), потом больше сидов. Скачанные WEB-DL 1080p и 4K уже не меняются на BDRip 1080p.
 
 Radarr ищет на трекерах по названию без года: у фильма, показанного на фестивале годом раньше, на трекерах часто тот год (Obsession: на TMDb 2026, премьера на TIFF в 2025). Подходящими он считает оба года — выхода и премьеры, фильмы с тем же названием и другим годом отбрасывает.
 
@@ -151,15 +151,16 @@ Radarr ищет на трекерах по названию без года: у 
 
 ### `.torrent`, не magnet
 
-Radarr и Sonarr берут у Prowlarr ссылку на `.torrent` и отдают qBittorrent уже файл, со списком файлов внутри. Поэтому `Downloading metadata` не появляется: метаданные не надо тянуть у пиров.
+С rutracker и 1337x Radarr и Sonarr берут у Prowlarr ссылку на `.torrent` и отдают qBittorrent уже файл, со списком файлов внутри. Поэтому `Downloading metadata` не появляется: метаданные не надо тянуть у пиров.
 
 - у всех трекеров `Prefer Magnet URL` выключен;
 - у 1337x `Primary` и `Fallback Download link` — `iTorrents`, а не magnet;
-- uindex и thepiratebay выключены: у них в результатах только magnet, `.torrent` нет.
+- приоритет: RuTracker 1, 1337x 2, uindex 20, thepiratebay 25 — из равных по качеству и счёту релизов Radarr/Sonarr берут трекер с меньшим числом, то есть `.torrent`;
+- uindex и thepiratebay отдают только magnet.
 
-Почему magnet висит: метаданные у него не в файле, их надо скачать у пиров через DHT/PeX или по трекерам. С barnard DHT-bootstrap (`dht.transmissionbt.com:6881`, `router.bittorrent.com:6881`, `dht.libtorrent.org:25401`) не отвечает, большинство UDP-трекеров тоже, поэтому DHT показывает 2–5 нод и метаданные не приходят. Настройками qBittorrent это не лечится: `BTProtocol = "TCP"` в `default.nix` только убирает бесполезный uTP, пиров он не добавляет. Рабочий путь здесь — `.torrent`; если у раздачи только magnet, она останется на `Downloading metadata`.
+Почему magnet висел: метаданные у него не в файле, их надо скачать у пиров через DHT/PeX или по трекерам. С barnard DHT-bootstrap (`dht.transmissionbt.com:6881`, `router.bittorrent.com:6881`, `dht.libtorrent.org:25401`) не отвечает, большинство UDP-трекеров тоже, поэтому DHT показывает 2–5 нод. `BTProtocol = "TCP"` в `default.nix` только убирает бесполезный uTP. Поэтому qBittorrent добавляет к каждой новой публичной раздаче HTTP-трекеры из списка ngosang (`AdditionalTrackersURL`, обновляет раз в сутки): они работают по TCP и дают пиров, у которых есть метаданные. Если у раздачи живых пиров нет, она всё равно останется на `Downloading metadata`.
 
-Если в qBittorrent у нового торрента пустой `magnet_uri` и сразу есть файлы — всё правильно. Старые торренты, добавленные магнитом, так и останутся на `Downloading metadata`: их надо удалить и перезабрать.
+Если в qBittorrent у торрента с rutracker или 1337x пустой `magnet_uri` и сразу есть файлы — всё правильно.
 
 ## Субтитры
 
@@ -212,8 +213,8 @@ ls /var/lib/arr/subtitles        # очередь перевода
 journalctl -u radarr -f          # поиск и импорт фильмов
 ```
 
-- Ничего не находит — Prowlarr → Indexers → Test all. Красный 1337x — FlareSolverr (`journalctl -u flaresolverr`); всё красное — xray (v2rayN) выключен. uindex и thepiratebay выключены намеренно (только magnet).
-- Торрент висит на «Downloading metadata» — он пришёл магнитом: проверь `magnet_uri` у него (`curl -s 127.0.0.1:8140/api/v2/torrents/info`), удали и перезабери. Новые должны быть с пустым `magnet_uri` и списком файлов сразу.
+- Ничего не находит — Prowlarr → Indexers → Test all. Красный 1337x — FlareSolverr (`journalctl -u flaresolverr`); всё красное — xray (v2rayN) выключен.
+- Торрент висит на «Downloading metadata» — он пришёл магнитом (uindex, thepiratebay; `magnet_uri` в `curl -s 127.0.0.1:8140/api/v2/torrents/info`). Есть ли у него HTTP-трекеры из списка: qBittorrent → торрент → Trackers; в логе qBittorrent «Tracker list updated» или «Failed to update tracker list». Если трекеры есть, а пиров нет — раздача мёртвая, удали и возьми другую.
 - Красный RuTracker — `curl -s 127.0.0.1:8150/health` (есть ли кука Cloudflare, `last_error`) и `journalctl -u rutracker-proxy`. Капчу на входе Prowlarr показывает картинкой: Indexers → RuTracker → Test, ввести код. Или один раз войти на rutracker в браузере с barnard.
 - «radarr не ответил за 150 с» или ошибка при **Download…** на новом фильме — Radarr не дождался своего сервера фильмов (api.radarr.video, ходит через xray): `journalctl -u radarr -b -n 200` — первая строка ошибки перед `SkyHookProxy`. Повтори через минуту; если так всегда — xray.
 - Скачалось, но нет в Kodi — Radarr → Activity → Queue (ошибка импорта), или `f` в Kodi.
