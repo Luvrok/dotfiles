@@ -25,6 +25,7 @@ Menu {
     // fields a list
     function page(rows) {
         input = entry === "";
+        searchable = entry === "";
         lines = Math.max(1, Math.min(rows.length, 15));
         show(rows);
     }
@@ -74,6 +75,7 @@ Clearing in 45 seconds"
     icon: "\u{f0306}"
     prompt: "search"
     input: true
+    startInSearch: true
     enterHint: entry === "" ? "open" : "copy"
     actions: entry === "" ? [["ctrl+a", "type login"]] : [["t", "type"], ["ctrl+a", "type login"], ["⌫", "back"]]
     lines: 15

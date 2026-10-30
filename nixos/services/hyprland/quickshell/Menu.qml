@@ -17,16 +17,19 @@ PanelWindow {
 
     // the text line has the keys: a prompt, or a search that filters the
     // rows as you type (case insensitive, every word must match). a menu
-    // that opens on its list and is searchable opens it with /, q in an
-    // empty search or tab (keeps the filter) goes back to the list. in the
-    // list j/k/l and g/G work too. letter keys go by where they are on the
+    // that opens on its list and is searchable opens it with /, or with tab
+    // when it has the field, tab (keeps the filter) flips back to the list,
+    // q types in the field. in the list
+    // j/k and g/G work too. letter keys go by where they are on the
     // keyboard, so they work on the ru layout, and only with the ctrl, alt
     // or super they ask for
     property bool input: false
     property bool searchable: false
     // the search text field has the focus (not the list). only meaningful
-    // when input && searchable: / enters it, tab leaves it
+    // when input && searchable: tab flips it on and off
     property bool searchFocused: false
+    // a searchable menu starts on its search field, not on its list
+    property bool startInSearch: false
     property bool password: false
     // the text line's placeholder
     property string prompt: ""
@@ -58,7 +61,7 @@ PanelWindow {
     // hides them
     property string enterHint: "pick"
     property var actions: []
-    property var hints: input && !searchable ? [["enter", enterHint], ...(lines > 0 ? [["↑↓", "move"]] : []), ...actions, ...upHint, ["esc", "close"]] : input && searchable ? [["enter", enterHint], ["↑↓", "move"], ["/", "search"], ["tab", "list"], ...actions, ...upHint, ["esc", "close"]] : input ? [["enter", enterHint], ["↑↓", "move"], ["tab", "list"], ["q", "back"], ["esc", "close"]] : [["j/k", "move"], ["enter", enterHint], ...actions, ...(searchable ? [["/", "search"]] : []), ...upHint, ["esc", "close"]]
+    property var hints: input && !searchable ? [["enter", enterHint], ...(lines > 0 ? [["j/k, ↑↓", "move"]] : []), ...actions, ...upHint, ["esc", "close"]] : input && searchable ? [["enter", enterHint], ["j/k, ↑↓", "move"], ...(searchFocused ? [["tab", "list"]] : [["tab", "search"]]), ...actions, ...upHint, ["esc", "close"]] : [["j/k", "move"], ["enter", enterHint], ...actions, ...(searchable ? [["/", "search"]] : []), ...upHint, ["esc", "close"]]
     // back to the menu it came from: q, or backspace while typing
     readonly property var upHint: parentMenu !== "" && atTop ? [[input ? "⌫" : "q", parentMenu]] : []
     // rows in the accent color: the connected network, the default sink
@@ -112,7 +115,7 @@ PanelWindow {
         field.input.text = "";
         filter();
         if (searchable)
-            searchFocused = false;
+            searchFocused = startInSearch;
         if (startOnFirst || selected !== undefined)
             jump(Math.max(0, Math.min(selected ?? 0, shown.length - 1)), 1);
         list.positionViewAtIndex(Math.max(0, list.currentIndex), ListView.Contain);
@@ -299,8 +302,6 @@ PanelWindow {
                 move(1, true);
             else if (searchable && k === Qt.Key_Tab)
                 closeSearch(true);
-            else if (searchable && field.text === "" && key(e, "q"))
-                closeSearch(false);
             else if (k === Qt.Key_Backspace && field.text === "")
                 up();
             else if (key(e, "a", ctrl))
@@ -322,7 +323,7 @@ PanelWindow {
         }
         // the list has the focus: searchable with the field shown but not
         // focused, or no input at all
-        if (enter || key(e, "l"))
+        if (enter)
             accept();
         else if (k === Qt.Key_Up || key(e, "k"))
             move(-1, true);
@@ -332,7 +333,7 @@ PanelWindow {
             jump(0, 1);
         else if (k === Qt.Key_End || key(e, "g"))
             jump(shown.length - 1, -1);
-        else if (searchable && key(e, "/"))
+        else if (searchable && (input ? k === Qt.Key_Tab : key(e, "/")))
             openSearch();
         else if (key(e, "q") && field.text !== "")
             closeSearch(false);
@@ -540,6 +541,7 @@ PanelWindow {
                 }
 
                 Rectangle {
+                    z: 1
                     visible: list.contentHeight > list.height + 1
                     anchors.right: parent.right
                     anchors.rightMargin: 2
@@ -551,8 +553,8 @@ PanelWindow {
                         width: parent.width
                         height: Math.max(12, parent.height * list.visibleArea.heightRatio)
                         y: parent.height * list.visibleArea.yPosition
-                        color: Theme.selBg
-                        opacity: 0.7
+                        color: Theme.fg
+                        opacity: 0.5
                     }
                 }
             }

@@ -86,7 +86,7 @@ Menu {
     readonly property int columns: Math.min(5, tools.length)
     property int selected: 0
     menuWidth: 26 + columns * ch(12) + (columns - 1) * 10
-    hints: [["h/l", "pick"], ["enter", "open"], ["key", "open"], ["q", "back in a tool"], ["esc", "close"]]
+    hints: [["h/l", "pick"], ["enter", "open"], ["key", "open"], ["esc", "close"]]
 
     function move(step) {
         const n = tools.length;
