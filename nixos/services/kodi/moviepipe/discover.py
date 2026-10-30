@@ -8,7 +8,8 @@
 # last tile turns the row's page, left on the first one back. a row gets
 # its path when the focus is two rows from it: tmdb helper asks tmdb for
 # every poster's details the first time. SEARCH: what tmdb finds, back
-# the rows again. t a trailer, r the rows again
+# the rows again. up from the rows: the plot on top, enter all of it. t a
+# trailer, o the tmdb page in the browser, r the rows again
 import threading
 import time
 
@@ -17,6 +18,7 @@ import xbmcgui
 
 from actions import rpc
 from arr import Error
+from browser import browse, url
 from keys import letter
 from tmdb import HELPER, helper, info, settle
 from trailer import trailer
@@ -52,8 +54,9 @@ ROWS = {
 # row n is list 200 + n: 1 the downloads (./default.py's queue), 2..8 tmdb's
 QUEUE = "plugin://plugin.video.moviepipe/?action=queue"
 FIRST, LAST = 2, 8
-# the chips, and the rows' SendClick: 40 + n the next page, 50 + n back
-MOVIES, SHOWS, SEARCH, BROWSE = 101, 102, 103, 104
+# the chips, the plot on top, and the rows' SendClick: 40 + n the next
+# page, 50 + n back
+MOVIES, SHOWS, SEARCH, BROWSE, PLOT = 101, 102, 103, 104, 9100
 NEXT, BACK = 40, 50
 # rows past the focus that get their path
 AHEAD = 2
@@ -234,6 +237,10 @@ class Discover(xbmcgui.WindowXML):
             if query:
                 self.query = query
                 self.show("search")
+        elif cid == PLOT:
+            row = self.getProperty("row")
+            if row:
+                xbmcgui.Dialog().textviewer(info(f"Container({row}).ListItem.Label"), info(f"Container({row}).ListItem.Plot"))
         elif cid == BROWSE:
             self.leave()
             xbmc.executebuiltin(f"ActivateWindow(Videos,{HELPER},return)")
@@ -253,6 +260,11 @@ class Discover(xbmcgui.WindowXML):
             self.stamp = str(time.time())
             for n in range(FIRST, self.enabled + 1):
                 self.put(n)
+        elif key == "o" and 201 <= focus <= 200 + LAST:
+            # its tmdb page in the browser: a film's, a show's, a person's
+            item = f"Container({focus}).ListItem"
+            kind = "person" if info(f"{item}.Property(tmdb_type)") == "person" else "tv" if info(f"{item}.DBType") == "tvshow" else "movie"
+            browse(url("tmdb", kind, info(f"{item}.UniqueID(tmdb)") or info(f"{item}.Property(tmdb_id)")))
         elif key == "t" and 201 <= focus <= 200 + LAST:
             tmdb = info(f"Container({focus}).ListItem.UniqueID(tmdb)") or info(f"Container({focus}).ListItem.Property(tmdb_id)")
             kind = "tv" if info(f"Container({focus}).ListItem.DBType") == "tvshow" else "movie"

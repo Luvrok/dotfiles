@@ -13,6 +13,11 @@
 #   ?action=trailer&type=movie|tv&tmdb=...  ./trailer.py, majan's film page
 #   ?action=reload     r on majan's film page: its cast row again
 #                      (../majan-moviepipe.xml)
+#   ?action=open&site=tmdb|imdb|letterboxd&type=movie|tv|person&tmdb=&imdb=
+#                      the page in the browser, ./browser.py (more on the
+#                      film page)
+#   ?action=plot&id=N  the whole plot of container N's tile (home's rows)
+#   ?action=page&row=N&by=1|-1  home's row N's page of tmdb helper
 import sys
 import time
 import urllib.parse
@@ -23,8 +28,10 @@ import xbmcplugin
 
 from actions import movie, show
 from arr import Error, error
+from browser import browse, url
 from discover import discover
 from person import person
+from tmdb import info, settle
 from trailer import trailer
 from windows import downloads, show_downloads
 
@@ -78,6 +85,23 @@ def reload():
     xbmcgui.Window(10000).setProperty("moviepipe.reload", str(time.time()))
 
 
+def plot():
+    # a tile's whole plot, home's rows (its info shows a few lines of it)
+    cid = QUERY["id"]
+    xbmcgui.Dialog().textviewer(info(f"Container({cid}).ListItem.Label"), info(f"Container({cid}).ListItem.Plot"))
+
+
+def page():
+    # home's row turns its page in place (../majan-moviepipe.xml: its path
+    # has the page of this property), its first tile in focus then
+    row, home = QUERY["row"], xbmcgui.Window(10000)
+    key = f"moviepipe.page{row}"
+    n = max(1, int(home.getProperty(key) or 1) + int(QUERY.get("by", 1)))
+    home.setProperty(key, str(n) if n > 1 else "")
+    if settle(row):
+        xbmc.executebuiltin(f"SetFocus({row},0,absolute)")
+
+
 action = QUERY.get("action")
 if action == "downloads":
     show_downloads()
@@ -93,5 +117,11 @@ elif action == "trailer":
     trailer(QUERY.get("type", "movie"), QUERY.get("tmdb"))
 elif action == "reload":
     reload()
+elif action == "open":
+    browse(url(QUERY.get("site", "tmdb"), QUERY.get("type", "movie"), QUERY.get("tmdb"), QUERY.get("imdb")))
+elif action == "plot":
+    plot()
+elif action == "page":
+    page()
 else:
     listing()

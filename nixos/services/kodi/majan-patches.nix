@@ -178,6 +178,30 @@
       from = "<expression name=\"VidInfo_ShowTrailer\">$EXP[ShowTrailerButton] + !String.IsEmpty(ListItem.Trailer)</expression>";
       to = "<expression name=\"VidInfo_ShowTrailer\">$EXP[ShowTrailerButton] + [!String.IsEmpty(ListItem.Trailer) | [[String.IsEqual(ListItem.DBType,movie) | String.IsEqual(ListItem.DBType,tvshow)] + !String.IsEmpty(ListItem.UniqueID(tmdb))]]</expression>";
     }
+    # the film page's plot: still, its last line fading when there's more
+    # (MoviePipe_Text's way, ./majan-moviepipe.xml); it rolled up on its own
+    # and showed the next line cut in half. enter on it: all of it, majan's
+    {
+      file = "1080i/Includes_VideoInfo.xml";
+      from = ''
+        <visible>!String.IsEmpty(ListItem.Plot) | !String.IsEmpty(ListItem.Tagline)</visible>
+        				<control type="textbox">'';
+      to = ''
+        <visible>!String.IsEmpty(ListItem.Plot) | !String.IsEmpty(ListItem.Tagline)</visible>
+        				<control type="textbox" id="9161">'';
+    }
+    {
+      file = "1080i/Includes_VideoInfo.xml";
+      # the page's, not the full plot's (it scrolls, its own count)
+      from = "\t\t\t\t\t<autoscroll delay=\"6000\" time=\"3000\" repeat=\"10000\">true</autoscroll>  <!-- standard Kodi plot scroll: wait 6s, roll, pause 10s, repeat -->";
+      to = "";
+    }
+    {
+      file = "1080i/Includes_VideoInfo.xml";
+      from = ''<control type="button" id="9001">'';
+      to = ''<control type="image"><bottom>0</bottom><width>1080</width><height>44</height><texture colordiffuse="bg">common/gradient_bottom.png</texture><visible>Container(9161).HasNext</visible></control><control type="button" id="9001">'';
+    }
+
     # the cast row was hidden while its list was empty, and a hidden list
     # loads nothing: when the film's own cast (kodi's, before tmdb helper's
     # took its place) was empty, as on the first pages after kodi starts,

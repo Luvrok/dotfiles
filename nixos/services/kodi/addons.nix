@@ -14,6 +14,7 @@
   writeText,
   requests,
   signals,
+  xdg-utils,
   pvr-iptvsimple,
   youtube,
 }:
@@ -113,6 +114,7 @@ let
           }
         )
       } $d/arr.json
+      substituteInPlace $d/browser.py --replace-fail 'OPENER = "xdg-open"' 'OPENER = "${xdg-utils}/bin/xdg-open"'
       mkdir -p $d/resources/skins/Default/media/bars
       ${kodi.pythonPackages.python.interpreter} ${./moviepipe-bars.py} $d/resources/skins/Default/media/bars
     '';

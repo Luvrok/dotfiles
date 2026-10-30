@@ -93,7 +93,7 @@
 				<height>22</height>
 				<font>mono_14</font>
 				<textcolor>$VAR[ColorCaption]</textcolor>
-				<label>ENTER — DOWNLOAD   I — INFO   T — TRAILER   R — RELOAD</label>
+				<label>ENTER — DOWNLOAD   I — INFO   T — TRAILER   O — IN THE BROWSER   R — RELOAD</label>
 			</control>
 			<!-- the text column at x 680, as the film page's -->
 			<control type="grouplist">
@@ -282,32 +282,21 @@
 						</control>
 					</control>
 				</control>
-				<!-- the biography, 6 lines, still, enter: all of it. the hint
-				     on a line of its own under it, only for a longer one
-				     (person.py's biomore): over the text it hid the last
-				     line's end -->
+				<!-- the biography, 6 lines, the rest fading out under them,
+				     enter: all of it -->
 				<control type="group">
 					<left>16</left>
 					<width>vidview_col_w</width>
-					<height>256</height>
+					<height>228</height>
 					<visible>!String.IsEmpty(Window.Property(bio))</visible>
-					<control type="textbox">
-						<width>1080</width>
-						<height>228</height>
-						<font>body_26</font>
-						<textcolor>text_body</textcolor>
-						<label>$INFO[Window.Property(bio)]</label>
-					</control>
-					<control type="label">
-						<left>0</left>
-						<top>230</top>
-						<width>1080</width>
-						<height>24</height>
-						<font>mono_13</font>
-						<textcolor>$VAR[ColorCaption]</textcolor>
-						<label>↑ ENTER — THE WHOLE BIOGRAPHY</label>
-						<visible>!String.IsEmpty(Window.Property(biomore))</visible>
-					</control>
+					<include content="MoviePipe_Text">
+						<param name="id" value="9002"/>
+						<param name="top" value="0"/>
+						<param name="width" value="1080"/>
+						<param name="height" value="228"/>
+						<param name="font" value="body_26"/>
+						<param name="label" value="$INFO[Window.Property(bio)]"/>
+					</include>
 					<control type="button" id="9001">
 						<width>1080</width>
 						<height>228</height>
@@ -383,6 +372,14 @@
 					<param name="id" value="113"/>
 					<param name="label" value="OLDEST"/>
 					<param name="shown" value="String.IsEqual(Window.Property(sort),oldest)"/>
+					<param name="onup" value="9001"/>
+					<param name="ondown" value="500"/>
+				</include>
+				<include content="MoviePipe_Chip">
+					<param name="id" value="121"/>
+					<param name="label" value="TMDB ↗"/>
+					<param name="shown" value="false"/>
+					<param name="left" value="32"/>
 					<param name="onup" value="9001"/>
 					<param name="ondown" value="500"/>
 				</include>

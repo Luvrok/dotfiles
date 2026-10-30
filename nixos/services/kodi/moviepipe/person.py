@@ -2,8 +2,10 @@
 # photo and what tmdb knows of them, their films, shows or the films they
 # directed, the known ones, the newest or the oldest first. tmdb helper
 # fills it, its lists' paths in the window's properties: enter on a film is
-# its player ("Download…"), i its page, c its menu, t its trailer, r the
-# row again. majan's film page opens it (../majan-moviepipe.xml): enter on
+# its player ("Download…"), i its page, c its menu, t its trailer, o its
+# tmdb page in the browser (TMDB ↗: the person's), r the row again. the
+# biography fades out under its lines, enter on it: all of it. majan's film
+# page opens it (../majan-moviepipe.xml): enter on
 # one of the cast, "more by director" (the film's director by its crew when
 # tmdb helper's list gave no name)
 import threading
@@ -13,6 +15,7 @@ from datetime import date
 import xbmc
 import xbmcgui
 
+from browser import browse, url
 from keys import letter
 from tmdb import count, helper, info, settle, wait
 from trailer import trailer
@@ -41,7 +44,7 @@ SORTS = {
 # film's crew
 DETAILS, SEARCH, CREW, ROW = 70, 71, 72, 500
 # the list's last tile (tmdb helper's next page), left on its first
-NEXT, PREVIOUS, BIO = 310, 311, 9001
+NEXT, PREVIOUS, BIO, TMDB = 310, 311, 9001, 121
 KINDS = {
     "Acting": "Actor",
     "Directing": "Director",
@@ -51,8 +54,6 @@ KINDS = {
     "Editing": "Editor",
     "Sound": "Composer",
 }
-# a biography longer than its 6 lines, about: the hint under it
-LONG_BIO = 420
 
 
 def day(text):
@@ -157,7 +158,6 @@ class Person(xbmcgui.WindowXML):
             self.setProperty(f"has_{tab}", "1" if self.counts[tab] or self.tab == tab else "")
         self.setProperty("name", self.name)
         self.setProperty("bio", self.bio)
-        self.setProperty("biomore", "1" if len(self.bio) > LONG_BIO or self.bio.count("\n") > 4 else "")
         self.setProperty("kind", KINDS.get(self.department, self.department or "Person"))
         self.setProperty("kicker", f"Known for {self.department}" if self.department else "")
         self.setProperty("born", day(get("Property(birthday)")))
@@ -218,6 +218,9 @@ class Person(xbmcgui.WindowXML):
         elif cid == BIO:
             xbmcgui.Dialog().textviewer(self.name, self.bio)
             return
+        elif cid == TMDB:
+            browse(url("tmdb", "person", self.tmdb))
+            return
         else:
             return
         self.show()
@@ -229,6 +232,10 @@ class Person(xbmcgui.WindowXML):
             # the row again, tmdb helper asked anew
             self.stamp = str(time.time())
             self.show()
+        elif key == "o" and self.getFocusId() == ROW:
+            # the film's or show's page in the browser
+            kind = "tv" if info(f"Container({ROW}).ListItem.DBType") == "tvshow" else "movie"
+            browse(url("tmdb", kind, info(f"Container({ROW}).ListItem.UniqueID(tmdb)") or info(f"Container({ROW}).ListItem.Property(tmdb_id)")))
         elif key == "t" and self.getFocusId() == ROW:
             tmdb = info(f"Container({ROW}).ListItem.UniqueID(tmdb)") or info(f"Container({ROW}).ListItem.Property(tmdb_id)")
             kind = "tv" if info(f"Container({ROW}).ListItem.DBType") == "tvshow" else "movie"

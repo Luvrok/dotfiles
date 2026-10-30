@@ -283,7 +283,25 @@ python не доходит, поэтому `SendClick` в скрытые кно�
 `ListItem.Duration` — это `чч:мм:сс`. Теперь как у Majan: `7.7 / 10`,
 `Duration(h)`/`Duration(m)` → `2h 16m`.
 
-### 18. Стенд (`test/`)
+### 18. Хвосты, Next на главной, браузер, просмотрено
+
+- Описания (инфо хабов и Discover, страница фильма Majan, биография) больше
+  не прокручиваются сами: высота ровно в строки, что не влезло — затемнено
+  градиентом Majan в цвет фона (`MoviePipe_Text`, видно по
+  `Container(id).HasNext` — у текстбокса есть следующая страница). На
+  описании можно встать (↑ из рядов) и раскрыть по Enter.
+- Next в рядах под полосой на главной листает ряд на месте:
+  `?action=page` ставит `Window(Home).Property(moviepipe.page<id>)`, путь
+  ряда его подставляет.
+- `browser.py`: TMDb / IMDb / Letterboxd (`letterboxd.com/tmdb/<id>`) через
+  `xdg-open` из xdg-utils, путь зашит при сборке (`addons.nix`): в PATH Kodi
+  его может не быть.
+- Просмотрено только руками: у mpv `playcountminimumtime` — максимум (Kodi
+  считал фильм просмотренным после 10 с mpv), у своего плеера
+  `playcountminimumpercent` 101. `w` — ToggleWatched везде (было только в
+  окне файлов).
+
+### 19. Стенд (`test/`)
 
 `test/run.sh start` собирает Kodi из рабочей копии (аддоны, скин, патчи — те
 же `addons.nix`, `majan-patches.nix`) и запускает с отдельным домом
