@@ -5,6 +5,7 @@
 # that fails (the disk not there, an app down) doesn't stop the others,
 # the next run tries again. setup.py CONFIG.json
 import json
+import re
 import sys
 import time
 import urllib.error
@@ -159,7 +160,9 @@ def straight(api):
             hosts.append(host)
             log(f"prowlarr: {name} straight")
         except Exception as e:  # noqa: BLE001 - a timeout too: through xray
-            log(f"prowlarr: {name} through xray: {str(e)[:200]}")
+            # prowlarr's reasons are json, their messages on one line
+            why = re.findall(r'"errorMessage": "([^"]*)"', str(e)) or [str(e)]
+            log(f"prowlarr: {name} through xray: {' / '.join(why)[:300]}")
     updated(api, "/config/host", proxyBypassFilter=",".join(hosts))
 
 
