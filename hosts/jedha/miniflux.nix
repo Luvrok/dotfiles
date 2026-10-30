@@ -21,6 +21,11 @@ let
     inherit category;
   };
 
+  habr = category: sub: t: limit: {
+    url = "https://habr.com/ru/rss/hubs/${sub}/articles/top/${t}/?fl=ru&limit=${toString limit}";
+    inherit category;
+  };
+
   # feeds managed from here: missing ones are added, settings are reapplied
   # on every switch and boot. a feed dropped from the list stays in miniflux,
   # delete it in the ui. besides url, attrs are api fields
@@ -29,11 +34,11 @@ let
   # systemd time span to poll the feed on top of miniflux's hourly round, and
   # ntfy, a push priority 1-5 for new entries (false turns pushes off)
   feeds = {
-    ateo = {
-      url = "${rsshub}/telegram/channel/Ateobreaking";
-      category = "Breaking";
-      refresh = "2min";
-    };
+    # ateo = {
+    #   url = "${rsshub}/telegram/channel/Ateobreaking";
+    #   category = "Breaking";
+    #   refresh = "2min";
+    # };
     meduza = {
       # blocked in russia, only works through xray
       url = "https://meduza.io/rss/all";
@@ -42,12 +47,6 @@ let
       crawler = true;
       # news only, no podcasts, features or games
       keep_filter_entry_rules = "EntryURL=^https://meduza\\.io/news/";
-    };
-    npr-world = {
-      url = "https://feeds.npr.org/1004/rss.xml";
-      category = "World";
-      # npr's pages fill images in with js, the crawler gets src="undefined"
-      crawler = false;
     };
     bbc-world = {
       url = "https://feeds.bbci.co.uk/news/world/rss.xml";
@@ -60,25 +59,40 @@ let
       category = "YouTube";
       ntfy = 5;
     };
-    reddit-worldnews = reddit "World" "worldnews" "day" 10;
-    reddit-europe = reddit "World" "europe" "day" 7;
-    reddit-geopolitics = reddit "World" "geopolitics" "day" 7;
-    reddit-news = reddit "US" "news" "day" 10;
-    reddit-politics = reddit "US" "politics" "day" 10;
-    # polls, election maps, charts
-    reddit-fivethirtyeight = reddit "Data" "fivethirtyeight" "day" 5;
-    reddit-dataisbeautiful = reddit "Data" "dataisbeautiful" "day" 5;
-    reddit-mapporn = reddit "Data" "MapPorn" "day" 5;
-    reddit-osint = reddit "Investigations" "OSINT" "week" 5;
-    bellingcat = {
-      url = "https://www.bellingcat.com/feed/";
-      category = "Investigations";
-    };
-    icij = {
-      url = "https://www.icij.org/feed/";
-      category = "Investigations";
+    myshows = {
+      url = "https://myshows.me/v3/rss/";
+      category = "News";
       crawler = true;
     };
+    # habr = {
+    #   url = "https://habr.com/ru/rss/best/daily/?limit=10";
+    #   category = "Tech";
+    #   crawler = true;
+    # };
+    reddit-worldnews = reddit "World" "worldnews" "week" 10;
+    reddit-europe = reddit "World" "europe" "week" 10;
+    reddit-geopolitics = reddit "World" "geopolitics" "week" 10;
+    reddit-news = reddit "US" "news" "week" 10;
+    reddit-politics = reddit "US" "politics" "week" 10;
+    reddit-movies = reddit "Entertaiment" "movies" "day" 10;
+    reddit-fivethirtyeight = reddit "Data" "fivethirtyeight" "week" 5;
+    reddit-dataisbeautiful = reddit "Data" "dataisbeautiful" "week" 5;
+    reddit-mapporn = reddit "Data" "MapPorn" "week" 5;
+    reddit-LocalLLaMA = reddit "Tech" "LocalLLaMA" "day" 10;
+    reddit-linux = reddit "Tech" "linux" "day" 5;
+
+    habr-artificial_intelligence = habr "Tech" "artificial_intelligence" "monthly" 5;
+    habr-linux_dev = habr "Tech" "linux_dev" "monthly" 5;
+    habr-linux = habr "Tech" "linux" "monthly" 5;
+    habr-sys_admin = habr "Tech" "sys_admin" "monthly" 5;
+    habr-db_admins = habr "Tech" "db_admins" "monthly" 5;
+    habr-s_admin = habr "Tech" "s_admin" "monthly" 5;
+    habr-devops = habr "Tech" "devops" "monthly" 5;
+    habr-postgresql = habr "Tech" "postgresql" "monthly" 5;
+    habr-kubernetes = habr "Tech" "kubernetes" "monthly" 5;
+    habr-go = habr "Tech" "go" "monthly" 5;
+    habr-data_visualization = habr "Tech" "data_visualization" "monthly" 5;
+    habr-virtualization = habr "Tech" "virtualization" "monthly" 5;
   };
 
   refreshed = lib.filterAttrs (_: feed: feed ? refresh) feeds;
@@ -237,6 +251,7 @@ in
       # i'm the only user
       HTTP_PROXY = proxy;
       HTTPS_PROXY = proxy;
+      NO_PROXY = "myshows.me,habr.com";
       FETCHER_ALLOW_PRIVATE_NETWORKS = 1;
       # same for integrations (ntfy): with the filter on, their client skips
       # the env proxy and goes straight out
