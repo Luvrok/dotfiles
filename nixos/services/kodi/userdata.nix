@@ -29,22 +29,6 @@ let
     </settings>
   '';
 
-  # enter on a film or an episode in tmdb helper: ./moviepipe's
-  # "Download…", the releases to pick one of. tmdb helper fills {tmdb} (the
-  # show's for an episode), {season} and {episode}
-  player =
-    let
-      run = query: "executebuiltin://RunPlugin(plugin://plugin.video.moviepipe/?action=download&${query})";
-    in
-    builtins.toJSON {
-      name = "Movie pipe: Download…";
-      plugin = "plugin.video.moviepipe";
-      priority = 1;
-      is_resolvable = "false";
-      play_movie = run "type=movie&tmdb={tmdb}";
-      play_episode = run "type=episode&tmdb={tmdb}&season={season}&episode={episode}";
-    };
-
   # kodi puts its libraries (rtmpdump, libnfs...) in LD_LIBRARY_PATH, mpv
   # shouldn't load them over its own, nor take kodi's proxy. -- for a file
   # that starts with a dash
@@ -77,9 +61,11 @@ in
     # vim keys (./keyboard.xml)
     "${datadir}/userdata/keymaps/keyboard.xml".source = ./keyboard.xml;
 
-    # enter on a film or an episode in tmdb helper: download, a release picked
-    "${datadir}/userdata/addon_data/plugin.video.themoviedb.helper/players/moviepipe-download.json".text =
-      player;
+    # enter on a film or an episode in tmdb helper: ./moviepipe's
+    # "Download…", the releases to pick one of. tmdb helper fills {tmdb} (the
+    # show's for an episode), {season} and {episode}
+    "${datadir}/userdata/addon_data/plugin.video.themoviedb.helper/players/moviepipe-download.json".source =
+      ./moviepipe-player.json;
 
     # torrent names the scraper finds
     "${datadir}/userdata/advancedsettings.xml".source = ./advancedsettings.xml;

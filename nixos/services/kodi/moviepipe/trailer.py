@@ -1,7 +1,7 @@
-# "trailer" on majan's film page (../majan.nix): its own, or tmdb's first
-# trailer (youtube) by tmdb helper's videos of it. tmdb helper's lists
-# leave ListItem.Trailer empty
-# opened in an external mpv process so kodi keeps running and doesn't wait
+# "trailer" on majan's film page (../majan.nix) and t on a poster
+# (./discover.py, ./person.py): its own, or tmdb's first trailer (youtube)
+# by tmdb helper's videos of it (tmdb helper's lists leave ListItem.Trailer
+# empty). in mpv of its own, kodi goes on and doesn't wait for it
 import json
 import os
 import shutil
@@ -63,8 +63,8 @@ def trailer(kind, tmdb):
     if not path:
         notify(title, "No trailer on TMDb")
         return
-    # закрываем только текущий диалог видео-инфо, не все (иначе при
-    # person->film->trailer вспыхивает person page)
+    # the film's page alone goes, not all: a person's page under it
+    # flashed up between them
     xbmc.executebuiltin("Dialog.Close(VideoInfo,true)", True)
     path = for_mpv(path)
     subprocess.Popen(

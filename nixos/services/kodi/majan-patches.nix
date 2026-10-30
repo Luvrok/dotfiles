@@ -191,12 +191,77 @@
 
     # home's top bar: 04 live tv, 05 discover, 06 downloads after tv shows,
     # in majan's music's place (hidden, and search and the gear don't move
-    # left for it). an accent frame on the item in focus: the underline is
-    # the section shown, the focus had no mark (the mouse over the bar)
+    # left for it), each with its rows under the bar (./majan-moviepipe.xml).
+    # the bar's items grey, white in focus (the mouse over one too), the
+    # section shown white and underlined: the focus had no mark, and an
+    # accent frame on it was one mark too many
     {
       file = "1080i/Includes_Home.xml";
-      from = "<!-- 3px accent underline -->";
-      to = ''<include content="Majan_FocusFrameAlways"><param name="visible" value="Control.HasFocus($PARAM[id])"/></include><!-- 3px accent underline -->'';
+      from = ''
+        <textcolor>text_secondary</textcolor>
+        					<label>$PARAM[index]</label>
+        					<visible>!$PARAM[active]</visible>
+        				</control>'';
+      to = ''
+        <textcolor>text_secondary</textcolor>
+        					<label>$PARAM[index]</label>
+        					<visible>!$PARAM[active] + !Control.HasFocus($PARAM[id])</visible>
+        				</control>
+        				<control type="label">
+        					<left>0</left>
+        					<top>4</top>
+        					<width>topbar_index_w</width>
+        					<height>topbar_item_h</height>
+        					<font>mono_14</font>
+        					<textcolor>text_primary</textcolor>
+        					<label>$PARAM[index]</label>
+        					<visible>!$PARAM[active] + Control.HasFocus($PARAM[id])</visible>
+        				</control>'';
+    }
+    {
+      file = "1080i/Includes_Home.xml";
+      from = ''
+        <font>menu_26_medium</font>
+        					<textcolor>text_secondary</textcolor>
+        					<label>$PARAM[label]</label>
+        					<visible>!$PARAM[active]</visible>
+        				</control>'';
+      to = ''
+        <font>menu_26_medium</font>
+        					<textcolor>text_secondary</textcolor>
+        					<label>$PARAM[label]</label>
+        					<visible>!$PARAM[active] + !Control.HasFocus($PARAM[id])</visible>
+        				</control>
+        				<control type="label">
+        					<left>topbar_label_x</left>
+        					<top>0</top>
+        					<width>200</width>
+        					<height>topbar_item_h</height>
+        					<font>menu_26_medium</font>
+        					<textcolor>text_primary</textcolor>
+        					<label>$PARAM[label]</label>
+        					<visible>!$PARAM[active] + Control.HasFocus($PARAM[id])</visible>
+        				</control>'';
+    }
+    {
+      # search's and the gear's: white in focus already, the frame goes
+      file = "1080i/Includes_Home.xml";
+      from = ''
+        <include content="Majan_FocusFrameAlways">
+        					<param name="visible" value="Control.HasFocus($PARAM[id])"/>
+        				</include>'';
+      to = "";
+    }
+    {
+      # down from 04 05 06: their rows
+      file = "1080i/Includes_Home.xml";
+      from = ''<ondown condition="$EXP[Home_HubMusic]">9231</ondown>'';
+      to = ''<ondown condition="$EXP[Home_HubMusic]">9231</ondown><ondown condition="$EXP[MoviePipe_HubLive]">9251</ondown><ondown condition="$EXP[MoviePipe_HubDiscover]">9261</ondown><ondown condition="$EXP[MoviePipe_HubDownloads]">9271</ondown>'';
+    }
+    {
+      file = "1080i/Home.xml";
+      from = "<include>Home_HubMusic</include>";
+      to = "<include>Home_HubMusic</include><include>MoviePipe_Hubs</include>";
     }
     {
       file = "1080i/Includes_Home.xml";

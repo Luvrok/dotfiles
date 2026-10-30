@@ -6,8 +6,9 @@
      collection's row stays its films in the library, enter opens it. the
      more row gets "similar" (tmdb's recommendations), its "more by
      director" is the director's page (./majan.nix), was the library's.
-     and home's top bar gets 04 tv, 05 discover, 06 downloads, the pages of
-     ./keyboard.xml's 4 5 6 -->
+     home's top bar gets 04 live tv, 05 discover, 06 downloads (the keys 4 5
+     6 of ./keyboard.xml), each with its rows under the bar like majan's own
+     sections. and the parts movie pipe's windows share (./moviepipe) -->
 <includes>
 	<variable name="MoviePipe_TmdbType">
 		<value condition="String.IsEqual(ListItem.DBType,movie)">movie</value>
@@ -70,21 +71,28 @@
 		</include>
 	</include>
 
-	<!-- home's top bar, after majan's tv shows (its music is hidden,
-	     ./majan-patches.nix): the pages of 4, 5, 6. they open a window of
-	     their own, never the section shown (no underline); they move left
-	     with majan's own when one of those is hidden in its settings -->
+
+	<!-- ============================================================ top bar
+	     after majan's tv shows (its music hidden, ./majan-patches.nix): 04
+	     live tv, 05 discover, 06 downloads. like majan's own: the focus
+	     shows the section's rows under the bar (after 300 ms on it, majan's
+	     rest timers), enter opens its window. they move left with majan's
+	     when one of those is hidden in its settings. params: id, x, w, index,
+	     label, section, onclick, onleft, onright -->
 	<include name="MoviePipe_MenuItem">
 		<include content="Home_MenuItem">
 			<param name="id" value="$PARAM[id]"/>
 			<param name="x" value="$PARAM[x]"/>
 			<param name="w" value="$PARAM[w]"/>
-			<param name="label_w" value="$PARAM[w]"/>
-			<param name="index" value="$PARAM[index]"/>
+			<param name="label_w" value="$PARAM[label_w]"/>
+			<param name="index" value="[UPPERCASE]$PARAM[index][/UPPERCASE]"/>
 			<param name="label" value="$PARAM[label]"/>
-			<param name="section" value="home"/>
-			<param name="active" value="false"/>
-			<param name="blur" value="9101"/>
+			<param name="section" value="$PARAM[section]"/>
+			<param name="active" value="String.IsEqual(Window(Home).Property(majan.section),$PARAM[section])"/>
+			<param name="reset_a" value="9218"/>
+			<param name="reset_b" value="9228"/>
+			<param name="reset_c" value="9238"/>
+			<param name="blur" value="$PARAM[blur]"/>
 			<param name="s1" value="[Skin.HasSetting(HideMenu.Home) | Skin.HasSetting(HideMenu.Movies)]"/>
 			<param name="d1" value="155"/>
 			<param name="s2" value="Skin.HasSetting(HideMenu.Movies)"/>
@@ -96,13 +104,18 @@
 			<param name="onright" value="$PARAM[onright]"/>
 		</include>
 	</include>
+	<!-- an index that's a number alone is a string id to kodi ("04" was
+	     ".."): [UPPERCASE] makes it text, as majan's own -->
 	<include name="MoviePipe_MenuItems">
 		<include content="MoviePipe_MenuItem">
 			<param name="id" value="9007"/>
 			<param name="x" value="626"/>
 			<param name="w" value="140"/>
+			<param name="label_w" value="98"/>
 			<param name="index" value="04"/>
 			<param name="label" value="Live TV"/>
+			<param name="section" value="livetv"/>
+			<param name="blur" value="9251"/>
 			<param name="onclick" value="ActivateWindow(TVChannels)"/>
 			<param name="onleft" value="9003"/>
 			<param name="onright" value="9008"/>
@@ -111,8 +124,11 @@
 			<param name="id" value="9008"/>
 			<param name="x" value="822"/>
 			<param name="w" value="152"/>
+			<param name="label_w" value="112"/>
 			<param name="index" value="05"/>
 			<param name="label" value="Discover"/>
+			<param name="section" value="discover"/>
+			<param name="blur" value="9261"/>
 			<param name="onclick" value="RunPlugin(plugin://plugin.video.moviepipe/?action=discover)"/>
 			<param name="onleft" value="9007"/>
 			<param name="onright" value="9009"/>
@@ -121,17 +137,511 @@
 			<param name="id" value="9009"/>
 			<param name="x" value="1030"/>
 			<param name="w" value="166"/>
+			<param name="label_w" value="126"/>
 			<param name="index" value="06"/>
 			<param name="label" value="Downloads"/>
+			<param name="section" value="downloads"/>
+			<param name="blur" value="9271"/>
 			<param name="onclick" value="RunPlugin(plugin://plugin.video.moviepipe/?action=downloads)"/>
 			<param name="onleft" value="9008"/>
 			<param name="onright" value="9005"/>
 		</include>
 	</include>
+	<!-- a section's rows: shown on it, once the focus rested there (its
+	     timer, majan's Home_RestTimer: sweeping across the bar asks nobody
+	     for anything) -->
+	<expression name="MoviePipe_HubLive">String.IsEqual(Window(Home).Property(majan.section),livetv) + Integer.IsEqual(Container(9258).CurrentItem,2)</expression>
+	<expression name="MoviePipe_HubDiscover">String.IsEqual(Window(Home).Property(majan.section),discover) + Integer.IsEqual(Container(9268).CurrentItem,2)</expression>
+	<expression name="MoviePipe_HubDownloads">String.IsEqual(Window(Home).Property(majan.section),downloads) + Integer.IsEqual(Container(9278).CurrentItem,2)</expression>
+	<include name="MoviePipe_Hubs">
+		<include content="Home_RestTimer">
+			<param name="id" value="9258"/>
+			<param name="menu" value="9007"/>
+		</include>
+		<include content="Home_RestTimer">
+			<param name="id" value="9268"/>
+			<param name="menu" value="9008"/>
+		</include>
+		<include content="Home_RestTimer">
+			<param name="id" value="9278"/>
+			<param name="menu" value="9009"/>
+		</include>
+		<!-- 04: the channels, the ones watched lately. enter plays it -->
+		<control type="group">
+			<visible>$EXP[MoviePipe_HubLive]</visible>
+			<include>Anim_FadeVisible</include>
+			<include content="MoviePipe_Info">
+				<param name="id" value="9251"/>
+				<param name="index" value="01"/>
+				<param name="label" value="Channels"/>
+				<param name="visible" value="!Control.HasFocus(9252)"/>
+			</include>
+			<include content="MoviePipe_Info">
+				<param name="id" value="9252"/>
+				<param name="index" value="02"/>
+				<param name="label" value="Watched lately"/>
+				<param name="visible" value="Control.HasFocus(9252)"/>
+			</include>
+			<include content="MoviePipe_Row">
+				<param name="id" value="9251"/>
+				<param name="top" value="home_hub_row1_y"/>
+				<param name="index" value="01"/>
+				<param name="label" value="Channels"/>
+				<param name="sub" value="iptv-org"/>
+				<param name="path" value="pvr://channels/tv/*"/>
+				<param name="onup" value="9007"/>
+				<param name="ondown" value="9252"/>
+				<param name="empty" value="No channels: tv -> channels"/>
+				<param name="w" value="home_cover_w"/>
+				<param name="h" value="home_cover_w"/>
+				<param name="pitch" value="home_cover_pitch"/>
+				<param name="art" value="$INFO[ListItem.Icon]"/>
+				<param name="aspect" value="keep"/>
+				<param name="round" value="false"/>
+			</include>
+			<include content="MoviePipe_Row">
+				<param name="id" value="9252"/>
+				<param name="top" value="home_hub_row2_y"/>
+				<param name="index" value="02"/>
+				<param name="label" value="Watched lately"/>
+				<param name="path" value="pvr://channels/tv/*?view=lastplayed"/>
+				<param name="onup" value="9251"/>
+				<param name="ondown" value="noop"/>
+				<param name="empty" value="None yet"/>
+				<param name="w" value="home_cover_w"/>
+				<param name="h" value="home_cover_w"/>
+				<param name="pitch" value="home_cover_pitch"/>
+				<param name="art" value="$INFO[ListItem.Icon]"/>
+				<param name="aspect" value="keep"/>
+				<param name="round" value="false"/>
+			</include>
+		</control>
+		<!-- 05: what's trending on tmdb, films and shows (all of discover:
+		     enter on the bar) -->
+		<control type="group">
+			<visible>$EXP[MoviePipe_HubDiscover]</visible>
+			<include>Anim_FadeVisible</include>
+			<include content="MoviePipe_Info">
+				<param name="id" value="9261"/>
+				<param name="index" value="01"/>
+				<param name="label" value="Trending films"/>
+				<param name="visible" value="!Control.HasFocus(9262)"/>
+			</include>
+			<include content="MoviePipe_Info">
+				<param name="id" value="9262"/>
+				<param name="index" value="02"/>
+				<param name="label" value="Trending shows"/>
+				<param name="visible" value="Control.HasFocus(9262)"/>
+			</include>
+			<include content="MoviePipe_Row">
+				<param name="id" value="9261"/>
+				<param name="top" value="home_hub_row1_y"/>
+				<param name="index" value="01"/>
+				<param name="label" value="Trending films"/>
+				<param name="sub" value="This week · TMDb"/>
+				<param name="path" value="plugin://plugin.video.themoviedb.helper/?info=trending_week&amp;tmdb_type=movie"/>
+				<param name="onup" value="9008"/>
+				<param name="ondown" value="9262"/>
+			</include>
+			<include content="MoviePipe_Row">
+				<param name="id" value="9262"/>
+				<param name="top" value="home_hub_row2_y"/>
+				<param name="index" value="02"/>
+				<param name="label" value="Trending shows"/>
+				<param name="sub" value="This week · TMDb"/>
+				<param name="path" value="plugin://plugin.video.themoviedb.helper/?info=trending_week&amp;tmdb_type=tv"/>
+				<param name="onup" value="9261"/>
+				<param name="ondown" value="noop"/>
+			</include>
+		</control>
+		<!-- 06: what radarr and sonarr download (./moviepipe/default.py's
+		     queue), enter: the downloads -->
+		<control type="group">
+			<visible>$EXP[MoviePipe_HubDownloads]</visible>
+			<include>Anim_FadeVisible</include>
+			<include content="MoviePipe_Info">
+				<param name="id" value="9271"/>
+				<param name="index" value="01"/>
+				<param name="label" value="Downloading"/>
+			</include>
+			<include content="MoviePipe_Row">
+				<param name="id" value="9271"/>
+				<param name="top" value="home_hub_row1_y"/>
+				<param name="index" value="01"/>
+				<param name="label" value="Downloading"/>
+				<param name="sub" value="Radarr · Sonarr"/>
+				<param name="path" value="plugin://plugin.video.moviepipe/?action=queue&amp;reload=$INFO[Window(Home).Property(majan.reload)]"/>
+				<param name="onup" value="9009"/>
+				<param name="ondown" value="noop"/>
+				<param name="empty" value="Nothing downloads"/>
+				<param name="custom" value="true"/>
+				<param name="onclick" value="RunPlugin(plugin://plugin.video.moviepipe/?action=downloads)"/>
+			</include>
+		</control>
+	</include>
 
-	<!-- ================================================ movie pipe's windows
-	     ./moviepipe/resources/skins/Default/1080i: a person's page and
-	     discover share these -->
+	<!-- ================================================ rows and their info
+	     majan's hub rows (Home_HubPosterRow) for movie pipe: the top bar's
+	     sections and discover (./moviepipe/discover.py). the last tile of a
+	     tmdb helper list is its next page (only its icon says so: kodi keeps
+	     a "specialsort" property to itself) -->
+	<expression name="MoviePipe_IsNext">String.Contains(ListItem.Art(icon),nextpage)</expression>
+	<!-- a person's photo is their thumb, a channel's logo its icon -->
+	<variable name="MoviePipe_PosterArt">
+		<value condition="!String.IsEmpty(ListItem.Art(poster))">$INFO[ListItem.Art(poster)]</value>
+		<value>$INFO[ListItem.Art(thumb)]</value>
+	</variable>
+	<!-- the next page's tile, majan's "see all" one: enter is the next page -->
+	<include name="MoviePipe_NextTile">
+		<control type="image">
+			<left>0</left>
+			<top>0</top>
+			<right>0</right>
+			<bottom>0</bottom>
+			<texture border="10" colordiffuse="border_button">$VAR[ButtonOutline]</texture>
+		</control>
+		<control type="image">
+			<centerleft>50%</centerleft>
+			<centertop>42%</centertop>
+			<width>26</width>
+			<height>26</height>
+			<texture colordiffuse="text_secondary">icons/chevron_right.png</texture>
+		</control>
+		<control type="label">
+			<left>0</left>
+			<right>0</right>
+			<centertop>58%</centertop>
+			<height>20</height>
+			<align>center</align>
+			<font>mono_13</font>
+			<textcolor>text_secondary</textcolor>
+			<label>NEXT</label>
+		</control>
+	</include>
+	<!-- a tile of a row: the picture (a poster, or a logo kept whole) over
+	     its title, majan's watched markers, focus lift and frame. params:
+	     id (the list), w, h, art, aspect, round (majan's corners; not a
+	     logo's), focused -->
+	<include name="MoviePipe_RowItem">
+		<param name="focused">false</param>
+		<param name="round">true</param>
+		<definition>
+			<control type="group">
+				<left>home_item_x</left>
+				<top>home_list_pad</top>
+				<width>$PARAM[w]</width>
+				<height>$PARAM[h]</height>
+				<include condition="$PARAM[focused]">Anim_FocusLift</include>
+				<control type="group">
+					<visible>!$EXP[MoviePipe_IsNext]</visible>
+					<control type="image">
+						<texture colordiffuse="bg_raised">common/white.png</texture>
+					</control>
+					<control type="textbox">
+						<left>12</left>
+						<right>12</right>
+						<top>12</top>
+						<height>75</height>
+						<font>small_19_bold</font>
+						<textcolor>text_secondary</textcolor>
+						<label>$INFO[ListItem.Label]</label>
+						<visible>$PARAM[round]</visible>
+					</control>
+					<control type="image">
+						<aspectratio>$PARAM[aspect]</aspectratio>
+						<texture background="true" diffuse="masks/poster_round8.png">$PARAM[art]</texture>
+						<visible>$EXP[IsRounded] + $PARAM[round]</visible>
+					</control>
+					<control type="image">
+						<aspectratio>$PARAM[aspect]</aspectratio>
+						<texture background="true">$PARAM[art]</texture>
+						<visible>!$EXP[IsRounded] | !$PARAM[round]</visible>
+					</control>
+					<include>Majan_WatchedMarkers</include>
+				</control>
+				<control type="group">
+					<visible>$EXP[MoviePipe_IsNext]</visible>
+					<include>MoviePipe_NextTile</include>
+				</control>
+				<include content="Majan_FocusFrame" condition="$PARAM[focused]">
+					<param name="visible" value="Control.HasFocus($PARAM[id])"/>
+				</include>
+			</control>
+		</definition>
+	</include>
+	<!-- a row, 254 tall: majan's name column (Home_RowLabel), the tiles
+	     right of it. enter: a show's page, a person's (./moviepipe/person.py),
+	     custom: onclick for every tile; tmdb helper's own otherwise (a film:
+	     its player, Download…; the next page: that page in videos). paged:
+	     the window turns the pages, n its row (SendClick 4n, 5n back on the
+	     first tile; ./moviepipe/discover.py). params: id, top, index, label,
+	     sub, path, onup, ondown, empty, w, h, pitch, art, aspect, round,
+	     visible -->
+	<include name="MoviePipe_Row">
+		<param name="top">0</param>
+		<param name="sub"></param>
+		<param name="empty">Nothing here</param>
+		<param name="w">home_poster_s_w</param>
+		<param name="h">home_poster_s_h</param>
+		<param name="pitch">home_poster_s_pitch</param>
+		<param name="art">$VAR[MoviePipe_PosterArt]</param>
+		<param name="aspect">scale</param>
+		<param name="round">true</param>
+		<param name="visible">true</param>
+		<param name="paged">false</param>
+		<param name="n">0</param>
+		<param name="custom">false</param>
+		<param name="onclick">noop</param>
+		<definition>
+			<control type="group">
+				<top>$PARAM[top]</top>
+				<width>screen_w</width>
+				<height>254</height>
+				<visible>$PARAM[visible]</visible>
+				<control type="group">
+					<top>home_list_pad</top>
+					<include content="Home_RowLabel">
+						<param name="index" value="$PARAM[index]"/>
+						<param name="label" value="$PARAM[label]"/>
+						<param name="sub" value="$PARAM[sub]"/>
+					</include>
+					<include content="Home_RowEmpty">
+						<param name="id" value="$PARAM[id]"/>
+						<param name="label" value="[UPPERCASE]$PARAM[empty][/UPPERCASE]"/>
+					</include>
+					<control type="label">
+						<left>328</left>
+						<top>12</top>
+						<width>1000</width>
+						<height>24</height>
+						<font>mono_14</font>
+						<textcolor>$VAR[ColorCaption]</textcolor>
+						<label>LOADING…</label>
+						<visible>!Integer.IsGreater(Container($PARAM[id]).NumItems,0) + Container($PARAM[id]).IsUpdating</visible>
+					</control>
+				</control>
+				<control type="list" id="$PARAM[id]">
+					<left>home_hub_list_x</left>
+					<top>0</top>
+					<width>home_hub_list_w</width>
+					<height>254</height>
+					<orientation>horizontal</orientation>
+					<onup>$PARAM[onup]</onup>
+					<ondown>$PARAM[ondown]</ondown>
+					<onleft condition="$PARAM[paged] + Integer.IsEqual(Container($PARAM[id]).CurrentItem,1) + Integer.IsGreater(Window.Property(row$PARAM[n].page),1)">SendClick(5$PARAM[n])</onleft>
+					<onleft>noop</onleft>
+					<onright>noop</onright>
+					<onfocus condition="$EXP[ArtBackgroundOn]">SetProperty(TMDbHelper.WidgetContainer,$PARAM[id],home)</onfocus>
+					<preloaditems>2</preloaditems>
+					<scrolltime tween="cubic" easing="out">200</scrolltime>
+					<content target="videos">$PARAM[path]</content>
+					<onclick condition="$PARAM[paged] + $EXP[MoviePipe_IsNext]">SendClick(4$PARAM[n])</onclick>
+					<onclick condition="$PARAM[custom]">$PARAM[onclick]</onclick>
+					<onclick condition="!$PARAM[custom] + !$EXP[MoviePipe_IsNext] + String.IsEqual(ListItem.DBType,tvshow)">Action(Info)</onclick>
+					<onclick condition="!$PARAM[custom] + !$EXP[MoviePipe_IsNext] + String.IsEqual(ListItem.Property(tmdb_type),person)">RunPlugin(plugin://plugin.video.moviepipe/?action=person&amp;name=$ESCINFO[Container($PARAM[id]).ListItem.Label]&amp;tmdb=$INFO[Container($PARAM[id]).ListItem.Property(tmdb_id)]&amp;tab=films)</onclick>
+					<itemlayout width="$PARAM[pitch]" height="254">
+						<include content="MoviePipe_RowItem">
+							<param name="id" value="$PARAM[id]"/>
+							<param name="w" value="$PARAM[w]"/>
+							<param name="h" value="$PARAM[h]"/>
+							<param name="art" value="$PARAM[art]"/>
+							<param name="aspect" value="$PARAM[aspect]"/>
+							<param name="round" value="$PARAM[round]"/>
+						</include>
+					</itemlayout>
+					<focusedlayout width="$PARAM[pitch]" height="254">
+						<include content="MoviePipe_RowItem">
+							<param name="id" value="$PARAM[id]"/>
+							<param name="w" value="$PARAM[w]"/>
+							<param name="h" value="$PARAM[h]"/>
+							<param name="art" value="$PARAM[art]"/>
+							<param name="aspect" value="$PARAM[aspect]"/>
+							<param name="round" value="$PARAM[round]"/>
+							<param name="focused" value="true"/>
+						</include>
+					</focusedlayout>
+				</control>
+			</control>
+		</definition>
+	</include>
+	<!-- the tile in focus of a row, majan's hub info (Home_InfoMovie): its
+	     row, title, year · runtime · rating · genres (a download's
+	     progress), the plot; image: its picture on the right (discover).
+	     params: id, index, label, visible, top, image, text_w, plot_h (a
+	     multiple of 33, a line of body_23), scroll (the plot, majan's
+	     way) -->
+	<include name="MoviePipe_Info">
+		<param name="visible">true</param>
+		<param name="top">home_hub_info_y</param>
+		<param name="image">false</param>
+		<param name="text_w">home_hub_text_w</param>
+		<param name="plot_h">66</param>
+		<param name="scroll">true</param>
+		<definition>
+			<control type="group">
+				<left>page_margin</left>
+				<top>$PARAM[top]</top>
+				<width>page_width</width>
+				<height>home_hub_info_h</height>
+				<visible>$PARAM[visible]</visible>
+				<control type="label">
+					<left>0</left>
+					<top>0</top>
+					<width>$PARAM[text_w]</width>
+					<height>20</height>
+					<font>mono_15</font>
+					<textcolor>$VAR[ColorAccent]</textcolor>
+					<label>[UPPERCASE]$PARAM[index] / $PARAM[label][/UPPERCASE]</label>
+				</control>
+				<control type="group">
+					<visible>!String.Contains(Container($PARAM[id]).ListItem.Art(icon),nextpage)</visible>
+					<control type="label">
+						<left>0</left>
+						<top>30</top>
+						<width>$PARAM[text_w]</width>
+						<height>70</height>
+						<font>display_68</font>
+						<textcolor>text_primary</textcolor>
+						<label>$INFO[Container($PARAM[id]).ListItem.Label]</label>
+					</control>
+					<control type="grouplist">
+						<left>0</left>
+						<top>107</top>
+						<width>$PARAM[text_w]</width>
+						<height>24</height>
+						<orientation>horizontal</orientation>
+						<itemgap>0</itemgap>
+						<control type="label">
+							<width>auto</width><height>24</height><font>mono_17</font><textcolor>text_secondary</textcolor>
+							<label>$INFO[Container($PARAM[id]).ListItem.Year]</label>
+						</control>
+						<control type="label">
+							<width>auto</width><height>24</height><font>mono_17</font><textcolor>text_secondary</textcolor>
+							<label>$INFO[Container($PARAM[id]).ListItem.Duration(h),  ·  ,h ]$INFO[Container($PARAM[id]).ListItem.Duration(m),,m]</label>
+							<visible>Integer.IsGreater(Container($PARAM[id]).ListItem.Duration(h),0)</visible>
+						</control>
+						<control type="label">
+							<width>auto</width><height>24</height><font>mono_17</font><textcolor>text_secondary</textcolor>
+							<label>$INFO[Container($PARAM[id]).ListItem.Duration(m),  ·  ,m]</label>
+							<visible>!Integer.IsGreater(Container($PARAM[id]).ListItem.Duration(h),0) + Integer.IsGreater(Container($PARAM[id]).ListItem.Duration(m),0)</visible>
+						</control>
+						<control type="label">
+							<width>auto</width><height>24</height><font>mono_17</font><textcolor>text_secondary</textcolor>
+							<label>$INFO[Container($PARAM[id]).ListItem.Rating,  ·  , / 10]</label>
+							<visible>!String.IsEmpty(Container($PARAM[id]).ListItem.Rating) + !String.IsEqual(Container($PARAM[id]).ListItem.Rating,0.0)</visible>
+						</control>
+						<control type="label">
+							<width max="520">auto</width><height>24</height><font>mono_17</font><textcolor>text_secondary</textcolor>
+							<label>$INFO[Container($PARAM[id]).ListItem.Genre,  ·  ,]</label>
+						</control>
+						<control type="label">
+							<width max="600">auto</width><height>24</height><font>mono_17</font><textcolor>$VAR[ColorAccent]</textcolor>
+							<label>$INFO[Container($PARAM[id]).ListItem.Property(progress),  ·  ,]</label>
+						</control>
+					</control>
+					<control type="textbox">
+						<left>0</left>
+						<top>139</top>
+						<width>$PARAM[text_w]</width>
+						<height>$PARAM[plot_h]</height>
+						<font>body_23</font>
+						<textcolor>text_body</textcolor>
+						<label>$INFO[Container($PARAM[id]).ListItem.Plot]</label>
+						<autoscroll delay="6000" time="3000" repeat="10000">$PARAM[scroll]</autoscroll>
+					</control>
+					<control type="group">
+						<left>1248</left>
+						<top>0</top>
+						<width>480</width>
+						<height>270</height>
+						<visible>$PARAM[image]</visible>
+						<control type="image">
+							<texture colordiffuse="bg_raised">common/white.png</texture>
+						</control>
+						<control type="image">
+							<aspectratio>scale</aspectratio>
+							<fadetime>200</fadetime>
+							<texture background="true" diffuse="masks/landscape_round8_large.png">$INFO[Container($PARAM[id]).ListItem.Art(fanart)]</texture>
+						</control>
+						<control type="image">
+							<aspectratio>keep</aspectratio>
+							<fadetime>200</fadetime>
+							<texture background="true">$INFO[Container($PARAM[id]).ListItem.Art(poster)]</texture>
+							<visible>String.IsEmpty(Container($PARAM[id]).ListItem.Art(fanart))</visible>
+						</control>
+					</control>
+				</control>
+				<control type="group">
+					<visible>String.Contains(Container($PARAM[id]).ListItem.Art(icon),nextpage)</visible>
+					<control type="label">
+						<left>0</left>
+						<top>30</top>
+						<width>$PARAM[text_w]</width>
+						<height>70</height>
+						<font>display_68</font>
+						<textcolor>text_primary</textcolor>
+						<label>Next page</label>
+					</control>
+					<control type="label">
+						<left>0</left>
+						<top>107</top>
+						<width>$PARAM[text_w]</width>
+						<height>24</height>
+						<font>mono_17</font>
+						<textcolor>text_secondary</textcolor>
+						<label>ENTER — THE NEXT 20</label>
+					</control>
+				</control>
+			</control>
+		</definition>
+	</include>
+	<!-- discover's row n (./moviepipe/discover.py): list 20n, the rest in
+	     the window's rown.* properties, paged by the window; the downloads'
+	     row (kind downloads) opens them. and its tile on top while it's
+	     the row (Window.Property(row)). params: n, onup, ondown -->
+	<include name="MoviePipe_DiscoverRow">
+		<include content="MoviePipe_Row">
+			<param name="id" value="20$PARAM[n]"/>
+			<param name="n" value="$PARAM[n]"/>
+			<param name="index" value="$INFO[Window.Property(row$PARAM[n].index)]"/>
+			<param name="label" value="$INFO[Window.Property(row$PARAM[n].title)]"/>
+			<param name="sub" value="$INFO[Window.Property(row$PARAM[n].sub)]"/>
+			<param name="path" value="$INFO[Window.Property(row$PARAM[n].path)]"/>
+			<param name="onup" value="$PARAM[onup]"/>
+			<param name="ondown" value="$PARAM[ondown]"/>
+			<param name="paged" value="true"/>
+			<param name="custom" value="String.IsEqual(Window.Property(row$PARAM[n].kind),downloads)"/>
+			<param name="onclick" value="RunPlugin(plugin://plugin.video.moviepipe/?action=downloads)"/>
+			<param name="visible" value="!String.IsEmpty(Window.Property(row$PARAM[n].path)) + String.IsEmpty(Window.Property(row$PARAM[n].empty))"/>
+		</include>
+	</include>
+	<include name="MoviePipe_DiscoverInfo">
+		<include content="MoviePipe_Info">
+			<param name="id" value="20$PARAM[n]"/>
+			<param name="index" value="$INFO[Window.Property(row$PARAM[n].index)]"/>
+			<param name="label" value="$INFO[Window.Property(row$PARAM[n].title)]"/>
+			<param name="visible" value="String.IsEqual(Window.Property(row),20$PARAM[n])"/>
+			<param name="image" value="true"/>
+			<param name="text_w" value="1200"/>
+			<param name="plot_h" value="132"/>
+			<param name="scroll" value="false"/>
+		</include>
+	</include>
+
+	<!-- a button nobody sees: the window's SendClick target (kodi gives
+	     python a click of a control the window has, only) -->
+	<include name="MoviePipe_Click">
+		<control type="button" id="$PARAM[id]">
+			<width>1</width>
+			<height>1</height>
+			<texturefocus/>
+			<texturenofocus/>
+			<visible>false</visible>
+		</control>
+	</include>
+
+	<!-- ========================================== movie pipe's windows' parts
+	     ./moviepipe/resources/skins/Default/1080i -->
 	<!-- a tab or an order of a row (FILMS, POPULAR...), like majan's more
 	     row's buttons: filled with the accent in focus, underlined when
 	     it's the one shown; enter is the window's (onClick). params: id,
@@ -162,13 +672,11 @@
 			</control>
 		</definition>
 	</include>
-	<!-- a poster of a row of tmdb helper's: the poster and majan's markers,
-	     the title, the year (and the role played). its last tile, tmdb
-	     helper's next page (specialsort bottom), says what enter does
-	     there: next. params: id (the list), focused -->
+	<!-- a person page's poster: the poster and majan's markers, the title,
+	     the year (and the role played); the next page's tile. params: id
+	     (the list), focused -->
 	<include name="MoviePipe_Poster">
 		<param name="focused">false</param>
-		<param name="next">Next page ›</param>
 		<definition>
 			<control type="group">
 				<left>16</left>
@@ -178,7 +686,7 @@
 					<height>poster_m_h</height>
 					<include condition="$PARAM[focused]">Anim_FocusZoom</include>
 					<control type="group">
-						<visible>!String.IsEqual(ListItem.Property(specialsort),bottom)</visible>
+						<visible>!$EXP[MoviePipe_IsNext]</visible>
 						<include content="VidView_ArtFallback">
 							<param name="label_visible" value="String.IsEmpty(ListItem.Art(poster)) + String.IsEmpty(ListItem.Art(thumb))"/>
 						</include>
@@ -188,17 +696,8 @@
 						<include>VidView_Markers</include>
 					</control>
 					<control type="group">
-						<visible>String.IsEqual(ListItem.Property(specialsort),bottom)</visible>
-						<control type="image">
-							<texture colordiffuse="bg_raised">common/white.png</texture>
-						</control>
-						<control type="label">
-							<align>center</align>
-							<aligny>center</aligny>
-							<font>card_21_bold</font>
-							<textcolor>text_primary</textcolor>
-							<label>$PARAM[next]</label>
-						</control>
+						<visible>$EXP[MoviePipe_IsNext]</visible>
+						<include>MoviePipe_NextTile</include>
 					</control>
 					<include content="VidView_PosterFocus" condition="$PARAM[focused]">
 						<param name="id" value="$PARAM[id]"/>
@@ -212,7 +711,7 @@
 					<font>card_21_bold</font>
 					<textcolor>text_primary</textcolor>
 					<label>$INFO[ListItem.Label]</label>
-					<visible>!String.IsEqual(ListItem.Property(specialsort),bottom)</visible>
+					<visible>!$EXP[MoviePipe_IsNext]</visible>
 				</control>
 				<control type="label">
 					<left>0</left>
@@ -222,111 +721,14 @@
 					<font>card_21</font>
 					<textcolor>text_secondary</textcolor>
 					<label>$VAR[MoviePipe_PosterLine]</label>
-					<visible>!String.IsEqual(ListItem.Property(specialsort),bottom)</visible>
+					<visible>!$EXP[MoviePipe_IsNext]</visible>
 				</control>
 			</control>
 		</definition>
 	</include>
-	<!-- a person's photo is their thumb -->
-	<variable name="MoviePipe_PosterArt">
-		<value condition="!String.IsEmpty(ListItem.Art(poster))">$INFO[ListItem.Art(poster)]</value>
-		<value>$INFO[ListItem.Art(thumb)]</value>
-	</variable>
-	<!-- the year, the role played (not "Director" on the directed tab), a
-	     download's progress -->
+	<!-- the year and the role played (not "Director" on the directed tab) -->
 	<variable name="MoviePipe_PosterLine">
-		<value condition="!String.IsEmpty(ListItem.Property(progress))">$INFO[ListItem.Property(progress)]</value>
 		<value condition="String.IsEqual(ListItem.Property(role),Director)">$INFO[ListItem.Year]</value>
 		<value>$INFO[ListItem.Year]$INFO[ListItem.Property(role), · ,]</value>
 	</variable>
-	<!-- discover's poster in focus: its row's name over it, its wide
-	     picture (a poster when it has none) -->
-	<variable name="MoviePipe_DiscoverKicker">
-		<value condition="Control.HasFocus(201)">$INFO[Window.Property(row1.title)]</value>
-		<value condition="Control.HasFocus(202)">$INFO[Window.Property(row2.title)]</value>
-		<value condition="Control.HasFocus(203)">$INFO[Window.Property(row3.title)]</value>
-		<value condition="Control.HasFocus(204)">$INFO[Window.Property(row4.title)]</value>
-		<value condition="Control.HasFocus(205)">$INFO[Window.Property(row5.title)]</value>
-		<value condition="Control.HasFocus(206)">$INFO[Window.Property(row6.title)]</value>
-		<value condition="Control.HasFocus(207)">$INFO[Window.Property(row7.title)]</value>
-		<value condition="Control.HasFocus(208)">$INFO[Window.Property(row8.title)]</value>
-	</variable>
-	<variable name="MoviePipe_DiscoverArt">
-		<value condition="!String.IsEmpty(ListItem.Art(fanart))">$INFO[ListItem.Art(fanart)]</value>
-		<value condition="!String.IsEmpty(ListItem.Art(landscape))">$INFO[ListItem.Art(landscape)]</value>
-		<value>$VAR[MoviePipe_PosterArt]</value>
-	</variable>
-	<!-- discover's row n (./moviepipe/discover.py): its list 20n, tmdb
-	     helper's list in Window.Property(rown.path), what's on it in
-	     rown.kind. enter on a film is tmdb helper's (its player: Download…),
-	     on a show its page, on a person theirs; the last tile the whole list
-	     in videos. shown once it has a path, till it came back empty.
-	     params: n, onup, ondown -->
-	<include name="MoviePipe_DiscoverRow">
-		<definition>
-			<control type="group">
-				<width>page_width</width>
-				<height>384</height>
-				<visible>!String.IsEmpty(Window.Property(row$PARAM[n].path)) + String.IsEmpty(Window.Property(row$PARAM[n].empty))</visible>
-				<control type="label">
-					<left>0</left>
-					<top>0</top>
-					<width>1200</width>
-					<height>40</height>
-					<font>section_24</font>
-					<textcolor>text_primary</textcolor>
-					<label>$INFO[Window.Property(row$PARAM[n].title)]</label>
-				</control>
-				<control type="label">
-					<left>0</left>
-					<top>18</top>
-					<width>page_width</width>
-					<height>26</height>
-					<align>right</align>
-					<font>mono_14</font>
-					<textcolor>$VAR[ColorCaption]</textcolor>
-					<label>$INFO[Container(20$PARAM[n]).NumItems]</label>
-				</control>
-				<control type="label">
-					<left>0</left>
-					<top>140</top>
-					<width>page_width</width>
-					<height>40</height>
-					<font>body_26</font>
-					<textcolor>text_secondary</textcolor>
-					<label>Loading…</label>
-					<visible>!Integer.IsGreater(Container(20$PARAM[n]).NumItems,0)</visible>
-				</control>
-				<control type="list" id="20$PARAM[n]">
-					<left>-16</left>
-					<top>36</top>
-					<width>1840</width>
-					<height>334</height>
-					<orientation>horizontal</orientation>
-					<preloaditems>1</preloaditems>
-					<scrolltime tween="cubic" easing="out">200</scrolltime>
-					<content target="videos">$INFO[Window.Property(row$PARAM[n].path)]</content>
-					<onclick condition="String.IsEqual(Container(20$PARAM[n]).ListItem.Property(specialsort),bottom)">ActivateWindow(Videos,$INFO[Window.Property(row$PARAM[n].all)],return)</onclick>
-					<onclick condition="!String.IsEqual(Container(20$PARAM[n]).ListItem.Property(specialsort),bottom) + String.IsEqual(Window.Property(row$PARAM[n].kind),tv)">Action(Info)</onclick>
-					<onclick condition="!String.IsEqual(Container(20$PARAM[n]).ListItem.Property(specialsort),bottom) + String.IsEqual(Window.Property(row$PARAM[n].kind),person)">RunPlugin(plugin://plugin.video.moviepipe/?action=person&amp;name=$ESCINFO[Container(20$PARAM[n]).ListItem.Label]&amp;tmdb=$INFO[Container(20$PARAM[n]).ListItem.Property(tmdb_id)]&amp;tab=films)</onclick>
-					<onup>$PARAM[onup]</onup>
-					<ondown>$PARAM[ondown]</ondown>
-					<onright>noop</onright>
-					<itemlayout width="poster_m_pitch" height="334">
-						<include content="MoviePipe_Poster">
-							<param name="id" value="20$PARAM[n]"/>
-							<param name="next" value="All ›"/>
-						</include>
-					</itemlayout>
-					<focusedlayout width="poster_m_pitch" height="334">
-						<include content="MoviePipe_Poster">
-							<param name="id" value="20$PARAM[n]"/>
-							<param name="next" value="All ›"/>
-							<param name="focused" value="true"/>
-						</include>
-					</focusedlayout>
-				</control>
-			</control>
-		</definition>
-	</include>
 </includes>

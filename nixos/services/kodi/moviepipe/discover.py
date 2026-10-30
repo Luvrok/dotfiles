@@ -1,17 +1,16 @@
 # 5, discover (resources/skins/Default/1080i/moviepipe-discover.xml): what
-# tmdb has, trending, popular, in cinemas, upcoming, top rated, more like
-# the library's newest, popular people, in rows of posters, films or shows
-# (the chips). tmdb helper fills them (the rows' paths are the window's
-# properties), so enter on a film is its player (Download…), i its page, c
-# its menu; a show's enter is its page, a person's theirs (./person.py).
-# what radarr and sonarr download is the first row, enter on it the
-# downloads. the focused poster big at the top. a row gets its path only
-# when the focus is two rows from it: tmdb helper asks tmdb for every
-# poster's details the first time. SEARCH: the rows are what tmdb finds,
-# back the rows again. t a trailer, r the rows again
+# tmdb has in rows, majan's hub rows, films or shows (the chips): trending,
+# popular, in cinemas, upcoming, top rated, more like the library's newest,
+# popular people; what radarr and sonarr download first. tmdb helper fills
+# them (the rows' paths are the window's properties), so enter on a film is
+# its player (Download…), i its page, c its menu; a show's enter is its
+# page, a person's theirs (./person.py), a download's the downloads. the
+# last tile turns the row's page, left on the first one back. a row gets
+# its path when the focus is two rows from it: tmdb helper asks tmdb for
+# every poster's details the first time. SEARCH: what tmdb finds, back
+# the rows again. t a trailer, r the rows again
 import threading
 import time
-import urllib.parse
 
 import xbmc
 import xbmcgui
@@ -19,12 +18,12 @@ import xbmcgui
 from actions import rpc
 from arr import Error
 from keys import letter
+from tmdb import HELPER, helper, info, settle
 from trailer import trailer
-from windows import downloads, show_downloads, window
+from windows import downloads, window
 
-HELPER = "plugin://plugin.video.themoviedb.helper/"
 # (the row's name, tmdb helper's list, what's on it). the order here is the
-# page's. {} in a name: the library's newest film or show
+# page's, rows 2 on. {} in a name: the library's newest film or show
 ROWS = {
     "movie": [
         ("Trending this week", "trending_week", "movie"),
@@ -50,23 +49,17 @@ ROWS = {
         ("People", "search", "person"),
     ],
 }
-# the chips, row n's list is 200 + n: 201 the downloads, 202.. tmdb's
+# row n is list 200 + n: 1 the downloads (./default.py's queue), 2..8 tmdb's
+QUEUE = "plugin://plugin.video.moviepipe/?action=queue"
+FIRST, LAST = 2, 8
+# the chips, and the rows' SendClick: 40 + n the next page, 50 + n back
 MOVIES, SHOWS, SEARCH, BROWSE = 101, 102, 103, 104
-DOWNLOADS, FIRST, LAST = 201, 202, 208
+NEXT, BACK = 40, 50
 # rows past the focus that get their path
 AHEAD = 2
-# s: how long a row may load before it counts as empty, how often the
-# downloads row looks again
-PATIENCE = 30
+# s: how often the focus and the downloads are looked at
+TICK = 0.2
 POLL = 10
-
-
-def info(label):
-    return xbmc.getInfoLabel(label)
-
-
-def helper(**params):
-    return f"{HELPER}?{urllib.parse.urlencode({k: v for k, v in params.items() if v})}"
 
 
 def newest(kind):
@@ -79,13 +72,10 @@ def newest(kind):
     return next(((x["title"], x["uniqueid"]["tmdb"]) for x in found if (x.get("uniqueid") or {}).get("tmdb")), None)
 
 
-def poster(app, records):
-    # a download as a poster: radarr's film or sonarr's show
-    q = records[0]
-    what = q.get("movie") if app == "radarr" else q.get("series")
-    what = what or {}
-    art = next((i.get("remoteUrl") for i in what.get("images", []) if i.get("coverType") == "poster"), "")
-    return what, art
+class Row:
+    # a row's name, tmdb helper's params for it, what's on it, its page
+    def __init__(self, title, params, kind):
+        self.title, self.params, self.kind, self.page = title, params, kind, 1
 
 
 class Discover(xbmcgui.WindowXML):
@@ -95,16 +85,18 @@ class Discover(xbmcgui.WindowXML):
         self.started = True
         self.closing = False
         self.moved = False
-        self.rows = []
+        self.rows = {}
+        self.enabled = FIRST - 1
         self.loads = 0
         self.stamp = ""
         self.query = ""
         self.mode = self.before = "movie"
-        self.enabled = FIRST - 1
-        self.keys = []
-        self.posters = []
+        self.queue = None
         self.show("movie")
-        threading.Thread(target=self.poll, daemon=True).start()
+        threading.Thread(target=self.watch, daemon=True).start()
+
+    def gone(self):
+        return self.closing
 
     # the rows
 
@@ -116,111 +108,119 @@ class Discover(xbmcgui.WindowXML):
         self.setProperty("query", f"«{self.query}»" if mode == "search" else "")
         rows = []
         for title, kind, what in ROWS[mode]:
-            extra = {}
+            params = dict(info=kind, tmdb_type=what)
             if kind == "recommendations":
                 found = newest(what)
                 if not found:
                     continue
                 title = title.format(found[0])
-                extra["tmdb_id"] = found[1]
+                params["tmdb_id"] = found[1]
             if kind == "search":
-                extra["query"] = self.query
-            rows.append((title, helper(info=kind, tmdb_type=what, **extra), what))
-        self.rows = rows
+                params["query"] = self.query
+            rows.append(Row(title, params, what))
+        self.rows = {FIRST + i: row for i, row in enumerate(rows)}
         self.loads += 1
-        threading.Thread(target=self.load, args=(self.loads,), daemon=True).start()
-
-    def load(self, load):
-        # the old rows away first: a new path keeps the old posters till the
-        # new ones come. then the first rows, the rest as the focus nears
-        for n in range(FIRST, LAST + 1):
-            self.clear(n)
+        load = self.loads
+        # the rows near the top get the new paths at once (the old posters
+        # dim till the new come, majan-moviepipe.xml), the rest go
         self.enabled = FIRST - 1
-        self.wait(lambda: not any(self.loaded(n) for n in range(FIRST, LAST + 1)), 2)
-        if load != self.loads:
-            return
+        for n in range(FIRST, LAST + 1):
+            self.clearProperty(f"row{n}.empty")
+            if n not in self.rows or n > FIRST + AHEAD:
+                for p in ("path", "title", "sub", "index", "kind", "page"):
+                    self.clearProperty(f"row{n}.{p}")
         self.near(FIRST)
-        # the focus on the first row once it's there, unless it moved
-        if self.wait(lambda: self.loaded(FIRST) or load != self.loads) and not self.moved and load == self.loads:
-            xbmc.executebuiltin(f"SetFocus({FIRST})")
+        threading.Thread(target=self.first, args=(load,), daemon=True).start()
 
-    def clear(self, n):
-        for p in ("path", "all", "title", "kind", "empty"):
-            self.clearProperty(f"row{n - 200}.{p}")
+    def first(self, load):
+        # the first row on top once it's in (the old rows' tile stood there
+        # otherwise), the focus on it unless it went elsewhere
+        if not settle(200 + FIRST, lambda: self.gone() or load != self.loads) or load != self.loads:
+            return
+        if not 201 <= self.getFocusId() <= 200 + LAST:
+            self.setProperty("row", str(200 + FIRST))
+        if not self.moved:
+            self.setProperty("row", str(200 + FIRST))
+            xbmc.executebuiltin(f"SetFocus({200 + FIRST})")
 
     def near(self, focus):
-        # rows up to AHEAD past the focus get their paths
+        # the rows up to AHEAD past the focus get their paths
         last = min(LAST, max(focus, FIRST) + AHEAD, FIRST + len(self.rows) - 1)
         while self.enabled < last:
             self.enabled += 1
-            self.enable(self.enabled)
+            self.put(self.enabled)
 
-    def enable(self, n):
-        title, path, kind = self.rows[n - FIRST]
-        row = f"row{n - 200}"
-        self.setProperty(f"{row}.title", title)
-        self.setProperty(f"{row}.kind", kind)
-        self.setProperty(f"{row}.all", path)
-        self.setProperty(f"{row}.path", path + (f"&reload={self.stamp}" if self.stamp else ""))
+    def put(self, n):
+        # row n's properties, its path last: a new path loads it
+        row = self.rows[n]
+        page = row.page if row.page > 1 else None
+        self.setProperty(f"row{n}.index", f"{n - 1:02}")
+        self.setProperty(f"row{n}.title", row.title)
+        self.setProperty(f"row{n}.sub", f"page {row.page}" if page else "TMDb")
+        self.setProperty(f"row{n}.kind", row.kind)
+        self.setProperty(f"row{n}.page", str(row.page))
+        self.setProperty(f"row{n}.path", helper(**row.params, page=page, reload=self.stamp))
         threading.Thread(target=self.empty, args=(n, self.loads), daemon=True).start()
 
     def empty(self, n, load):
         # a row that came back empty goes, the focus skips it
-        if not self.wait(lambda: self.loaded(n) or load != self.loads, PATIENCE) and load == self.loads:
-            self.setProperty(f"row{n - 200}.empty", "1")
+        if not settle(200 + n, lambda: self.gone() or load != self.loads) and load == self.loads and not self.gone():
+            self.setProperty(f"row{n}.empty", "1")
 
-    def loaded(self, n):
-        return int(info(f"Container({n}).NumItems") or 0) > 0
+    def turn(self, n, by):
+        # the row's next page (by 1) or the one before (-1), its first tile
+        row = self.rows.get(n)
+        if not row or row.page + by < 1:
+            return
+        row.page += by
+        self.put(n)
 
-    def wait(self, done, seconds=PATIENCE):
+        def first():
+            if settle(200 + n, self.gone):
+                try:
+                    self.getControl(200 + n).selectItem(0)
+                except RuntimeError:
+                    pass
+
+        threading.Thread(target=first, daemon=True).start()
+
+    # what's in focus, what downloads
+
+    def watch(self):
+        # the row whose tile is on top: the one with the focus, the last one
+        # when it went up to the chips (the mouse too, it moves no action)
         monitor = xbmc.Monitor()
-        for _ in range(int(seconds * 10)):
-            if self.closing or monitor.abortRequested():
-                return False
-            if done():
-                return True
-            monitor.waitForAbort(0.1)
-        return False
-
-    # what downloads, the first row
-
-    def poll(self):
-        monitor = xbmc.Monitor()
-        while not self.closing and not monitor.abortRequested():
+        polled = 0
+        while not self.closing and not monitor.waitForAbort(TICK):
             try:
-                self.downloads()
+                focus = self.getFocusId()
+                if 201 <= focus <= 200 + LAST and str(focus) != self.getProperty("row"):
+                    self.setProperty("row", str(focus))
+                    if focus > 200 + FIRST:
+                        self.moved = True
+                    self.near(focus - 200)
+                if time.time() - polled > POLL:
+                    polled = time.time()
+                    self.downloads()
             except RuntimeError:
-                return
-            if monitor.waitForAbort(POLL):
                 return
 
     def downloads(self):
+        # the first row while something downloads, again when that changed
         found, _ = downloads()
-        if self.closing:
+        keys = [(key, row["percent"]) for key, _, _, row in found]
+        if keys == self.queue or self.closing:
             return
-        keys = [key for key, *_ in found]
-        if keys != self.keys:
-            control = self.getControl(DOWNLOADS)
-            control.reset()
-            self.posters = []
-            for key, records, _, props in found:
-                what, art = poster(key[0], records)
-                li = xbmcgui.ListItem(what.get("title") or props["label"])
-                li.setArt({"poster": art, "fanart": next((i.get("remoteUrl") for i in what.get("images", []) if i.get("coverType") == "fanart"), "")})
-                tag = li.getVideoInfoTag()
-                tag.setMediaType("movie" if key[0] == "radarr" else "tvshow")
-                tag.setPlot(what.get("overview", ""))
-                if what.get("year"):
-                    tag.setYear(int(what["year"]))
-                if what.get("tmdbId"):
-                    tag.setUniqueIDs({"tmdb": str(what["tmdbId"])}, "tmdb")
-                self.posters.append(li)
-            control.addItems(self.posters)
-            self.keys = keys
-            self.setProperty("row1.path", "downloads" if found else "")
-            self.setProperty("row1.title", "Downloading" if found else "")
-        for li, (_, _, _, props) in zip(self.posters, found):
-            li.setProperty("progress", f"{props['percent']} · {props['state']}")
+        self.queue = keys
+        if not found:
+            for p in ("path", "title", "sub", "index", "kind"):
+                self.clearProperty(f"row1.{p}")
+            return
+        self.setProperty("row1.index", "06")
+        self.setProperty("row1.title", "Downloading")
+        self.setProperty("row1.sub", "Radarr · Sonarr")
+        self.setProperty("row1.kind", "downloads")
+        self.setProperty("row1.path", f"{QUEUE}&reload={time.time()}")
 
     # keys
 
@@ -237,8 +237,10 @@ class Discover(xbmcgui.WindowXML):
         elif cid == BROWSE:
             self.leave()
             xbmc.executebuiltin(f"ActivateWindow(Videos,{HELPER},return)")
-        elif cid == DOWNLOADS:
-            show_downloads()
+        elif NEXT < cid <= NEXT + LAST:
+            self.turn(cid - NEXT, 1)
+        elif BACK < cid <= BACK + LAST:
+            self.turn(cid - BACK, -1)
 
     def onAction(self, action):
         a = action.getId()
@@ -246,12 +248,12 @@ class Discover(xbmcgui.WindowXML):
         focus = self.getFocusId()
         if a in (xbmcgui.ACTION_MOVE_UP, xbmcgui.ACTION_MOVE_DOWN, xbmcgui.ACTION_MOVE_LEFT, xbmcgui.ACTION_MOVE_RIGHT):
             self.moved = True
-            if FIRST <= focus <= LAST:
-                self.near(focus)
         elif key == "r":
+            # every row again, tmdb helper asked anew
             self.stamp = str(time.time())
-            self.show(self.mode)
-        elif key == "t" and DOWNLOADS <= focus <= LAST:
+            for n in range(FIRST, self.enabled + 1):
+                self.put(n)
+        elif key == "t" and 201 <= focus <= 200 + LAST:
             tmdb = info(f"Container({focus}).ListItem.UniqueID(tmdb)") or info(f"Container({focus}).ListItem.Property(tmdb_id)")
             kind = "tv" if info(f"Container({focus}).ListItem.DBType") == "tvshow" else "movie"
             if tmdb:

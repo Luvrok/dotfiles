@@ -8,17 +8,16 @@
 # tmdb helper's list gave no name)
 import threading
 import time
-import urllib.parse
 from datetime import date
 
 import xbmc
 import xbmcgui
 
 from keys import letter
+from tmdb import count, helper, info, settle, wait
 from trailer import trailer
 from windows import window
 
-HELPER = "plugin://plugin.video.themoviedb.helper/"
 # the tabs: the button, tmdb helper's list and more of its params, the
 # row's name, the person's count of them (tmdb helper's details)
 TABS = {
@@ -56,14 +55,6 @@ KINDS = {
 LONG_BIO = 420
 
 
-def info(label):
-    return xbmc.getInfoLabel(label)
-
-
-def helper(**params):
-    return f"{HELPER}?{urllib.parse.urlencode(params)}"
-
-
 def day(text):
     try:
         return date.fromisoformat(text[:10]).strftime("%-d %b %Y")
@@ -73,7 +64,7 @@ def day(text):
 
 def items(cid):
     # a hidden list's items: (label, item's infolabel prefix)
-    for i in range(int(info(f"Container({cid}).NumItems") or 0)):
+    for i in range(count(cid)):
         item = f"Container({cid}).ListItemAbsolute({i})"
         yield info(f"{item}.Label"), item
 
@@ -93,21 +84,17 @@ class Person(xbmcgui.WindowXML):
         self.setProperty("empty", "Loading…")
         threading.Thread(target=self.load, daemon=True).start()
 
-    def wait(self, cid, seconds=30, empty=False):
-        # till the list has items (or has none, empty)
-        monitor = xbmc.Monitor()
-        for _ in range(seconds * 10):
-            if self.closing or monitor.abortRequested():
-                return False
-            if (int(info(f"Container({cid}).NumItems") or 0) > 0) != empty:
-                return True
-            monitor.waitForAbort(0.1)
-        return False
+    def gone(self):
+        return self.closing
+
+    def filled(self, cid):
+        # a hidden list (the details, a search, a crew) has its items
+        return wait(lambda: count(cid) > 0, 30, self.gone)
 
     def search(self):
         # the first of that name, tmdb's most popular first
         self.setProperty("search", helper(info="search", tmdb_type="person", query=self.name))
-        if not self.wait(SEARCH):
+        if not self.filled(SEARCH):
             return None
         found = [(label.casefold() != self.name.casefold(), n, info(f"{item}.Property(tmdb_id)")) for n, (label, item) in enumerate(items(SEARCH))]
         return min(found)[2] if found else None
@@ -116,7 +103,7 @@ class Person(xbmcgui.WindowXML):
         # the film's director by its crew, a show's creator: tmdb helper's
         # lists have no director, only its page of the film does
         self.setProperty("crew", helper(info="crew", tmdb_type=self.kind, tmdb_id=self.film))
-        if not self.wait(CREW):
+        if not self.filled(CREW):
             return None
         jobs = ("Creator", "Director") if self.kind == "tv" else ("Director",)
         found = []
@@ -140,7 +127,7 @@ class Person(xbmcgui.WindowXML):
             self.setProperty("empty", f"No {self.name or 'director'} on TMDb")
             return
         self.setProperty("details", helper(info="details", tmdb_type="person", tmdb_id=self.tmdb))
-        if self.wait(DETAILS):
+        if self.filled(DETAILS):
             self.details()
         if not self.tab:
             if self.department == "Directing" and self.counts.get("directed"):
@@ -162,8 +149,8 @@ class Person(xbmcgui.WindowXML):
         self.bio = get("Plot")
         self.department = get("Property(department)")
         died = get("Property(deathday)")
-        for tab, (*_, count) in TABS.items():
-            self.counts[tab] = int(get(f"Property({count})") or 0)
+        for tab, (*_, total) in TABS.items():
+            self.counts[tab] = int(get(f"Property({total})") or 0)
         # the directed: of all they did behind the camera, the tab says
         # if there's none. the others only with some
         for tab in TABS:
@@ -199,21 +186,15 @@ class Person(xbmcgui.WindowXML):
         threading.Thread(target=self.loaded, args=(self.loads, helper(**params)), daemon=True).start()
 
     def loaded(self, load, path):
-        # the old row away first, "Loading…" in its place: a new path keeps
-        # the old posters till the new ones come, the films stood there
-        # while the shows loaded. then the new one
-        self.setProperty("empty", "Loading…")
+        # the old posters dim till the new ones are in (the xml), then the
+        # first of them, or "Nothing here"
         self.setProperty("loading", "1")
-        self.setProperty("path", "")
-        self.wait(ROW, 2, empty=True)
-        if load != self.loads:
-            return
         self.setProperty("path", path)
-        found = self.wait(ROW)
-        if load != self.loads:
+        found = settle(ROW, lambda: self.gone() or load != self.loads)
+        if load != self.loads or self.closing:
             return
         self.setProperty("loading", "")
-        self.setProperty("empty", "" if found else "Nothing here" if not self.closing else "")
+        self.setProperty("empty", "" if found else "Nothing here")
         if found:
             # a list's own call, off the ui thread: gone with the window
             try:

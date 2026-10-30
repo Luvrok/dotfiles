@@ -1,6 +1,8 @@
 # Movie pipe in video add-ons, and its routes:
 #   ?action=downloads  what radarr and sonarr download (6, ../keyboard.xml),
 #                      ./windows.py
+#   ?action=queue      the same as a folder of posters: discover's first row,
+#                      the top bar's 06 (../majan-moviepipe.xml)
 #   ?action=discover   tmdb's trending, popular, new (5), ./discover.py
 #   ?action=download&type=movie|episode&tmdb=...  ./actions.py for tmdb
 #                      helper's player (../userdata.nix), enter on a film
@@ -24,7 +26,7 @@ from arr import Error, error
 from discover import discover
 from person import person
 from trailer import trailer
-from windows import show_downloads
+from windows import downloads, show_downloads
 
 HANDLE = int(sys.argv[1])
 QUERY = dict(urllib.parse.parse_qsl(sys.argv[2][1:]))
@@ -34,6 +36,29 @@ def listing():
     # opened in video add-ons: no folder, the downloads' window
     xbmcplugin.endOfDirectory(HANDLE, succeeded=False)
     xbmc.executebuiltin(f"RunPlugin({sys.argv[0]}?action=downloads)")
+
+
+def queue():
+    # a poster a download: radarr's film or sonarr's show, its progress
+    found, _ = downloads()
+    items = []
+    for key, records, _, row in found:
+        what = records[0].get("movie" if key[0] == "radarr" else "series") or {}
+        art = {i.get("coverType"): i.get("remoteUrl") for i in what.get("images", [])}
+        li = xbmcgui.ListItem(what.get("title") or row["label"])
+        li.setArt({"poster": art.get("poster", ""), "fanart": art.get("fanart", "")})
+        li.setProperty("progress", f"{row['percent']} · {row['state']}")
+        tag = li.getVideoInfoTag()
+        tag.setMediaType("movie" if key[0] == "radarr" else "tvshow")
+        tag.setPlot(what.get("overview", ""))
+        if what.get("year"):
+            tag.setYear(int(what["year"]))
+        if what.get("tmdbId"):
+            tag.setUniqueIDs({"tmdb": str(what["tmdbId"])}, "tmdb")
+        items.append((f"{sys.argv[0]}?action=downloads", li, False))
+    xbmcplugin.setContent(HANDLE, "movies")
+    xbmcplugin.addDirectoryItems(HANDLE, items, len(items))
+    xbmcplugin.endOfDirectory(HANDLE, cacheToDisc=False)
 
 
 def player():
@@ -56,6 +81,8 @@ def reload():
 action = QUERY.get("action")
 if action == "downloads":
     show_downloads()
+elif action == "queue":
+    queue()
 elif action == "discover":
     discover()
 elif action in ("download", "pick"):

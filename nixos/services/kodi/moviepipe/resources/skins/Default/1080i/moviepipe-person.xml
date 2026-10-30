@@ -89,7 +89,7 @@
 			<control type="label">
 				<left>page_margin</left>
 				<top>966</top>
-				<width>vidview_hero_w</width>
+				<width>1100</width>
 				<height>22</height>
 				<font>mono_14</font>
 				<textcolor>$VAR[ColorCaption]</textcolor>
@@ -426,9 +426,10 @@
 					<font>body_26</font>
 					<textcolor>text_secondary</textcolor>
 					<label>$INFO[Window.Property(empty)]</label>
+					<visible>!Integer.IsGreater(Container(500).NumItems,0)</visible>
 				</control>
 				<control type="list" id="500">
-					<animation effect="fade" start="100" end="30" time="150" condition="!String.IsEmpty(Window.Property(loading))">Conditional</animation>
+					<animation effect="fade" start="100" end="30" time="150" condition="!String.IsEmpty(Window.Property(loading)) | Container(500).IsUpdating">Conditional</animation>
 					<left>-16</left>
 					<top>52</top>
 					<width>1840</width>
@@ -437,8 +438,8 @@
 					<preloaditems>1</preloaditems>
 					<scrolltime tween="cubic" easing="out">200</scrolltime>
 					<content target="videos">$INFO[Window.Property(path)]</content>
-					<onclick condition="String.IsEqual(Container(500).ListItem.Property(specialsort),bottom)">SendClick(310)</onclick>
-					<onclick condition="String.IsEqual(Container(500).ListItem.DBType,tvshow)">Action(Info)</onclick>
+					<onclick condition="$EXP[MoviePipe_IsNext]">SendClick(310)</onclick>
+					<onclick condition="!$EXP[MoviePipe_IsNext] + String.IsEqual(ListItem.DBType,tvshow)">Action(Info)</onclick>
 					<onup>9000</onup>
 					<ondown>noop</ondown>
 					<onleft condition="Integer.IsEqual(Container(500).CurrentItem,1) + Integer.IsGreater(Window.Property(page),1)">SendClick(311)</onleft>
