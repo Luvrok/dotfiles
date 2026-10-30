@@ -13,30 +13,12 @@
     firewall = {
       enable = true;
       allowPing = true;
+      # only what's reachable from outside. nginx and the xray tunnel
+      # inbounds talk over 127.0.0.1, and lo is trusted anyway
       allowedTCPPorts = [
         22
-        53
         80
         443
-        4110
-        4533
-        4545
-        5390
-        5489
-        6280
-        8081
-        8129
-        8130
-        8291
-        9393
-        10443
-        22000
-        51413
-      ];
-      allowedUDPPorts = [
-        21027
-        22000
-        51413
       ];
     };
   };
