@@ -392,8 +392,6 @@ def row(app, records, torrent):
         "whyline": color("; ".join(problems), AMBER) if problems else "",
         # the row's button, majan's icons: what it does
         "toggle": ("icons/play.png" if torrent["state"] in STOPPED else "icons/pause.png") if torrent else "",
-        # internal key for selection tracking
-        "__key": key,
     }
 
 
@@ -471,11 +469,10 @@ class Downloads(Window):
                 self.keys = keys
             self.records = {key: records for key, records, _, _ in found}
             self.torrents = {key: torrent for key, _, torrent, _ in found}
-            for li, (_, _, _, props) in zip(self.items, found):
+            for li, (key, _, _, props) in zip(self.items, found):
                 li.setLabel(props.pop("label"))
                 # mark selected rows visually
-                key = props.get("__key")
-                if key and key in self.selected_keys:
+                if key in self.selected_keys:
                     props["mark"] = color("✓", GREEN) + " " + (props.get("mark", "") or "")
                 li.setProperties(props)
             self.setProperty("trouble", "; ".join(trouble))

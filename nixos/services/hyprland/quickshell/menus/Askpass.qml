@@ -10,6 +10,8 @@ Menu {
 
     property string kind: "pin"
     property string error: ""
+    // this is the prompt other menus wait for, it never suspends itself
+    isAskpass: true
 
     signal answered(string text)
 

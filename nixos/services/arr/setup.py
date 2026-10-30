@@ -375,15 +375,17 @@ def prowlarr(sec):
     }
 
     # the trackers by priority, 1 first: of two equal releases radarr and
-    # sonarr take the one of the tracker before
-    def tracker(name, definition, priority, fields=None, tags=()):
+    # sonarr take the one of the tracker before. magnets hang in "downloading
+    # metadata" here: no udp, dht finds no peers. a .torrent has its files
+    # already, so prefer the torrent url everywhere
+    def tracker(name, definition, priority, fields=None, tags=(), enable=True):
         return lambda: provider(
             api,
             "/indexer",
             name,
             lambda x: x["definitionName"] == definition,
-            fields or {},
-            enable=True,
+            {"torrentBaseSettings.preferMagnetUrl": False, **(fields or {})},
+            enable=enable,
             priority=priority,
             appProfileId=1,
             tags=list(tags),
@@ -411,9 +413,22 @@ def prowlarr(sec):
     steps["old rutracker"] = lambda: [
         api.call("DELETE", f"/indexer/{x['id']}") for x in api.get("/indexer") if x["implementation"] == "RuTracker"
     ]
-    steps["uindex"] = tracker("Uindex", "uindex", 2, tags=[flaresolverr])
-    steps["thepiratebay"] = tracker("The Pirate Bay", "thepiratebay", 3)
-    steps["1337x"] = tracker("1337x", "1337x", 4, tags=[flaresolverr])
+    # magnet only, no .torrent on the site: sonarr and radarr would hand
+    # qbittorrent a magnet and it would wait for metadata forever. off
+    steps["uindex"] = tracker("Uindex", "uindex", 2, tags=[flaresolverr], enable=False)
+    steps["thepiratebay"] = tracker("The Pirate Bay", "thepiratebay", 3, enable=False)
+    # primary and fallback to itorrents' .torrent, the definition's default
+    # is the magnet
+    steps["1337x"] = tracker(
+        "1337x",
+        "1337x",
+        4,
+        {
+            "primarydownloadlink": 0,
+            "fallbackdownloadlink": 0,
+        },
+        tags=[flaresolverr],
+    )
     # waited for: radarr's trackers are there for years() after
     steps["sync"] = lambda: command(api, "ApplicationIndexerSync")
     return run("prowlarr", steps)

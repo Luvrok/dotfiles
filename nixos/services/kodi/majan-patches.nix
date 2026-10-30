@@ -169,12 +169,12 @@
       from = "<expression name=\"VidInfo_ShowTrailer\">$EXP[ShowTrailerButton] + !String.IsEmpty(ListItem.Trailer)</expression>";
       to = "<expression name=\"VidInfo_ShowTrailer\">$EXP[ShowTrailerButton] + [!String.IsEmpty(ListItem.Trailer) | [[String.IsEqual(ListItem.DBType,movie) | String.IsEqual(ListItem.DBType,tvshow)] + !String.IsEmpty(ListItem.UniqueID(tmdb))]]</expression>";
     }
-    # cast row: add a spinner while tmdb helper loads the cast (first open is slow)
-    {
-      file = "1080i/Includes_VideoInfo.xml";
-      from = "\t\t\t\t<control type=\"list\" id=\"50\">";
-      to = "\t\t\t\t<!-- loading spinner while cast loads -->\n\t\t\t\t<control type=\"busydialog\" id=\"9002\">\n\t\t\t\t\t<visible>Container(50).IsUpdating</visible>\n\t\t\t\t\t<left>900</left>\n\t\t\t\t\t<top>200</top>\n\t\t\t\t</control>\n\t\t\t\t<control type=\"list\" id=\"50\">";
-    }
+    # # cast row: add a spinner while tmdb helper loads the cast (first open is slow)
+    # {
+    #   file = "1080i/Includes_VideoInfo.xml";
+    #   from = "\t\t\t\t<control type=\"list\" id=\"50\">";
+    #   to = "\t\t\t\t<!-- loading spinner while cast loads -->\n\t\t\t\t<control type=\"busydialog\" id=\"9002\">\n\t\t\t\t\t<visible>Container(50).IsUpdating</visible>\n\t\t\t\t\t<left>900</left>\n\t\t\t\t\t<top>200</top>\n\t\t\t\t</control>\n\t\t\t\t<control type=\"list\" id=\"50\">";
+    # }
   ];
 
   # a third font in kodi's settings -> interface -> skin -> fonts, "JetBrains

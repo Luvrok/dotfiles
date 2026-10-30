@@ -206,6 +206,7 @@ ShellRoot {
             shell.askNote = desc;
             shell.askError = error;
             shell.askScreen = Hypr.focusedScreen();
+            Prompt.active = true;
             shell.asking = true;
         }
     }
@@ -423,7 +424,10 @@ ShellRoot {
             note: shell.askNote
             error: shell.askError
             onAnswered: text => askpass.answered(text)
-            onDone: Qt.callLater(() => shell.asking = false)
+            onDone: Qt.callLater(() => {
+                shell.asking = false;
+                Prompt.active = false;
+            })
         }
     }
 }

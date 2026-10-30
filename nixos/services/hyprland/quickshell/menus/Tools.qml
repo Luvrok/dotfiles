@@ -83,15 +83,32 @@ Menu {
     icon: "\u{f09ad}"
     lines: 0
     // up to 6 squares in a row
-    readonly property int columns: Math.min(6, tools.length)
+    readonly property int columns: Math.min(5, tools.length)
+    property int selected: 0
     menuWidth: 26 + columns * ch(12) + (columns - 1) * 10
-    hints: [["key", "open"], ["q", "back in a tool"], ["esc", "close"]]
+    hints: [["h/l", "pick"], ["enter", "open"], ["key", "open"], ["q", "back in a tool"], ["esc", "close"]]
+
+    function move(step) {
+        const n = tools.length;
+        selected = (selected + step + n) % n;
+    }
 
     keys: e => {
-        const t = tools.find(t => key(e, t.key));
-        if (!t)
-            return false;
-        pick(t);
+        if (key(e, "h"))
+            move(-1);
+        else if (key(e, "l"))
+            move(1);
+        else if (key(e, "j") || key(e, "k"))
+            return true;
+        else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter)
+            pick(tools[selected]);
+        else {
+            const t = tools.find(t => key(e, t.key));
+            if (!t)
+                return false;
+            selected = tools.indexOf(t);
+            pick(t);
+        }
         return true;
     }
 
@@ -113,13 +130,18 @@ Menu {
 
                 delegate: Tile {
                     required property var modelData
+                    required property int index
                     width: grid.side
                     height: grid.side
                     key: modelData.key
                     icon: modelData.icon
                     name: modelData.name
+                    selected: menu.selected === index
                     font: menu.rowFont
-                    onClicked: menu.pick(modelData)
+                    onClicked: {
+                        menu.selected = index;
+                        menu.pick(modelData);
+                    }
                 }
             }
         }

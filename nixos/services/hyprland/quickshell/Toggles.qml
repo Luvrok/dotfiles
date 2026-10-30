@@ -5,10 +5,11 @@ import Quickshell
 import Quickshell.Io
 
 // what the switches menu turns on and off, and the bar shows while it's
-// on: vpn (xray.service, hosts/barnard/xray.nix), zapret, dnscrypt-proxy.
-// a check says if it's on, on and off do it. xray has a polkit rule, so
-// plain systemctl, the other system units go through scripts/units and
-// sudo asks in the askpass menu. a new switch is a line in `list`
+// on: vpn (xray.service, hosts/barnard/xray.nix), zapret, dnscrypt-proxy,
+// rutracker-proxy. a check says if it's on, on and off do it. xray has a
+// polkit rule, so plain systemctl, the other system units go through
+// scripts/units and sudo asks in the askpass menu. a new switch is a line
+// in `list`: restart is what the menu's r key runs on the selected one
 Singleton {
     id: root
 
@@ -21,7 +22,8 @@ Singleton {
             icon: "\u{f0582}",
             check: "systemctl is-active -q xray",
             on: "systemctl start xray",
-            off: "systemctl stop xray"
+            off: "systemctl stop xray",
+            restart: "systemctl restart xray"
         },
         {
             key: "z",
@@ -30,7 +32,8 @@ Singleton {
             icon: "\u{f0499}",
             check: "systemctl is-active -q zapret-discord-youtube",
             on: `bash ${units} do system start zapret-discord-youtube`,
-            off: `bash ${units} do system stop zapret-discord-youtube`
+            off: `bash ${units} do system stop zapret-discord-youtube`,
+            restart: `bash ${units} do system restart zapret-discord-youtube`
         },
         {
             key: "d",
@@ -39,7 +42,18 @@ Singleton {
             icon: "\u{f048b}",
             check: "systemctl is-active -q dnscrypt-proxy",
             on: `bash ${units} do system start dnscrypt-proxy`,
-            off: `bash ${units} do system stop dnscrypt-proxy`
+            off: `bash ${units} do system stop dnscrypt-proxy`,
+            restart: `bash ${units} do system restart dnscrypt-proxy`
+        },
+        {
+            key: "t",
+            id: "rutracker",
+            name: "rutracker",
+            icon: "\u{f019}",
+            check: "systemctl is-active -q rutracker-proxy",
+            on: `bash ${units} do system start rutracker-proxy`,
+            off: `bash ${units} do system stop rutracker-proxy`,
+            restart: `bash ${units} do system restart rutracker-proxy`
         }
     ]
     // id: true or false, from the last check
@@ -67,6 +81,18 @@ Singleton {
             sid: t.id
         });
         p.exec(["sh", "-c", isOn(t.id) ? t.off : t.on]);
+    }
+
+    function reload(t) {
+        if (pending[t.id] || !t.restart)
+            return;
+        pending = Object.assign({}, pending, {
+            [t.id]: true
+        });
+        const p = switcher.createObject(root, {
+            sid: t.id
+        });
+        p.exec(["sh", "-c", t.restart]);
     }
 
     function refresh() {

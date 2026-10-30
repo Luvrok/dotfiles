@@ -3,8 +3,9 @@ import qs
 
 // a big square of the tools and switches menus: the key that picks it in
 // an orange corner, the icon, the name. mode: "" for a tool, "on" fills
-// it orange, "off" dims the icon, "busy" pulses. mode, not state: Item
-// has a state
+// it orange, "off" dims the icon, "busy" pulses. selected is h/l's cursor,
+// selectedBorder and selectedWidth say how it stands out. mode, not state:
+// Item has a state
 Rectangle {
     id: tile
 
@@ -12,6 +13,9 @@ Rectangle {
     property string icon: ""
     property string name: ""
     property string mode: ""
+    property bool selected: false
+    property color selectedBorder: Theme.border
+    property int selectedWidth: 1
     property font font
 
     signal clicked
@@ -19,8 +23,8 @@ Rectangle {
     readonly property bool on: mode === "on"
 
     color: on ? Theme.selBg : mouse.containsMouse ? Theme.hover : "transparent"
-    border.width: 1
-    border.color: mouse.containsMouse || on ? Theme.border : Theme.line
+    border.width: selected ? selectedWidth : 1
+    border.color: selected ? selectedBorder : mouse.containsMouse || on ? Theme.border : Theme.line
     opacity: 0
     Component.onCompleted: intro.start()
 

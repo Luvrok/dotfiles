@@ -49,6 +49,7 @@ Menu {
     icon: "\u{f014c}"
     prompt: "search"
     input: true
+    searchable: true
     enterHint: "copy"
     lines: 15
 

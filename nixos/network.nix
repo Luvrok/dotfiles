@@ -53,10 +53,12 @@ in
       allowPing = true;
       allowedTCPPorts = [
         22000 # syncthing
+        51413
         61208
       ];
       allowedUDPPorts = [
         21027 # syncthing discovery
+        51413
         22000 # syncthing
       ];
     };

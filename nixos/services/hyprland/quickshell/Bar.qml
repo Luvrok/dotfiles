@@ -258,8 +258,8 @@ PanelWindow {
             }
             Sep {}
 
-            // the switches that are on (vpn, zapret, dnscrypt), a click opens
-            // the switches menu
+            // the switches that are on (vpn, zapret, dnscrypt, rutracker), a
+            // click opens the switches menu
             Label {
                 id: switches
                 readonly property var on: Toggles.list.filter(t => Toggles.isOn(t.id))

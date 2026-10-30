@@ -46,12 +46,16 @@ PanelWindow {
     property bool startOnFirst: true
     property string busy: ""
     property string activity: ""
+    // hidden while a password prompt is up (Prompt.qml), shown again after
+    property bool suspended: false
+    // this menu itself is the password prompt: it never suspends on its own prompt
+    property bool isAskpass: false
     // what enter does, the menu's own keys (in the list, or with ctrl or alt
     // in a prompt), and all the keys at the bottom: [[key, what], ...], []
     // hides them
     property string enterHint: "pick"
     property var actions: []
-    property var hints: input && !searchable ? [["enter", enterHint], ...(lines > 0 ? [["↑↓", "move"]] : []), ...actions, ...upHint, ["esc", "close"]] : input ? [["enter", enterHint], ["↑↓", "move"], ["tab", "list"], ["q", "back"], ["esc", "close"]] : [["j/k", "move"], ["enter", enterHint], ...actions, ...(searchable ? [["/", "search"]] : []), ...upHint, ["esc", "close"]]
+    property var hints: input && !searchable ? [["enter", enterHint], ...(lines > 0 ? [["↑↓", "move"]] : []), ...actions, ...upHint, ["esc", "close"]] : input && searchable ? [["enter", enterHint], ["↑↓", "move"], ["/", "search"], ...actions, ...upHint, ["esc", "close"]] : input ? [["enter", enterHint], ["↑↓", "move"], ["tab", "list"], ["q", "back"], ["esc", "close"]] : [["j/k", "move"], ["enter", enterHint], ...actions, ...(searchable ? [["/", "search"]] : []), ...upHint, ["esc", "close"]]
     // back to the menu it came from: q, or backspace while typing
     readonly property var upHint: parentMenu !== "" && atTop ? [[input ? "⌫" : "q", parentMenu]] : []
     // rows in the accent color: the connected network, the default sink
@@ -126,6 +130,26 @@ PanelWindow {
 
     function hide() {
         visible = false;
+    }
+
+    // a password prompt is opening: hide, keep the rows and the cursor,
+    // come back when it is done. it is a quickshell menu too, so it has to
+    // be the only one on screen
+    function suspend() {
+        if (!visible || isAskpass)
+            return;
+        suspended = true;
+        visible = false;
+    }
+
+    function resume() {
+        if (!suspended)
+            return;
+        suspended = false;
+        visible = true;
+        root.WlrLayershell.keyboardFocus = WlrKeyboardFocus.Exclusive;
+        takeKeys();
+        retake.restart();
     }
 
     // stay open and pulse while something runs, show() ends it
@@ -262,10 +286,8 @@ PanelWindow {
                 move(-1, true);
             else if (k === Qt.Key_Down || key(e, "n", ctrl) || key(e, "j", ctrl))
                 move(1, true);
-            else if (searchable && k === Qt.Key_Tab)
-                closeSearch(true);
-            else if (searchable && field.text === "" && key(e, "q"))
-                closeSearch(false);
+            else if (searchable && key(e, "/"))
+                openSearch();
             else if (k === Qt.Key_Backspace && field.text === "")
                 up();
             else if (key(e, "a", ctrl))
@@ -325,9 +347,26 @@ PanelWindow {
 
     // a click anywhere else closes it
     HyprlandFocusGrab {
-        active: root.visible
+        active: root.visible && !root.suspended
         windows: [root]
-        onCleared: root.cancel()
+        onCleared: {
+            if (root.suspended || Prompt.active)
+                return;
+            root.cancel();
+        }
+    }
+
+    // askpass is a quickshell menu too, so only one of them can be on
+    // screen: this one hides, and comes back when the prompt is done
+    Connections {
+        target: Prompt
+
+        function onActiveChanged() {
+            if (Prompt.active)
+                root.suspend();
+            else
+                root.resume();
+        }
     }
 
     // the keys stay here until esc or a click outside. hyprland hands them
@@ -348,7 +387,7 @@ PanelWindow {
         id: reclaim
         interval: 100
         onTriggered: {
-            if (!root.visible || Qt.application.state === Qt.ApplicationActive)
+            if (!root.visible || root.suspended || Qt.application.state === Qt.ApplicationActive)
                 return;
             root.WlrLayershell.keyboardFocus = WlrKeyboardFocus.OnDemand;
             retake.start();

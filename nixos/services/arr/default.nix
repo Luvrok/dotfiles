@@ -191,6 +191,10 @@ in
         QueueingSystemEnabled = false;
         GlobalMaxRatio = 2;
         GlobalMaxSeedingMinutes = 43200;
+        # udp here is mostly filtered: dht bootstrap and most trackers time
+        # out, uTP finds nothing. tcp peers only, magnets are never grabbed
+        # (./setup.py), the trackers give .torrent files
+        BTProtocol = "TCP";
       };
       Preferences.WebUI = {
         Address = "127.0.0.1";
