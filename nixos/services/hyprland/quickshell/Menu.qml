@@ -24,6 +24,9 @@ PanelWindow {
     // or super they ask for
     property bool input: false
     property bool searchable: false
+    // the search text field has the focus (not the list). only meaningful
+    // when input && searchable: / enters it, tab leaves it
+    property bool searchFocused: false
     property bool password: false
     // the text line's placeholder
     property string prompt: ""
@@ -55,7 +58,7 @@ PanelWindow {
     // hides them
     property string enterHint: "pick"
     property var actions: []
-    property var hints: input && !searchable ? [["enter", enterHint], ...(lines > 0 ? [["↑↓", "move"]] : []), ...actions, ...upHint, ["esc", "close"]] : input && searchable ? [["enter", enterHint], ["↑↓", "move"], ["/", "search"], ...actions, ...upHint, ["esc", "close"]] : input ? [["enter", enterHint], ["↑↓", "move"], ["tab", "list"], ["q", "back"], ["esc", "close"]] : [["j/k", "move"], ["enter", enterHint], ...actions, ...(searchable ? [["/", "search"]] : []), ...upHint, ["esc", "close"]]
+    property var hints: input && !searchable ? [["enter", enterHint], ...(lines > 0 ? [["↑↓", "move"]] : []), ...actions, ...upHint, ["esc", "close"]] : input && searchable ? [["enter", enterHint], ["↑↓", "move"], ["/", "search"], ["tab", "list"], ...actions, ...upHint, ["esc", "close"]] : input ? [["enter", enterHint], ["↑↓", "move"], ["tab", "list"], ["q", "back"], ["esc", "close"]] : [["j/k", "move"], ["enter", enterHint], ...actions, ...(searchable ? [["/", "search"]] : []), ...upHint, ["esc", "close"]]
     // back to the menu it came from: q, or backspace while typing
     readonly property var upHint: parentMenu !== "" && atTop ? [[input ? "⌫" : "q", parentMenu]] : []
     // rows in the accent color: the connected network, the default sink
@@ -108,6 +111,8 @@ PanelWindow {
         busy = "";
         field.input.text = "";
         filter();
+        if (searchable)
+            searchFocused = false;
         if (startOnFirst || selected !== undefined)
             jump(Math.max(0, Math.min(selected ?? 0, shown.length - 1)), 1);
         list.positionViewAtIndex(Math.max(0, list.currentIndex), ListView.Contain);
@@ -171,22 +176,25 @@ PanelWindow {
         done();
     }
 
+    // enter the search field: focus the text line
     function openSearch() {
-        input = true;
-        takeKeys();
+        searchFocused = true;
+        field.input.forceActiveFocus();
     }
 
+    // leave the search field: focus the list again, keep or clear the text
     function closeSearch(keep) {
-        input = false;
-        if (!keep) {
+        if (!keep)
             field.input.text = "";
-            filter();
-        }
+        filter();
+        searchFocused = false;
         takeKeys();
     }
 
     function takeKeys() {
-        if (input)
+        if (searchable && !searchFocused)
+            keyCatcher.forceActiveFocus();
+        else if (input)
             field.input.forceActiveFocus();
         else
             keyCatcher.forceActiveFocus();
@@ -273,11 +281,14 @@ PanelWindow {
             return;
         const ctrl = Qt.ControlModifier;
         const enter = k === Qt.Key_Return || k === Qt.Key_Enter;
+        // the search text field has the focus: Run-like input, or searchable
+        // with searchFocused. otherwise the list has the focus.
+        const inSearchInput = input && (!searchable || searchFocused);
         if (k === Qt.Key_PageUp)
             move(-lines, false);
         else if (k === Qt.Key_PageDown)
             move(lines, false);
-        else if (input) {
+        else if (inSearchInput) {
             if (enter && (mods & ctrl))
                 accepted(-1, field.text);
             else if (enter || key(e, "m", ctrl))
@@ -286,8 +297,10 @@ PanelWindow {
                 move(-1, true);
             else if (k === Qt.Key_Down || key(e, "n", ctrl) || key(e, "j", ctrl))
                 move(1, true);
-            else if (searchable && key(e, "/"))
-                openSearch();
+            else if (searchable && k === Qt.Key_Tab)
+                closeSearch(true);
+            else if (searchable && field.text === "" && key(e, "q"))
+                closeSearch(false);
             else if (k === Qt.Key_Backspace && field.text === "")
                 up();
             else if (key(e, "a", ctrl))
@@ -307,6 +320,8 @@ PanelWindow {
                 e.accepted = false;
             return;
         }
+        // the list has the focus: searchable with the field shown but not
+        // focused, or no input at all
         if (enter || key(e, "l"))
             accept();
         else if (k === Qt.Key_Up || key(e, "k"))
