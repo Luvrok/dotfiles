@@ -27,8 +27,9 @@ let
   # (hosts/barnard/xray.nix), qbittorrent never: prowlarr's servers
   # (tracker definitions, flaresolverr's test) and radarr's and sonarr's
   # are behind cloudflare, the provider stalls it. 127.0.0.1 and the lan go
-  # straight, and the trackers that answer straight (./setup.py's
-  # straight). no searches while xray is off
+  # straight. prowlarr's trackers and flaresolverr straight, a tracker
+  # through xray only when it doesn't answer straight (./setup.py's
+  # straight)
   useProxy = true;
   proxy = {
     host = "127.0.0.1";

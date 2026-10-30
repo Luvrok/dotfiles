@@ -23,7 +23,7 @@ flowchart LR
   L -- "скан папки" --> K
 ```
 
-Трекеры, которые отвечают с IP barnard напрямую, идут мимо xray: при каждом запуске arr-setup Prowlarr тестирует каждый трекер напрямую (его хост в «Ignored Addresses» прокси), не прошёл — через xray. Через xray соединение открывается ~30 с, напрямую uindex и apibay (thepiratebay) — 0.2 с. 1337x за Cloudflare, а FlareSolverr Prowlarr всегда пускает через свой прокси, поэтому 1337x остаётся на xray. rutracker и 1337x отдают `.torrent`, uindex и thepiratebay — только magnet. Приоритет (`setup.py`): rutracker, uindex, thepiratebay, 1337x — magnet это или нет, не важно. Метаданные magnet'а qBittorrent тянет у пиров, которых находят публичные HTTP-трекеры: он добавляет их к каждой новой публичной раздаче (`default.nix`), потому что UDP и DHT здесь не работают.
+Prowlarr и FlareSolverr ходят напрямую, xray — запасной путь для отдельного трекера: при каждом запуске arr-setup Prowlarr тестирует каждый трекер напрямую, не прошёл — получает тег `xray` (indexer proxy на xray). Через xray соединение открывается ~30 с, и FlareSolverr не успевал пройти Cloudflare за 60 с; напрямую uindex — 11 с, 1337x — 32 с. Трекер за Cloudflare на xray не выручит (кука FlareSolverr для прямого IP), в логе arr-setup будет «through xray» с причиной. Свои серверы Prowlarr напрямую отвечают 403: определения трекеров скачиваются через xray, только если их нет. rutracker и 1337x отдают `.torrent`, uindex и thepiratebay — только magnet. Приоритет (`setup.py`): rutracker, uindex, thepiratebay, 1337x — magnet это или нет, не важно. Метаданные magnet'а qBittorrent тянет у пиров, которых находят публичные HTTP-трекеры: он добавляет их к каждой новой публичной раздаче (`default.nix`), потому что UDP и DHT здесь не работают.
 
 ## Что где
 
