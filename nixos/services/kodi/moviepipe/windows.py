@@ -1,5 +1,5 @@
 # the add-on's two windows, majan-like (resources/skins/Default/1080i):
-# the releases to pick one of ("Pick a release…", ./actions.py) and what
+# the releases to pick one of ("Download…", ./actions.py) and what
 # downloads (6, ./default.py). a row: its name, then columns
 import os
 import re
@@ -9,6 +9,7 @@ import xbmc
 import xbmcgui
 
 from arr import HERE, Api, Error, error, gb, notify, qbittorrent, waiting
+from keys import letter
 
 # 0.png .. 100.png, a bar per 5% (../addons.nix)
 BARS = os.path.join(HERE, "resources", "skins", "Default", "media", "bars")
@@ -430,14 +431,13 @@ def downloads():
 
 class Downloads(Window):
     # right on a row: its button (pause, go on), left: the row again.
-    # space (kodi's pause) works the button from either
-    # v: toggle selection of focused row (vim-like visual mode)
-    # d: delete all selected rows (with confirmation)
+    # space (kodi's pause) works the button from either. v marks a row (and
+    # goes to the next), d removes the marked ones or the one in focus, r
+    # asks radarr, sonarr and qbittorrent again
     def onInit(self):
         if self.started:
             return
         self.started = True
-        self.selected_keys = set()
         self.refresh()
         self.setFocusId(50)
         threading.Thread(target=self.loop, daemon=True).start()
@@ -467,35 +467,29 @@ class Downloads(Window):
                 if at in keys:
                     control.selectItem(keys.index(at))
                 self.keys = keys
+            self.marked &= set(keys)
             self.records = {key: records for key, records, _, _ in found}
             self.torrents = {key: torrent for key, _, torrent, _ in found}
             for li, (key, _, _, props) in zip(self.items, found):
                 li.setLabel(props.pop("label"))
-                # mark selected rows visually
-                if key in self.selected_keys:
-                    props["mark"] = color("✓", GREEN) + " " + (props.get("mark", "") or "")
+                if key in self.marked:
+                    props["mark"] = color("✓", GREEN)
                 li.setProperties(props)
             self.setProperty("trouble", "; ".join(trouble))
             self.setProperty("empty", "" if found or trouble else "Nothing downloads")
+            self.setProperty("marked", f"{len(self.marked)} marked" if self.marked else "")
 
     def onAction(self, action):
         a = action.getId()
-        btn = action.getButtonCode()
-        if btn == ord("r"):
-            # manual refresh
-            try:
-                self.refresh()
-            except RuntimeError:
-                pass
-            return
-        # vim-like: v = toggle selection, d = delete selected
-        if btn == ord("v") and self.getFocusId() == 50:
-            self.toggle_selection()
-            return
-        if btn == ord("d") and self.getFocusId() == 50:
-            self.delete_selected()
-            return
-        if a in (xbmcgui.ACTION_PREVIOUS_MENU, xbmcgui.ACTION_NAV_BACK):
+        key = letter(action)
+        rows = self.getFocusId() == 50
+        if key == "r":
+            self.refresh()
+        elif key == "v" and rows:
+            self.mark()
+        elif key == "d" and rows:
+            self.remove(sorted(self.marked) or [k for k in [self.focused()] if k])
+        elif a in (xbmcgui.ACTION_PREVIOUS_MENU, xbmcgui.ACTION_NAV_BACK):
             self.close()
         elif self.getFocusId() != 50:
             return
@@ -521,39 +515,39 @@ class Downloads(Window):
             error(e)
         self.refresh()
 
-    def toggle_selection(self):
+    def mark(self):
         key = self.focused()
-        if not key:
+        if key is None:
             return
-        if key in self.selected_keys:
-            self.selected_keys.remove(key)
-        else:
-            self.selected_keys.add(key)
+        self.marked ^= {key}
         self.refresh()
+        at = self.rows().getSelectedPosition()
+        if at + 1 < len(self.keys):
+            self.rows().selectItem(at + 1)
 
-    def delete_selected(self):
-        if not self.selected_keys:
+    def remove(self, keys, another=False):
+        # from radarr's or sonarr's queue and from qbittorrent. another:
+        # this release to the blocklist, they look for the next one
+        keys = [k for k in keys if k in self.records]
+        if not keys:
             return
-        # confirm
-        count = len(self.selected_keys)
-        if not xbmcgui.Dialog().yesno("Delete downloads", f"Remove {count} selected download(s) from queue and client?"):
+        names = [name(k[0], self.records[k]) for k in keys]
+        shown = names[:8] + ([f"and {len(names) - 8} more"] if len(names) > 8 else [])
+        if not another and not xbmcgui.Dialog().yesno("Remove from downloads", "\n".join(shown)):
             return
-        for key in list(self.selected_keys):
-            records = self.records.get(key)
-            if not records:
-                continue
+        for key in keys:
             try:
                 Api(key[0]).call(
                     "DELETE",
                     "/queue/bulk",
-                    {"ids": [r["id"] for r in records]},
+                    {"ids": [r["id"] for r in self.records[key]]},
                     removeFromClient="true",
-                    blocklist="false",
-                    skipRedownload="true",
+                    blocklist="true" if another else "false",
+                    skipRedownload="false" if another else "true",
                 )
             except Error as e:
                 error(e)
-        self.selected_keys.clear()
+        self.marked -= set(keys)
         self.refresh()
 
     def onClick(self, control):
@@ -573,21 +567,8 @@ class Downloads(Window):
             return
         if actions[i] in ("Resume", "Pause"):
             self.toggle(key)
-            return
-        # another: this one to the blocklist, they search again
-        another = actions[i] == "Another release"
-        try:
-            Api(key[0]).call(
-                "DELETE",
-                "/queue/bulk",
-                {"ids": [r["id"] for r in records]},
-                removeFromClient="true",
-                blocklist="true" if another else "false",
-                skipRedownload="false" if another else "true",
-            )
-        except Error as e:
-            error(e)
-        self.refresh()
+        else:
+            self.remove([key], another=actions[i] == "Another release")
 
 
 def show_downloads():
@@ -596,6 +577,7 @@ def show_downloads():
         "moviepipe-downloads.xml",
         started=False,
         keys=[],
+        marked=set(),
         items=[],
         records={},
         torrents={},

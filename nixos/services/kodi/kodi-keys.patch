@@ -1,0 +1,51 @@
+diff --git a/xbmc/input/InputManager.cpp b/xbmc/input/InputManager.cpp
+index 26641f6..acac146 100644
+--- a/xbmc/input/InputManager.cpp
++++ b/xbmc/input/InputManager.cpp
+@@ -600,11 +600,8 @@ bool CInputManager::HandleKey(const CKey& key)
+         if (control->GetControlType() == CGUIControl::GUICONTROL_EDIT)
+           useKeyboard = true;
+ 
+-        // If the key pressed is shift-A to shift-Z set usekeyboard to true.
+-        // This causes the keypress to be used for list navigation.
+-        if (control->IsContainer() && key.GetModifiers() == CKey::MODIFIER_SHIFT &&
+-            key.GetUnicode())
+-          useKeyboard = true;
++        // shift-A to shift-Z go through the keymaps like any key: no jump to
++        // the first item with that letter in a list
+       }
+     }
+     if (useKeyboard)
+diff --git a/xbmc/input/keyboard/KeyboardStat.cpp b/xbmc/input/keyboard/KeyboardStat.cpp
+index d6784c9..4162197 100644
+--- a/xbmc/input/keyboard/KeyboardStat.cpp
++++ b/xbmc/input/keyboard/KeyboardStat.cpp
+@@ -182,8 +182,7 @@ CKey CKeyboardStat::TranslateKey(XBMC_keysym& keysym) const
+   // The function keys are exempted because function keys have no shifted value and
+   // the Nyxboard remote uses keys like Shift-F3 for some buttons.
+   if (modifiers == CKey::MODIFIER_SHIFT)
+-    if ((unicode < 'A' || unicode > 'Z') && (unicode < 'a' || unicode > 'z') &&
+-        (vkey < XBMCVK_F1 || vkey > XBMCVK_F24))
++    if ((vkey < XBMCVK_A || vkey > XBMCVK_Z) && (vkey < XBMCVK_F1 || vkey > XBMCVK_F24))
+       modifiers = 0;
+ 
+   // Create and return a CKey
+diff --git a/xbmc/windowing/wayland/XkbcommonKeymap.cpp b/xbmc/windowing/wayland/XkbcommonKeymap.cpp
+index 9ccb013..a27b60c 100644
+--- a/xbmc/windowing/wayland/XkbcommonKeymap.cpp
++++ b/xbmc/windowing/wayland/XkbcommonKeymap.cpp
+@@ -441,6 +441,14 @@ XBMCKey CXkbcommonKeymap::XBMCKeyForKeysym(xkb_keysym_t sym)
+ 
+ XBMCKey CXkbcommonKeymap::XBMCKeyForKeycode(xkb_keycode_t code) const
+ {
++  // the key as the first layout has it (us of "us,ru"), at the level the
++  // modifiers pick: the keymaps go by latin keys and work on any layout.
++  // the character typed is still the active layout's
++  // (UnicodeCodepointForKeycode)
++  const xkb_level_index_t level = xkb_state_key_get_level(m_state.get(), code, 0);
++  const xkb_keysym_t* syms = nullptr;
++  if (xkb_keymap_key_get_syms_by_level(m_keymap.get(), code, 0, level, &syms) == 1)
++    return XBMCKeyForKeysym(syms[0]);
+   return XBMCKeyForKeysym(KeysymForKeycode(code));
+ }
+ 

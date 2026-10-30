@@ -4,7 +4,8 @@
      the seeders it has (of the swarm's), how long yet, quality, sdr or hdr,
      tracker, a button to pause it or go on (right to it, enter). qbittorrent's
      numbers, every 2 s; enter on a row: pause or go on, another release,
-     away. under the list the release of the one in focus and
+     away. v marks rows, d removes the marked (or the one in focus), r
+     reloads. under the list the release of the one in focus and
      what's wrong with it. majan's fonts, colours
      and textures; the two layouts of a row are the same but for the focus -->
 <window>
@@ -65,7 +66,7 @@
 				<align>right</align>
 				<font>small_16</font>
 				<textcolor>accent_amber</textcolor>
-				<label>$INFO[Window.Property(trouble)]</label>
+				<label>$INFO[Window.Property(marked),[COLOR text_primary],[/COLOR]    ]$INFO[Window.Property(trouble)]</label>
 			</control>
 			<control type="image">
 				<top>72</top>
@@ -503,7 +504,7 @@
 				<height>24</height>
 				<font>mono_13</font>
 				<textcolor>text_tertiary</textcolor>
-				<label>→ to the pause button and enter, or space — pause, resume    enter on a row — pause, another release, remove    esc — close</label>
+				<label>space or → and enter — pause, resume    enter — pause, another release, remove    v — mark    d — remove marked    r — reload    esc — close</label>
 			</control>
 		</control>
 	</controls>

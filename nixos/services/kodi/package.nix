@@ -4,9 +4,18 @@
 { pkgs, inputs }:
 
 let
-  kodiPackages = pkgs.kodi-wayland.packages;
+  # ./kodi-keys.patch: a ru layout's keys are the us ones in the keymaps
+  # (./keyboard.xml; kodi gave every cyrillic letter one code), and
+  # shift+letter goes through them too (G, the last item; it jumped to the
+  # first item with that letter). kodi builds from source then, not from
+  # the cache. a kodi it doesn't apply to fails the build: the patch is
+  # three small hunks, redo them or drop the line (keys on ru stop working)
+  kodi = pkgs.kodi-wayland.overrideAttrs (old: {
+    patches = (old.patches or [ ]) ++ [ ./kodi-keys.patch ];
+  });
+  kodiPackages = kodi.packages;
   addons = kodiPackages.callPackage ./addons.nix { inherit inputs; };
-  kodiWithAddons = pkgs.kodi-wayland.withPackages (_: addons);
+  kodiWithAddons = kodi.withPackages (_: addons);
 
   # tmdb through xray's mixed inbound (hosts/barnard/xray.nix) when the
   # provider breaks it: kodi's curl (posters) and the scrapers' urllib
