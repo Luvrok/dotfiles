@@ -58,8 +58,9 @@ FIRST, LAST = 2, 8
 # page, 50 + n back
 MOVIES, SHOWS, SEARCH, BROWSE, PLOT = 101, 102, 103, 104, 9100
 NEXT, BACK = 40, 50
-# rows past the focus that get their path
-AHEAD = 2
+# rows past the focus that get their path: each is tmdb helper asking tmdb
+# for its 20 posters' details the first time
+AHEAD = 1
 # s: how often the focus and the downloads are looked at
 TICK = 0.2
 POLL = 10

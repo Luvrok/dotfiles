@@ -105,10 +105,18 @@ in
   # tmdb helper plays a second of its dummy.mp4 before a player that isn't a
   # file (ours above), and a file plays in mpv: only its strm files get the
   # dummy. its lists of a person's films 60 a page, not 20
-  # (./moviepipe/person.py). a symlink into the store: these two can't be
-  # changed from kodi's gui, its other settings can't be kept either
+  # (./moviepipe/person.py). 10 requests at a time, not as many as a list
+  # has (20 a row, discover's rows at once): on a slow line a few of them
+  # timed out (15 s), two timeouts in 45 s and tmdb helper asks tmdb
+  # nothing for 15 s, a 429 the same: rows and posters stayed empty.
+  # "medium" art: posters w500, fanart w1280, not w780 and the original
+  # (megabytes each) for a 140 px poster and a blurred backdrop. a symlink
+  # into the store: these can't be changed from kodi's gui, its other
+  # settings can't be kept either
   programs.kodi.addonSettings."plugin.video.themoviedb.helper" = {
     only_resolve_strm = "true";
     pagemulti_sync = "3";
+    max_threads = "10";
+    artwork_quality = "2";
   };
 }

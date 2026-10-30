@@ -32,7 +32,7 @@ setup() {
   cp $REPO/advancedsettings.xml $D/userdata/advancedsettings.xml
   cp $REPO/moviepipe-player.json $D/userdata/addon_data/plugin.video.themoviedb.helper/players/moviepipe-download.json
   cat >$D/userdata/addon_data/plugin.video.themoviedb.helper/settings.xml <<EOF
-<settings version="2"><setting id="only_resolve_strm">true</setting><setting id="pagemulti_sync">3</setting></settings>
+<settings version="2"><setting id="only_resolve_strm">true</setting><setting id="pagemulti_sync">3</setting><setting id="max_threads">10</setting><setting id="artwork_quality">2</setting></settings>
 EOF
   # and no network services: kodi under xvfb in a container crashed now and
   # then right as ws-discovery started
