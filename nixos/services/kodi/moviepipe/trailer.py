@@ -1,13 +1,29 @@
 # "trailer" on majan's film page (../majan.nix): its own, or tmdb's first
 # trailer (youtube) by tmdb helper's videos of it. tmdb helper's lists
 # leave ListItem.Trailer empty
+# opened in an external mpv process so kodi keeps running and doesn't wait
 import json
+import os
+import shutil
+import subprocess
+import urllib.parse
 
 import xbmc
 
 from arr import notify
 
 HELPER = "plugin://plugin.video.themoviedb.helper/"
+
+
+def find_mpv():
+    for candidate in (
+        shutil.which("mpv"),
+        "/run/current-system/sw/bin/mpv",
+        "/etc/profiles/per-user/barnard/bin/mpv",
+    ):
+        if candidate and os.path.exists(candidate):
+            return candidate
+    return "mpv"
 
 
 def videos(kind, tmdb):
@@ -27,6 +43,18 @@ def videos(kind, tmdb):
     return [f["file"] for f in found.get("result", {}).get("files") or [] if f.get("filetype") == "file"]
 
 
+def for_mpv(path):
+    # tmdb helper hands youtube as plugin://plugin.video.youtube/...;
+    # mpv doesn't know kodi protocols, turn it into a plain youtube url
+    if path.startswith("plugin://plugin.video.youtube/"):
+        qs = urllib.parse.urlparse(path).query
+        params = urllib.parse.parse_qs(qs)
+        vid = params.get("video_id", [""])[0]
+        if vid:
+            return f"https://www.youtube.com/watch?v={vid}"
+    return path
+
+
 def trailer(kind, tmdb):
     title = xbmc.getInfoLabel("ListItem.Title")
     path = xbmc.getInfoLabel("ListItem.Trailer")
@@ -38,4 +66,10 @@ def trailer(kind, tmdb):
     # закрываем только текущий диалог видео-инфо, не все (иначе при
     # person->film->trailer вспыхивает person page)
     xbmc.executebuiltin("Dialog.Close(VideoInfo,true)", True)
-    xbmc.executebuiltin(f"PlayMedia({json.dumps(path)},playlist_type_hint=1)")
+    path = for_mpv(path)
+    subprocess.Popen(
+        [find_mpv(), path],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
