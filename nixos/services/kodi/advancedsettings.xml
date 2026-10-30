@@ -6,6 +6,9 @@
      and tmdb had nothing. the regexps are kodi's, case insensitive -->
 <advancedsettings version="1.0">
 	<video>
+		<!-- watched only by hand (w, ./keyboard.xml): kodi's own player (tv,
+		     streams) marks nothing whatever was seen of it -->
+		<playcountminimumpercent>101</playcountminimumpercent>
 		<!-- the name ends at a season too: .S01. (Season 1) .2.сезон.
 		     .The.Complete.Series. -->
 		<cleanstrings action="append">

@@ -20,9 +20,15 @@
 			<q>Back</q>
 			<f>UpdateLibrary(video)</f>
 			<r>Container.Refresh</r>
-			<!-- movie pipe's windows (./moviepipe/keys.py): t a trailer, v
-			     marks a download, d removes. nothing elsewhere -->
+			<!-- watched or not: only by hand, kodi marks nothing itself
+			     (./userdata.nix, ./advancedsettings.xml). kodi had w in its
+			     lists of files only -->
+			<w>ToggleWatched</w>
+			<!-- movie pipe's windows (./moviepipe/keys.py): t a trailer, o
+			     its page in the browser, v marks a download, d removes.
+			     nothing elsewhere -->
 			<t>noop</t>
+			<o>noop</o>
 			<v>noop</v>
 			<d>noop</d>
 			<!-- majan's home tabs, 01 home, 02 movies, 03 tv shows, from any

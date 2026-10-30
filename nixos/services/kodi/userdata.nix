@@ -72,8 +72,9 @@ in
 
     # a video file goes to mpv. kodi runs it through sh with the path in
     # double quotes, a " $ ` or \ in a file name breaks it. mpv resumes
-    # where it was (save-position-on-quit), kodi marks it watched after
-    # 10 seconds of mpv. tv and the streams of add-ons stay in kodi's
+    # where it was (save-position-on-quit). kodi marked it watched after
+    # 10 seconds of mpv: never now (playcountminimumtime), only by hand (w,
+    # ./keyboard.xml). tv and the streams of add-ons stay in kodi's
     # player, the first rule that matches wins
     "${datadir}/userdata/playercorefactory.xml".text = ''
       <playercorefactory>
@@ -82,6 +83,7 @@ in
             <filename>${mpv}</filename>
             <args>"{1}"</args>
             <hidexbmc>false</hidexbmc>
+            <playcountminimumtime>2147483647</playcountminimumtime>
           </player>
         </players>
         <rules action="prepend">
