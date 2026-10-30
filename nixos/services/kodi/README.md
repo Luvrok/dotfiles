@@ -14,7 +14,8 @@ movie pipe (radarr/sonarr, см. `../arr/movie pipe.md`), tv через iptv sim
 | Файл | Что |
 | --- | --- |
 | `default.nix` | модуль: пакет, источники библиотеки, импорт `userdata.nix` |
-| `package.nix` | kodi + аддоны, `addonIds`, необязательная обёртка с xray-прокси |
+| `package.nix` | kodi (с `kodi-keys.patch`) + аддоны, `addonIds`, необязательная обёртка с xray-прокси |
+| `kodi-keys.patch` | клавиши на ru-раскладке и `shift+буква` через keymap |
 | `addons.nix` | сами аддоны: majan, tmdb helper, moviepipe, iptv simple, youtube |
 | `userdata.nix` | всё, что kodi читает в `userdata`, и активация home-manager |
 | `userdata.py` | `enable` / `defaults`: включить аддоны и первые настройки |
@@ -23,7 +24,7 @@ movie pipe (radarr/sonarr, см. `../arr/movie pipe.md`), tv через iptv sim
 | `majan-patch.py` | применяет `majan-patches.nix` к скину |
 | `keyboard.xml` | vim-клавиши |
 | `advancedsettings.xml` | имена торрентов для скрапера, аниме без сезона |
-| `majan-moviepipe.xml` | страница фильма majan с кнопками movie pipe |
+| `majan-moviepipe.xml` | includes movie pipe в majan: страница фильма, пункты 04–06 верхнего меню, плитка постера, чипы и ряд Discover для окон аддона |
 | `moviepipe-bars.py` | текстуры прогресс-баров и подчёркивания для аддона |
 | `moviepipe/` | сам аддон: `plugin.video.moviepipe` |
 
@@ -172,6 +173,49 @@ store, и остальные настройки tmdb helper, изменённы�
 перезапуска не сохранятся. Если это начнёт мешать — убрать блок из
 `userdata.nix` и вернуть `players()`.
 
+### 9. Клавиши: почему патч Kodi
+
+Две вещи keymap'ом не сделать, проверено по исходникам Kodi 21.3:
+
+- **ru-раскладка.** На Wayland Kodi берёт keysym активной раскладки
+  (`CXkbcommonKeymap::XBMCKeyForKeycode`), у кириллицы нет vkey, и
+  `CKey` отдаёт для **любой** русской буквы один код `0xF200`
+  (`KEY_UNICODE`). Продублировать клавиши «кириллическим кодом» в
+  `keyboard.xml` нельзя: код у всех один. Патч берёт keysym с первой
+  раскладки (us) на том же уровне модификаторов; символ для полей ввода
+  по-прежнему из активной (`UnicodeCodepointForKeycode`).
+- **`shift+буква`.** `CInputManager::HandleKey` для контейнера с
+  `shift+буква` сразу уходит в «набор с клавиатуры» → прыжок к элементу на
+  эту букву, keymap не спрашивается. Поэтому `<g mod="shift">` не работал.
+  Патч убирает это условие, а в `CKeyboardStat` shift сохраняется по vkey
+  A–Z (раньше по unicode, у кириллицы shift терялся).
+
+Цена — Kodi собирается из исходников. Патч не лёг на новую версию —
+сборка падает (это лучше, чем молча потерять клавиши); три маленьких
+куска, их легко перенести.
+
+В окнах аддона клавиши раньше сравнивались с `ord("r")` — у Kodi код
+клавиши `0xF000 + vkey` (`0xF052` для r), поэтому `r`, `v`, `d` не
+срабатывали никогда. Теперь `moviepipe/keys.py`, а `t v d` в
+`keyboard.xml` стоят `noop`, чтобы в обычных окнах ничего не делать.
+
+### 10. Ряд актёров пропадал
+
+Ряд на странице фильма был виден только при `NumItems > 0`, а скрытый
+список Kodi не загружает. Если у элемента не было своего каста (списки
+TMDb Helper в первые минуты после запуска), список оставался скрытым и
+не загружался никогда. Теперь ряд виден, пока его путь — TMDb Helper,
+«Loading the cast…» в пустом, сервис через 3 с пустоты меняет `reload=` в
+пути (до трёх раз), `r` на странице — то же вручную.
+
+### 11. Никто не качает без спросу
+
+Убраны «Download» с автопоиском (пункт меню и второй плеер TMDb Helper) и
+`searchForMovie`/`searchForMissingEpisodes`. Остался один **Download…** —
+окно раздач; у сериала — по окну на каждый выбранный сезон. Сезон, где
+ничего не выбрано, снова не «wanted». Поиск раздач — `DialogProgressBG`,
+не модальный.
+
 ## Что осталось нерешённым
 
 ### Кавычки в имени файла и внешний плеер mpv
@@ -192,6 +236,16 @@ store, и остальные настройки tmdb helper, изменённы�
 только вместе с русским языком в самом kodi: `strings.po` в
 `resources/language/resource.language.ru_ru/`, `getLocalizedString` в питоне
 и `$LOCALIZE[]` в xml окон.
+
+### Discover: что не вошло
+
+- Метки «качается» на постерах в обычных рядах (нужно проверить, раскрывает
+  ли Kodi `$INFO` во втором аргументе `String.Contains` внутри layout).
+  Пока есть только ряд *Downloading* первым.
+- Ряды TMDb Helper на главной Majan (Skin settings → Custom rows) — руками,
+  если нужны.
+- Раскладка окна (`moviepipe-discover.xml`) собрана из includes Majan и
+  проверена только парсером и резолвом includes, не глазами.
 
 ## Как проверить
 

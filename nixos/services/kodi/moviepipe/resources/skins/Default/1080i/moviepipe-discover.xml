@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 5, discover (../../../../discover.py): majan's page header, the chips
+     (films or shows, search, tmdb helper's own list), the poster in focus
+     big (majan's home spotlight: the text left, the picture right), the
+     rows under it, scrolling under the top. 201 the downloads (python's
+     items), 202..208 tmdb helper's lists (majan-moviepipe.xml's
+     MoviePipe_DiscoverRow, the window's rown.* properties). a row with no
+     path or that came back empty is hidden, up and down skip it -->
+<window>
+	<defaultcontrol always="true">101</defaultcontrol>
+	<include>Anim_WindowOpenClose</include>
+	<controls>
+		<include>Majan_Background</include>
+		<include content="Majan_PageHeader">
+			<param name="index" value="05"/>
+			<param name="title" value="Discover"/>
+		</include>
+		<include>Majan_Clock</include>
+		<include>Majan_TopRule</include>
+		<!-- the chips -->
+		<control type="grouplist" id="9000">
+			<left>page_margin</left>
+			<top>below_bar_top</top>
+			<width>1100</width>
+			<height>subnav_h</height>
+			<orientation>horizontal</orientation>
+			<usecontrolcoords>true</usecontrolcoords>
+			<itemgap>12</itemgap>
+			<onleft>noop</onleft>
+			<onright>noop</onright>
+			<include content="MoviePipe_Chip">
+				<param name="id" value="101"/>
+				<param name="label" value="MOVIES"/>
+				<param name="shown" value="String.IsEqual(Window.Property(mode),movie)"/>
+				<param name="onup" value="noop"/>
+				<param name="ondown" value="300"/>
+			</include>
+			<include content="MoviePipe_Chip">
+				<param name="id" value="102"/>
+				<param name="label" value="TV SHOWS"/>
+				<param name="shown" value="String.IsEqual(Window.Property(mode),tv)"/>
+				<param name="onup" value="noop"/>
+				<param name="ondown" value="300"/>
+			</include>
+			<include content="MoviePipe_Chip">
+				<param name="id" value="103"/>
+				<param name="label" value="SEARCH$INFO[Window.Property(query), ]"/>
+				<param name="shown" value="String.IsEqual(Window.Property(mode),search)"/>
+				<param name="left" value="32"/>
+				<param name="onup" value="noop"/>
+				<param name="ondown" value="300"/>
+			</include>
+			<include content="MoviePipe_Chip">
+				<param name="id" value="104"/>
+				<param name="label" value="BROWSE TMDB HELPER"/>
+				<param name="shown" value="false"/>
+				<param name="onup" value="noop"/>
+				<param name="ondown" value="300"/>
+			</include>
+		</control>
+		<control type="label">
+			<right>page_margin</right>
+			<top>below_bar_top</top>
+			<width>900</width>
+			<height>subnav_h</height>
+			<align>right</align>
+			<aligny>center</aligny>
+			<font>mono_13</font>
+			<textcolor>$VAR[ColorCaption]</textcolor>
+			<label>ENTER — DOWNLOAD   I — INFO   C — MENU   T — TRAILER   R — RELOAD</label>
+		</control>
+		<!-- the poster in focus: ListItem is the focused row's -->
+		<control type="group">
+			<visible>ControlGroup(300).HasFocus()</visible>
+			<control type="group">
+				<left>1184</left>
+				<top>196</top>
+				<width>640</width>
+				<height>360</height>
+				<control type="image">
+					<texture colordiffuse="bg_raised">common/white.png</texture>
+				</control>
+				<include content="VidView_ArtImage">
+					<param name="art" value="$VAR[MoviePipe_DiscoverArt]"/>
+					<param name="mask" value="masks/landscape_round8_large.png"/>
+					<param name="fade" value="120"/>
+				</include>
+			</control>
+			<control type="label">
+				<left>page_margin</left>
+				<top>200</top>
+				<width>1040</width>
+				<height>22</height>
+				<font>mono_15</font>
+				<textcolor>$VAR[ColorAccent]</textcolor>
+				<label>[UPPERCASE]$VAR[MoviePipe_DiscoverKicker][/UPPERCASE]</label>
+			</control>
+			<control type="label">
+				<left>page_margin</left>
+				<top>226</top>
+				<width>1040</width>
+				<height>80</height>
+				<font>display_56</font>
+				<textcolor>text_primary</textcolor>
+				<label>$INFO[ListItem.Label]</label>
+			</control>
+			<control type="label">
+				<left>page_margin</left>
+				<top>312</top>
+				<width>1040</width>
+				<height>34</height>
+				<font>body_26</font>
+				<textcolor>text_secondary</textcolor>
+				<label>$INFO[ListItem.Year]$INFO[ListItem.Genre, · ,]$INFO[ListItem.Rating, · ★ ,]$INFO[ListItem.Duration, · , min]$INFO[ListItem.Property(progress), · ,]</label>
+			</control>
+			<control type="textbox">
+				<left>page_margin</left>
+				<top>356</top>
+				<width>1040</width>
+				<height>152</height>
+				<font>body_26</font>
+				<textcolor>text_body</textcolor>
+				<label>$INFO[ListItem.Plot]</label>
+			</control>
+		</control>
+		<control type="label">
+			<left>page_margin</left>
+			<top>300</top>
+			<width>1040</width>
+			<height>40</height>
+			<font>body_26</font>
+			<textcolor>text_secondary</textcolor>
+			<label>↓ the rows</label>
+			<visible>!ControlGroup(300).HasFocus()</visible>
+		</control>
+		<!-- the rows, under the poster in focus, clipped to their own part
+		     of the screen: the focused one scrolls into it -->
+		<control type="grouplist" id="300">
+			<left>page_margin</left>
+			<top>576</top>
+			<width>1824</width>
+			<height>504</height>
+			<orientation>vertical</orientation>
+			<itemgap>0</itemgap>
+			<onup>9000</onup>
+			<control type="group">
+				<width>page_width</width>
+				<height>384</height>
+				<visible>!String.IsEmpty(Window.Property(row1.path))</visible>
+				<control type="label">
+					<left>0</left>
+					<top>0</top>
+					<width>1200</width>
+					<height>40</height>
+					<font>section_24</font>
+					<textcolor>text_primary</textcolor>
+					<label>$INFO[Window.Property(row1.title)]</label>
+				</control>
+				<control type="list" id="201">
+					<left>-16</left>
+					<top>36</top>
+					<width>1840</width>
+					<height>334</height>
+					<orientation>horizontal</orientation>
+					<scrolltime tween="cubic" easing="out">200</scrolltime>
+					<onup>9000</onup>
+					<ondown>202</ondown>
+					<onright>noop</onright>
+					<itemlayout width="poster_m_pitch" height="334">
+						<include content="MoviePipe_Poster">
+							<param name="id" value="201"/>
+						</include>
+					</itemlayout>
+					<focusedlayout width="poster_m_pitch" height="334">
+						<include content="MoviePipe_Poster">
+							<param name="id" value="201"/>
+							<param name="focused" value="true"/>
+						</include>
+					</focusedlayout>
+				</control>
+			</control>
+			<include content="MoviePipe_DiscoverRow">
+				<param name="n" value="2"/>
+				<param name="onup" value="201"/>
+				<param name="ondown" value="203"/>
+			</include>
+			<include content="MoviePipe_DiscoverRow">
+				<param name="n" value="3"/>
+				<param name="onup" value="202"/>
+				<param name="ondown" value="204"/>
+			</include>
+			<include content="MoviePipe_DiscoverRow">
+				<param name="n" value="4"/>
+				<param name="onup" value="203"/>
+				<param name="ondown" value="205"/>
+			</include>
+			<include content="MoviePipe_DiscoverRow">
+				<param name="n" value="5"/>
+				<param name="onup" value="204"/>
+				<param name="ondown" value="206"/>
+			</include>
+			<include content="MoviePipe_DiscoverRow">
+				<param name="n" value="6"/>
+				<param name="onup" value="205"/>
+				<param name="ondown" value="207"/>
+			</include>
+			<include content="MoviePipe_DiscoverRow">
+				<param name="n" value="7"/>
+				<param name="onup" value="206"/>
+				<param name="ondown" value="208"/>
+			</include>
+			<include content="MoviePipe_DiscoverRow">
+				<param name="n" value="8"/>
+				<param name="onup" value="207"/>
+				<param name="ondown" value="noop"/>
+			</include>
+		</control>
+	</controls>
+</window>

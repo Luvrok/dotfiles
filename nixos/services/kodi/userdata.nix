@@ -1,5 +1,5 @@
 # what kodi reads in its userdata (./default.nix sets the package up):
-# vim keys, tmdb helper's players for ./moviepipe, torrent names for the
+# vim keys, tmdb helper's player for ./moviepipe, torrent names for the
 # scraper, a video file going to mpv, the tv channels of iptv simple. the
 # settings it can't be handed as plain files (majan first, the channels on
 # the first run) are ./userdata.py's, written at the end of this file
@@ -29,19 +29,17 @@ let
     </settings>
   '';
 
-  # enter on a film or an episode in tmdb helper asks which player: these
-  # two, ./moviepipe's actions. tmdb helper fills {tmdb} (the show's for an
-  # episode), {season} and {episode}
+  # enter on a film or an episode in tmdb helper: ./moviepipe's
+  # "Download…", the releases to pick one of. tmdb helper fills {tmdb} (the
+  # show's for an episode), {season} and {episode}
   player =
-    action: name: priority:
     let
-      run =
-        query: "executebuiltin://RunPlugin(plugin://plugin.video.moviepipe/?action=${action}&${query})";
+      run = query: "executebuiltin://RunPlugin(plugin://plugin.video.moviepipe/?action=download&${query})";
     in
     builtins.toJSON {
-      name = "Movie pipe: ${name}";
+      name = "Movie pipe: Download…";
       plugin = "plugin.video.moviepipe";
-      inherit priority;
+      priority = 1;
       is_resolvable = "false";
       play_movie = run "type=movie&tmdb={tmdb}";
       play_episode = run "type=episode&tmdb={tmdb}&season={season}&episode={episode}";
@@ -79,12 +77,9 @@ in
     # vim keys (./keyboard.xml)
     "${datadir}/userdata/keymaps/keyboard.xml".source = ./keyboard.xml;
 
-    # enter on a film or an episode in tmdb helper asks which player
-    "${datadir}/userdata/addon_data/plugin.video.themoviedb.helper/players/moviepipe-pick.json".text =
-      player "pick" "Pick a release…"
-        1;
+    # enter on a film or an episode in tmdb helper: download, a release picked
     "${datadir}/userdata/addon_data/plugin.video.themoviedb.helper/players/moviepipe-download.json".text =
-      player "download" "Download" 2;
+      player;
 
     # torrent names the scraper finds
     "${datadir}/userdata/advancedsettings.xml".source = ./advancedsettings.xml;
