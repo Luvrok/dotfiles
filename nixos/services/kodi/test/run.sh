@@ -9,6 +9,10 @@
 #   run.sh type TEXT
 #   run.sh log [N]       kodi's log; errs [N]: its errors and warnings
 #   run.sh library       a dozen films for home (mock, kodi stopped); f scans
+#   run.sh xray [S]      a slow xray (S s a tunnel, 8) and an image.tmdb.org
+#                        of the mock's pictures (./xray.py): kodi's pictures
+#                        through ../moviepipe/images.py from the next start.
+#                        rm -r $STATE/xray: straight again
 # a change to ../ is stop, start again (kodi reads its add-ons at start)
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -31,6 +35,8 @@ setup() {
   mkdir -p $D/userdata/keymaps $D/userdata/addon_data/plugin.video.themoviedb.helper/players $STATE/shots
   cp $REPO/keyboard.xml $D/userdata/keymaps/keyboard.xml
   cp $REPO/advancedsettings.xml $D/userdata/advancedsettings.xml
+  # run.sh xray: the mock's pictures as tmdb's, through images.py
+  [ -e $STATE/xray/cert.pem ] && sed -i 's#<pathsubstitution>#&<substitute><from>http://127.0.0.1:8765/img/</from><to>http://127.0.0.1:8770/t/p/</to></substitute>#' $D/userdata/advancedsettings.xml
   cp $REPO/moviepipe-player.json $D/userdata/addon_data/plugin.video.themoviedb.helper/players/moviepipe-download.json
   cat >$D/userdata/addon_data/plugin.video.themoviedb.helper/settings.xml <<EOF
 <settings version="2"><setting id="only_resolve_strm">true</setting><setting id="pagemulti_sync">3</setting><setting id="max_threads">10</setting><setting id="artwork_quality">2</setting></settings>
@@ -85,10 +91,14 @@ start() {
 
 launch() {
   # no proxy: the mock is 127.0.0.1. a null audio sink: no sound card. no
-  # core file of a crash in the working directory
+  # core file of a crash in the working directory. run.sh xray's
+  # image.tmdb.org: its certificate (nixpkgs' openssl reads NIX_SSL_CERT_FILE
+  # first, this container has one)
   ulimit -c 0
+  cert=$STATE/xray/cert.pem
+  [ -e $cert ] || cert=
   env -u HTTPS_PROXY -u HTTP_PROXY -u https_proxy -u http_proxy -u ALL_PROXY -u NO_PROXY -u no_proxy \
-    HOME=$STATE/home LD_LIBRARY_PATH=$2/lib LIBGL_DRIVERS_PATH=$2/lib/dri \
+    ${cert:+SSL_CERT_FILE=$cert NIX_SSL_CERT_FILE=$cert} HOME=$STATE/home LD_LIBRARY_PATH=$2/lib LIBGL_DRIVERS_PATH=$2/lib/dri \
     __EGL_VENDOR_LIBRARY_DIRS=$2/share/glvnd/egl_vendor.d __GLX_VENDOR_LIBRARY_NAME=mesa LIBGL_ALWAYS_SOFTWARE=1 \
     KODI_AE_SINK=NULL $1/bin/kodi --gl-interface=egl --standalone >$STATE/kodi.out 2>&1 &
 }
@@ -135,6 +145,11 @@ with sqlite3.connect(db) as c:
 case "${1:-}" in
 start) start ;;
 library) library ;;
+xray)
+  pkill -f "python3 $HERE/xray.py"
+  PATH=$(tool openssl)/bin:$PATH python3 $HERE/xray.py "${2:-8}" >$STATE/xray.out 2>&1 &
+  timeout 20 bash -c "until grep -q up $STATE/xray.out; do sleep 0.2; done"
+  ;;
 stop) stop ;;
 shot) $(tool imagemagick)/bin/import -window root "$STATE/shots/$2.png" ;;
 key)
@@ -152,5 +167,5 @@ errs)
     grep -vE "ActiveAE|OpenSink|Avahi|Zeroconf|DBus|Error getting /nix|xbmcbin|LogindUPower|GL_EXT|Skipped .* duplicate|vaGetDriver|sleep delay|plugin.video.youtube" |
     cut -c1-260 | tail -n "${2:-30}"
   ;;
-*) sed -n '2,12p' "$0" ;;
+*) sed -n '2,16p' "$0" ;;
 esac

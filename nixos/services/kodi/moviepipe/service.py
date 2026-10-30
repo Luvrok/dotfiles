@@ -3,7 +3,8 @@
 # once kodi isn't scanning: UpdateLibrary would stop a scan), a
 # notification when a download starts, ends or fails. where it got to is
 # in the add-on's data, what came while kodi was off is taken in at start.
-# and majan's film page's cast row asked again while it's empty (Cast)
+# and majan's film page's cast row asked again while it's empty (Cast).
+# tmdb's pictures through xray (./images.py)
 import json
 import os
 import threading
@@ -15,6 +16,7 @@ import xbmcgui
 import xbmcvfs
 
 from arr import Api, Error, notify
+from images import PORT, Images
 
 STATE = xbmcvfs.translatePath("special://profile/addon_data/plugin.video.moviepipe/state.json")
 POLL = 60
@@ -196,8 +198,18 @@ class Cast(threading.Thread):
                 self.home.setProperty("moviepipe.reload", stamp)
 
 
+def log(message, bad):
+    xbmc.log(f"moviepipe: {message}", xbmc.LOGWARNING if bad else xbmc.LOGINFO)
+
+
 monitor = xbmc.Monitor()
 Service(Pipe()).start()
 Cast().start()
+images = Images(log=log)
+try:
+    images.start()
+except OSError as e:
+    log(f"pictures on 127.0.0.1:{PORT}: {e}", True)
 while not monitor.waitForAbort(TICK):
     pass
+images.stop()

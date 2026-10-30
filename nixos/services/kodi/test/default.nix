@@ -35,7 +35,9 @@ let
             shortRev = "mock";
           };
         };
-        arr = import ../../arr/shared.nix // { inherit keys; };
+        arr = import ../../arr/shared.nix // {
+          inherit keys;
+        };
       }
     else
       { inherit inputs; }
@@ -44,10 +46,14 @@ in
 {
   kodi = kodi.withPackages (_: addons);
   # what userdata.py turns on
-  ids = builtins.concatStringsSep " " (map (a: a.namespace) (kodi.packages.requiredKodiAddons addons));
-  # the screen with no screen and its gl, keys pressed from outside
+  ids = builtins.concatStringsSep " " (
+    map (a: a.namespace) (kodi.packages.requiredKodiAddons addons)
+  );
+  # the screen with no screen and its gl, keys pressed from outside, the
+  # certificate of ./xray.py's image.tmdb.org
   tools = {
     inherit (pkgs) mesa xdotool imagemagick;
     xvfb = pkgs.xorg.xvfb;
+    openssl = pkgs.openssl.bin;
   };
 }
