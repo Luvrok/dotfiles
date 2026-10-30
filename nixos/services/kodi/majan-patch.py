@@ -1,5 +1,6 @@
 # what ../kodi/majan.nix asks this: copies ./majan-patches.nix's files into
-# the skin, applies its patches and adds its "JetBrains Mono" fontset.
+# the skin, applies its patches, adds its "JetBrains Mono" fontset and
+# draws its discs.
 # majan-patch.py SKINDIR PATCHES.json FONTSDIR. a patch whose text isn't
 # there as often as it says stops the build with its file and text: a skin
 # update that rewrites one is then a build error, not a change in the wrong
@@ -11,6 +12,7 @@ import shutil
 import struct
 import sys
 import xml.etree.ElementTree as ET
+import zlib
 
 skin, spec, fonts = sys.argv[1], json.load(open(sys.argv[2])), sys.argv[3]
 SIZE = re.compile(r"<size>([0-9]+)</size>")
@@ -96,6 +98,27 @@ def fontset(font):
     check(name)
 
 
+def disc(name, size):
+    # a white disc, a png of size px: an edge's pixel as white as the disc
+    # covers of it (8x8 samples each). majan has no circle, the top bar's
+    # focus is one (the skin colours it)
+    n, r = 8, size / 2
+    rows = b""
+    for y in range(size):
+        rows += b"\0"
+        for x in range(size):
+            covered = sum((x + (i + 0.5) / n - r) ** 2 + (y + (j + 0.5) / n - r) ** 2 <= r * r for i in range(n) for j in range(n))
+            rows += bytes((255, 255, 255, round(255 * covered / n / n)))
+
+    def chunk(tag, data):
+        return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", zlib.crc32(tag + data))
+
+    path = os.path.join(skin, name)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "wb") as f:
+        f.write(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 6, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(rows)) + chunk(b"IEND", b""))
+
+
 for copy in spec["copy"]:
     shutil.copyfile(copy["from"], os.path.join(skin, copy["to"]))
 
@@ -112,6 +135,9 @@ for patch in spec["patch"]:
     write(path, text.replace(patch["from"], patch["to"]))
 
 fontset(spec["font"])
+
+for each in spec["disc"]:
+    disc(each["to"], each["size"])
 
 for name in sorted({p["file"] for p in spec["patch"]} | {c["to"] for c in spec["copy"]}):
     check(name)

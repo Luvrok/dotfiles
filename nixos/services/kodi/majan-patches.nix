@@ -14,6 +14,15 @@
     }
   ];
 
+  # the top bar's dot (./majan-patch.py draws it): 8 px on screen, twice
+  # that here, a 4k screen's 16 px as sharp as a 1080p one's 8
+  disc = [
+    {
+      to = "media/moviepipe/dot.png";
+      size = 16;
+    }
+  ];
+
   patch = [
     # its black curtain over kodi while a video plays waits for a frame of
     # kodi's own player, mpv plays in its own window: off
@@ -218,7 +227,8 @@
     # left for it), each with its rows under the bar (./majan-moviepipe.xml).
     # the bar's items grey, white in focus (the mouse over one too), the
     # section shown white and underlined: the focus had no mark, and an
-    # accent frame on it was one mark too many
+    # accent frame on it was one mark too many. the focus has a small
+    # accent dot after it, on the text's middle; none while it's off the bar
     {
       file = "1080i/Includes_Home.xml";
       from = ''
@@ -268,13 +278,62 @@
         				</control>'';
     }
     {
-      # search's and the gear's: white in focus already, the frame goes
+      # after the label: a grouplist of it again, unseen (as wide as the
+      # text, bold on the section shown), and the dot
+      file = "1080i/Includes_Home.xml";
+      from = "<!-- 3px accent underline -->";
+      to = ''
+        <control type="grouplist">
+        					<left>topbar_label_x</left>
+        					<top>0</top>
+        					<width>240</width>
+        					<height>topbar_item_h</height>
+        					<orientation>horizontal</orientation>
+        					<itemgap>8</itemgap>
+        					<usecontrolcoords>true</usecontrolcoords>
+        					<visible>Control.HasFocus($PARAM[id])</visible>
+        					<control type="label">
+        						<width max="200">auto</width>
+        						<height>topbar_item_h</height>
+        						<font>menu_26_bold</font>
+        						<textcolor>00000000</textcolor>
+        						<label>$PARAM[label]</label>
+        						<visible>$PARAM[active]</visible>
+        					</control>
+        					<control type="label">
+        						<width max="200">auto</width>
+        						<height>topbar_item_h</height>
+        						<font>menu_26_medium</font>
+        						<textcolor>00000000</textcolor>
+        						<label>$PARAM[label]</label>
+        						<visible>!$PARAM[active]</visible>
+        					</control>
+        					<control type="image">
+        						<top>21</top>
+        						<width>8</width>
+        						<height>8</height>
+        						<texture colordiffuse="$VAR[ColorAccent]">moviepipe/dot.png</texture>
+        					</control>
+        				</control>
+        				<!-- 3px accent underline -->'';
+    }
+    {
+      # search's and the gear's: white in focus already, the frame goes,
+      # the dot after the icon instead (its glyph ends 3 px before it does)
       file = "1080i/Includes_Home.xml";
       from = ''
         <include content="Majan_FocusFrameAlways">
         					<param name="visible" value="Control.HasFocus($PARAM[id])"/>
         				</include>'';
-      to = "";
+      to = ''
+        <control type="image">
+        					<left>33</left>
+        					<top>10</top>
+        					<width>8</width>
+        					<height>8</height>
+        					<texture colordiffuse="$VAR[ColorAccent]">moviepipe/dot.png</texture>
+        					<visible>Control.HasFocus($PARAM[id])</visible>
+        				</control>'';
     }
     {
       # down from 04 05 06: their rows

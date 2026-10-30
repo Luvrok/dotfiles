@@ -8,6 +8,7 @@
 #   run.sh key KEY...    xdotool's names: Right, Return, BackSpace, i, 5...
 #   run.sh type TEXT
 #   run.sh log [N]       kodi's log; errs [N]: its errors and warnings
+#   run.sh library       a dozen films for home (mock, kodi stopped); f scans
 # a change to ../ is stop, start again (kodi reads its add-ons at start)
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -99,8 +100,41 @@ stop() {
   sleep 2
 }
 
+library() {
+  # films for majan's home (its spotlight wants 7.5+, 50+ votes, unwatched):
+  # an nfo, a poster and a fanart each, read by "local information only"
+  # (metadata.local), no internet. the source's content goes straight into
+  # kodi's database (kodi stopped), f scans
+  magick=$(tool imagemagick)/bin/magick
+  lib=$STATE/library/movies
+  n=0
+  for title in Sinners Arrival Heat Prisoners Sicario Zodiac Memento Gravity Moon Drive Her Up; do
+    n=$((n + 1))
+    year=20$((10 + n))
+    f="$lib/$title ($year)/$title ($year)"
+    [ -e "$f.nfo" ] && continue
+    mkdir -p "$(dirname "$f")"
+    echo x >"$f.mkv"
+    $magick -size 500x750 "xc:hsl($((n * 29 % 360)),55%,35%)" -gravity center -pointsize 72 -fill white -annotate 0 "$title" "$f-poster.png"
+    $magick -size 1280x720 "xc:hsl($((n * 29 % 360)),45%,25%)" -gravity center -pointsize 96 -fill white -annotate 0 "$title" "$f-fanart.png"
+    printf '%s\n' "<movie><title>$title</title><year>$year</year><runtime>$((90 + n * 5))</runtime>" \
+      "<plot>$title, a film of the test library: a plot long enough for three lines of the spotlight and more, so that the fade under its last line shows when the text goes on past what its box holds.</plot>" \
+      "<ratings><rating name=\"themoviedb\" max=\"10\" default=\"true\"><value>8.$n</value><votes>$((100 * n))</votes></rating></ratings>" \
+      "<uniqueid type=\"tmdb\" default=\"true\">$((1000 + n))</uniqueid><genre>Drama</genre><director>Denis Villeneuve</director></movie>" >"$f.nfo"
+  done
+  python3 -c '
+import glob, sqlite3, sys
+db = max(glob.glob(sys.argv[1] + "/MyVideos*.db"))
+with sqlite3.connect(db) as c:
+    if not c.execute("select 1 from path where strPath = ?", (sys.argv[2],)).fetchone():
+        c.execute("insert into path (strPath, strContent, strScraper, scanRecursive, useFolderNames, strSettings, noUpdate, exclude, allAudio) values (?, \"movies\", \"metadata.local\", 2147483647, 0, \"\", 0, 0, 0)", (sys.argv[2],))
+' "$D/userdata/Database" "$lib/"
+  printf '<sources><video><default pathversion="1"></default><source><name>Movies</name><path pathversion="1">%s/</path><allowsharing>true</allowsharing></source></video></sources>\n' "$lib" >$D/userdata/sources.xml
+}
+
 case "${1:-}" in
 start) start ;;
+library) library ;;
 stop) stop ;;
 shot) $(tool imagemagick)/bin/import -window root "$STATE/shots/$2.png" ;;
 key)
@@ -118,5 +152,5 @@ errs)
     grep -vE "ActiveAE|OpenSink|Avahi|Zeroconf|DBus|Error getting /nix|xbmcbin|LogindUPower|GL_EXT|Skipped .* duplicate|vaGetDriver|sleep delay|plugin.video.youtube" |
     cut -c1-260 | tail -n "${2:-30}"
   ;;
-*) sed -n '2,11p' "$0" ;;
+*) sed -n '2,12p' "$0" ;;
 esac
