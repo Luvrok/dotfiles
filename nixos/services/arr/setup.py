@@ -135,6 +135,34 @@ def proxy(api):
     )
 
 
+# trackers that may go straight, by their host: xray takes some 30 s for
+# a connection, uindex and the pirate bay's api answer this ip at once.
+# each is tried straight first (the proxy's ignored addresses) and goes
+# through xray when prowlarr's test of it fails straight. flaresolverr
+# always goes through xray (prowlarr gives it its proxy whatever the
+# address), so a tracker behind cloudflare here (1337x) fails straight
+# with xray's cookie and stays on xray
+STRAIGHT = {"Uindex": "uindex.org", "The Pirate Bay": "apibay.org", "1337x": "1337x.to"}
+
+
+def straight(api):
+    if C["proxy"] is None:
+        return
+    hosts = []
+    for name, host in STRAIGHT.items():
+        item = next((x for x in api.get("/indexer") if x["name"] == name and x["enable"]), None)
+        if item is None:
+            continue
+        updated(api, "/config/host", proxyBypassFilter=",".join(hosts + [host]))
+        try:
+            api.post("/indexer/test", item)
+            hosts.append(host)
+            log(f"prowlarr: {name} straight")
+        except Exception as e:  # noqa: BLE001 - a timeout too: through xray
+            log(f"prowlarr: {name} through xray: {str(e)[:200]}")
+    updated(api, "/config/host", proxyBypassFilter=",".join(hosts))
+
+
 def command(api, name):
     # a command of theirs, waited for
     c = api.post("/command", {"name": name})
@@ -430,6 +458,7 @@ def prowlarr(sec):
         },
         tags=[flaresolverr],
     )
+    steps["straight"] = lambda: straight(api)
     # waited for: radarr's trackers are there for years() after
     steps["sync"] = lambda: command(api, "ApplicationIndexerSync")
     return run("prowlarr", steps)
