@@ -144,8 +144,17 @@
     }
     {
       file = "1080i/Includes_VideoInfo.xml";
-      from = ''<param name="id" value="13"/>'';
-      to = ''<param name="id" value="9151"/><param name="onclick" value="RunPlugin(plugin://plugin.video.moviepipe/?action=person&amp;name=$ESCINFO[ListItem.Director]&amp;tab=directed)"/>'';
+      from = ''
+        <param name="id" value="13"/>
+        				<param name="label" value="MORE BY DIRECTOR"/>
+        				<param name="visible" value="!String.IsEmpty(ListItem.Director)"/>'';
+      # tmdb helper's lists have no director (only its own page of a film
+      # does): the page finds them in the film's crew by its tmdb id
+      to = ''
+        <param name="id" value="9151"/>
+        				<param name="label" value="MORE BY DIRECTOR"/>
+        				<param name="onclick" value="RunPlugin(plugin://plugin.video.moviepipe/?action=person&amp;film=$INFO[ListItem.UniqueID(tmdb)]&amp;type=$VAR[MoviePipe_TmdbType]&amp;name=$ESCINFO[ListItem.Director]&amp;tab=directed)"/>
+        				<param name="visible" value="!String.IsEmpty(ListItem.Director) | $EXP[MoviePipe_HasTmdb]"/>'';
     }
     {
       file = "1080i/Includes_VideoInfo.xml";
@@ -169,12 +178,71 @@
       from = "<expression name=\"VidInfo_ShowTrailer\">$EXP[ShowTrailerButton] + !String.IsEmpty(ListItem.Trailer)</expression>";
       to = "<expression name=\"VidInfo_ShowTrailer\">$EXP[ShowTrailerButton] + [!String.IsEmpty(ListItem.Trailer) | [[String.IsEqual(ListItem.DBType,movie) | String.IsEqual(ListItem.DBType,tvshow)] + !String.IsEmpty(ListItem.UniqueID(tmdb))]]</expression>";
     }
-    # # cast row: add a spinner while tmdb helper loads the cast (first open is slow)
-    # {
-    #   file = "1080i/Includes_VideoInfo.xml";
-    #   from = "\t\t\t\t<control type=\"list\" id=\"50\">";
-    #   to = "\t\t\t\t<!-- loading spinner while cast loads -->\n\t\t\t\t<control type=\"busydialog\" id=\"9002\">\n\t\t\t\t\t<visible>Container(50).IsUpdating</visible>\n\t\t\t\t\t<left>900</left>\n\t\t\t\t\t<top>200</top>\n\t\t\t\t</control>\n\t\t\t\t<control type=\"list\" id=\"50\">";
-    # }
+    # the cast row was hidden while its list was empty, and a hidden list
+    # loads nothing: when the film's own cast (kodi's, before tmdb helper's
+    # took its place) was empty, as on the first pages after kodi starts,
+    # the row stayed empty. it stays with tmdb helper's, "Loading…" till
+    # the cast comes (./majan-moviepipe.xml)
+    {
+      file = "1080i/Includes_VideoInfo.xml";
+      from = "<visible>Integer.IsGreater(Container(50).NumItems,0)</visible>";
+      to = "<visible>Integer.IsGreater(Container(50).NumItems,0) | $EXP[MoviePipe_CastFromHelper]</visible><include>MoviePipe_CastEmpty</include>";
+    }
+
+    # home's top bar: 04 live tv, 05 discover, 06 downloads after tv shows,
+    # in majan's music's place (hidden, and search and the gear don't move
+    # left for it). an accent frame on the item in focus: the underline is
+    # the section shown, the focus had no mark (the mouse over the bar)
+    {
+      file = "1080i/Includes_Home.xml";
+      from = "<!-- 3px accent underline -->";
+      to = ''<include content="Majan_FocusFrameAlways"><param name="visible" value="Control.HasFocus($PARAM[id])"/></include><!-- 3px accent underline -->'';
+    }
+    {
+      file = "1080i/Includes_Home.xml";
+      from = ''<param name="shown" value="!Skin.HasSetting(HideMenu.Music)"/>'';
+      to = ''<param name="shown" value="false"/>'';
+    }
+    {
+      file = "1080i/Includes_Home.xml";
+      # music's: hidden, the way from tv shows goes through it
+      from = ''<param name="onright" value="9005"/>'';
+      to = ''<param name="onright" value="9007"/>'';
+    }
+    {
+      file = "1080i/Includes_Home.xml";
+      # search's
+      from = ''<param name="onleft" value="9004"/>'';
+      to = ''<param name="onleft" value="9009"/>'';
+    }
+    {
+      file = "1080i/Includes_Home.xml";
+      from = ''<param name="d4" value="157"/>'';
+      to = ''<param name="d4" value="0"/>'';
+      # search and the gear
+      count = 2;
+    }
+    {
+      file = "1080i/Includes_Home.xml";
+      from = "<!-- Search: Majan search window (Custom_1150_Search.xml) -->";
+      to = "<include>MoviePipe_MenuItems</include><!-- Search: Majan search window (Custom_1150_Search.xml) -->";
+    }
+    {
+      file = "1080i/Constants.xml";
+      from = ''<constant name="menu_x_search">783</constant>'';
+      to = ''<constant name="menu_x_search">1252</constant>'';
+    }
+    {
+      file = "1080i/Constants.xml";
+      from = ''<constant name="menu_x_gear">865</constant>'';
+      to = ''<constant name="menu_x_gear">1334</constant>'';
+    }
+    {
+      # the gear's menu drops under it, 25 px left of it: the gear moved 469
+      file = "1080i/Custom_1151_SystemMenu.xml";
+      from = "<left>840</left>";
+      to = "<left>1309</left>";
+    }
   ];
 
   # a third font in kodi's settings -> interface -> skin -> fonts, "JetBrains

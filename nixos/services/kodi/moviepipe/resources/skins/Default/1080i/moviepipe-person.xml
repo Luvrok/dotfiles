@@ -3,8 +3,9 @@
      (Includes_VideoInfo.xml): the photo, what tmdb knows of them, the films
      row under it (the page slides up while it has the focus, its cast row
      too). tmdb helper's lists, the paths in the window's properties: 70 the
-     details, 71 tmdb's people of a name, 500 the films. enter on one is
-     tmdb helper's players (movie pipe's "Download", "Pick a release…"), i
+     details, 71 tmdb's people of a name, 72 a film's crew (its director),
+     500 the films. enter on one is
+     tmdb helper's player (movie pipe's "Download…"), i
      its page, c its menu. a show's enter is its page (tmdb helper's would
      be its seasons in videos). the tabs (films, tv shows, directed) and the
      orders (popular, newest, oldest) underlined like majan's pages in its
@@ -29,6 +30,15 @@
 			<width>1</width>
 			<height>1</height>
 			<content target="videos">$INFO[Window.Property(search)]</content>
+			<itemlayout width="1" height="1"/>
+			<focusedlayout width="1" height="1"/>
+		</control>
+		<control type="list" id="72">
+			<left>0</left>
+			<top>0</top>
+			<width>1</width>
+			<height>1</height>
+			<content target="videos">$INFO[Window.Property(crew)]</content>
 			<itemlayout width="1" height="1"/>
 			<focusedlayout width="1" height="1"/>
 		</control>
@@ -83,7 +93,7 @@
 				<height>22</height>
 				<font>mono_14</font>
 				<textcolor>$VAR[ColorCaption]</textcolor>
-				<label>ENTER — DOWNLOAD, A SHOW: ITS PAGE   I — INFO</label>
+				<label>ENTER — DOWNLOAD   I — INFO   T — TRAILER   R — RELOAD</label>
 			</control>
 			<!-- the text column at x 680, as the film page's -->
 			<control type="grouplist">
@@ -272,11 +282,14 @@
 						</control>
 					</control>
 				</control>
-				<!-- the biography, 6 lines, still, enter: all of it -->
+				<!-- the biography, 6 lines, still, enter: all of it. the hint
+				     on a line of its own under it, only for a longer one
+				     (person.py's biomore): over the text it hid the last
+				     line's end -->
 				<control type="group">
 					<left>16</left>
 					<width>vidview_col_w</width>
-					<height>228</height>
+					<height>256</height>
 					<visible>!String.IsEmpty(Window.Property(bio))</visible>
 					<control type="textbox">
 						<width>1080</width>
@@ -285,16 +298,15 @@
 						<textcolor>text_body</textcolor>
 						<label>$INFO[Window.Property(bio)]</label>
 					</control>
-					<!-- hint that bio is expandable -->
 					<control type="label">
-						<left>1000</left>
-						<top>200</top>
-						<width>80</width>
-						<height>28</height>
-						<align>right</align>
+						<left>0</left>
+						<top>230</top>
+						<width>1080</width>
+						<height>24</height>
 						<font>mono_13</font>
-						<textcolor>text_tertiary</textcolor>
-						<label>⏎ more</label>
+						<textcolor>$VAR[ColorCaption]</textcolor>
+						<label>↑ ENTER — THE WHOLE BIOGRAPHY</label>
+						<visible>!String.IsEmpty(Window.Property(biomore))</visible>
 					</control>
 					<control type="button" id="9001">
 						<width>1080</width>
@@ -328,120 +340,52 @@
 				<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
 				<onleft>noop</onleft>
 				<onright>noop</onright>
-				<control type="togglebutton" id="101">
-					<left>0</left>
-					<width>auto</width>
-					<height>subnav_h</height>
-					<label>FILMS</label>
-					<altlabel>FILMS</altlabel>
-					<font>mono_15</font>
-					<textcolor>text_secondary</textcolor>
-					<focusedcolor>ink</focusedcolor>
-					<textoffsetx>14</textoffsetx>
-					<texturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</texturefocus>
-					<texturenofocus/>
-					<alttexturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</alttexturefocus>
-					<alttexturenofocus border="14,4,14,3" colordiffuse="$VAR[ColorAccent]">moviepipe-underline.png</alttexturenofocus>
-					<usealttexture>String.IsEqual(Window.Property(tab),films)</usealttexture>
-					<onup condition="Control.IsVisible(9001)">9001</onup>
-					<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
-					<visible>!String.IsEmpty(Window.Property(has_films))</visible>
-				</control>
-				<control type="togglebutton" id="102">
-					<left>0</left>
-					<width>auto</width>
-					<height>subnav_h</height>
-					<label>TV SHOWS</label>
-					<altlabel>TV SHOWS</altlabel>
-					<font>mono_15</font>
-					<textcolor>text_secondary</textcolor>
-					<focusedcolor>ink</focusedcolor>
-					<textoffsetx>14</textoffsetx>
-					<texturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</texturefocus>
-					<texturenofocus/>
-					<alttexturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</alttexturefocus>
-					<alttexturenofocus border="14,4,14,3" colordiffuse="$VAR[ColorAccent]">moviepipe-underline.png</alttexturenofocus>
-					<usealttexture>String.IsEqual(Window.Property(tab),tv)</usealttexture>
-					<onup condition="Control.IsVisible(9001)">9001</onup>
-					<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
-					<visible>!String.IsEmpty(Window.Property(has_tv))</visible>
-				</control>
-				<control type="togglebutton" id="103">
-					<left>0</left>
-					<width>auto</width>
-					<height>subnav_h</height>
-					<label>DIRECTED</label>
-					<altlabel>DIRECTED</altlabel>
-					<font>mono_15</font>
-					<textcolor>text_secondary</textcolor>
-					<focusedcolor>ink</focusedcolor>
-					<textoffsetx>14</textoffsetx>
-					<texturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</texturefocus>
-					<texturenofocus/>
-					<alttexturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</alttexturefocus>
-					<alttexturenofocus border="14,4,14,3" colordiffuse="$VAR[ColorAccent]">moviepipe-underline.png</alttexturenofocus>
-					<usealttexture>String.IsEqual(Window.Property(tab),directed)</usealttexture>
-					<onup condition="Control.IsVisible(9001)">9001</onup>
-					<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
-					<visible>!String.IsEmpty(Window.Property(has_directed))</visible>
-				</control>
-				<control type="togglebutton" id="111">
-					<left>32</left>
-					<width>auto</width>
-					<height>subnav_h</height>
-					<label>POPULAR</label>
-					<altlabel>POPULAR</altlabel>
-					<font>mono_15</font>
-					<textcolor>text_secondary</textcolor>
-					<focusedcolor>ink</focusedcolor>
-					<textoffsetx>14</textoffsetx>
-					<texturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</texturefocus>
-					<texturenofocus/>
-					<alttexturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</alttexturefocus>
-					<alttexturenofocus border="14,4,14,3" colordiffuse="$VAR[ColorAccent]">moviepipe-underline.png</alttexturenofocus>
-					<usealttexture>String.IsEqual(Window.Property(sort),popular)</usealttexture>
-					<onup condition="Control.IsVisible(9001)">9001</onup>
-					<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
-					<visible>true</visible>
-				</control>
-				<control type="togglebutton" id="112">
-					<left>0</left>
-					<width>auto</width>
-					<height>subnav_h</height>
-					<label>NEWEST</label>
-					<altlabel>NEWEST</altlabel>
-					<font>mono_15</font>
-					<textcolor>text_secondary</textcolor>
-					<focusedcolor>ink</focusedcolor>
-					<textoffsetx>14</textoffsetx>
-					<texturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</texturefocus>
-					<texturenofocus/>
-					<alttexturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</alttexturefocus>
-					<alttexturenofocus border="14,4,14,3" colordiffuse="$VAR[ColorAccent]">moviepipe-underline.png</alttexturenofocus>
-					<usealttexture>String.IsEqual(Window.Property(sort),newest)</usealttexture>
-					<onup condition="Control.IsVisible(9001)">9001</onup>
-					<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
-					<visible>true</visible>
-				</control>
-				<control type="togglebutton" id="113">
-					<left>0</left>
-					<width>auto</width>
-					<height>subnav_h</height>
-					<label>OLDEST</label>
-					<altlabel>OLDEST</altlabel>
-					<font>mono_15</font>
-					<textcolor>text_secondary</textcolor>
-					<focusedcolor>ink</focusedcolor>
-					<textoffsetx>14</textoffsetx>
-					<texturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</texturefocus>
-					<texturenofocus/>
-					<alttexturefocus colordiffuse="$VAR[ColorAccent]">common/white.png</alttexturefocus>
-					<alttexturenofocus border="14,4,14,3" colordiffuse="$VAR[ColorAccent]">moviepipe-underline.png</alttexturenofocus>
-					<usealttexture>String.IsEqual(Window.Property(sort),oldest)</usealttexture>
-					<onup condition="Control.IsVisible(9001)">9001</onup>
-					<ondown condition="Integer.IsGreater(Container(500).NumItems,0)">500</ondown>
-					<visible>true</visible>
-				</control>
+				<include content="MoviePipe_Chip">
+					<param name="id" value="101"/>
+					<param name="label" value="FILMS"/>
+					<param name="shown" value="String.IsEqual(Window.Property(tab),films)"/>
+					<param name="onup" value="9001"/>
+					<param name="ondown" value="500"/>
+					<param name="visible" value="!String.IsEmpty(Window.Property(has_films))"/>
+				</include>
+				<include content="MoviePipe_Chip">
+					<param name="id" value="102"/>
+					<param name="label" value="TV SHOWS"/>
+					<param name="shown" value="String.IsEqual(Window.Property(tab),tv)"/>
+					<param name="onup" value="9001"/>
+					<param name="ondown" value="500"/>
+					<param name="visible" value="!String.IsEmpty(Window.Property(has_tv))"/>
+				</include>
+				<include content="MoviePipe_Chip">
+					<param name="id" value="103"/>
+					<param name="label" value="DIRECTED"/>
+					<param name="shown" value="String.IsEqual(Window.Property(tab),directed)"/>
+					<param name="onup" value="9001"/>
+					<param name="ondown" value="500"/>
+					<param name="visible" value="!String.IsEmpty(Window.Property(has_directed))"/>
+				</include>
+				<include content="MoviePipe_Chip">
+					<param name="id" value="111"/>
+					<param name="label" value="POPULAR"/>
+					<param name="shown" value="String.IsEqual(Window.Property(sort),popular)"/>
+					<param name="left" value="32"/>
+					<param name="onup" value="9001"/>
+					<param name="ondown" value="500"/>
+				</include>
+				<include content="MoviePipe_Chip">
+					<param name="id" value="112"/>
+					<param name="label" value="NEWEST"/>
+					<param name="shown" value="String.IsEqual(Window.Property(sort),newest)"/>
+					<param name="onup" value="9001"/>
+					<param name="ondown" value="500"/>
+				</include>
+				<include content="MoviePipe_Chip">
+					<param name="id" value="113"/>
+					<param name="label" value="OLDEST"/>
+					<param name="shown" value="String.IsEqual(Window.Property(sort),oldest)"/>
+					<param name="onup" value="9001"/>
+					<param name="ondown" value="500"/>
+				</include>
 			</control>
 			<!-- the films, where the film page's cast row is -->
 			<control type="group">
@@ -484,6 +428,7 @@
 					<label>$INFO[Window.Property(empty)]</label>
 				</control>
 				<control type="list" id="500">
+					<animation effect="fade" start="100" end="30" time="150" condition="!String.IsEmpty(Window.Property(loading))">Conditional</animation>
 					<left>-16</left>
 					<top>52</top>
 					<width>1840</width>
@@ -499,136 +444,15 @@
 					<onleft condition="Integer.IsEqual(Container(500).CurrentItem,1) + Integer.IsGreater(Window.Property(page),1)">SendClick(311)</onleft>
 					<onright>noop</onright>
 					<itemlayout width="poster_m_pitch" height="334">
-					<control type="group">
-						<left>16</left>
-						<top>14</top>
-						<control type="group">
-							<width>poster_m_w</width>
-							<height>poster_m_h</height>
-							<control type="group">
-								<visible>!String.IsEqual(ListItem.Property(specialsort),bottom)</visible>
-								<include content="VidView_ArtFallback">
-									<param name="label_visible" value="String.IsEmpty(ListItem.Art(poster))"/>
-								</include>
-								<include content="VidView_ArtImage">
-									<param name="art" value="$INFO[ListItem.Art(poster)]"/>
-								</include>
-								<include>VidView_Markers</include>
-							</control>
-							<!-- tmdb helper's next page -->
-							<control type="group">
-								<visible>String.IsEqual(ListItem.Property(specialsort),bottom)</visible>
-								<control type="image">
-									<texture colordiffuse="bg_raised">common/white.png</texture>
-								</control>
-								<control type="label">
-									<align>center</align>
-									<aligny>center</aligny>
-									<font>card_21_bold</font>
-									<textcolor>text_primary</textcolor>
-									<label>Next page ›</label>
-								</control>
-							</control>
-						</control>
-						<control type="label">
-							<left>0</left>
-							<top>264</top>
-							<width>poster_m_w</width>
-							<height>28</height>
-							<font>card_21_bold</font>
-							<textcolor>text_primary</textcolor>
-							<label>$INFO[ListItem.Label]</label>
-							<visible>!String.IsEqual(ListItem.Property(specialsort),bottom)</visible>
-						</control>
-						<control type="label">
-							<left>0</left>
-							<top>292</top>
-							<width>poster_m_w</width>
-							<height>24</height>
-							<font>card_21</font>
-							<textcolor>text_secondary</textcolor>
-							<label>$INFO[ListItem.Year]$INFO[ListItem.Property(role), · ,]</label>
-							<visible>!String.IsEqual(ListItem.Property(specialsort),bottom) + !String.IsEqual(ListItem.Property(role),Director)</visible>
-						</control>
-						<control type="label">
-							<left>0</left>
-							<top>292</top>
-							<width>poster_m_w</width>
-							<height>24</height>
-							<font>card_21</font>
-							<textcolor>text_secondary</textcolor>
-							<label>$INFO[ListItem.Year]</label>
-							<visible>!String.IsEqual(ListItem.Property(specialsort),bottom) + String.IsEqual(ListItem.Property(role),Director)</visible>
-						</control>
-					</control>
+						<include content="MoviePipe_Poster">
+							<param name="id" value="500"/>
+						</include>
 					</itemlayout>
 					<focusedlayout width="poster_m_pitch" height="334">
-					<control type="group">
-						<left>16</left>
-						<top>14</top>
-						<control type="group">
-							<width>poster_m_w</width>
-							<height>poster_m_h</height>
-							<include>Anim_FocusZoom</include>
-							<control type="group">
-								<visible>!String.IsEqual(ListItem.Property(specialsort),bottom)</visible>
-								<include content="VidView_ArtFallback">
-									<param name="label_visible" value="String.IsEmpty(ListItem.Art(poster))"/>
-								</include>
-								<include content="VidView_ArtImage">
-									<param name="art" value="$INFO[ListItem.Art(poster)]"/>
-								</include>
-								<include>VidView_Markers</include>
-							</control>
-							<!-- tmdb helper's next page -->
-							<control type="group">
-								<visible>String.IsEqual(ListItem.Property(specialsort),bottom)</visible>
-								<control type="image">
-									<texture colordiffuse="bg_raised">common/white.png</texture>
-								</control>
-								<control type="label">
-									<align>center</align>
-									<aligny>center</aligny>
-									<font>card_21_bold</font>
-									<textcolor>text_primary</textcolor>
-									<label>Next page ›</label>
-								</control>
-							</control>
-							<include content="VidView_PosterFocus">
-								<param name="id" value="500"/>
-							</include>
-						</control>
-						<control type="label">
-							<left>0</left>
-							<top>264</top>
-							<width>poster_m_w</width>
-							<height>28</height>
-							<font>card_21_bold</font>
-							<textcolor>text_primary</textcolor>
-							<label>$INFO[ListItem.Label]</label>
-							<visible>!String.IsEqual(ListItem.Property(specialsort),bottom)</visible>
-						</control>
-						<control type="label">
-							<left>0</left>
-							<top>292</top>
-							<width>poster_m_w</width>
-							<height>24</height>
-							<font>card_21</font>
-							<textcolor>text_secondary</textcolor>
-							<label>$INFO[ListItem.Year]$INFO[ListItem.Property(role), · ,]</label>
-							<visible>!String.IsEqual(ListItem.Property(specialsort),bottom) + !String.IsEqual(ListItem.Property(role),Director)</visible>
-						</control>
-						<control type="label">
-							<left>0</left>
-							<top>292</top>
-							<width>poster_m_w</width>
-							<height>24</height>
-							<font>card_21</font>
-							<textcolor>text_secondary</textcolor>
-							<label>$INFO[ListItem.Year]</label>
-							<visible>!String.IsEqual(ListItem.Property(specialsort),bottom) + String.IsEqual(ListItem.Property(role),Director)</visible>
-						</control>
-					</control>
+						<include content="MoviePipe_Poster">
+							<param name="id" value="500"/>
+							<param name="focused" value="true"/>
+						</include>
 					</focusedlayout>
 				</control>
 			</control>

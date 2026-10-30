@@ -2,13 +2,16 @@
 # minute, a folder they put in the library gets scanned (that folder only,
 # once kodi isn't scanning: UpdateLibrary would stop a scan), a
 # notification when a download starts, ends or fails. where it got to is
-# in the add-on's data, what came while kodi was off is taken in at start
+# in the add-on's data, what came while kodi was off is taken in at start.
+# and majan's film page's cast row asked again while it's empty (Cast)
 import json
 import os
 import threading
+import time
 from datetime import datetime, timezone
 
 import xbmc
+import xbmcgui
 import xbmcvfs
 
 from arr import Api, Error, notify
@@ -149,7 +152,52 @@ class Service(threading.Thread):
                 break
 
 
+class Cast(threading.Thread):
+    # majan's film page: the cast row is tmdb helper's (../majan-moviepipe.xml).
+    # right after kodi starts tmdb helper isn't ready and the row stays empty
+    # for good: still empty after WAIT s, its path again (the reload stamp),
+    # TRIES times, then the row says so, r on the page tries again
+    # (../keyboard.xml, default.py's reload)
+    WAIT = 3
+    TRIES = 3
+    PAGE = "Window.IsActive(movieinformation) + !String.IsEqual(ListItem.DBType,set) + [!String.IsEmpty(ListItem.UniqueID(tmdb)) | !String.IsEmpty(ListItem.TVShowTitle)]"
+
+    def __init__(self):
+        super().__init__(daemon=True)
+        self.monitor = xbmc.Monitor()
+        self.home = xbmcgui.Window(10000)
+
+    def run(self):
+        page = stamp = None
+        empty = tries = 0
+        while not self.monitor.waitForAbort(0.5):
+            if not xbmc.getCondVisibility(self.PAGE):
+                page = None
+                continue
+            reload = self.home.getProperty("moviepipe.reload")
+            now = (xbmc.getInfoLabel("ListItem.DBType"), xbmc.getInfoLabel("ListItem.UniqueID(tmdb)"), xbmc.getInfoLabel("ListItem.Label"))
+            if now != page or (reload != stamp and tries >= self.TRIES):
+                # another film, or r after it gave up: from the start
+                page, empty, tries = now, 0, 0
+                self.home.clearProperty("moviepipe.cast")
+            stamp = reload
+            if xbmc.getCondVisibility("Integer.IsGreater(Container(50).NumItems,0)"):
+                empty = 0
+                continue
+            empty += 0.5
+            if empty < self.WAIT or tries > self.TRIES:
+                continue
+            empty = 0
+            tries += 1
+            if tries > self.TRIES:
+                self.home.setProperty("moviepipe.cast", "No cast on TMDb    r — again")
+            else:
+                stamp = str(time.time())
+                self.home.setProperty("moviepipe.reload", stamp)
+
+
 monitor = xbmc.Monitor()
 Service(Pipe()).start()
+Cast().start()
 while not monitor.waitForAbort(TICK):
     pass

@@ -19,6 +19,12 @@ let
   kodi = import ./package.nix { inherit pkgs inputs; };
 in
 {
+  # kodi's settings -> regional -> timezone lists the zones of
+  # /usr/share/zoneinfo/zone.tab, nixos has none: the list was empty and
+  # the setting looked locked to the system's (time.timeZone). kodi's own
+  # zone is its alone (it sets TZ for itself)
+  systemd.tmpfiles.rules = [ "L /usr/share/zoneinfo - - - - ${pkgs.tzdata}/share/zoneinfo" ];
+
   home-manager.users.${username} = {
     imports = [ (import ./userdata.nix { inherit (kodi) addonIds; }) ];
 
