@@ -1,0 +1,54 @@
+#!/bin/sh
+# nixos on this machine or a server, the core of sapply, sboot, supdate and
+# sclean (they call this). a server is its flake name, ssh goes to
+# root@<host> (/etc/hosts has them, nixos/network.nix) or to an address
+#   snix switch|boot|update|clean            this machine
+#   snix switch|boot|update|clean HOST [ADDR] a server
+#     switch  build and switch now
+#     boot    build, the next boot gets it (systemd or kernel updates)
+#     update  flake update, then switch
+#     clean   gc, old generations, optimise the store
+
+action=$1
+host=$2
+addr=${3:-$2}
+flake="$HOME/HOME/infra/dotfiles"
+
+case "$action" in
+    switch | boot | update | clean) ;;
+    *)
+        echo "usage: $0 switch|boot|update|clean [host [address]]" >&2
+        exit 1
+        ;;
+esac
+
+where=${host:-$(hostname)}
+
+run() {
+    if [ "$action" = clean ]; then
+        cmd='nh clean all && nix profile wipe-history && nix store optimise'
+        if [ -n "$host" ]; then ssh "root@$addr" "$cmd"; else sh -c "$cmd"; fi
+        return
+    fi
+
+    sub=$action
+    set --
+    if [ "$action" = update ]; then
+        sub=switch
+        set -- -u
+    fi
+    if [ -n "$host" ]; then
+        nh os "$sub" "$@" "$flake#$host" -H "$host" --target-host "root@$addr"
+    else
+        nh os "$sub" "$@" "$flake#$USER"
+    fi
+}
+
+if run; then
+    notify-send -r 9991 "$where: $action OK"
+    pw-play "$HOME/.local/media/soundeffect/minecraft-sheep2.mp3" &
+else
+    notify-send -r 9991 "$where: $action FAILED"
+    pw-play "$HOME/.local/media/soundeffect/minecraft-cave.mp3" &
+    exit 1
+fi

@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import qs
 
-// nixos_menu: sapply, supdate, sclean and their remote twins. a command
+// nixos_menu: sapply, sboot, supdate, sclean, here and on the servers. a command
 // is typed into the mini kitty scratchpad (scripts/nixrun, special:spnix,
 // $mod+ctrl+u), it shows, the build and a sudo password happen there.
 // hide it with $mod+ctrl+u while it builds, sapply's notification says
@@ -16,11 +16,13 @@ Menu {
     // [row, command line], "" a divider
     readonly property var commands: [
         ["apply\tnh os switch", "sapply"],
+        ["boot\tnh os boot, reboot after", "sboot"],
         ["update\tflake update, switch", "supdate"],
         ["clean\tgc, optimise", "sclean"],
         ["", ""],
-        ...hosts.map(h => [`apply ${h}\tremote switch`, `sapply-remote ${h} ${h}`]),
-        ...hosts.map(h => [`clean ${h}\tremote gc`, `sclean-remote ${h}`])
+        ...hosts.map(h => [`apply ${h}\tremote switch`, `sapply ${h}`]),
+        ...hosts.map(h => [`boot ${h}\tremote boot`, `sboot ${h}`]),
+        ...hosts.map(h => [`clean ${h}\tremote gc`, `sclean ${h}`])
     ]
 
     function toggle() {
