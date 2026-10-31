@@ -28,7 +28,6 @@
       "models": {
         "qwen": {
           "name": "Qwen3.8 27B",
-          "reasoning": true,
           "tool_call": true,
           "limit": {
             "context": 131072,
@@ -37,7 +36,6 @@
         },
         "qwen-uncensored": {
           "name": "Qwen3.8 27B uncensored",
-          "reasoning": true,
           "tool_call": true,
           "limit": {
             "context": 131072,
@@ -46,13 +44,11 @@
         },
         "qwen-uncensored-vision": {
           "name": "Qwen3.8 27B uncensored vision",
-          "reasoning": true,
           "tool_call": true,
           "limit": {
             "context": 65536,
             "output": 24576
           },
-          "attachment": true,
           "modalities": {
             "input": [
               "text",
@@ -65,7 +61,6 @@
         },
         "gemma-26b": {
           "name": "Gemma 4 26B-A4B",
-          "reasoning": true,
           "tool_call": true,
           "limit": {
             "context": 131072,
@@ -74,7 +69,6 @@
         },
         "gemma-12b": {
           "name": "Gemma 4 12B",
-          "reasoning": true,
           "tool_call": true,
           "limit": {
             "context": 131072,
@@ -83,7 +77,6 @@
         },
         "gpt-oss": {
           "name": "gpt-oss 20B",
-          "reasoning": true,
           "tool_call": true,
           "limit": {
             "context": 131072,
