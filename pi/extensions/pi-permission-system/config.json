@@ -42,7 +42,8 @@
 
     "mcp": {
       "*": "ask",
-      "docs": "allow"
+      "docs": "allow",
+      "notes": "allow"
     },
 
     "bash": {
@@ -90,16 +91,6 @@
       "git rev-parse *": "allow",
       "git branch": "allow",
       "git remote -v": "allow",
-
-      "qmd search *": "allow",
-      "qmd vsearch *": "allow",
-      "qmd get *": "allow",
-      "qmd multi-get *": "allow",
-      "qmd ls": "allow",
-      "qmd ls *": "allow",
-      "qmd status": "allow",
-      "qmd collection list": "allow",
-      "qmd context list": "allow",
 
       "* > *": "ask",
       "* >> *": "ask",

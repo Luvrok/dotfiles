@@ -22,8 +22,6 @@ let
   };
 in
 {
-  imports = [ ./qmd.nix ];
-
   home.packages = [
     pi
     pkgs.python3Packages.huggingface-hub
@@ -39,5 +37,6 @@ in
       mkOutOfStoreSymlink "${repo}/extensions/pi-permission-system/config.json";
     # one link per skill
     ".pi/agent/skills/qwen-generate".source = mkOutOfStoreSymlink "${repo}/skills/qwen-generate";
+    ".pi/agent/skills/notes".source = mkOutOfStoreSymlink "${repo}/skills/notes";
   };
 }

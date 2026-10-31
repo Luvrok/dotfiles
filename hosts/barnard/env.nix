@@ -6,6 +6,8 @@
     ./xray.nix
     # docs index for pi, vectors from llama-swap
     ../../nixos/services/docs-mcp
+    # the obsidian vault, its own index next to it
+    ../../nixos/services/notes-mcp
     # the wayland sessions
     ../../nixos/services/sway
     ../../nixos/services/hyprland
