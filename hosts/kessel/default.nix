@@ -4,6 +4,7 @@
   imports = [
     # ./disk-config.nix
     ./hardware-configuration.nix
+    ../../modules/small-disk.nix
     ./network.nix
   ];
 
