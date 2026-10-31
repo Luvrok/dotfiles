@@ -7,11 +7,12 @@
 
 let
   cfg = config.services.llama-swap;
-  # nixpkgs' gpu builds, from cache.nixos.org. rocm on amd: on the rx 7800 xt
-  # llama-bench gave gemma-26b 85 t/s on rocm, 14 on vulkan. vulkan on the
-  # nvidia host, the only backend that works there
+  # nixpkgs' vulkan build, from cache.nixos.org, on every host. on barnard
+  # vulkan also sees the ryzen's igpu (it works from system ram) and split
+  # the models onto it: llama-bench gemma-26b tg 14 t/s on both, 129 on the
+  # rx 7800 xt alone (rocm: 85). so the igpu is hidden from it, below
   nvidia = lib.elem "nvidia" config.services.xserver.videoDrivers;
-  llama-cpp = if nvidia then pkgs.llama-cpp-vulkan else pkgs.llama-cpp-rocm;
+  llama-cpp = pkgs.llama-cpp-vulkan;
   # no gpu variant of it in nixpkgs: this one builds here, small
   sd-cpp = pkgs.stable-diffusion-cpp.override { vulkanSupport = true; };
 
@@ -33,6 +34,10 @@ in
   };
 
   systemd.services.llama-swap = {
+    # the discrete gpu only, for llama-server and sd-server (both ggml).
+    # the nvidia host's order isn't known, it keeps them all
+    environment = lib.optionalAttrs (!nvidia) { GGML_VK_VISIBLE_DEVICES = "0"; };
+
     path = [
       llama-cpp
       sd-cpp
