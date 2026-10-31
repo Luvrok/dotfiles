@@ -1,4 +1,4 @@
-{ ... }:
+{ lib, pkgs, ... }:
 
 {
   imports = [
@@ -16,6 +16,24 @@
     # api keys of opencode's free tiers
     ../../nixos/services/opencode-keys.nix
   ];
+
+  # the sddm greeter runs in weston: only the main monitor on the right (DP-2),
+  # the left one (DP-1) stays off until the session starts. kiosk is the
+  # shell the sddm module uses
+  services.displayManager.sddm.wayland.compositorCommand =
+    let
+      ini = (pkgs.formats.ini { }).generate "weston.ini" {
+        keyboard = {
+          keymap_layout = "us,ru";
+          keymap_options = "grp:win_space_toggle";
+        };
+        output = {
+          name = "DP-1";
+          mode = "off";
+        };
+      };
+    in
+    "${lib.getExe pkgs.weston} --shell=kiosk -c ${ini}";
 
   environment.sessionVariables = {
     XFT_DPI = "109";
