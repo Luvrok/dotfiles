@@ -25,6 +25,12 @@
       "enabled": true,
       "timeout": 120000
     },
+    "notes": {
+      "type": "remote",
+      "url": "http://127.0.0.1:6281/mcp",
+      "enabled": true,
+      "timeout": 120000
+    },
     "searxng": {
       "type": "local",
       "command": ["mcp-searxng"],
@@ -39,6 +45,7 @@
     "*": "allow",
 
     "docs_fetch_url": "deny",
+    "notes_fetch_url": "deny",
     "websearch": "deny",
     "webfetch": "ask",
     "searxng_web_url_read": "ask",

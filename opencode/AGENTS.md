@@ -14,6 +14,7 @@
 
 - Web search: the `searxng_*` tools.
 - Library docs: the `docs` skill first, web search after.
+- The user's Obsidian notes: the `notes` skill.
 
 ## Safety
 
