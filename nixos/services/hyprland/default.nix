@@ -1,7 +1,7 @@
 # hyprland: the twin of the sway session on hyprland's own layouts and
-# dispatchers, animations like picom in i3. the bar, the wallpaper and the
-# menus that do what the rofi scripts do are quickshell. sddm lists it next
-# to i3 and sway, i3 stays the default. barnard only, its env.nix imports this
+# dispatchers, with animations. the bar, the wallpaper and the menus that do
+# what the rofi scripts do are quickshell. sddm lists it next to sway, it's
+# the default session. barnard only, its env.nix imports this
 {
   config,
   lib,
@@ -71,12 +71,12 @@
     })
 
     # started from hyprland.lua, the same tools as in sway
-    swayidle # xidlehook
-    sway-audio-idle-inhibit # xidlehook --not-when-audio
-    gammastep # redshift
-    wl-clipboard # xclip
-    cliphist # greenclip
-    grim # flameshot
+    swayidle
+    sway-audio-idle-inhibit
+    gammastep
+    wl-clipboard
+    cliphist
+    grim
     slurp
 
     # quickshell/scripts: record, bt-pair, wifi, apps and route (pw-dump,
@@ -114,7 +114,7 @@
 
   # quickshell is the notification server here (quickshell/Notifs.qml). dunst
   # (home/services/dunst.nix) starts on the first notification over d-bus,
-  # so it stays off while a hyprland runs. i3 and sway still get it
+  # so it stays off while a hyprland runs. sway still gets it
   systemd.user.units."dunst.service" = {
     overrideStrategy = "asDropin";
     text = ''
@@ -141,7 +141,4 @@
       };
     }
   ];
-
-  # the hyprland module turns it on, then i3 starts xdg autostart files too
-  services.xserver.desktopManager.runXdgAutostartIfNone = false;
 }

@@ -31,8 +31,7 @@ Menu {
 
     onAccepted: (index, text) => {
         hide();
-        // greenclip in i3, cliphist here
-        Quickshell.execDetached(["sh", "-c", "rm -f ~/.cache/greenclip.history; cliphist wipe 2>/dev/null; " + commands[index][1]]);
+        Quickshell.execDetached(["sh", "-c", "cliphist wipe 2>/dev/null; " + commands[index][1]]);
         done();
     }
 

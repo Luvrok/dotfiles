@@ -90,7 +90,6 @@ function _ps_aux_grep() { command ps aux | grep --color=auto "$1" }
 alias ll='ls -lah --color'
 alias la='ls -A --color'
 alias dt='cd $HOME/HOME/infra/dotfiles'
-alias dm='cd $HOME/HOME/infra/dwm'
 alias gg='cd $HOME/HOME/wizzard/Gringotts-Grid'
 alias mustore='cd $HOME/HOME/wizzard/music-store'
 alias learn='cd $HOME/HOME/learn'

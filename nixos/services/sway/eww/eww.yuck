@@ -1,5 +1,5 @@
-;; dwm-like bar for sway, same as the i3 one in home/programs/eww: tags,
-;; layout, window titles, status. the wifi and keys menus are i3 only
+;; dwm-like bar for sway: tags,
+;; layout, window titles, status
 
 ;; tags for all monitors
 (deflisten workspaces :initial "[]" "eww-sway-workspaces")
@@ -11,10 +11,10 @@
 (deflisten xkb :initial "" "sway-xkb listen")
 
 ;; status blocks, every 10s (volume also updates right after a click)
-(defpoll volume :interval "10s" "i3-volume")
-(defpoll memory :interval "10s" "i3-memory")
-(defpoll wifi   :interval "10s" "i3-wifi")
-(defpoll date   :interval "15s" "i3-date")
+(defpoll volume :interval "10s" "bar-volume")
+(defpoll memory :interval "10s" "bar-memory")
+(defpoll wifi   :interval "10s" "bar-wifi")
+(defpoll date   :interval "15s" "bar-date")
 
 ;; tags 1-9 of this monitor
 ;; orange: open here, square: has windows, filled square: focused
@@ -68,11 +68,10 @@
       (label :class "block" :text xkb))
     (sep)
 
-    ;; volume: scroll ±2%, middle click mutes. i3-volume refreshes the
-    ;; i3 bar only, this one is a daemon of its own
+    ;; volume: scroll ±2%, middle click mutes, then the bar polls it again
     (eventbox :timeout "1s"
-              :onscroll "i3-volume {} >/dev/null; ${EWW_CMD} poll volume"
-              :onmiddleclick "i3-volume mute >/dev/null; ${EWW_CMD} poll volume"
+              :onscroll "bar-volume {} >/dev/null; ${EWW_CMD} poll volume"
+              :onmiddleclick "bar-volume mute >/dev/null; ${EWW_CMD} poll volume"
       (label :class "block" :text volume))
     (sep)
 

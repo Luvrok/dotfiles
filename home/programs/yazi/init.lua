@@ -9,7 +9,6 @@ require("bunny"):setup({
     { key = "h",          path = "~/HOME",         desc = "Home"         },
 		{ key = "m",          path = "/media/outer-1", desc = "Home"         },
 		{ key = "d",          path = "~/HOME/infra/dotfiles", desc = "dotfiles"         },
-		{ key = "w",          path = "~/HOME/infra/dwm", desc = "dwm"         },
 		{ key = "p",          path = "~/HOME/projects", desc = "projects"         },
     { key = { "l", "s" }, path = "~/.local/share", desc = "Local share"  },
     { key = { "l", "b" }, path = "~/.local/bin",   desc = "Local bin"    },

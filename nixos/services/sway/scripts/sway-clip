@@ -1,4 +1,4 @@
-# clipboard history in rofi, the wayland twin of rofi-greenclip. sway config
+# clipboard history in rofi. sway config
 # runs `wl-paste --watch cliphist store`, that fills it. esc keeps the
 # clipboard as it is
 sel=$(cliphist list | rofi -dmenu -p search -display-columns 2 \

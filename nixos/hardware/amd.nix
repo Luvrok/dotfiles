@@ -19,15 +19,6 @@
     (btop.override { rocmSupport = true; })
   ];
 
-  environment.etc."X11/xorg.conf.d/10-amdgpu.conf".text = ''
-    Section "Device"
-        Identifier "AMD"
-        Driver "amdgpu"
-        Option "TearFree" "true"
-        Option "DRI" "3"
-    EndSection
-  '';
-
   environment.variables = {
     LIBVA_DRIVER_NAME = "radeonsi";
   };

@@ -6,11 +6,8 @@
 {
   imports = [
     ./jedha-tunnel.nix
-    ./greenclip.nix
     ./sddm.nix
     ./syncthing.nix
-    ./xserver.nix
-    ./i3
     ./llama-swap
     ./llama-swap/searxng.nix
     ./rgb-off.nix

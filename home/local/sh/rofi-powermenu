@@ -10,8 +10,7 @@ shutdown="⏻"
 chosen=$(printf '%s\n' "$lock" "$suspend" "$logout" "$reboot" "$shutdown" | "${rofi_command[@]}" -dmenu -selected-row 0)
 
 _clear() {
-  rm -f ~/.cache/greenclip.history
-  # sway's clipboard history
+  # clipboard history
   cliphist wipe 2>/dev/null || true
 }
 

@@ -131,31 +131,12 @@
       qpwgraph
       v4l-utils
 
-      # --- xorg ---
-      better-swallow
-      dmenu
-      dwmblocks
-      j4-dmenu-desktop
-      libxcvt
-      librsvg
-      slop
-      st
-      xclip
+      # --- x11 tools, the rofi scripts run them through xwayland ---
       (tesseract.override { enableLanguages = [ "eng" "rus" ]; })
-      xcolor
-      xcursorthemes
+      xclip
       xdotool
       xdpyinfo
-      xinit
-      xkb-switch
-      xset
-      xsetroot
-      xsettingsd
-      xwininfo
-      xwinwrap
-      xwallpaper
-      libxrandr
-      xsel
+      xcursorthemes
 
       # --- apps ---
       aseprite
@@ -197,7 +178,6 @@
       stress-ng
       testdisk
       vrrtest
-      xev
 
       # --- management ---
       home-manager

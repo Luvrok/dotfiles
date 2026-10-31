@@ -23,63 +23,6 @@ in
         };
       });
     })
-    (final: prev: {
-      dwm = prev.dwm.overrideAttrs (old: {
-        version = "dwm-6.7";
-        src = inputs.dwm.outPath;
-        buildInputs =
-          (old.buildInputs or [ ])
-          ++ (with pkgs; [
-            libXcursor
-            libXres
-            yajl
-          ]);
-      });
-    })
-    (final: prev: {
-      st = prev.st.overrideAttrs (_: {
-        version = "st-0.9.3";
-        src = inputs.st.outPath;
-        buildInputs = with pkgs; [
-          libX11
-          libXft
-          imlib2
-        ];
-      });
-    })
-    (final: prev: {
-      slock = prev.slock.overrideAttrs (_: {
-        version = "slock-1.6";
-        src = inputs.slock.outPath;
-        buildInputs = with pkgs; [
-          libX11
-          libxrandr
-          libxcrypt
-          libxext
-          libXinerama
-          imlib2
-          libXft
-        ];
-      });
-    })
-    (final: prev: {
-      dwmblocks = prev.dwmblocks.overrideAttrs (old: {
-        src = inputs.dwmblocks.outPath;
-        buildInputs = with pkgs; [
-          libX11
-          libxcb
-          xcbutil
-          pkg-config
-        ];
-        makeFlags = [ "PREFIX=$(out)" ];
-        postPatch = ''
-          if grep -q 'void termhandler()' src/main.c; then
-            substituteInPlace src/main.c \
-              --replace-fail 'void termhandler()' 'void termhandler(int signum)'
-          fi
-        '';
-      });
-    })
     (self: super: {
       mpv-config = super.stdenvNoCC.mkDerivation {
         pname = "mpv-config";
@@ -125,15 +68,6 @@ in
             doCheck = false;
           });
     })
-    (final: prev: {
-      i3 = prev.i3.overrideAttrs (old: {
-        postPatch = (old.postPatch or "") + ''
-          substituteInPlace src/render.c --replace-fail 'return deco_height;' 'return 0;'
-        '';
-        doCheck = false;
-      });
-    })
-    inputs.better-swallow.overlay
     inputs.lazygit.overlays.default
   ];
 }

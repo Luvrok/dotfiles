@@ -1,24 +1,5 @@
 {
   "nodes": {
-    "better-swallow": {
-      "inputs": {
-        "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs"
-      },
-      "locked": {
-        "lastModified": 1766408807,
-        "narHash": "sha256-iowos1QckBccDY4N1X0t5LmCHC32nD19pgHqIF2mJL8=",
-        "owner": "afishhh",
-        "repo": "better-swallow",
-        "rev": "91019bcacc6d3d5edbd760c0d6db39677df6b956",
-        "type": "github"
-      },
-      "original": {
-        "owner": "afishhh",
-        "repo": "better-swallow",
-        "type": "github"
-      }
-    },
     "disko": {
       "inputs": {
         "nixpkgs": [
@@ -36,54 +17,6 @@
       "original": {
         "owner": "nix-community",
         "repo": "disko",
-        "type": "github"
-      }
-    },
-    "dmenu": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1770501330,
-        "narHash": "sha256-T3f4scDolWrhuvFF2oZUFnJXdV/y+Je1GWT9PDtmgxg=",
-        "owner": "Luvrok",
-        "repo": "dmenu",
-        "rev": "aed91a390f65ddf0e836afe445e86f05cfe205fc",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Luvrok",
-        "repo": "dmenu",
-        "type": "github"
-      }
-    },
-    "dwm": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1791408251,
-        "narHash": "sha256-2J4CHlgJGaXRs0+OS9FlqV0XByvhJ8yJMxuTD9qNihQ=",
-        "owner": "Luvrok",
-        "repo": "dwm",
-        "rev": "1a269cda59121a71dcd9f5e8c215c114642c3652",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Luvrok",
-        "repo": "dwm",
-        "type": "github"
-      }
-    },
-    "dwmblocks": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1775223792,
-        "narHash": "sha256-6jiAG3YvouZIEXtT7/zm+DuEd/UCkp4v1cknqGciQxU=",
-        "owner": "Luvrok",
-        "repo": "dwmblocks-async",
-        "rev": "fa447e60ca257c983336830b324e38c0dce83e88",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Luvrok",
-        "repo": "dwmblocks-async",
         "type": "github"
       }
     },
@@ -139,21 +72,6 @@
       "original": {
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "type": "github"
-      }
-    },
-    "flake-utils": {
-      "locked": {
-        "lastModified": 1676283394,
-        "narHash": "sha256-XX2f9c3iySLCw54rJ/CZs+ZK6IQy7GXNY4nSOyu2QG4=",
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "rev": "3db36a8b464d0c4532ba1c7dda728f4576d6d073",
-        "type": "github"
-      },
-      "original": {
-        "owner": "numtide",
-        "repo": "flake-utils",
         "type": "github"
       }
     },
@@ -326,21 +244,6 @@
         "type": "github"
       }
     },
-    "nixpkgs": {
-      "locked": {
-        "lastModified": 1695145219,
-        "narHash": "sha256-Eoe9IHbvmo5wEDeJXKFOpKUwxYJIOxKUesounVccNYk=",
-        "path": "/nix/store/cz973qsjldbw4x7fx0rwcvhr9k645vz2-source",
-        "rev": "5ba549eafcf3e33405e5f66decd1a72356632b96",
-        "type": "path"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixpkgs-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-kodi": {
       "locked": {
         "lastModified": 1792502884,
@@ -485,22 +388,6 @@
         "type": "github"
       }
     },
-    "picom-pijulius": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1790050031,
-        "narHash": "sha256-YhzrwqJFhvwI9aAVYzlcXAUkI5kKHBXzbLtvIP4s1Go=",
-        "owner": "pijulius",
-        "repo": "picom",
-        "rev": "a719ef3a40a2d70f3fc23e8dd055ef312b37f5db",
-        "type": "github"
-      },
-      "original": {
-        "owner": "pijulius",
-        "repo": "picom",
-        "type": "github"
-      }
-    },
     "qmd": {
       "inputs": {
         "flake-utils": "flake-utils_2",
@@ -522,11 +409,7 @@
     },
     "root": {
       "inputs": {
-        "better-swallow": "better-swallow",
         "disko": "disko",
-        "dmenu": "dmenu",
-        "dwm": "dwm",
-        "dwmblocks": "dwmblocks",
         "home-manager": "home-manager",
         "kodi-infotagger": "kodi-infotagger",
         "kodi-jurialmunkey": "kodi-jurialmunkey",
@@ -538,12 +421,9 @@
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-kodi": "nixpkgs-kodi",
         "nixpkgs-pinned": "nixpkgs-pinned",
-        "picom-pijulius": "picom-pijulius",
         "qmd": "qmd",
         "rutracker-cf-proxy": "rutracker-cf-proxy",
-        "slock": "slock",
         "sops-nix": "sops-nix",
-        "st": "st",
         "textfoxy": "textfoxy",
         "voidsddm": "voidsddm",
         "zapret-discord-youtube": "zapret-discord-youtube"
@@ -566,22 +446,6 @@
         "url": "https://github.com/rofl3228/rutracker-cf-proxy"
       }
     },
-    "slock": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1778790533,
-        "narHash": "sha256-wcu5Oq7oO7iJ/VzqzjR6nxOicUf60LceshHQn8WfTTU=",
-        "owner": "Luvrok",
-        "repo": "slock",
-        "rev": "da7542775112216106d53932cc250393409bd7f0",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Luvrok",
-        "repo": "slock",
-        "type": "github"
-      }
-    },
     "sops-nix": {
       "inputs": {
         "nixpkgs": [
@@ -599,22 +463,6 @@
       "original": {
         "owner": "Mic92",
         "repo": "sops-nix",
-        "type": "github"
-      }
-    },
-    "st": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1774370787,
-        "narHash": "sha256-5OW7ZvhnzPi1K9V5gFj+DuNLtc1UWXNIcP9RkYOky+s=",
-        "owner": "Luvrok",
-        "repo": "st",
-        "rev": "603ea1e5cd5d12393d38fb43a7d5296351ed40c4",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Luvrok",
-        "repo": "st",
         "type": "github"
       }
     },

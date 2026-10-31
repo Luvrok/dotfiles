@@ -10,7 +10,7 @@ cache_dir=${XDG_CACHE_HOME:-$HOME/.cache}
 notify='false'
 clip=primary
 clip_clear=45
-clipboard_backend=${ROFI_PASS_CLIPBOARD_BACKEND:-xclip}
+clipboard_backend=${ROFI_PASS_CLIPBOARD_BACKEND:-wl-clipboard}
 
 case "$clipboard_backend" in
 	"xclip");;

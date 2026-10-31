@@ -1,6 +1,5 @@
-# sway: the wayland twin of nixos/services/i3/config. same tags, binds and
-# scratchpads, the sway-* scripts stand in for the i3-* ones. no animations,
-# picom is x11 only. x11 tools are swapped for wayland ones where i3 used them
+# sway: same tags, binds and scratchpads as hyprland (nixos/services/hyprland),
+# no animations
 set $mod Mod4
 
 # env import and sway-session.target from the nixos sway module
@@ -8,7 +7,7 @@ include /etc/sway/config.d/*
 
 font pango:JetBrainsMonoNL NFP 10
 
-# same colors as ~/.Xresources gives i3
+# gruvbox, the same as everywhere else
 set $normbg     #171717
 set $normborder #3c3836
 set $normfg     #ebdbb2
@@ -36,7 +35,7 @@ mouse_warping output
 focus_on_window_activation smart
 focus_wrapping workspace
 
-# x11 apps (st, nsxiv, dmenu) read colors and fonts from ~/.Xresources, see
+# xwayland apps (nsxiv) read colors and fonts from ~/.Xresources, see
 # xrdb below. lazy xwayland quits 10 s after the last x app and forgets them
 xwayland force
 
@@ -141,15 +140,14 @@ bindsym --to-code $mod+Shift+d   exec rofi-audio
 bindsym --to-code $mod+Shift+y   exec rofi-translate
 bindsym --to-code $mod+o         exec kitty --class movies -e yazi /media/outer-1
 bindsym --to-code $mod+Print     exec sway-shot ocr
-# the eww wifi menu is i3 only
 bindsym --to-code $mod+Ctrl+w    exec rofi-wifi
 
 # XF86
-bindsym --to-code XF86AudioMute         exec dwm-volume mute
-bindsym --to-code XF86AudioLowerVolume  exec dwm-volume down
-bindsym --to-code XF86AudioRaiseVolume  exec dwm-volume up
-bindsym --to-code XF86MonBrightnessUp   exec dwm-brightness up
-bindsym --to-code XF86MonBrightnessDown exec dwm-brightness down
+bindsym --to-code XF86AudioMute         exec volume mute
+bindsym --to-code XF86AudioLowerVolume  exec volume down
+bindsym --to-code XF86AudioRaiseVolume  exec volume up
+bindsym --to-code XF86MonBrightnessUp   exec brightness up
+bindsym --to-code XF86MonBrightnessDown exec brightness down
 bindsym --to-code Print                 exec sway-shot
 
 # monitors, position comes from the output lines above. the main one runs
@@ -255,9 +253,8 @@ bindsym --to-code $mod+Mod1+7 exec sway-ws follow 7
 bindsym --to-code $mod+Mod1+8 exec sway-ws follow 8
 bindsym --to-code $mod+Mod1+9 exec sway-ws follow 9
 
-# what i3 gets from xserver.nix and the user services: x resources (the
-# session wrapper), clipboard history (greenclip), screen off after 5 min
-# unless audio plays (xidlehook), night colors (redshift)
+# x resources for xwayland apps, clipboard history, screen off after 5 min
+# unless audio plays, night colors
 exec xrdb -merge ~/.Xresources
 exec wl-paste --watch cliphist -max-items 200 store
 exec swayidle -w timeout 300 'swaymsg "output * power off"' resume 'swaymsg "output * power on"'

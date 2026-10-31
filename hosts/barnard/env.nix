@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ ... }:
 
 {
   imports = [
@@ -6,7 +6,7 @@
     ./xray.nix
     # docs index for pi, vectors from llama-swap
     ../../nixos/services/docs-mcp
-    # wayland sessions next to i3
+    # the wayland sessions
     ../../nixos/services/sway
     ../../nixos/services/hyprland
     # the movies and series of /media/outer-1, played in mpv
@@ -16,10 +16,6 @@
     # api keys of opencode's free tiers
     ../../nixos/services/opencode-keys.nix
   ];
-
-  services.displayManager.sddm.setupScript = ''
-    ${pkgs.xrandr}/bin/xrandr --output DisplayPort-0 --off
-  '';
 
   environment.sessionVariables = {
     XFT_DPI = "109";
@@ -31,22 +27,5 @@
   environment.extraInit = ''
     #Turn off gui for ssh auth
     unset -v SSH_ASKPASS
-  '';
-
-  environment.etc."X11/xorg.conf.d/60-monitor.conf".text = ''
-    Section "Monitor"
-        Identifier "DisplayPort-0"
-        Modeline "2560x1440R" 497.25 2560 2608 2640 2720 1440 1443 1448 1525 +hsync -vsync
-        Option "PreferredMode" "2560x1440R"
-        Option "Position" "0 0"
-    EndSection
-
-    Section "Monitor"
-        Identifier "DisplayPort-1"
-        Modeline "2560x1440R" 497.25 2560 2608 2640 2720 1440 1443 1448 1525 +hsync -vsync
-        Option "PreferredMode" "2560x1440R"
-        Option "Position" "2560 0"
-        Option "Primary" "true"
-    EndSection
   '';
 }
