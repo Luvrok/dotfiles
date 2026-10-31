@@ -144,7 +144,6 @@
       discord
       feh
       libreoffice
-      obsidian
       pavucontrol
       qbittorrent
       gopeed
@@ -183,5 +182,8 @@
       nh
     ])
     ++ (with pkgs-pinned; [
+      # unstable's obsidian 1.14.5 on nixpkgs' electron: a grey window, its
+      # renderer fails (webFrame). back to pkgs once unstable's works
+      obsidian
     ]);
 }
