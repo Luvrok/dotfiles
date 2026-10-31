@@ -135,7 +135,6 @@ bindsym --to-code $mod+b         exec rofi-bluetooth
 bindsym --to-code $mod+Shift+w   exec webcam
 bindsym --to-code $mod+u         exec rofi-pass
 bindsym --to-code $mod+Ctrl+k    exec rofi-killer
-bindsym --to-code $mod+Shift+u   exec nixos_menu
 bindsym --to-code $mod+Shift+d   exec rofi-audio
 bindsym --to-code $mod+Shift+y   exec rofi-translate
 bindsym --to-code $mod+o         exec kitty --class movies -e yazi /media/outer-1

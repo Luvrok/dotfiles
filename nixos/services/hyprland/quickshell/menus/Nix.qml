@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import qs
 
-// nixos_menu: sapply, sboot, supdate, sclean, here and on the servers. a command
+// the nixos menu: sapply, sboot, supdate, sclean, here and on the servers. a command
 // is typed into the mini kitty scratchpad (scripts/nixrun, special:spnix,
 // $mod+ctrl+u), it shows, the build and a sudo password happen there.
 // hide it with $mod+ctrl+u while it builds, sapply's notification says
