@@ -18,6 +18,7 @@ Menu {
         ["apply\tnh os switch", "sapply"],
         ["boot\tnh os boot, reboot after", "sboot"],
         ["update\tflake update, switch", "supdate"],
+        ["update boot\tflake update, boot, reboot after", "supdate -b"],
         ["clean\tgc, optimise", "sclean"],
         ["", ""],
         ...hosts.map(h => [`apply ${h}\tremote switch`, `sapply ${h}`]),

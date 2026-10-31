@@ -1,3 +1,8 @@
 #!/bin/sh
-# snix update on this machine, or on a server: supdate HOST [ADDR]
+# flake update, then switch. -b: then boot, reboot after (systemd or
+# kernel in the update). a server: supdate [-b] HOST [ADDR]
+if [ "${1:-}" = -b ]; then
+    shift
+    exec snix update-boot "$@"
+fi
 exec snix update "$@"
