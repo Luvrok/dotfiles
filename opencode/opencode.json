@@ -15,7 +15,6 @@
     "llama-swap"
   ],
   "autoupdate": false,
-
   "_comment": "llama-swap: the local models, the same as pi/models.json (ids, contexts from nixos/services/llama-swap/config.yaml)",
   "provider": {
     "llama-swap": {
@@ -86,11 +85,9 @@
       }
     }
   },
-
   "share": "disabled",
   "lsp": true,
   "formatter": true,
-
   "mcp": {
     "docs": {
       "type": "remote",
@@ -106,23 +103,22 @@
     },
     "searxng": {
       "type": "local",
-      "command": ["mcp-searxng"],
+      "command": [
+        "mcp-searxng"
+      ],
       "environment": {
         "SEARXNG_URL": "http://127.0.0.1:11433"
       },
       "enabled": true
     }
   },
-
   "permission": {
     "*": "allow",
-
     "docs_fetch_url": "deny",
     "notes_fetch_url": "deny",
     "websearch": "deny",
-    "webfetch": "ask",
-    "searxng_web_url_read": "ask",
-
+    "webfetch": "allow",
+    "searxng_web_url_read": "allow",
     "read": {
       "*": "allow",
       "*.env": "deny",
@@ -139,7 +135,6 @@
       "~/.config/gh/**": "deny",
       "~/.aws/**": "deny"
     },
-
     "edit": {
       "*": "allow",
       "*.env": "deny",
@@ -166,78 +161,86 @@
       ".opencode/**": "deny",
       "*/.opencode/**": "deny"
     },
-
     "external_directory": {
       "*": "deny",
       "~/.config/opencode/**": "allow",
       "~/.local/share/opencode/**": "allow",
       "/nix/store/**": "allow"
     },
-
     "bash": {
-      "*": "ask",
-
-      "cd *": "allow",
-      "pwd": "allow",
-      "echo *": "allow",
-      "which *": "allow",
-      "type *": "allow",
-      "date": "allow",
-      "uname *": "allow",
-      "ps *": "allow",
-
-      "cat *": "allow",
-      "head *": "allow",
-      "tail *": "allow",
-      "ls *": "allow",
-      "tree *": "allow",
-      "stat *": "allow",
-      "file *": "allow",
-      "wc *": "allow",
-      "du *": "allow",
-      "df *": "allow",
-
-      "grep *": "allow",
-      "rg *": "allow",
-      "find *": "allow",
+      "*": "allow",
+      "rm *": "ask",
+      "rm -r*": "deny",
+      "rm -R*": "deny",
+      "rm -f*": "deny",
+      "rm --recursive*": "deny",
+      "rm --force*": "deny",
+      "rm * -r*": "deny",
+      "rm * -R*": "deny",
+      "rm * -f*": "deny",
+      "rmdir *": "ask",
       "find * -delete*": "ask",
-      "fd *": "allow",
-
-      "sort *": "allow",
-      "cut *": "allow",
-      "tr *": "allow",
-      "jq *": "allow",
-      "diff *": "allow",
-      "sha256sum *": "allow",
-
-      "git status *": "allow",
-      "git diff *": "allow",
-      "git log *": "allow",
-      "git show *": "allow",
-      "git blame *": "allow",
-      "git ls-files *": "allow",
-      "git rev-parse *": "allow",
-      "git branch": "allow",
-      "git remote -v": "allow",
-
-      "* > *": "ask",
-      "* >> *": "ask",
-      "* *.env": "ask",
-      "* *.env.*": "ask",
       "find * -exec*": "ask",
       "find * -ok*": "ask",
-      "find * -fprint*": "ask",
-      "find * -fls*": "ask",
       "fd * -x*": "ask",
       "fd * -X*": "ask",
       "fd * --exec*": "ask",
-      "rg * --pre*": "ask",
-      "sort * -o*": "ask",
-      "sort * --output*": "ask",
-      "tree * -o*": "ask",
+      "shred *": "deny",
+      "truncate *": "ask",
+      "sudo *": "deny",
+      "doas *": "deny",
+      "su *": "deny",
+      "pkexec *": "deny",
+      "dd *": "deny",
+      "mkfs*": "deny",
+      "wipefs *": "deny",
+      "fdisk *": "deny",
+      "parted *": "deny",
+      "mount *": "deny",
+      "umount *": "deny",
+      "chmod -R*": "deny",
+      "chown *": "deny",
+      "chgrp *": "deny",
+      "reboot*": "deny",
+      "shutdown*": "deny",
+      "poweroff*": "deny",
+      "halt*": "deny",
+      "systemctl *": "ask",
+      "systemctl status *": "allow",
+      "systemctl list-*": "allow",
+      "systemctl is-*": "allow",
+      "kill *": "ask",
+      "pkill *": "ask",
+      "killall *": "ask",
+      "nixos-rebuild*": "deny",
+      "nh *": "deny",
+      "nix flake update*": "deny",
+      "nix flake lock*": "ask",
+      "nix-collect-garbage*": "deny",
+      "nix store gc*": "deny",
+      "nix-store --gc*": "deny",
+      "nix profile *": "ask",
+      "* | sh*": "deny",
+      "* | bash*": "deny",
+      "* | zsh*": "deny",
+      "* | sudo*": "deny",
+      "git push*": "ask",
+      "git push* -f*": "deny",
+      "git push* --force*": "deny",
+      "git reset --hard*": "ask",
+      "git clean*": "ask",
+      "git checkout -- *": "ask",
+      "git restore*": "ask",
+      "git rebase*": "ask",
+      "git branch -D*": "ask",
+      "git stash drop*": "ask",
+      "git stash clear*": "ask",
       "git * --output*": "ask",
       "git * --ext-diff*": "ask",
-      "git * --textconv*": "ask"
+      "git * --textconv*": "ask",
+      "* *.env": "ask",
+      "* *.env.*": "ask",
+      "rg * --pre*": "ask"
     }
   }
 }
