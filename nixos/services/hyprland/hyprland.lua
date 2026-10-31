@@ -378,10 +378,16 @@ local scratchpads = {
     -- types into it over kitty's remote control)
     spnix = "kitty --class spnix --name spnix --title nix -o font_size=8 -o allow_remote_control=socket-only --listen-on unix:@hypr-nix",
 }
-for name, cmd in pairs(scratchpads) do
-    hl.workspace_rule({ workspace = "special:" .. name, on_created_empty = cmd })
+for name in pairs(scratchpads) do
     hl.window_rule({ match = { class = "^" .. name .. "$" }, workspace = "special:" .. name })
 end
+-- a scratchpad's workspace that comes up empty starts its app
+hl.on("workspace.created", function(ws)
+    local cmd = scratchpads[(ws.name or ""):gsub("^special:", "")]
+    if cmd and ws.is_empty then
+        hl.exec_cmd(cmd)
+    end
+end)
 hl.window_rule({
     match = { class = "^(spterm|spdotfiles|rangerterm)$" },
     float = true,
