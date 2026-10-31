@@ -13,6 +13,13 @@ let
   # rx 7800 xt alone (rocm: 85). so the igpu is hidden from it, below
   nvidia = lib.elem "nvidia" config.services.xserver.videoDrivers;
   llama-cpp = pkgs.llama-cpp-vulkan;
+  # qwen runs on rocm (config.yaml, chat-rocm): with its mtp drafts it gave
+  # ~36 t/s there, ~25 on vulkan, though vulkan is faster without them
+  # (llama-bench tg 34 vs 24 at 10k). the nvidia host has no rocm, the name
+  # is its vulkan llama-server there
+  llama-server-rocm = pkgs.writeShellScriptBin "llama-server-rocm" ''
+    exec ${if nvidia then llama-cpp else pkgs.llama-cpp-rocm}/bin/llama-server "$@"
+  '';
   # no gpu variant of it in nixpkgs: this one builds here, small
   sd-cpp = pkgs.stable-diffusion-cpp.override { vulkanSupport = true; };
 
@@ -34,12 +41,17 @@ in
   };
 
   systemd.services.llama-swap = {
-    # the discrete gpu only, for llama-server and sd-server (both ggml).
-    # the nvidia host's order isn't known, it keeps them all
-    environment = lib.optionalAttrs (!nvidia) { GGML_VK_VISIBLE_DEVICES = "0"; };
+    # the discrete gpu only, for llama-server and sd-server (both ggml):
+    # vulkan and rocm see the igpu too. the nvidia host's order isn't
+    # known, it keeps them all
+    environment = lib.optionalAttrs (!nvidia) {
+      GGML_VK_VISIBLE_DEVICES = "0";
+      HIP_VISIBLE_DEVICES = "0";
+    };
 
     path = [
       llama-cpp
+      llama-server-rocm
       sd-cpp
     ];
 
