@@ -72,6 +72,12 @@ hl.config({
         scroll_event_delay = 150,
     },
 
+    -- the session starts on DP-1, the first output. when DP-2 comes up the
+    -- cursor goes to its middle and the focus follows it
+    cursor = {
+        default_monitor = "DP-2",
+    },
+
     input = {
         kb_layout = "us,ru",
         -- win+space switches the layout, so $mod+space binds are dead like in sway
@@ -713,10 +719,6 @@ hl.on("hyprland.start", function()
     -- from another session lets go. default.nix keeps a new one from starting
     hl.exec_cmd("systemctl --user stop dunst.service")
     hl.exec_cmd("qs -c hyprland")
-    -- the session starts on DP-1, the first output: focus and the cursor go
-    -- to the main DP-2 on the right, its middle
-    hl.dispatch(hl.dsp.focus({ monitor = "DP-2" }))
-    hl.dispatch(hl.dsp.cursor.move({ x = 2560 + 1280, y = 720 }))
 end)
 
 hl.on("hyprland.shutdown", function()

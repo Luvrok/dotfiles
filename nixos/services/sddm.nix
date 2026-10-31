@@ -14,6 +14,14 @@ in
 {
   environment.systemPackages = [ voidsddm ];
 
+  # the greeter (weston) only sees input devices udev is done with. udev is
+  # busy for some seconds after the greeter shows (the usb devices, eth0's
+  # rename), the keyboard didn't type then. so the greeter waits for udev
+  systemd.services.display-manager = {
+    wants = [ "systemd-udev-settle.service" ];
+    after = [ "systemd-udev-settle.service" ];
+  };
+
   services.displayManager.sddm = {
     enable = true;
     wayland.enable = true;

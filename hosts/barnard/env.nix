@@ -24,6 +24,9 @@
   services.displayManager.sddm.wayland.compositorCommand =
     let
       ini = (pkgs.formats.ini { }).generate "weston.ini" {
+        # what shows before the greeter is up, the theme's color. kiosk is
+        # black without it
+        shell.background-color = "0xff171717";
         keyboard = {
           keymap_layout = "us,ru";
           keymap_options = "grp:win_space_toggle";
