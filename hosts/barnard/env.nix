@@ -17,9 +17,11 @@
     ../../nixos/services/opencode-keys.nix
   ];
 
-  # the sddm greeter runs in weston: only the main monitor on the right (DP-2),
-  # the left one (DP-1) stays off until the session starts. kiosk is the
-  # shell the sddm module uses
+  # the sddm greeter runs in weston. the greeter focuses qt's primary screen,
+  # the first output weston announces, that's DP-1 on the left, and weston
+  # can't pick another. so DP-1 clones the main DP-2 on the right (same
+  # 2560x1440): one output, the form and the cursor are on DP-2, DP-1 shows
+  # the same. kiosk is the shell the sddm module uses
   services.displayManager.sddm.wayland.compositorCommand =
     let
       ini = (pkgs.formats.ini { }).generate "weston.ini" {
@@ -29,7 +31,7 @@
         };
         output = {
           name = "DP-1";
-          mode = "off";
+          same-as = "DP-2";
         };
       };
     in
