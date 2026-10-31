@@ -713,6 +713,10 @@ hl.on("hyprland.start", function()
     -- from another session lets go. default.nix keeps a new one from starting
     hl.exec_cmd("systemctl --user stop dunst.service")
     hl.exec_cmd("qs -c hyprland")
+    -- the session starts on DP-1, the first output: focus and the cursor go
+    -- to the main DP-2 on the right, its middle
+    hl.dispatch(hl.dsp.focus({ monitor = "DP-2" }))
+    hl.dispatch(hl.dsp.cursor.move({ x = 2560 + 1280, y = 720 }))
 end)
 
 hl.on("hyprland.shutdown", function()
