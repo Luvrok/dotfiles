@@ -21,6 +21,9 @@
 
     # the notes' search for pi (home/programs/pi/qmd.nix)
     qmd.url = "github:tobi/qmd";
+    # on the system's nixpkgs: its own older glibc broke the system tools it
+    # runs (uname: GLIBC_2.43 not found)
+    qmd.inputs.nixpkgs.follows = "nixpkgs";
 
     # kodi and its add-ons (nixos/services/kodi), pinned to a commit each:
     # `nix flake update` leaves them, kodi is built with a patch

@@ -5,7 +5,7 @@
   ...
 }:
 let
-  vaultRel = "HOME/wizzard/Gringotts-Grid";
+  vaultRel = "HOME/wizzard/Holocron";
   vault = "${config.home.homeDirectory}/${vaultRel}";
 
   qmdUpstream = inputs.qmd.packages.${pkgs.stdenv.hostPlatform.system}.default;
