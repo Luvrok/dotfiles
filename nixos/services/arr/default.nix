@@ -27,7 +27,9 @@ let
   # (hosts/barnard/xray.nix), qbittorrent never: prowlarr's servers
   # (tracker definitions, flaresolverr's test) and radarr's and sonarr's
   # are behind cloudflare, the provider stalls it. 127.0.0.1 and the lan go
-  # straight. no searches while xray is off
+  # straight. prowlarr's trackers and flaresolverr straight, a tracker
+  # through xray only when it doesn't answer straight (./setup.py's
+  # straight)
   useProxy = true;
   proxy = {
     host = "127.0.0.1";
@@ -192,9 +194,14 @@ in
         GlobalMaxRatio = 2;
         GlobalMaxSeedingMinutes = 43200;
         # udp here is mostly filtered: dht bootstrap and most trackers time
-        # out, uTP finds nothing. tcp peers only, magnets are never grabbed
-        # (./setup.py), the trackers give .torrent files
+        # out, uTP finds nothing. tcp peers only
         BTProtocol = "TCP";
+        # a magnet (uindex, the pirate bay: ./setup.py) gets its files from
+        # peers, and with no dht only a tracker over tcp finds them: public
+        # http trackers on every new public torrent, ngosang's list,
+        # qbittorrent fetches it again every day
+        AddTrackersFromURLEnabled = true;
+        AdditionalTrackersURL = "https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_all_http.txt";
       };
       Preferences.WebUI = {
         Address = "127.0.0.1";

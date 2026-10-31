@@ -1,10 +1,12 @@
 # the add-ons kodi gets: majan (./majan.nix), tmdb helper (films, shows
 # and people from tmdb, with the menu of ./moviepipe on them), Movie pipe,
 # iptv simple with its tv channels, youtube for the trailers. the
-# github ones are flake inputs like the skins: nix flake update
-# kodi-tmdbhelper kodi-jurialmunkey kodi-infotagger
+# github ones are flake inputs like the skins, pinned to a commit each
+# (flake.nix)
 {
   inputs,
+  # ../arr/shared.nix: its ports and the keys' folder (./test: the mock's)
+  arr ? import ../arr/shared.nix,
   kodi,
   lib,
   buildKodiAddon,
@@ -12,13 +14,12 @@
   writeText,
   requests,
   signals,
+  xdg-utils,
   pvr-iptvsimple,
   youtube,
 }:
 
 let
-  arr = import ../arr/shared.nix;
-
   # the version an add-on's own addon.xml gives, kodi shows that one: a
   # derivation's shouldn't drift from it
   addonVersion =
@@ -113,6 +114,7 @@ let
           }
         )
       } $d/arr.json
+      substituteInPlace $d/browser.py --replace-fail 'OPENER = "xdg-open"' 'OPENER = "${xdg-utils}/bin/xdg-open"'
       mkdir -p $d/resources/skins/Default/media/bars
       ${kodi.pythonPackages.python.interpreter} ${./moviepipe-bars.py} $d/resources/skins/Default/media/bars
     '';

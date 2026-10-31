@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- vim keys in kodi, over its own (special://xbmc/system/keymaps/keyboard.xml),
-     the same in every skin. h j k l were the pvr windows, q queued an item.
-     f fast-forwarded kodi's own player, mpv plays: it scans the library.
-     shift+letters stay kodi's: jump to that letter in a list, so no G.
+     the same in every skin. h j k l were the pvr windows, q queued an item,
+     r rewound kodi's own player (mpv plays). g / G the first and the last
+     item: shift+letter jumped to that letter in a list before the keymap
+     saw it, ./kodi-keys.patch sends it here like any key, and makes a ru
+     layout's keys the us ones. f scans the library, r reloads the list.
      quickshell's keys menu has them ([kodi] in keys.conf) -->
 <keymap>
 	<global>
@@ -12,20 +14,33 @@
 			<k>Up</k>
 			<l>Right</l>
 			<g>FirstPage</g>
+			<g mod="shift">LastPage</g>
 			<d mod="ctrl">PageDown</d>
 			<u mod="ctrl">PageUp</u>
 			<q>Back</q>
 			<f>UpdateLibrary(video)</f>
+			<r>Container.Refresh</r>
+			<!-- watched or not: only by hand, kodi marks nothing itself
+			     (./userdata.nix, ./advancedsettings.xml). kodi had w in its
+			     lists of files only -->
+			<w>ToggleWatched</w>
+			<!-- movie pipe's windows (./moviepipe/keys.py): t a trailer, o
+			     its page in the browser, v marks a download, d removes.
+			     nothing elsewhere -->
+			<t>noop</t>
+			<o>noop</o>
+			<v>noop</v>
+			<d>noop</d>
 			<!-- majan's home tabs, 01 home, 02 movies, 03 tv shows, from any
 			     window. number keys were for typing numbers in lists, a text
 			     field still takes them -->
 			<one>ActivateWindowAndFocus(Home,9001,0)</one>
 			<two>ActivateWindowAndFocus(Home,9002,0)</two>
 			<three>ActivateWindowAndFocus(Home,9003,0)</three>
-			<!-- 4 the tv channels, 5 tmdb helper (films, shows, people not in
+			<!-- 4 the tv channels, 5 discover (tmdb's films and shows not in
 			     the library), 6 what downloads (../arr) -->
 			<four>ActivateWindow(TVChannels)</four>
-			<five>ActivateWindow(Videos,plugin://plugin.video.themoviedb.helper/,return)</five>
+			<five>RunPlugin(plugin://plugin.video.moviepipe/?action=discover)</five>
 			<six>RunPlugin(plugin://plugin.video.moviepipe/?action=downloads)</six>
 			<!-- majan's search, the home screen's search icon opens it -->
 			<forwardslash>ActivateWindow(1150)</forwardslash>
@@ -40,6 +55,13 @@
 			<three>SetFocus(9003)</three>
 		</keyboard>
 	</Home>
+	<!-- majan's film page: r asks tmdb helper for its cast again
+	     (./moviepipe/default.py's reload) -->
+	<movieinformation>
+		<keyboard>
+			<r>RunPlugin(plugin://plugin.video.moviepipe/?action=reload)</r>
+		</keyboard>
+	</movieinformation>
 	<!-- typing: a key that maps to moving around moves instead of typing
 	     its letter, noop lets kodi type it. the digits too: they open
 	     home's pages everywhere else (one, two, three, and 4, 5, 6 in

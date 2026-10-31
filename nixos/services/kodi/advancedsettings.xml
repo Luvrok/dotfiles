@@ -6,6 +6,9 @@
      and tmdb had nothing. the regexps are kodi's, case insensitive -->
 <advancedsettings version="1.0">
 	<video>
+		<!-- watched only by hand (w, ./keyboard.xml): kodi's own player (tv,
+		     streams) marks nothing whatever was seen of it -->
+		<playcountminimumpercent>101</playcountminimumpercent>
 		<!-- the name ends at a season too: .S01. (Season 1) .2.сезон.
 		     .The.Complete.Series. -->
 		<cleanstrings action="append">
@@ -17,4 +20,19 @@
 	<tvshowmatching action="append">
 		<regexp defaultseason="1">[ _.]-[ _.]()([0-9]{1,4})(?:v[0-9])?([^\\/0-9][^\\/]*)$</regexp>
 	</tvshowmatching>
+	<!-- tmdb's pictures from ./moviepipe/images.py, through xray:
+	     image.tmdb.org answers this ip with 403. for every file kodi opens,
+	     tmdb helper's lists and blur and the scraper's art too; its
+	     texture cache keeps tmdb's address -->
+	<pathsubstitution>
+		<substitute>
+			<from>https://image.tmdb.org/t/p/</from>
+			<to>http://127.0.0.1:8770/t/p/</to>
+		</substitute>
+	</pathsubstitution>
+	<network>
+		<!-- s of nothing before kodi's curl gives up (20): images.py's
+		     first connection through xray takes up to 50 -->
+		<curllowspeedtime>60</curllowspeedtime>
+	</network>
 </advancedsettings>

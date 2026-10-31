@@ -14,6 +14,15 @@
     }
   ];
 
+  # the top bar's dot (./majan-patch.py draws it): 8 px on screen, twice
+  # that here, a 4k screen's 16 px as sharp as a 1080p one's 8
+  disc = [
+    {
+      to = "media/moviepipe/dot.png";
+      size = 16;
+    }
+  ];
+
   patch = [
     # its black curtain over kodi while a video plays waits for a frame of
     # kodi's own player, mpv plays in its own window: off
@@ -144,8 +153,17 @@
     }
     {
       file = "1080i/Includes_VideoInfo.xml";
-      from = ''<param name="id" value="13"/>'';
-      to = ''<param name="id" value="9151"/><param name="onclick" value="RunPlugin(plugin://plugin.video.moviepipe/?action=person&amp;name=$ESCINFO[ListItem.Director]&amp;tab=directed)"/>'';
+      from = ''
+        <param name="id" value="13"/>
+        				<param name="label" value="MORE BY DIRECTOR"/>
+        				<param name="visible" value="!String.IsEmpty(ListItem.Director)"/>'';
+      # tmdb helper's lists have no director (only its own page of a film
+      # does): the page finds them in the film's crew by its tmdb id
+      to = ''
+        <param name="id" value="9151"/>
+        				<param name="label" value="MORE BY DIRECTOR"/>
+        				<param name="onclick" value="RunPlugin(plugin://plugin.video.moviepipe/?action=person&amp;film=$INFO[ListItem.UniqueID(tmdb)]&amp;type=$VAR[MoviePipe_TmdbType]&amp;name=$ESCINFO[ListItem.Director]&amp;tab=directed)"/>
+        				<param name="visible" value="!String.IsEmpty(ListItem.Director) | $EXP[MoviePipe_HasTmdb]"/>'';
     }
     {
       file = "1080i/Includes_VideoInfo.xml";
@@ -169,12 +187,210 @@
       from = "<expression name=\"VidInfo_ShowTrailer\">$EXP[ShowTrailerButton] + !String.IsEmpty(ListItem.Trailer)</expression>";
       to = "<expression name=\"VidInfo_ShowTrailer\">$EXP[ShowTrailerButton] + [!String.IsEmpty(ListItem.Trailer) | [[String.IsEqual(ListItem.DBType,movie) | String.IsEqual(ListItem.DBType,tvshow)] + !String.IsEmpty(ListItem.UniqueID(tmdb))]]</expression>";
     }
-    # # cast row: add a spinner while tmdb helper loads the cast (first open is slow)
-    # {
-    #   file = "1080i/Includes_VideoInfo.xml";
-    #   from = "\t\t\t\t<control type=\"list\" id=\"50\">";
-    #   to = "\t\t\t\t<!-- loading spinner while cast loads -->\n\t\t\t\t<control type=\"busydialog\" id=\"9002\">\n\t\t\t\t\t<visible>Container(50).IsUpdating</visible>\n\t\t\t\t\t<left>900</left>\n\t\t\t\t\t<top>200</top>\n\t\t\t\t</control>\n\t\t\t\t<control type=\"list\" id=\"50\">";
-    # }
+    # the film page's plot: still, its last line fading when there's more
+    # (MoviePipe_Text's way, ./majan-moviepipe.xml); it rolled up on its own
+    # and showed the next line cut in half. enter on it: all of it, majan's
+    {
+      file = "1080i/Includes_VideoInfo.xml";
+      from = ''
+        <visible>!String.IsEmpty(ListItem.Plot) | !String.IsEmpty(ListItem.Tagline)</visible>
+        				<control type="textbox">'';
+      to = ''
+        <visible>!String.IsEmpty(ListItem.Plot) | !String.IsEmpty(ListItem.Tagline)</visible>
+        				<control type="textbox" id="9161">'';
+    }
+    {
+      file = "1080i/Includes_VideoInfo.xml";
+      # the page's, not the full plot's (it scrolls, its own count)
+      from = "\t\t\t\t\t<autoscroll delay=\"6000\" time=\"3000\" repeat=\"10000\">true</autoscroll>  <!-- standard Kodi plot scroll: wait 6s, roll, pause 10s, repeat -->";
+      to = "";
+    }
+    {
+      file = "1080i/Includes_VideoInfo.xml";
+      from = ''<control type="button" id="9001">'';
+      to = ''<control type="image"><bottom>0</bottom><width>1080</width><height>44</height><texture colordiffuse="bg">common/gradient_bottom.png</texture><visible>Container(9161).HasNext</visible></control><control type="button" id="9001">'';
+    }
+
+    # the cast row was hidden while its list was empty, and a hidden list
+    # loads nothing: when the film's own cast (kodi's, before tmdb helper's
+    # took its place) was empty, as on the first pages after kodi starts,
+    # the row stayed empty. it stays with tmdb helper's, "Loading…" till
+    # the cast comes (./majan-moviepipe.xml)
+    {
+      file = "1080i/Includes_VideoInfo.xml";
+      from = "<visible>Integer.IsGreater(Container(50).NumItems,0)</visible>";
+      to = "<visible>Integer.IsGreater(Container(50).NumItems,0) | $EXP[MoviePipe_CastFromHelper]</visible><include>MoviePipe_CastEmpty</include>";
+    }
+
+    # home's top bar: 04 live tv, 05 discover, 06 downloads after tv shows,
+    # in majan's music's place (hidden, and search and the gear don't move
+    # left for it), each with its rows under the bar (./majan-moviepipe.xml).
+    # the bar's items grey, white in focus (the mouse over one too), the
+    # section shown white and underlined: the focus had no mark, and an
+    # accent frame on it was one mark too many. the focus has a small
+    # accent dot after it, on the text's middle; none while it's off the bar
+    {
+      file = "1080i/Includes_Home.xml";
+      from = ''
+        <textcolor>text_secondary</textcolor>
+        					<label>$PARAM[index]</label>
+        					<visible>!$PARAM[active]</visible>
+        				</control>'';
+      to = ''
+        <textcolor>text_secondary</textcolor>
+        					<label>$PARAM[index]</label>
+        					<visible>!$PARAM[active] + !Control.HasFocus($PARAM[id])</visible>
+        				</control>
+        				<control type="label">
+        					<left>0</left>
+        					<top>4</top>
+        					<width>topbar_index_w</width>
+        					<height>topbar_item_h</height>
+        					<font>mono_14</font>
+        					<textcolor>text_primary</textcolor>
+        					<label>$PARAM[index]</label>
+        					<visible>!$PARAM[active] + Control.HasFocus($PARAM[id])</visible>
+        				</control>'';
+    }
+    {
+      file = "1080i/Includes_Home.xml";
+      from = ''
+        <font>menu_26_medium</font>
+        					<textcolor>text_secondary</textcolor>
+        					<label>$PARAM[label]</label>
+        					<visible>!$PARAM[active]</visible>
+        				</control>'';
+      to = ''
+        <font>menu_26_medium</font>
+        					<textcolor>text_secondary</textcolor>
+        					<label>$PARAM[label]</label>
+        					<visible>!$PARAM[active] + !Control.HasFocus($PARAM[id])</visible>
+        				</control>
+        				<control type="label">
+        					<left>topbar_label_x</left>
+        					<top>0</top>
+        					<width>200</width>
+        					<height>topbar_item_h</height>
+        					<font>menu_26_medium</font>
+        					<textcolor>text_primary</textcolor>
+        					<label>$PARAM[label]</label>
+        					<visible>!$PARAM[active] + Control.HasFocus($PARAM[id])</visible>
+        				</control>'';
+    }
+    {
+      # after the label: a grouplist of it again, unseen (as wide as the
+      # text, bold on the section shown), and the dot
+      file = "1080i/Includes_Home.xml";
+      from = "<!-- 3px accent underline -->";
+      to = ''
+        <control type="grouplist">
+        					<left>topbar_label_x</left>
+        					<top>0</top>
+        					<width>240</width>
+        					<height>topbar_item_h</height>
+        					<orientation>horizontal</orientation>
+        					<itemgap>8</itemgap>
+        					<usecontrolcoords>true</usecontrolcoords>
+        					<visible>Control.HasFocus($PARAM[id])</visible>
+        					<control type="label">
+        						<width max="200">auto</width>
+        						<height>topbar_item_h</height>
+        						<font>menu_26_bold</font>
+        						<textcolor>00000000</textcolor>
+        						<label>$PARAM[label]</label>
+        						<visible>$PARAM[active]</visible>
+        					</control>
+        					<control type="label">
+        						<width max="200">auto</width>
+        						<height>topbar_item_h</height>
+        						<font>menu_26_medium</font>
+        						<textcolor>00000000</textcolor>
+        						<label>$PARAM[label]</label>
+        						<visible>!$PARAM[active]</visible>
+        					</control>
+        					<control type="image">
+        						<top>21</top>
+        						<width>8</width>
+        						<height>8</height>
+        						<texture colordiffuse="$VAR[ColorAccent]">moviepipe/dot.png</texture>
+        					</control>
+        				</control>
+        				<!-- 3px accent underline -->'';
+    }
+    {
+      # search's and the gear's: white in focus already, the frame goes,
+      # the dot after the icon instead (its glyph ends 3 px before it does)
+      file = "1080i/Includes_Home.xml";
+      from = ''
+        <include content="Majan_FocusFrameAlways">
+        					<param name="visible" value="Control.HasFocus($PARAM[id])"/>
+        				</include>'';
+      to = ''
+        <control type="image">
+        					<left>33</left>
+        					<top>10</top>
+        					<width>8</width>
+        					<height>8</height>
+        					<texture colordiffuse="$VAR[ColorAccent]">moviepipe/dot.png</texture>
+        					<visible>Control.HasFocus($PARAM[id])</visible>
+        				</control>'';
+    }
+    {
+      # down from 04 05 06: their rows
+      file = "1080i/Includes_Home.xml";
+      from = ''<ondown condition="$EXP[Home_HubMusic]">9231</ondown>'';
+      to = ''<ondown condition="$EXP[Home_HubMusic]">9231</ondown><ondown condition="$EXP[MoviePipe_HubLive]">9251</ondown><ondown condition="$EXP[MoviePipe_HubDiscover]">9261</ondown><ondown condition="$EXP[MoviePipe_HubDownloads]">9271</ondown>'';
+    }
+    {
+      file = "1080i/Home.xml";
+      from = "<include>Home_HubMusic</include>";
+      to = "<include>Home_HubMusic</include><include>MoviePipe_Hubs</include>";
+    }
+    {
+      file = "1080i/Includes_Home.xml";
+      from = ''<param name="shown" value="!Skin.HasSetting(HideMenu.Music)"/>'';
+      to = ''<param name="shown" value="false"/>'';
+    }
+    {
+      file = "1080i/Includes_Home.xml";
+      # music's: hidden, the way from tv shows goes through it
+      from = ''<param name="onright" value="9005"/>'';
+      to = ''<param name="onright" value="9007"/>'';
+    }
+    {
+      file = "1080i/Includes_Home.xml";
+      # search's
+      from = ''<param name="onleft" value="9004"/>'';
+      to = ''<param name="onleft" value="9009"/>'';
+    }
+    {
+      file = "1080i/Includes_Home.xml";
+      from = ''<param name="d4" value="157"/>'';
+      to = ''<param name="d4" value="0"/>'';
+      # search and the gear
+      count = 2;
+    }
+    {
+      file = "1080i/Includes_Home.xml";
+      from = "<!-- Search: Majan search window (Custom_1150_Search.xml) -->";
+      to = "<include>MoviePipe_MenuItems</include><!-- Search: Majan search window (Custom_1150_Search.xml) -->";
+    }
+    {
+      file = "1080i/Constants.xml";
+      from = ''<constant name="menu_x_search">783</constant>'';
+      to = ''<constant name="menu_x_search">1252</constant>'';
+    }
+    {
+      file = "1080i/Constants.xml";
+      from = ''<constant name="menu_x_gear">865</constant>'';
+      to = ''<constant name="menu_x_gear">1334</constant>'';
+    }
+    {
+      # the gear's menu drops under it, 25 px left of it: the gear moved 469
+      file = "1080i/Custom_1151_SystemMenu.xml";
+      from = "<left>840</left>";
+      to = "<left>1309</left>";
+    }
   ];
 
   # a third font in kodi's settings -> interface -> skin -> fonts, "JetBrains

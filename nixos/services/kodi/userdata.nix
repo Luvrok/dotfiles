@@ -1,5 +1,5 @@
 # what kodi reads in its userdata (./default.nix sets the package up):
-# vim keys, tmdb helper's players for ./moviepipe, torrent names for the
+# vim keys, tmdb helper's player for ./moviepipe, torrent names for the
 # scraper, a video file going to mpv, the tv channels of iptv simple. the
 # settings it can't be handed as plain files (majan first, the channels on
 # the first run) are ./userdata.py's, written at the end of this file
@@ -28,24 +28,6 @@ let
       <setting id="m3uUrl">${channels.${name}}</setting>
     </settings>
   '';
-
-  # enter on a film or an episode in tmdb helper asks which player: these
-  # two, ./moviepipe's actions. tmdb helper fills {tmdb} (the show's for an
-  # episode), {season} and {episode}
-  player =
-    action: name: priority:
-    let
-      run =
-        query: "executebuiltin://RunPlugin(plugin://plugin.video.moviepipe/?action=${action}&${query})";
-    in
-    builtins.toJSON {
-      name = "Movie pipe: ${name}";
-      plugin = "plugin.video.moviepipe";
-      inherit priority;
-      is_resolvable = "false";
-      play_movie = run "type=movie&tmdb={tmdb}";
-      play_episode = run "type=episode&tmdb={tmdb}&season={season}&episode={episode}";
-    };
 
   # kodi puts its libraries (rtmpdump, libnfs...) in LD_LIBRARY_PATH, mpv
   # shouldn't load them over its own, nor take kodi's proxy. -- for a file
@@ -79,20 +61,20 @@ in
     # vim keys (./keyboard.xml)
     "${datadir}/userdata/keymaps/keyboard.xml".source = ./keyboard.xml;
 
-    # enter on a film or an episode in tmdb helper asks which player
-    "${datadir}/userdata/addon_data/plugin.video.themoviedb.helper/players/moviepipe-pick.json".text =
-      player "pick" "Pick a release…"
-        1;
-    "${datadir}/userdata/addon_data/plugin.video.themoviedb.helper/players/moviepipe-download.json".text =
-      player "download" "Download" 2;
+    # enter on a film or an episode in tmdb helper: ./moviepipe's
+    # "Download…", the releases to pick one of. tmdb helper fills {tmdb} (the
+    # show's for an episode), {season} and {episode}
+    "${datadir}/userdata/addon_data/plugin.video.themoviedb.helper/players/moviepipe-download.json".source =
+      ./moviepipe-player.json;
 
     # torrent names the scraper finds
     "${datadir}/userdata/advancedsettings.xml".source = ./advancedsettings.xml;
 
     # a video file goes to mpv. kodi runs it through sh with the path in
     # double quotes, a " $ ` or \ in a file name breaks it. mpv resumes
-    # where it was (save-position-on-quit), kodi marks it watched after
-    # 10 seconds of mpv. tv and the streams of add-ons stay in kodi's
+    # where it was (save-position-on-quit). kodi marked it watched after
+    # 10 seconds of mpv: never now (playcountminimumtime), only by hand (w,
+    # ./keyboard.xml). tv and the streams of add-ons stay in kodi's
     # player, the first rule that matches wins
     "${datadir}/userdata/playercorefactory.xml".text = ''
       <playercorefactory>
@@ -101,6 +83,7 @@ in
             <filename>${mpv}</filename>
             <args>"{1}"</args>
             <hidexbmc>false</hidexbmc>
+            <playcountminimumtime>2147483647</playcountminimumtime>
           </player>
         </players>
         <rules action="prepend">
@@ -122,10 +105,18 @@ in
   # tmdb helper plays a second of its dummy.mp4 before a player that isn't a
   # file (ours above), and a file plays in mpv: only its strm files get the
   # dummy. its lists of a person's films 60 a page, not 20
-  # (./moviepipe/person.py). a symlink into the store: these two can't be
-  # changed from kodi's gui, its other settings can't be kept either
+  # (./moviepipe/person.py). 10 requests at a time, not as many as a list
+  # has (20 a row, discover's rows at once): on a slow line a few of them
+  # timed out (15 s), two timeouts in 45 s and tmdb helper asks tmdb
+  # nothing for 15 s, a 429 the same: rows and posters stayed empty.
+  # "medium" art: posters w500, fanart w1280, not w780 and the original
+  # (megabytes each) for a 140 px poster and a blurred backdrop. a symlink
+  # into the store: these can't be changed from kodi's gui, its other
+  # settings can't be kept either
   programs.kodi.addonSettings."plugin.video.themoviedb.helper" = {
     only_resolve_strm = "true";
     pagemulti_sync = "3";
+    max_threads = "10";
+    artwork_quality = "2";
   };
 }

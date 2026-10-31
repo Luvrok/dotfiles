@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<!-- radarr and sonarr in kodi (../../arr): "Download" and "Pick a release…"
+<!-- radarr and sonarr in kodi (../../arr): "Download…" (pick a release)
      in the menu (c) of a film or a show that tmdb helper shows and on
-     enter there (tmdb helper's players, ../default.nix), the window of
-     its downloads (6, or video add-ons), kodi's library scanned when one is
-     in. ../addons.nix builds it -->
-<addon id="plugin.video.moviepipe" name="Movie pipe" version="1.0.0" provider-name="barnard">
+     enter there (tmdb helper's player, ../userdata.nix), "Delete from
+     disk" in the menu of the library's, the window of its downloads (6, or
+     video add-ons), discover (5), kodi's library scanned when one is in.
+     ../addons.nix builds it -->
+<addon id="plugin.video.moviepipe" name="Movie pipe" version="1.1.0" provider-name="barnard">
 	<requires>
 		<import addon="xbmc.python" version="3.0.1"/>
 	</requires>
@@ -12,17 +13,19 @@
 		<provides>video</provides>
 	</extension>
 	<extension point="xbmc.service" library="service.py"/>
-	<!-- a film not in the library, a show, its season or episode, all
-	     with their tmdb id: tmdb helper's lists, kodi's tv shows -->
+	<!-- Download…: a film not in the library, a show, its season or
+	     episode, all with their tmdb id (tmdb helper's lists, kodi's tv
+	     shows). Delete from disk: a film, show, season or episode of the
+	     library -->
 	<extension point="kodi.context.item">
 		<menu id="kodi.core.main">
 			<item library="context.py" args="download">
-				<label>Download</label>
+				<label>Download…</label>
 				<visible>[String.IsEqual(ListItem.DBType,movie) + String.IsEmpty(ListItem.DBID) + !String.IsEmpty(ListItem.UniqueID(tmdb))] | [String.IsEqual(ListItem.DBType,tvshow) + !String.IsEmpty(ListItem.UniqueID(tmdb))] | [[String.IsEqual(ListItem.DBType,season) | String.IsEqual(ListItem.DBType,episode)] + !String.IsEmpty(ListItem.UniqueID(tvshow.tmdb))]</visible>
 			</item>
-			<item library="context.py" args="pick">
-				<label>Pick a release…</label>
-				<visible>[String.IsEqual(ListItem.DBType,movie) + String.IsEmpty(ListItem.DBID) + !String.IsEmpty(ListItem.UniqueID(tmdb))] | [String.IsEqual(ListItem.DBType,tvshow) + !String.IsEmpty(ListItem.UniqueID(tmdb))] | [[String.IsEqual(ListItem.DBType,season) | String.IsEqual(ListItem.DBType,episode)] + !String.IsEmpty(ListItem.UniqueID(tvshow.tmdb))]</visible>
+			<item library="context.py" args="delete">
+				<label>Delete from disk</label>
+				<visible>!String.IsEmpty(ListItem.DBID) + [String.IsEqual(ListItem.DBType,movie) | String.IsEqual(ListItem.DBType,tvshow) | String.IsEqual(ListItem.DBType,season) | String.IsEqual(ListItem.DBType,episode)]</visible>
 			</item>
 		</menu>
 	</extension>

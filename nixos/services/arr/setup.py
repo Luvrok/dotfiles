@@ -5,6 +5,7 @@
 # that fails (the disk not there, an app down) doesn't stop the others,
 # the next run tries again. setup.py CONFIG.json
 import json
+import re
 import sys
 import time
 import urllib.error
@@ -117,12 +118,12 @@ def updated(api, path, **values):
         api.put(path, dict(page, **values))
 
 
-def proxy(api):
+def proxy(api, on=True):
     # the provider's blocks: xray's mixed inbound (hosts/barnard/xray.nix)
     # when ./default.nix turns it on, 127.0.0.1 and the lan go straight.
-    # everything else through it, cloudflare's clearance from flaresolverr
-    # (that goes through it too) holds for that ip only
-    p = C["proxy"]
+    # prowlarr's off: its trackers go straight or through xray each
+    # (straight below)
+    p = C["proxy"] if on else None
     updated(
         api,
         "/config/host",
@@ -133,6 +134,32 @@ def proxy(api):
         proxyBypassFilter="",
         proxyBypassLocalAddresses=True,
     )
+
+
+# prowlarr's trackers, and flaresolverr for them, straight: through
+# xray a connection takes some 30 s, flaresolverr ran out of its 60 on
+# cloudflare's checks and prowlarr turned the tracker off. straight it
+# solves uindex's in 11 s, 1337x's in 32. a tracker whose test fails
+# straight goes through xray (an indexer proxy, by its tag): one behind
+# cloudflare fails there too (flaresolverr's cookie is for this ip), the
+# log says so. prowlarr's own servers answer 403 straight: no new tracker
+# definitions without xray, the ones it has stay
+def straight(api, xray):
+    for item in api.get("/indexer"):
+        if not item["enable"] or "rutracker" in item["definitionName"]:
+            continue
+        item["tags"] = [t for t in item["tags"] if t != xray]
+        api.put(f"/indexer/{item['id']}?forceSave=true", item)
+        try:
+            api.post("/indexer/test", item)
+            log(f"prowlarr: {item['name']} straight")
+            continue
+        except Exception as e:  # noqa: BLE001 - a timeout too: through xray
+            # prowlarr's reasons are json, their messages on one line
+            why = re.findall(r'"errorMessage": "([^"]*)"', str(e)) or [str(e)]
+        item["tags"].append(xray)
+        api.put(f"/indexer/{item['id']}?forceSave=true", item)
+        log(f"prowlarr: {item['name']} through xray: {' / '.join(why)[:300]}")
 
 
 def command(api, name):
@@ -331,15 +358,33 @@ def prowlarr(sec):
         have = lambda: {x["definitionName"] for x in api.get("/indexer/schema")}
         if wanted - have():
             command(api, "IndexerDefinitionUpdate")
+        if C["proxy"] and wanted - have():
+            # straight indexers.prowlarr.com answers 403: through xray for it
+            proxy(api)
+            try:
+                command(api, "IndexerDefinitionUpdate")
+            finally:
+                proxy(api, on=False)
         if missing := wanted - have():
             raise RuntimeError(
                 f"no definitions of {', '.join(sorted(missing))}: indexers.prowlarr.com doesn't answer"
                 " (journalctl -u prowlarr, useProxy in nixos/services/arr/default.nix)"
             )
 
+    xray = tag(api, "xray")
     steps = {
-        "proxy": lambda: proxy(api),
+        "proxy": lambda: proxy(api, on=False),
         "definitions": definitions,
+        # xray for a tracker that doesn't answer straight
+        "xray": lambda: C["proxy"]
+        and provider(
+            api,
+            "/indexerProxy",
+            "xray",
+            impl("Http"),
+            {"host": C["proxy"]["host"], "port": C["proxy"]["port"]},
+            tags=[xray],
+        ),
         # cloudflare's checks for 1337x and uindex: a chromium
         # passes them, a tracker with the tag gets its cookies. prowlarr
         # tests it with prowlarr.servarr.com (journalctl -u flaresolverr
@@ -375,9 +420,11 @@ def prowlarr(sec):
     }
 
     # the trackers by priority, 1 first: of two equal releases radarr and
-    # sonarr take the one of the tracker before. magnets hang in "downloading
-    # metadata" here: no udp, dht finds no peers. a .torrent has its files
-    # already, so prefer the torrent url everywhere
+    # sonarr take the one of the tracker before: rutracker, uindex, the
+    # pirate bay, 1337x, magnet or not. a .torrent has its files already, a
+    # magnet gets them from peers: no udp here, no dht, only the http
+    # trackers qbittorrent adds to it (./default.nix). so the torrent url
+    # wherever there is one
     def tracker(name, definition, priority, fields=None, tags=(), enable=True):
         return lambda: provider(
             api,
@@ -413,10 +460,9 @@ def prowlarr(sec):
     steps["old rutracker"] = lambda: [
         api.call("DELETE", f"/indexer/{x['id']}") for x in api.get("/indexer") if x["implementation"] == "RuTracker"
     ]
-    # magnet only, no .torrent on the site: sonarr and radarr would hand
-    # qbittorrent a magnet and it would wait for metadata forever. off
-    steps["uindex"] = tracker("Uindex", "uindex", 2, tags=[flaresolverr], enable=False)
-    steps["thepiratebay"] = tracker("The Pirate Bay", "thepiratebay", 3, enable=False)
+    # magnets only, no .torrent on the site
+    steps["uindex"] = tracker("Uindex", "uindex", 2, tags=[flaresolverr])
+    steps["thepiratebay"] = tracker("The Pirate Bay", "thepiratebay", 3)
     # primary and fallback to itorrents' .torrent, the definition's default
     # is the magnet
     steps["1337x"] = tracker(
@@ -429,6 +475,7 @@ def prowlarr(sec):
         },
         tags=[flaresolverr],
     )
+    steps["straight"] = lambda: C["proxy"] and straight(api, xray)
     # waited for: radarr's trackers are there for years() after
     steps["sync"] = lambda: command(api, "ApplicationIndexerSync")
     return run("prowlarr", steps)

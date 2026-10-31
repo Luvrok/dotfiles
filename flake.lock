@@ -207,6 +207,7 @@
         "url": "https://github.com/jurialmunkey/script.module.infotagger"
       },
       "original": {
+        "rev": "0118f53c9cf68a6625794d07af607cac1e920064",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/jurialmunkey/script.module.infotagger"
@@ -224,6 +225,7 @@
         "url": "https://github.com/jurialmunkey/script.module.jurialmunkey"
       },
       "original": {
+        "rev": "8f42fb5f4698f3e4552f38955964b2f3843dba69",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/jurialmunkey/script.module.jurialmunkey"
@@ -241,6 +243,7 @@
         "url": "https://github.com/KarmaMole/kodi-skins"
       },
       "original": {
+        "rev": "0f6a3246f1aa41e82f895366709d2bcaaa87e6fc",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/KarmaMole/kodi-skins"
@@ -259,6 +262,7 @@
       },
       "original": {
         "ref": "nexus",
+        "rev": "9c20ea9bcf67fcb4370a5771da08b6cf7bdb676e",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/jurialmunkey/script.skinvariables"
@@ -277,6 +281,7 @@
       },
       "original": {
         "ref": "nexus",
+        "rev": "edae17cb8bfc69d1f614ff44b2490ecd6bd5e9a0",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/jurialmunkey/plugin.video.themoviedb.helper"
@@ -334,6 +339,23 @@
         "ref": "nixpkgs-unstable",
         "repo": "nixpkgs",
         "type": "github"
+      }
+    },
+    "nixpkgs-kodi": {
+      "locked": {
+        "lastModified": 1792502884,
+        "narHash": "sha256-IoNisKcGbUjdd45qCqywGMCYmZ5EnkxezvLII0FWwNA=",
+        "ref": "refs/heads/master",
+        "rev": "02c087f3fe673c9e317f206a627cb6b910336dbe",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/NixOS/nixpkgs"
+      },
+      "original": {
+        "rev": "02c087f3fe673c9e317f206a627cb6b910336dbe",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/NixOS/nixpkgs"
       }
     },
     "nixpkgs-lib": {
@@ -514,6 +536,7 @@
         "lazygit": "lazygit",
         "llama-cpp": "llama-cpp",
         "nixpkgs": "nixpkgs_4",
+        "nixpkgs-kodi": "nixpkgs-kodi",
         "nixpkgs-pinned": "nixpkgs-pinned",
         "picom-pijulius": "picom-pijulius",
         "qmd": "qmd",

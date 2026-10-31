@@ -93,7 +93,8 @@ def error(e):
 
 
 def waiting(title, text, work):
-    # work() in a thread under a progress dialog; None when cancelled
+    # work() in a thread, a bar in the corner meanwhile (kodi's background
+    # progress): kodi stays usable, what comes next opens when it's done
     out = {}
 
     def run():
@@ -104,17 +105,18 @@ def waiting(title, text, work):
 
     t = threading.Thread(target=run, daemon=True)
     t.start()
-    progress = xbmcgui.DialogProgress()
+    progress = xbmcgui.DialogProgressBG()
     progress.create(title, text)
+    monitor = xbmc.Monitor()
     seconds = 0
-    while t.is_alive():
-        if progress.iscanceled():
-            progress.close()
-            return None
-        xbmc.sleep(250)
-        seconds += 0.25
-        progress.update(min(99, int(seconds)), f"{text} {int(seconds)} s")
-    progress.close()
+    try:
+        while t.is_alive():
+            if monitor.waitForAbort(0.25):
+                return None
+            seconds += 0.25
+            progress.update(min(99, int(seconds)), title, f"{text} {int(seconds)} s")
+    finally:
+        progress.close()
     if "error" in out:
         raise out["error"]
     return out["value"]

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- "Pick a release…": the trackers' releases (../../../../windows.py,
+<!-- "Download…": the trackers' releases (../../../../windows.py,
      Releases), a row each: its title, then quality, sdr or hdr, size,
      seeders, tracker, release group, language, age, why radarr or sonarr
      wouldn't take it. the columns' names are buttons: enter sorts by one,
