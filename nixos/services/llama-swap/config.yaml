@@ -90,7 +90,6 @@ models:
       --ctx-size 65536
     <<: *qwen-filters
 
-  # moe with 4b active, so the experts --fit moves to the cpu cost little speed
   # a 128k f16 kv cache made --fit push part of each gemma to the cpu: 56 t/s
   # for the 26b and the 12b alike (llama-bench, empty context: 129 for the
   # 26b). q8_0 halves it, gemma barely notices
