@@ -1,4 +1,4 @@
-{ lib, modulesPath, ... }:
+{ pkgs, lib, modulesPath, ... }:
 
 {
   imports =
@@ -7,9 +7,9 @@
 
   boot.initrd.availableKernelModules = [ "ata_piix" "uhci_hcd" "virtio_pci" "virtio_scsi" "sd_mod" "sr_mod" ];
   boot.initrd.kernelModules = [ "dm-snapshot" "dm-mod" ];
-  boot.initrd.systemd.enable = true;
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   swapDevices = [ ];
 

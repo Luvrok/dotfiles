@@ -20,8 +20,6 @@
   boot.loader.grub.configurationLimit = 3;
   boot.loader.systemd-boot.configurationLimit = 3;
 
-  services.journald.extraConfig = "SystemMaxUse=200M";
-
   # man pages and nixos docs, nobody reads them on a vps
   documentation.enable = false;
 }

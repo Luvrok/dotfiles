@@ -1,4 +1,4 @@
-{ config, lib, modulesPath, ... }:
+{ pkgs, config, lib, modulesPath, ... }:
 
 {
   imports =
@@ -9,6 +9,7 @@
   boot.initrd.kernelModules = [ "dm-snapshot" ];
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   boot.kernelParams = [
     "consoleblank=60"
