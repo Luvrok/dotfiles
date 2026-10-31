@@ -719,6 +719,23 @@ hl.on("hyprland.start", function()
     -- from another session lets go. default.nix keeps a new one from starting
     hl.exec_cmd("systemctl --user stop dunst.service")
     hl.exec_cmd("qs -c hyprland")
+
+    -- new windows open on the focused monitor. at login it ends up DP-1 (it
+    -- comes up first, the workspaces move around after it), while
+    -- cursor.default_monitor puts the cursor on DP-2. so for the first 3 s
+    -- the focus goes back to DP-2 whenever it's elsewhere
+    local ticks = 0
+    local main
+    main = hl.timer(function()
+        ticks = ticks + 1
+        local active = hl.get_active_monitor()
+        if hl.get_monitor("DP-2") and (not active or active.name ~= "DP-2") then
+            hl.dispatch(hl.dsp.focus({ monitor = "DP-2" }))
+        end
+        if ticks >= 15 then
+            main:set_enabled(false)
+        end
+    end, { timeout = 200, type = "repeat" })
 end)
 
 hl.on("hyprland.shutdown", function()
