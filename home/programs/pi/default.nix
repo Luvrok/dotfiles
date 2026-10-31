@@ -22,6 +22,8 @@ let
   };
 in
 {
+  imports = [ ./qmd.nix ];
+
   home.packages = [
     pi
     pkgs.python3Packages.huggingface-hub

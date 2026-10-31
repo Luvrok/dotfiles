@@ -19,6 +19,9 @@
     voidsddm.url = "github:Luvrok/VoidSDDM";
     voidsddm.flake = false;
 
+    # the notes' search for pi (home/programs/pi/qmd.nix)
+    qmd.url = "github:tobi/qmd";
+
     # kodi and its add-ons (nixos/services/kodi), pinned to a commit each:
     # `nix flake update` leaves them, kodi is built with a patch
     # (kodi-keys.patch) and majan with patches that want its exact xml.
