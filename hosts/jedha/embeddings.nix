@@ -6,8 +6,6 @@ let
   quant = "Q8_0";
 in
 {
-  imports = [ ../../modules/llm/llama-cpp.nix ];
-
   systemd.tmpfiles.rules = [ "d /var/lib/models 0755 root root -" ];
 
   services.llama-cpp = {

@@ -227,23 +227,6 @@
         "type": "github"
       }
     },
-    "llama-cpp": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1792453641,
-        "narHash": "sha256-VCVbSsikOTSJ9Gjy8oZnf9bRFgB5g6fW/X76uir8L7w=",
-        "owner": "ggml-org",
-        "repo": "llama.cpp",
-        "rev": "3bb63cbcbfb62056c84fe9e521b0f3d756d29c32",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ggml-org",
-        "repo": "llama.cpp",
-        "rev": "3bb63cbcbfb62056c84fe9e521b0f3d756d29c32",
-        "type": "github"
-      }
-    },
     "nixpkgs-kodi": {
       "locked": {
         "lastModified": 1792502884,
@@ -417,7 +400,6 @@
         "kodi-skinvariables": "kodi-skinvariables",
         "kodi-tmdbhelper": "kodi-tmdbhelper",
         "lazygit": "lazygit",
-        "llama-cpp": "llama-cpp",
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-kodi": "nixpkgs-kodi",
         "nixpkgs-pinned": "nixpkgs-pinned",

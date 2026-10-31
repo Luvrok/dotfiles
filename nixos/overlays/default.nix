@@ -6,23 +6,9 @@ in
 {
   imports = [
     ./extraShell.nix
-    # llama.cpp source pin, shared with jedha
-    ../../modules/llm/llama-cpp.nix
   ];
 
   nixpkgs.overlays = [
-    (final: prev: {
-      stable-diffusion-cpp = prev.stable-diffusion-cpp.overrideAttrs (_: {
-        version = "master-968-8cd731e";
-        src = prev.fetchFromGitHub {
-          owner = "leejet";
-          repo = "stable-diffusion.cpp";
-          tag = "master-968-8cd731e";
-          hash = "sha256-NZUNtYNSDhAEpm+4Ja/RD/0ynZAGynczBcrjxo234+Y=";
-          fetchSubmodules = true;
-        };
-      });
-    })
     (self: super: {
       mpv-config = super.stdenvNoCC.mkDerivation {
         pname = "mpv-config";
@@ -47,26 +33,6 @@ in
             --replace '~~/script-opts/memo-history.log' '~/.local/state/mpv/memo-history.log'
         '';
       };
-    })
-    (final: prev: {
-      llama-cpp =
-        (prev.llama-cpp.override {
-          rocmSupport = true;
-          # the only backend that works on the nvidia host
-          vulkanSupport = true;
-          blasSupport = true;
-        }).overrideAttrs
-          (oldAttrs: {
-            cmakeFlags = (oldAttrs.cmakeFlags or [ ]) ++ [
-              "-DGGML_NATIVE=ON"
-              "-DLLAMA_BUILD_TESTS=OFF" # later -D wins
-            ];
-            preConfigure = ''
-              export NIX_ENFORCE_NO_NATIVE=0
-              ${oldAttrs.preConfigure or ""}
-            '';
-            doCheck = false;
-          });
     })
     inputs.lazygit.overlays.default
   ];

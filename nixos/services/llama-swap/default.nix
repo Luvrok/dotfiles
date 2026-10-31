@@ -7,6 +7,11 @@
 
 let
   cfg = config.services.llama-swap;
+  # nixpkgs' own gpu builds, cache.nixos.org has them: rocm on amd, vulkan
+  # on the nvidia host (the only backend that works there)
+  nvidia = lib.elem "nvidia" config.services.xserver.videoDrivers;
+  llama-cpp = if nvidia then pkgs.llama-cpp-vulkan else pkgs.llama-cpp-rocm;
+  # no gpu variant of it in nixpkgs: this one builds here, small
   sd-cpp = pkgs.stable-diffusion-cpp.override { vulkanSupport = true; };
 
   # kept as yaml for the anchors and macros. checked at build time, the way
@@ -28,7 +33,7 @@ in
 
   systemd.services.llama-swap = {
     path = [
-      pkgs.llama-cpp
+      llama-cpp
       sd-cpp
     ];
 

@@ -40,9 +40,6 @@
     rutracker-cf-proxy.flake = false;
 
 
-    # nixpkgs lags behind, pinned to a commit so `nix flake update` leaves it
-    llama-cpp.url = "github:ggml-org/llama.cpp/3bb63cbcbfb62056c84fe9e521b0f3d756d29c32";
-    llama-cpp.flake = false;
   };
 
   outputs =
