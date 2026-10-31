@@ -19,7 +19,6 @@
     "sd_mod"
   ];
   boot.initrd.kernelModules = [ "amdgpu" ];
-  boot.initrd.systemd.enable = true;
   boot.kernelModules = [
     "kvm-amd"
   ];

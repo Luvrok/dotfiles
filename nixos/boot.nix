@@ -21,7 +21,6 @@
     # no boot text on the console: the greeter is on tty1, its lines show
     # when weston goes away at login. errors are in journalctl
     consoleLogLevel = 3;
-    initrd.verbose = false;
     kernelParams = [
       "quiet"
       "systemd.show_status=false"

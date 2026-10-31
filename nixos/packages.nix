@@ -164,7 +164,6 @@
       prismlauncher
 
       # --- android ---
-      adbfs-rootless # mount android phone as a folder
       android-tools # connect phone/camera
 
       # --- live-usb ---
