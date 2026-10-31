@@ -14,13 +14,16 @@ in
 {
   environment.systemPackages = [ voidsddm ];
 
-  # the greeter (weston) only sees input devices udev is done with. udev is
-  # busy for some seconds after the greeter shows (the usb devices, eth0's
-  # rename), the keyboard didn't type then. so the greeter waits for udev
-  systemd.services.display-manager = {
-    wants = [ "systemd-udev-settle.service" ];
-    after = [ "systemd-udev-settle.service" ];
-  };
+  # weston takes only the input devices udev is done with. the devices
+  # behind the chipset (usb, the second nvme, ethernet) come up seconds
+  # after the greeter would show, it didn't type then. so the greeter waits
+  # for a keyboard, 20 s at most (by-path covers usb and laptop keyboards)
+  systemd.services.display-manager.preStart = ''
+    for _ in {1..100}; do
+      ls /dev/input/by-path/*-event-kbd >/dev/null 2>&1 && break
+      sleep 0.2
+    done
+  '';
 
   services.displayManager.sddm = {
     enable = true;
