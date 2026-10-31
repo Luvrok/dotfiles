@@ -26,11 +26,9 @@
     dmenu.flake = false;
     slock.url = "github:Luvrok/slock";
     slock.flake = false;
-    textfoxy.url = "github:Luvrok/textfoxy?ref=claude/zealous-cerf-xdz2wx";
+    textfoxy.url = "github:Luvrok/textfoxy";
     voidsddm.url = "github:Luvrok/VoidSDDM";
     voidsddm.flake = false;
-
-    qmd.url = "github:tobi/qmd";
 
     # kodi and its add-ons (nixos/services/kodi), pinned to a commit each:
     # `nix flake update` leaves them, kodi is built with a patch

@@ -91,17 +91,6 @@
       "git branch": "allow",
       "git remote -v": "allow",
 
-      "qmd search *": "allow",
-      "qmd vsearch *": "allow",
-      "qmd query *": "allow",
-      "qmd get *": "allow",
-      "qmd multi-get *": "allow",
-      "qmd ls": "allow",
-      "qmd ls *": "allow",
-      "qmd status": "allow",
-      "qmd collection list": "allow",
-      "qmd context list": "allow",
-
       "* > *": "ask",
       "* >> *": "ask",
       "* *.env": "ask",
