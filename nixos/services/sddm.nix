@@ -14,13 +14,17 @@ in
 {
   environment.systemPackages = [ voidsddm ];
 
-  # weston takes only the input devices udev is done with. the devices
-  # behind the chipset (usb, the second nvme, ethernet) come up seconds
-  # after the greeter would show, it didn't type then. so the greeter waits
-  # for a keyboard, 20 s at most (by-path covers usb and laptop keyboards)
+  # weston (libinput) takes only the input devices udev has processed. the
+  # kernel finds the usb devices at ~2 s, udev gets to them seconds after the
+  # greeter shows, it didn't type then. so the greeter waits until udev's
+  # database has a keyboard, 20 s at most. the /dev link alone isn't enough:
+  # it can stay from the initrd while the database is cleared at switch-root
   systemd.services.display-manager.preStart = ''
     for _ in {1..100}; do
-      ls /dev/input/by-path/*-event-kbd >/dev/null 2>&1 && break
+      for k in /dev/input/by-path/*-event-kbd; do
+        udevadm info --query=property "$k" 2>/dev/null \
+          | grep -q '^ID_INPUT_KEYBOARD=1$' && break 2
+      done
       sleep 0.2
     done
   '';
