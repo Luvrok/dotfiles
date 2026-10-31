@@ -72,12 +72,6 @@ hl.config({
         scroll_event_delay = 150,
     },
 
-    -- the session starts on DP-1, the first output. when DP-2 comes up the
-    -- cursor goes to its middle and the focus follows it
-    cursor = {
-        default_monitor = "DP-2",
-    },
-
     input = {
         kb_layout = "us,ru",
         -- win+space switches the layout, so $mod+space binds are dead like in sway
@@ -139,9 +133,10 @@ hl.env("QT_QPA_PLATFORM", "wayland;xcb")
 ---- monitors ----
 ------------------
 
--- DP-2 is the main one on the right, DP-1 on the left
-hl.monitor({ output = "DP-2", mode = "2560x1440@120", position = "2560x0", scale = 1 })
-hl.monitor({ output = "DP-1", mode = "2560x1440@120", position = "0x0", scale = 1 })
+-- DP-1 is the main one on the right, DP-2 on the left. DP-1 is the first
+-- connector, so the session starts on it: the focus, the cursor, new windows
+hl.monitor({ output = "DP-1", mode = "2560x1440@120", position = "2560x0", scale = 1 })
+hl.monitor({ output = "DP-2", mode = "2560x1440@120", position = "0x0", scale = 1 })
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
 
 ------------------
@@ -154,10 +149,10 @@ hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" 
 -- 10 is pinned too, so the second monitor starts at 11. when a monitor is
 -- unplugged its pins don't count and the other one gets 1..9
 for i = 1, 10 do
-    hl.workspace_rule({ workspace = tostring(i), monitor = "DP-2" })
+    hl.workspace_rule({ workspace = tostring(i), monitor = "DP-1" })
 end
 for i = 11, 19 do
-    hl.workspace_rule({ workspace = tostring(i), monitor = "DP-1" })
+    hl.workspace_rule({ workspace = tostring(i), monitor = "DP-2" })
 end
 hl.workspace_rule({ workspace = "1", default = true })
 hl.workspace_rule({ workspace = "11", default = true })
@@ -459,12 +454,12 @@ hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightness down"), held)
 
 -- monitors: the main one runs at 120 Hz next to the second one and at 240 Hz alone
 hl.bind(mod .. " + F7", function()
-    hl.monitor({ output = "DP-1", mode = "2560x1440@120", disabled = false })
-    hl.monitor({ output = "DP-2", mode = "2560x1440@120" })
+    hl.monitor({ output = "DP-2", mode = "2560x1440@120", disabled = false })
+    hl.monitor({ output = "DP-1", mode = "2560x1440@120" })
 end)
 hl.bind(mod .. " + SHIFT + F7", function()
-    hl.monitor({ output = "DP-1", disabled = true })
-    hl.monitor({ output = "DP-2", mode = "2560x1440@240" })
+    hl.monitor({ output = "DP-2", disabled = true })
+    hl.monitor({ output = "DP-1", mode = "2560x1440@240" })
 end)
 
 -- scratchpads: show/hide, start the app if it's not there
@@ -719,23 +714,6 @@ hl.on("hyprland.start", function()
     -- from another session lets go. default.nix keeps a new one from starting
     hl.exec_cmd("systemctl --user stop dunst.service")
     hl.exec_cmd("qs -c hyprland")
-
-    -- new windows open on the focused monitor. at login it ends up DP-1 (it
-    -- comes up first, the workspaces move around after it), while
-    -- cursor.default_monitor puts the cursor on DP-2. so for the first 3 s
-    -- the focus goes back to DP-2 whenever it's elsewhere
-    local ticks = 0
-    local main
-    main = hl.timer(function()
-        ticks = ticks + 1
-        local active = hl.get_active_monitor()
-        if hl.get_monitor("DP-2") and (not active or active.name ~= "DP-2") then
-            hl.dispatch(hl.dsp.focus({ monitor = "DP-2" }))
-        end
-        if ticks >= 15 then
-            main:set_enabled(false)
-        end
-    end, { timeout = 200, type = "repeat" })
 end)
 
 hl.on("hyprland.shutdown", function()

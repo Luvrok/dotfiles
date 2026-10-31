@@ -39,11 +39,11 @@ focus_wrapping workspace
 # xrdb below. lazy xwayland quits 10 s after the last x app and forgets them
 xwayland force
 
-# monitors. names are kernel connectors, not the x11 ones: DisplayPort-0 is
-# DP-1 here, DisplayPort-1 is DP-2. check with `swaymsg -t get_outputs`.
-# DP-2 is the main one on the right, DP-1 on the left
-output DP-2 mode 2560x1440@120Hz position 2560 0
-output DP-1 mode 2560x1440@120Hz position 0 0
+# monitors. names are kernel connectors, check with `swaymsg -t get_outputs`.
+# DP-1 is the main one on the right, DP-2 on the left. DP-1 is the first
+# connector, so the session starts on it
+output DP-1 mode 2560x1440@120Hz position 2560 0
+output DP-2 mode 2560x1440@120Hz position 0 0
 
 # no file: plain background, no error
 output * bg ~/HOME/wizzard/wallpaper/art/nature/Church_Heart_of_the_Andes.jpg fill #171717
@@ -61,26 +61,26 @@ seat * xcursor_theme Vanilla-DMZ 32
 # output, so the main one is the first plugged in output of the workspace 1
 # line, sway-ws and the bar read it from here. pinned workspaces are created
 # on their monitor only and go back there when it's plugged in
-workspace 1 output DP-2
-workspace 2 output DP-2
-workspace 3 output DP-2
-workspace 4 output DP-2
-workspace 5 output DP-2
-workspace 6 output DP-2
-workspace 7 output DP-2
-workspace 8 output DP-2
-workspace 9 output DP-2
+workspace 1 output DP-1
+workspace 2 output DP-1
+workspace 3 output DP-1
+workspace 4 output DP-1
+workspace 5 output DP-1
+workspace 6 output DP-1
+workspace 7 output DP-1
+workspace 8 output DP-1
+workspace 9 output DP-1
 
 # second monitor, add other names after a space
-workspace 11 output DP-1
-workspace 12 output DP-1
-workspace 13 output DP-1
-workspace 14 output DP-1
-workspace 15 output DP-1
-workspace 16 output DP-1
-workspace 17 output DP-1
-workspace 18 output DP-1
-workspace 19 output DP-1
+workspace 11 output DP-2
+workspace 12 output DP-2
+workspace 13 output DP-2
+workspace 14 output DP-2
+workspace 15 output DP-2
+workspace 16 output DP-2
+workspace 17 output DP-2
+workspace 18 output DP-2
+workspace 19 output DP-2
 
 # tabbed: tags 1, 2, 9 on both monitors (11, 12, 19 on the second one).
 # no tab bar, sway is patched like i3 (see default.nix), the bar has titles
@@ -152,8 +152,8 @@ bindsym --to-code Print                 exec sway-shot
 
 # monitors, position comes from the output lines above. the main one runs
 # at 120 Hz next to the second one and at 240 Hz alone
-bindsym --to-code $mod+F7       output DP-1 enable; output DP-2 mode 2560x1440@120Hz
-bindsym --to-code $mod+Shift+F7 output DP-1 disable; output DP-2 mode 2560x1440@240Hz
+bindsym --to-code $mod+F7       output DP-2 enable; output DP-1 mode 2560x1440@120Hz
+bindsym --to-code $mod+Shift+F7 output DP-2 disable; output DP-1 mode 2560x1440@240Hz
 
 # scratchpads
 bindsym --to-code $mod+g exec sway-sp toggle spterm kitty --class spterm --name spterm --title scratchpad

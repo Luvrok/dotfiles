@@ -17,23 +17,16 @@
     ../../nixos/services/opencode-keys.nix
   ];
 
-  # the sddm greeter runs in weston. it focuses the first output weston
-  # announces, that's DP-1 on the left, and weston can't pick another one
-  # (a clone left the right one black). so DP-1 is off in the greeter only,
-  # hyprland turns it on (hyprland.lua). kiosk is the shell the sddm module uses
+  # the sddm greeter runs in weston, on the first output: DP-1, the main one
+  # on the right. us,ru like the sessions, the theme's color under it.
+  # kiosk is the shell the sddm module uses
   services.displayManager.sddm.wayland.compositorCommand =
     let
       ini = (pkgs.formats.ini { }).generate "weston.ini" {
-        # what shows before the greeter is up, the theme's color. kiosk is
-        # black without it
         shell.background-color = "0xff171717";
         keyboard = {
           keymap_layout = "us,ru";
           keymap_options = "grp:win_space_toggle";
-        };
-        output = {
-          name = "DP-1";
-          mode = "off";
         };
       };
     in
