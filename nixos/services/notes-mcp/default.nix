@@ -57,15 +57,21 @@ let
   # no include: docs-mcp filters the folders it walks with it too, **/*.md
   # left it at the vault's root. so every name with an extension but .md
   # is out (pictures, pdfs, canvases), folders have none. a regex is only
-  # one between slashes, no flags after them. hidden ones
-  # (.obsidian, .trash) docs-mcp skips by itself
+  # one between slashes, no flags after them. hidden files and folders
+  # (.obsidian, .trash, .anything) docs-mcp skips by itself, includeHidden
+  # is off by default
   scrapeArgs = [
     "file://${mount}"
     "--scrape-mode=fetch"
     "--max-depth=50"
     "--max-pages=100000"
     "--exclude-pattern=/\\.(?!md$)[A-Za-z0-9]{1,8}$/"
+    # the folders themselves too: they're walked by their own urls
+    "--exclude-pattern=**/copilot"
     "--exclude-pattern=**/copilot/**"
+    # plugins' files
+    "--exclude-pattern=**/_meta"
+    "--exclude-pattern=**/_meta/**"
   ];
   # a change here scrapes the whole vault again
   scrapeKey = builtins.hashString "sha256" (builtins.toJSON scrapeArgs);
