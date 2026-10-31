@@ -43,9 +43,11 @@ let
     n: s: lib.nameValuePair (lib.removePrefix "opencode/" n) { options.apiKey = "{file:${s.path}}"; }
   ) keys;
 
-  # jq, not toJSON: nix sorts the keys, the permission rules are last-match-wins
+  # jq, not toJSON: nix sorts the keys, the permission rules are last-match-wins.
+  # the keys go next to the providers opencode.json has (llama-swap), a
+  # provider in both gets both
   settings = pkgs.runCommand "opencode.json" { nativeBuildInputs = [ pkgs.jq ]; } ''
-    jq --argjson p ${lib.escapeShellArg (builtins.toJSON providers)} '.provider = $p' \
+    jq --argjson p ${lib.escapeShellArg (builtins.toJSON providers)} '.provider = ((.provider // {}) * $p) | del(._comment)' \
       ${repo}/opencode.json > $out
   '';
 in
