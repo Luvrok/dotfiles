@@ -26,14 +26,45 @@ let
   iptvOrg = path: "https://iptv-org.github.io/iptv/${path}.m3u";
   channelsConfig = pkgs.writeText "kodi-channels.json" (
     builtins.toJSON {
-      lists = {
-        "Russia" = iptvOrg "countries/ru";
-        "Russia (Free-TV)" = freeTv "russia";
-        "UK" = freeTv "uk";
-        "USA" = freeTv "usa";
-        "Movies" = iptvOrg "categories/movies";
-        "News" = iptvOrg "categories/news";
-      };
+      # a group: its lists. a country: iptv-org's and free-tv's (where it
+      # has one). the west, australia and new zealand, russia. then the
+      # topics across countries
+      lists =
+        let
+          country = code: freeTvName: [ (iptvOrg "countries/${code}") ] ++ lib.optional (freeTvName != null) (freeTv freeTvName);
+        in
+        {
+          "Russia" = country "ru" "russia";
+          "UK" = country "uk" "uk";
+          "USA" = country "us" "usa";
+          "Canada" = country "ca" "canada";
+          "Australia" = country "au" "australia";
+          "New Zealand" = country "nz" null;
+          "Ireland" = country "ie" "ireland";
+          "Germany" = country "de" "germany";
+          "Austria" = country "at" "austria";
+          "Switzerland" = country "ch" "switzerland";
+          "France" = country "fr" "france";
+          "Belgium" = country "be" "belgium";
+          "Netherlands" = country "nl" "netherlands";
+          "Luxembourg" = country "lu" "luxembourg";
+          "Italy" = country "it" "italy";
+          "Spain" = country "es" "spain";
+          "Portugal" = country "pt" "portugal";
+          "Denmark" = country "dk" "denmark";
+          "Sweden" = country "se" "sweden";
+          "Norway" = country "no" "norway";
+          "Finland" = country "fi" "finland";
+          "Iceland" = country "is" "iceland";
+          "Movies" = [
+            (iptvOrg "categories/movies")
+            (freeTv "zz_movies")
+          ];
+          "News" = [
+            (iptvOrg "categories/news")
+            (freeTv "zz_news_en")
+          ];
+        };
       fixes =
         let
           firstChannel = "https://cdn8.1internet.tv/dash-live3/streams/1tv-dvr/1tvdash.mpd?e=2000000000";
@@ -51,7 +82,7 @@ let
           "Rossiya 24" = russia24;
         };
       timeout = 8;
-      workers = 32;
+      workers = 64;
     }
   );
   channelsFile = "${config.xdg.dataHome}/kodi-channels/channels.m3u";
