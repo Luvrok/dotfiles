@@ -161,14 +161,19 @@ func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, 
 	var buf []float32
 	ended := false
 	var first, last time.Time
-	firstLen, chunks := 0.0, 0
+	// the first burst: what came within 250 ms of the first chunk. one
+	// chunk of the server arrives as several reads at once, it says
+	// nothing about the speed
+	burst, chunks := 0.0, 0
 	more := make(chan struct{}, 1)
 	go func() {
 		for chunk := range src {
 			mu.Lock()
 			if first.IsZero() {
 				first = time.Now()
-				firstLen = float64(len(chunk)) / float64(rate)
+			}
+			if time.Since(first) < 250*time.Millisecond {
+				burst += float64(len(chunk)) / float64(rate)
 			}
 			last = time.Now()
 			chunks++
@@ -187,15 +192,16 @@ func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, 
 		default:
 		}
 	}()
-	// seconds of audio made per second, after the first chunk
+	// seconds of audio made per second after the first burst, over 1.5 s
+	// at least: the server sends half a second of audio at a time
 	measured := func() float64 {
 		mu.Lock()
 		defer mu.Unlock()
 		d := last.Sub(first).Seconds()
-		if chunks < 2 || d <= 0 {
+		if d < 1.5 {
 			return 0
 		}
-		return (float64(len(buf))/float64(rate) - firstLen) / d
+		return min(4, (float64(len(buf))/float64(rate)-burst)/d)
 	}
 
 	// the head start: a quarter second, more for a slow generator. with r
@@ -214,11 +220,12 @@ func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, 
 		if r <= 0 {
 			r = measured()
 		}
-		// no speed known yet: wait for a second chunk to tell
+		// no speed known yet: wait until it can be told
 		known := r > 0 || e
 		need := 0.25
 		if r > 0 && r < 1 && expect > 0 {
-			need = max(need, expect.Seconds()*(1-r)*1.3)
+			// plus one of the server's half-second steps and a bit
+			need = max(need, expect.Seconds()*(1-r)*1.3+0.7)
 		}
 		if e || (known && have >= need) || (k > 0 && since > 20*time.Second) {
 			if expect > 0 {
