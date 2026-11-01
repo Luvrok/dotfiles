@@ -67,6 +67,9 @@ type Daemon struct {
 	lastAt  time.Time
 	last    struct{ text, lang string }
 
+	// jarvis' models llama-swap has up right now
+	loaded []string
+
 	kwsMu   sync.Mutex
 	spotter *speech.Spotter
 }
@@ -148,6 +151,7 @@ func (d *Daemon) Run(ctx context.Context, sock string) error {
 	if err := d.openMic(); err != nil {
 		d.fail("mic", err)
 	}
+	go d.watchVRAM(ctx)
 	errc := make(chan error, 1)
 	go func() { errc <- d.serve(ctx, sock) }()
 	select {
@@ -289,6 +293,10 @@ func (d *Daemon) listen() {
 	if !ok {
 		return
 	}
+	d.mu.Lock()
+	ch := d.char.ID
+	d.mu.Unlock()
+	d.warm(ch)
 	go func() {
 		defer d.end()
 		d.request(ctx)
@@ -485,7 +493,7 @@ func (d *Daemon) speak(ctx context.Context, ch *config.Character, text, lang str
 			src <- chunk
 		}
 	}()
-	err = d.audio.PlayStream(ctx, src, stream.Rate, func(v float64) { d.level(v, "tts") })
+	err = d.audio.PlayStream(ctx, src, stream.Rate, speechLength(text), func(v float64) { d.level(v, "tts") })
 	d.level(0, "tts")
 	if ctx.Err() != nil {
 		return
@@ -495,6 +503,12 @@ func (d *Daemon) speak(ctx context.Context, ch *config.Character, text, lang str
 	} else if err := stream.Err(); err != nil {
 		d.fail("tts", err)
 	}
+}
+
+// speechLength: about how long the text takes to say, for the head start
+// of a slow stream. ~14 characters a second in both languages
+func speechLength(text string) time.Duration {
+	return time.Duration(float64(len([]rune(text))) / 14 * float64(time.Second))
 }
 
 // preview: a short greeting from a character, no switch, no history

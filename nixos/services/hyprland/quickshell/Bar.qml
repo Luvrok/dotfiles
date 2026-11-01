@@ -5,6 +5,7 @@ import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Services.Pipewire
+import qs.widgets
 
 // dwm-like bar, the twin of nixos/services/sway/eww: tags, the windows of
 // the open tag as squares, status. hyprland hides it under fullscreen
@@ -257,6 +258,16 @@ PanelWindow {
                 }
             }
             Sep {}
+
+            // jarvis while it works or holds the gpu (widgets/JarvisBar.qml)
+            JarvisBar {
+                id: jarvis
+                barHeight: bar.height
+                onOpenMenu: bar.openMenu("jarvis")
+            }
+            Sep {
+                visible: jarvis.visible
+            }
 
             // the switches that are on (vpn, zapret, dnscrypt, rutracker), a
             // click opens the switches menu

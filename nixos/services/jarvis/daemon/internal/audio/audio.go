@@ -145,20 +145,26 @@ func (a *Audio) Play(ctx context.Context, samples []float32, rate int, level fun
 	src := make(chan []float32, 1)
 	src <- samples
 	close(src)
-	return a.PlayStream(ctx, src, rate, level)
+	return a.PlayStream(ctx, src, rate, 0, level)
 }
 
 // PlayStream plays chunks as they come, until src closes and all of it
-// played. it starts once a quarter second is in, so a slow start doesn't
-// stutter; if the generator falls behind later, the gap is silence
-func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, level func(float64)) error {
+// played. expect is about how long the whole thing is: when the generator
+// is slower than real time (a cold model), it waits until enough is in to
+// play to the end without a gap. a gap anyway stops it until half a second
+// is in again: one pause instead of a stutter
+func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, expect time.Duration, level func(float64)) error {
 	var mu sync.Mutex
 	var buf []float32
 	ended := false
+	var first time.Time
 	more := make(chan struct{}, 1)
 	go func() {
 		for chunk := range src {
 			mu.Lock()
+			if first.IsZero() {
+				first = time.Now()
+			}
 			buf = append(buf, chunk...)
 			mu.Unlock()
 			select {
@@ -175,21 +181,32 @@ func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, 
 		}
 	}()
 
-	// the head start
+	// the head start: a quarter second, more for a slow generator. with r
+	// seconds of audio made per second, all of it plays without a gap once
+	// expect*(1-r) is in
 	for {
 		mu.Lock()
-		n, e := len(buf), ended
+		n, e, since := len(buf), ended, time.Since(first)
 		mu.Unlock()
 		if e && n == 0 {
 			return nil
 		}
-		if e || n >= rate/4 {
+		have := float64(n) / float64(rate)
+		need := 0.25
+		if since > 300*time.Millisecond && expect > 0 {
+			r := have / since.Seconds()
+			if r < 1 {
+				need = max(need, expect.Seconds()*(1-r)*1.15)
+			}
+		}
+		if e || have >= need {
 			break
 		}
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-more:
+		case <-time.After(100 * time.Millisecond):
 		}
 	}
 
@@ -198,13 +215,23 @@ func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, 
 	cfg.Playback.Channels = 1
 	cfg.SampleRate = uint32(rate)
 	pos := 0
+	stalled := false
 	done := make(chan struct{})
 	var once sync.Once
 	dev, err := malgo.InitDevice(a.ctx.Context, cfg, malgo.DeviceCallbacks{
 		Data: func(out, _ []byte, frames uint32) {
 			mu.Lock()
 			defer mu.Unlock()
+			if !ended && pos >= len(buf) {
+				stalled = true
+			}
+			if stalled && (ended || len(buf)-pos >= rate/2) {
+				stalled = false
+			}
 			n := min(int(frames), len(buf)-pos)
+			if stalled {
+				n = 0
+			}
 			for i := 0; i < n; i++ {
 				binary.LittleEndian.PutUint32(out[i*4:], math.Float32bits(buf[pos+i]))
 			}

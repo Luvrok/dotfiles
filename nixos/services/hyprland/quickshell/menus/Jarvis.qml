@@ -7,10 +7,13 @@ import qs.widgets
 // jarvis, the voice assistant (nixos/services/jarvis): the daemon listens,
 // the llm answers as the character, the tts speaks it. this menu talks to
 // the daemon over its socket while it's open and starts listening when it
-// opens. the big square is the mic, a click on it pauses. space pauses or
+// opens. once the question is heard it slides away, the bar's mic
+// (widgets/JarvisBar.qml) shows the rest and the answer comes as a
+// notification, so the desktop is free while jarvis thinks and speaks.
+// the big square is the mic, a click on it pauses. space pauses or
 // resumes, c copies the answer, i picks the input, v the character (p
-// plays its greeting), r listens again. esc stops the voice and closes,
-// the answer stays in the notification. no daemon: "jarvis is off"
+// plays its greeting), r listens again, u frees the vram. esc stops the
+// voice and closes. no daemon: "jarvis is off"
 Menu {
     id: menu
 
@@ -54,6 +57,9 @@ Menu {
             character = m.character;
             break;
         case "state":
+            // the question is in: away, the rest goes on without the menu
+            if (jarvis === "listening" && m.state === "transcribing" && page === "main")
+                away.start();
             jarvis = m.state;
             if (m.state !== "error")
                 errorText = "";
@@ -139,8 +145,8 @@ Menu {
     // still work
     activity: working ? jarvis : ""
     lines: 0
-    menuWidth: ch(64)
-    hints: page === "main" ? [["space", jarvis === "paused" ? "resume" : "pause"], ["c", "copy"], ["i", "input"], ["v", "voice"], ["r", "again"], ["esc", "close"]] : [["j/k", "move"], ["enter", "pick"], ...(page === "voice" ? [["p", "preview"]] : []), ["h", "back"], ["esc", "close"]]
+    menuWidth: ch(46)
+    hints: page === "main" ? [["space", jarvis === "paused" ? "resume" : "pause"], ["c", "copy"], ["i", "input"], ["v", "voice"], ["r", "again"], ["u", "unload"], ["esc", "close"]] : [["j/k", "move"], ["enter", "pick"], ...(page === "voice" ? [["p", "preview"]] : []), ["h", "back"], ["esc", "close"]]
     body: page === "main" ? talk : null
 
     onAccepted: index => {
@@ -188,6 +194,13 @@ Menu {
             send({
                 type: "listen"
             });
+        else if (key(e, "u")) {
+            send({
+                type: "unload"
+            });
+            flash = "unloaded";
+            flashEnd.restart();
+        }
         else
             return key(e, "j") || key(e, "k") || e.key === Qt.Key_Return || e.key === Qt.Key_Enter;
         return true;
@@ -215,6 +228,16 @@ Menu {
         onError: menu.jarvis = "off"
     }
 
+    // a moment to see "transcribing", then the layer rule slides it out
+    Timer {
+        id: away
+        interval: 350
+        onTriggered: {
+            menu.hide();
+            menu.done();
+        }
+    }
+
     Timer {
         id: flashEnd
         interval: 1200
@@ -234,8 +257,8 @@ Menu {
 
             MicTile {
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: 160
-                height: 160
+                width: 128
+                height: 128
                 mode: menu.jarvis === "off" || menu.jarvis === "connecting" ? "paused" : menu.jarvis
                 micLevel: menu.micLevel
                 ttsLevel: menu.ttsLevel
@@ -323,8 +346,7 @@ Menu {
         }
     }
 
+    // closing it some other way (the hotkey again) leaves the request
+    // running: only esc stops it
     Component.onCompleted: show([])
-    Component.onDestruction: send({
-        type: "close"
-    })
 }

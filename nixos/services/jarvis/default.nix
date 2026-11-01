@@ -238,7 +238,7 @@ let
 
   # no rounded shapes in jarvis' qml, ever
   noRadius = pkgs.runCommandLocal "jarvis-no-radius" { } ''
-    if grep -n radius ${quickshell}/menus/Jarvis.qml ${quickshell}/widgets/MicTile.qml; then
+    if grep -n radius ${quickshell}/menus/Jarvis.qml ${quickshell}/widgets/MicTile.qml ${quickshell}/widgets/JarvisBar.qml; then
       echo "jarvis: radius in the qml above, its shapes stay square" >&2
       exit 1
     fi

@@ -85,6 +85,7 @@ func (d *Daemon) handle(conn net.Conn) {
 	d.send(c, d.charactersMsg())
 	d.refreshSources()
 	d.send(c, d.sourcesMsg())
+	d.send(c, d.loadedMsg())
 
 	sc := bufio.NewScanner(conn)
 	sc.Buffer(make([]byte, 64*1024), 64*1024)
@@ -114,6 +115,13 @@ func (d *Daemon) command(c *client, cmd command) {
 	case "stop", "close":
 		// the history stays until forget_after_s
 		d.stop()
+	case "watch":
+		// the bar: it follows the state, it isn't a menu on screen
+		d.mu.Lock()
+		c.cli = true
+		d.mu.Unlock()
+	case "unload":
+		go d.unload()
 	case "set_source":
 		d.setSource(cmd.ID)
 	case "set_character":

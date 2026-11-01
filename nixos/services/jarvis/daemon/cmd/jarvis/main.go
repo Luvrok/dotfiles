@@ -26,6 +26,7 @@ const usage = `usage: jarvis <command>
   pause                   close the mic, wake word too
   resume                  open it again
   stop                    stop listening or speaking
+  unload                  free the vram: the llm and the voices go
   last                    print the last answer
   check                   say what keeps jarvis from working
 `
@@ -49,7 +50,7 @@ func main() {
 		runDaemon(os.Args[2:])
 	case "listen":
 		os.Exit(listen())
-	case "pause", "resume", "stop":
+	case "pause", "resume", "stop", "unload":
 		os.Exit(send(map[string]any{"type": os.Args[1]}, nil))
 	case "last":
 		os.Exit(send(map[string]any{"type": "last_answer"}, func(m map[string]any) bool {
