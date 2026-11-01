@@ -51,6 +51,12 @@ type Config struct {
 		Turns        int `toml:"turns"`
 		ForgetAfterS int `toml:"forget_after_s"`
 	} `toml:"history"`
+	// what the llm may use when asked, an empty url turns a tool off
+	Tools struct {
+		WebSearch    string `toml:"web_search"`
+		NotesMCP     string `toml:"notes_mcp"`
+		NotesLibrary string `toml:"notes_library"`
+	} `toml:"tools"`
 	UI struct {
 		OpenCmd    []string `toml:"open_cmd"`
 		Notify     bool     `toml:"notify"`
@@ -76,6 +82,7 @@ func Load(path string) (*Config, error) {
 	c.History.Turns = 6
 	c.History.ForgetAfterS = 600
 	c.UI.Notify = true
+	c.Tools.NotesLibrary = "notes"
 	if _, err := toml.DecodeFile(path, c); err != nil {
 		return nil, fmt.Errorf("config %s: %w", path, err)
 	}

@@ -18,6 +18,7 @@ import (
 	"jarvis/internal/llm"
 	"jarvis/internal/notify"
 	"jarvis/internal/speech"
+	"jarvis/internal/tools"
 	"jarvis/internal/tts"
 )
 
@@ -28,10 +29,12 @@ const (
 	Listening    = "listening"
 	Transcribing = "transcribing"
 	Thinking     = "thinking"
-	Voicing      = "voicing"
-	Speaking     = "speaking"
-	Paused       = "paused"
-	Error        = "error"
+	// a tool runs: the web search or the notes
+	Searching = "searching"
+	Voicing   = "voicing"
+	Speaking  = "speaking"
+	Paused    = "paused"
+	Error     = "error"
 )
 
 type Daemon struct {
@@ -45,6 +48,7 @@ type Daemon struct {
 	vad     *speech.VAD
 	llm     *llm.Client
 	tts     *tts.Client
+	tools   *tools.Set
 	notes   notify.Notifier
 
 	mu      sync.Mutex
@@ -83,6 +87,7 @@ func New(cfg *config.Config) (*Daemon, error) {
 		basePrompt: string(base),
 		llm:        llm.New(cfg.LLM.URL, cfg.LLM.Model, cfg.LLM.MaxTokens),
 		tts:        tts.New(cfg.TTS.URL),
+		tools:      tools.New(cfg.Tools.WebSearch, cfg.Tools.NotesMCP, cfg.Tools.NotesLibrary),
 		state:      Idle,
 		clients:    map[*client]bool{},
 	}
@@ -332,7 +337,7 @@ func (d *Daemon) request(ctx context.Context) {
 	messages := append([]llm.Message{{Role: "system", Content: d.systemPrompt(ch)}}, d.history...)
 	d.mu.Unlock()
 	messages = append(messages, llm.Message{Role: "user", Content: text})
-	raw, err := d.llm.Chat(ctx, messages)
+	raw, err := d.ask(ctx, messages, d.tools.List())
 	if ctx.Err() != nil {
 		return
 	}
@@ -400,7 +405,39 @@ func (d *Daemon) record(ctx context.Context, capture chan []float32) ([]float32,
 	}
 }
 
+// the most tool rounds before the llm has to answer
+const maxToolRounds = 3
+
+// ask: the llm's answer. when it wants a tool, the tool runs and the llm
+// gets its result, a few rounds at most. the tools stay out of the history
+func (d *Daemon) ask(ctx context.Context, messages []llm.Message, tools []llm.Tool) (string, error) {
+	for round := 0; ; round++ {
+		if round == maxToolRounds {
+			// enough searching, answer with what's there
+			tools = nil
+		}
+		m, err := d.llm.Chat(ctx, messages, tools)
+		if err != nil {
+			return "", err
+		}
+		if len(m.ToolCalls) == 0 {
+			return m.Content, nil
+		}
+		d.setState(Searching)
+		messages = append(messages, m)
+		for _, call := range m.ToolCalls {
+			out := d.tools.Call(ctx, call.Function.Name, call.Function.Arguments)
+			if ctx.Err() != nil {
+				return "", ctx.Err()
+			}
+			messages = append(messages, llm.Message{Role: "tool", ToolCallID: call.ID, Content: out})
+		}
+		d.setState(Thinking)
+	}
+}
+
 // speak: the text is out (menu or notification, the chime), then the voice
+// as it's generated
 func (d *Daemon) speak(ctx context.Context, ch *config.Character, text, lang string, announce bool) {
 	notifying := announce && d.cfg.UI.Notify && d.viewers() == 0
 	if announce {
@@ -412,7 +449,22 @@ func (d *Daemon) speak(ctx context.Context, ch *config.Character, text, lang str
 	}
 
 	d.setState(Voicing)
-	samples, rate, err := d.tts.Speak(ctx, ch, text, lang)
+	stream, err := d.tts.Stream(ctx, ch, text, lang)
+	// the first audio: the notification loses its "voicing…"
+	var first []float32
+	if err == nil {
+		select {
+		case <-ctx.Done():
+		case chunk, ok := <-stream.C:
+			first = chunk
+			if !ok {
+				err = stream.Err()
+				if err == nil {
+					err = errors.New("tts: no audio")
+				}
+			}
+		}
+	}
 	if notifying {
 		d.notes.Show(ch.Name, text, d.stop)
 	}
@@ -425,10 +477,23 @@ func (d *Daemon) speak(ctx context.Context, ch *config.Character, text, lang str
 	}
 
 	d.setState(Speaking)
-	err = d.audio.Play(ctx, samples, rate, func(v float64) { d.level(v, "tts") })
+	src := make(chan []float32, 1)
+	src <- first
+	go func() {
+		defer close(src)
+		for chunk := range stream.C {
+			src <- chunk
+		}
+	}()
+	err = d.audio.PlayStream(ctx, src, stream.Rate, func(v float64) { d.level(v, "tts") })
 	d.level(0, "tts")
-	if err != nil && ctx.Err() == nil {
+	if ctx.Err() != nil {
+		return
+	}
+	if err != nil {
 		d.fail("playback", err)
+	} else if err := stream.Err(); err != nil {
+		d.fail("tts", err)
 	}
 }
 
@@ -445,10 +510,10 @@ func (d *Daemon) preview(id string) {
 	go func() {
 		defer d.end()
 		d.setState(Thinking)
-		raw, err := d.llm.Chat(ctx, []llm.Message{
+		raw, err := d.ask(ctx, []llm.Message{
 			{Role: "system", Content: d.systemPrompt(ch)},
 			{Role: "user", Content: "Greet me in one short sentence, the way you always do."},
-		})
+		}, nil)
 		if ctx.Err() != nil {
 			return
 		}
@@ -561,6 +626,7 @@ func (d *Daemon) check() []string {
 			seen[m] = true
 		}
 	}
+	problems = append(problems, d.tools.Check(ctx)...)
 	files := append(speech.WhisperFiles(d.cfg.STT.Model), d.cfg.VAD.Model)
 	if d.cfg.WakeWord.Enable {
 		files = append(files, speech.KWSFiles(d.cfg.WakeWord.Model)...)

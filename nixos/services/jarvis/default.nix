@@ -95,6 +95,11 @@ let
       inherit (cfg.history) turns;
       forget_after_s = 600;
     };
+    tools = {
+      web_search = if cfg.tools.webSearch == null then "" else cfg.tools.webSearch;
+      notes_mcp = if cfg.tools.notesMcp == null then "" else cfg.tools.notesMcp;
+      notes_library = "notes";
+    };
     ui = {
       open_cmd = cfg.openCmd;
       inherit (cfg) notify;
@@ -272,6 +277,26 @@ in
       type = lib.types.str;
       default = "http://127.0.0.1:11434";
       description = "llama-swap, it serves the llm and the tts.";
+    };
+    # what the llm may use, only when the user asks for it. null turns one off
+    tools.webSearch = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default =
+        if config.services.searx.enable then
+          "http://127.0.0.1:${toString (config.services.searx.settings.server.port or 8888)}"
+        else
+          null;
+      description = "searxng for the web search, its json api. The local one when it's on.";
+    };
+    tools.notesMcp = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      # notes-mcp's port (nixos/services/notes-mcp), on the hosts that import it
+      default =
+        if config.virtualisation.oci-containers.containers ? notes-mcp then
+          "http://127.0.0.1:6281/mcp"
+        else
+          null;
+      description = "The notes' mcp server (docs-mcp-server), its library \"notes\".";
     };
     openCmd = lib.mkOption {
       type = lib.types.listOf lib.types.str;

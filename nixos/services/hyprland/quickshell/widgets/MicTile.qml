@@ -18,7 +18,7 @@ Rectangle {
     signal clicked
 
     readonly property bool listening: mode === "listening"
-    readonly property bool working: mode === "transcribing" || mode === "thinking" || mode === "voicing"
+    readonly property bool working: ["transcribing", "thinking", "searching", "voicing"].includes(mode)
     readonly property bool speaking: mode === "speaking"
     readonly property bool paused: mode === "paused"
     readonly property bool failed: mode === "error"

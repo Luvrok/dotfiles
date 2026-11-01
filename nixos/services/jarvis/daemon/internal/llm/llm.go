@@ -1,5 +1,6 @@
-// llm: one chat completion from llama-swap, no streaming, thinking off.
-// the answer is cleaned up for the voice before tts gets it
+// llm: chat completions from llama-swap, no streaming, thinking off. a
+// reply may ask for tools first, the daemon runs them and asks again. the
+// answer is cleaned up for the voice before tts gets it
 package llm
 
 import (
@@ -16,8 +17,26 @@ import (
 )
 
 type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+	Role       string     `json:"role"`
+	Content    string     `json:"content"`
+	ToolCalls  []ToolCall `json:"tool_calls,omitempty"`
+	ToolCallID string     `json:"tool_call_id,omitempty"`
+}
+
+type ToolCall struct {
+	ID       string `json:"id"`
+	Type     string `json:"type"`
+	Function struct {
+		Name      string `json:"name"`
+		Arguments string `json:"arguments"`
+	} `json:"function"`
+}
+
+// Tool: what the model sees of a tool, an openai function
+type Tool struct {
+	Name        string
+	Description string
+	Parameters  json.RawMessage
 }
 
 type Client struct {
@@ -32,8 +51,9 @@ func New(url, model string, maxTokens int) *Client {
 	return &Client{URL: strings.TrimRight(url, "/"), Model: model, MaxTokens: maxTokens, HTTP: &http.Client{Timeout: 120 * time.Second}}
 }
 
-func (c *Client) Chat(ctx context.Context, messages []Message) (string, error) {
-	body, _ := json.Marshal(map[string]any{
+// Chat: the model's next message, its text or the tools it wants
+func (c *Client) Chat(ctx context.Context, messages []Message, tools []Tool) (Message, error) {
+	payload := map[string]any{
 		"model":      c.Model,
 		"stream":     false,
 		"messages":   messages,
@@ -41,35 +61,46 @@ func (c *Client) Chat(ctx context.Context, messages []Message) (string, error) {
 		"chat_template_kwargs": map[string]any{
 			"enable_thinking": false,
 		},
-	})
+	}
+	if len(tools) > 0 {
+		list := make([]map[string]any, len(tools))
+		for i, t := range tools {
+			list[i] = map[string]any{"type": "function", "function": map[string]any{
+				"name": t.Name, "description": t.Description, "parameters": t.Parameters,
+			}}
+		}
+		payload["tools"] = list
+		payload["tool_choice"] = "auto"
+	}
+	body, _ := json.Marshal(payload)
 	req, err := http.NewRequestWithContext(ctx, "POST", c.URL+"/v1/chat/completions", bytes.NewReader(body))
 	if err != nil {
-		return "", err
+		return Message{}, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := c.HTTP.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("llm: %w", err)
+		return Message{}, fmt.Errorf("llm: %w", err)
 	}
 	defer resp.Body.Close()
 	raw, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("llm: %s: %s", resp.Status, short(raw))
+		return Message{}, fmt.Errorf("llm: %s: %s", resp.Status, short(raw))
 	}
 	var out struct {
 		Choices []struct {
-			Message struct {
-				Content string `json:"content"`
-			} `json:"message"`
+			Message Message `json:"message"`
 		} `json:"choices"`
 	}
 	if err := json.Unmarshal(raw, &out); err != nil {
-		return "", fmt.Errorf("llm: %w", err)
+		return Message{}, fmt.Errorf("llm: %w", err)
 	}
 	if len(out.Choices) == 0 {
-		return "", fmt.Errorf("llm: no answer: %s", short(raw))
+		return Message{}, fmt.Errorf("llm: no answer: %s", short(raw))
 	}
-	return out.Choices[0].Message.Content, nil
+	m := out.Choices[0].Message
+	m.Role = "assistant"
+	return m, nil
 }
 
 // the ids llama-swap serves, for jarvis check

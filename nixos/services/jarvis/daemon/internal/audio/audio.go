@@ -142,14 +142,61 @@ func Level(samples []float32) float64 {
 // Play plays mono samples at rate on the default output. level gets the
 // level ~30 times a second. ctx cancel cuts it
 func (a *Audio) Play(ctx context.Context, samples []float32, rate int, level func(float64)) error {
-	if len(samples) == 0 {
-		return nil
+	src := make(chan []float32, 1)
+	src <- samples
+	close(src)
+	return a.PlayStream(ctx, src, rate, level)
+}
+
+// PlayStream plays chunks as they come, until src closes and all of it
+// played. it starts once a quarter second is in, so a slow start doesn't
+// stutter; if the generator falls behind later, the gap is silence
+func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, level func(float64)) error {
+	var mu sync.Mutex
+	var buf []float32
+	ended := false
+	more := make(chan struct{}, 1)
+	go func() {
+		for chunk := range src {
+			mu.Lock()
+			buf = append(buf, chunk...)
+			mu.Unlock()
+			select {
+			case more <- struct{}{}:
+			default:
+			}
+		}
+		mu.Lock()
+		ended = true
+		mu.Unlock()
+		select {
+		case more <- struct{}{}:
+		default:
+		}
+	}()
+
+	// the head start
+	for {
+		mu.Lock()
+		n, e := len(buf), ended
+		mu.Unlock()
+		if e && n == 0 {
+			return nil
+		}
+		if e || n >= rate/4 {
+			break
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-more:
+		}
 	}
+
 	cfg := malgo.DefaultDeviceConfig(malgo.Playback)
 	cfg.Playback.Format = malgo.FormatF32
 	cfg.Playback.Channels = 1
 	cfg.SampleRate = uint32(rate)
-	var mu sync.Mutex
 	pos := 0
 	done := make(chan struct{})
 	var once sync.Once
@@ -157,18 +204,15 @@ func (a *Audio) Play(ctx context.Context, samples []float32, rate int, level fun
 		Data: func(out, _ []byte, frames uint32) {
 			mu.Lock()
 			defer mu.Unlock()
-			n := int(frames)
-			if pos+n > len(samples) {
-				n = len(samples) - pos
-			}
+			n := min(int(frames), len(buf)-pos)
 			for i := 0; i < n; i++ {
-				binary.LittleEndian.PutUint32(out[i*4:], math.Float32bits(samples[pos+i]))
+				binary.LittleEndian.PutUint32(out[i*4:], math.Float32bits(buf[pos+i]))
 			}
 			for i := n * 4; i < len(out); i++ {
 				out[i] = 0
 			}
 			pos += n
-			if pos >= len(samples) {
+			if ended && pos >= len(buf) {
 				once.Do(func() { close(done) })
 			}
 		},
@@ -201,10 +245,10 @@ func (a *Audio) Play(ctx context.Context, samples []float32, rate int, level fun
 				continue
 			}
 			mu.Lock()
-			p := pos
+			lo := max(0, pos-window)
+			v := Level(buf[lo:pos])
 			mu.Unlock()
-			lo := max(0, p-window)
-			level(Level(samples[lo:p]))
+			level(v)
 		}
 	}
 }

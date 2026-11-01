@@ -32,7 +32,7 @@ Menu {
     property string flash: ""
 
     readonly property var persona: characters.find(c => c.id === character) ?? null
-    readonly property bool working: ["transcribing", "thinking", "voicing"].includes(jarvis)
+    readonly property bool working: ["transcribing", "thinking", "searching", "voicing"].includes(jarvis)
 
     function send(msg) {
         if (!sock.connected)
@@ -135,7 +135,8 @@ Menu {
     icon: persona?.icon || "\u{f06a9}"
     status: flash !== "" ? flash : jarvis === "off" ? "jarvis is off" : page !== "main" ? page : working ? "" : jarvis
     statusAccent: flash !== "" || jarvis === "listening" || jarvis === "speaking" || jarvis === "error"
-    // transcribing, thinking and voicing pulse in the head, keys still work
+    // transcribing, thinking, searching and voicing pulse in the head, keys
+    // still work
     activity: working ? jarvis : ""
     lines: 0
     menuWidth: ch(64)
