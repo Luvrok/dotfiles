@@ -270,7 +270,8 @@ in
     };
     notify = lib.mkOption {
       type = lib.types.bool;
-      default = true;
+      # off: the menu comes back when jarvis starts speaking, with the answer
+      default = false;
       description = "A notification with the answer while the menu is closed.";
     };
     llamaSwapUrl = lib.mkOption {

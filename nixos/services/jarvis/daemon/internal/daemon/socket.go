@@ -130,9 +130,9 @@ func (d *Daemon) command(c *client, cmd command) {
 		d.preview(cmd.ID)
 	case "last_answer":
 		d.mu.Lock()
-		text, lang := d.last.text, d.last.lang
+		q, text, lang := d.last.question, d.last.text, d.last.lang
 		d.mu.Unlock()
-		d.send(c, map[string]any{"type": "answer", "text": text, "lang": lang, "last": true})
+		d.send(c, map[string]any{"type": "answer", "text": text, "lang": lang, "question": q, "last": true})
 	case "check":
 		problems := d.check()
 		d.send(c, map[string]any{"type": "check", "ok": len(problems) == 0, "problems": problems})

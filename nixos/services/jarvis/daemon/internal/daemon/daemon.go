@@ -65,7 +65,7 @@ type Daemon struct {
 
 	history []llm.Message
 	lastAt  time.Time
-	last    struct{ text, lang string }
+	last    struct{ question, text, lang string }
 
 	// jarvis' models llama-swap has up right now
 	loaded []string
@@ -369,7 +369,7 @@ func (d *Daemon) request(ctx context.Context) {
 		d.history = d.history[len(d.history)-n:]
 	}
 	d.lastAt = time.Now()
-	d.last.text, d.last.lang = answer, lang
+	d.last.question, d.last.text, d.last.lang = text, answer, lang
 	d.mu.Unlock()
 
 	d.speak(ctx, ch, answer, lang, true)
@@ -484,6 +484,10 @@ func (d *Daemon) speak(ctx context.Context, ch *config.Character, text, lang str
 		return
 	}
 
+	// the menu comes back for the answer: to read it, and r to reply
+	if announce && d.viewers() == 0 && len(d.cfg.UI.OpenCmd) > 0 {
+		notify.Run(d.cfg.UI.OpenCmd)
+	}
 	d.setState(Speaking)
 	src := make(chan []float32, 1)
 	src <- first

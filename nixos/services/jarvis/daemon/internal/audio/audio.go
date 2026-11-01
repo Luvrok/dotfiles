@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	"strings"
 	"sync"
@@ -200,6 +201,9 @@ func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, 
 			}
 		}
 		if e || have >= need {
+			if expect > 0 {
+				log.Printf("voice: %.1fs in after %.1fs, head start %.1fs", have, since.Seconds(), need)
+			}
 			break
 		}
 		select {
@@ -216,14 +220,16 @@ func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, 
 	cfg.SampleRate = uint32(rate)
 	pos := 0
 	stalled := false
+	stalls := 0
 	done := make(chan struct{})
 	var once sync.Once
 	dev, err := malgo.InitDevice(a.ctx.Context, cfg, malgo.DeviceCallbacks{
 		Data: func(out, _ []byte, frames uint32) {
 			mu.Lock()
 			defer mu.Unlock()
-			if !ended && pos >= len(buf) {
+			if !ended && pos >= len(buf) && !stalled {
 				stalled = true
+				stalls++
 			}
 			if stalled && (ended || len(buf)-pos >= rate*4/5) {
 				stalled = false
@@ -260,6 +266,11 @@ func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, 
 			dev.Stop()
 			return ctx.Err()
 		case <-done:
+			if expect > 0 {
+				mu.Lock()
+				log.Printf("voice: %.1fs played, %d gaps", float64(len(buf))/float64(rate), stalls)
+				mu.Unlock()
+			}
 			// the device buffer still holds the tail
 			time.Sleep(150 * time.Millisecond)
 			dev.Stop()

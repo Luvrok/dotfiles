@@ -77,6 +77,8 @@ Menu {
         case "answer":
             if (m.text !== "")
                 answer = m.text;
+            if (m.last && m.question)
+                asked = m.question;
             break;
         case "characters":
             characters = m.list;
