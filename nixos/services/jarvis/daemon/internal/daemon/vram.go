@@ -78,6 +78,12 @@ func (d *Daemon) refreshLoaded(ctx context.Context) {
 	d.mu.Lock()
 	same := slices.Equal(list, d.loaded)
 	d.loaded = list
+	// a voice that's gone starts cold next time, its speed is measured again
+	for m := range d.speed {
+		if !slices.Contains(list, m) {
+			delete(d.speed, m)
+		}
+	}
 	d.mu.Unlock()
 	if !same {
 		d.broadcast(d.loadedMsg())

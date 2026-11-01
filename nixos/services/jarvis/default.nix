@@ -203,12 +203,22 @@ let
         hf_id = "${s.path}";
         inherit (s) type;
       };
-      # no torch.compile: a cold load in seconds, not minutes
+      # torch.compile: without it the server also skips its fast codebook and
+      # streaming paths, and the voice came out at 0.7x real time (RTF 1.45).
+      # "default" compiles in less time than the readme's max-autotune, hip
+      # graphs stay off. it costs the cold load, so ttl 600 keeps it warm.
+      # 72 frames is the readme's decode window for amd
       optimization = {
         attention = "flash_attention_2";
-        use_compile = false;
+        use_compile = true;
+        compile_mode = "default";
         use_cuda_graphs = false;
         use_fast_codebook = true;
+        compile_codebook_predictor = true;
+        streaming = {
+          decode_window_frames = 72;
+          emit_every_frames = 6;
+        };
       };
       server = {
         host = "127.0.0.1";

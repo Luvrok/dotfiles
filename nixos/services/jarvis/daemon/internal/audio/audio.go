@@ -146,26 +146,32 @@ func (a *Audio) Play(ctx context.Context, samples []float32, rate int, level fun
 	src := make(chan []float32, 1)
 	src <- samples
 	close(src)
-	return a.PlayStream(ctx, src, rate, 0, level)
+	_, err := a.PlayStream(ctx, src, rate, 0, 0, level)
+	return err
 }
 
 // PlayStream plays chunks as they come, until src closes and all of it
-// played. expect is about how long the whole thing is: when the generator
-// is slower than real time (a cold model), it waits until enough is in to
-// play to the end without a gap. a gap anyway stops it until 0.8 s is in
-// again: one pause instead of a stutter
-func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, expect time.Duration, level func(float64)) error {
+// played. expect is about how long the whole thing is, speed how many
+// seconds of audio the generator made per second last time (0: unknown,
+// it's measured on the first chunks). a generator slower than real time
+// gets a head start long enough to play to the end without a gap; a gap
+// anyway stops it until 0.8 s is in again. it returns the speed it saw
+func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, expect time.Duration, speed float64, level func(float64)) (float64, error) {
 	var mu sync.Mutex
 	var buf []float32
 	ended := false
-	var first time.Time
+	var first, last time.Time
+	firstLen, chunks := 0.0, 0
 	more := make(chan struct{}, 1)
 	go func() {
 		for chunk := range src {
 			mu.Lock()
 			if first.IsZero() {
 				first = time.Now()
+				firstLen = float64(len(chunk)) / float64(rate)
 			}
+			last = time.Now()
+			chunks++
 			buf = append(buf, chunk...)
 			mu.Unlock()
 			select {
@@ -181,34 +187,48 @@ func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, 
 		default:
 		}
 	}()
+	// seconds of audio made per second, after the first chunk
+	measured := func() float64 {
+		mu.Lock()
+		defer mu.Unlock()
+		d := last.Sub(first).Seconds()
+		if chunks < 2 || d <= 0 {
+			return 0
+		}
+		return (float64(len(buf))/float64(rate) - firstLen) / d
+	}
 
 	// the head start: a quarter second, more for a slow generator. with r
 	// seconds of audio made per second, all of it plays without a gap once
 	// expect*(1-r) is in
 	for {
 		mu.Lock()
-		n, e, since := len(buf), ended, time.Since(first)
+		n, e, k := len(buf), ended, chunks
+		since := time.Since(first)
 		mu.Unlock()
 		if e && n == 0 {
-			return nil
+			return 0, nil
 		}
 		have := float64(n) / float64(rate)
-		need := 0.25
-		if since > 300*time.Millisecond && expect > 0 {
-			r := have / since.Seconds()
-			if r < 1 {
-				need = max(need, expect.Seconds()*(1-r)*1.3)
-			}
+		r := speed
+		if r <= 0 {
+			r = measured()
 		}
-		if e || have >= need {
+		// no speed known yet: wait for a second chunk to tell
+		known := r > 0 || e
+		need := 0.25
+		if r > 0 && r < 1 && expect > 0 {
+			need = max(need, expect.Seconds()*(1-r)*1.3)
+		}
+		if e || (known && have >= need) || (k > 0 && since > 20*time.Second) {
 			if expect > 0 {
-				log.Printf("voice: %.1fs in after %.1fs, head start %.1fs", have, since.Seconds(), need)
+				log.Printf("voice: %.1fs in after %.1fs, speed %.2fx, head start %.1fs", have, since.Seconds(), r, need)
 			}
 			break
 		}
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return 0, ctx.Err()
 		case <-more:
 		case <-time.After(100 * time.Millisecond):
 		}
@@ -251,11 +271,11 @@ func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, 
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("playback: %w", err)
+		return 0, fmt.Errorf("playback: %w", err)
 	}
 	defer dev.Uninit()
 	if err := dev.Start(); err != nil {
-		return fmt.Errorf("playback: %w", err)
+		return 0, fmt.Errorf("playback: %w", err)
 	}
 	tick := time.NewTicker(33 * time.Millisecond)
 	defer tick.Stop()
@@ -264,7 +284,7 @@ func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, 
 		select {
 		case <-ctx.Done():
 			dev.Stop()
-			return ctx.Err()
+			return 0, ctx.Err()
 		case <-done:
 			if expect > 0 {
 				mu.Lock()
@@ -277,7 +297,7 @@ func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, 
 			if level != nil {
 				level(0)
 			}
-			return nil
+			return measured(), nil
 		case <-tick.C:
 			if level == nil {
 				continue

@@ -69,6 +69,8 @@ type Daemon struct {
 
 	// jarvis' models llama-swap has up right now
 	loaded []string
+	// seconds of audio each voice model makes per second, from its last answers
+	speed map[string]float64
 
 	kwsMu   sync.Mutex
 	spotter *speech.Spotter
@@ -93,6 +95,7 @@ func New(cfg *config.Config) (*Daemon, error) {
 		tools:      tools.New(cfg.Tools.WebSearch, cfg.Tools.NotesMCP, cfg.Tools.NotesLibrary),
 		state:      Idle,
 		clients:    map[*client]bool{},
+		speed:      map[string]float64{},
 	}
 
 	st := config.LoadState()
@@ -497,7 +500,20 @@ func (d *Daemon) speak(ctx context.Context, ch *config.Character, text, lang str
 			src <- chunk
 		}
 	}()
-	err = d.audio.PlayStream(ctx, src, stream.Rate, speechLength(text), func(v float64) { d.level(v, "tts") })
+	d.mu.Lock()
+	known := d.speed[ch.Voice.Model]
+	d.mu.Unlock()
+	speed, err := d.audio.PlayStream(ctx, src, stream.Rate, speechLength(text), known, func(v float64) { d.level(v, "tts") })
+	// the voice's speed for next time, smoothed: the first answer after a
+	// load is the slowest
+	if speed > 0 {
+		d.mu.Lock()
+		if known > 0 {
+			speed = (known + speed) / 2
+		}
+		d.speed[ch.Voice.Model] = speed
+		d.mu.Unlock()
+	}
 	d.level(0, "tts")
 	if ctx.Err() != nil {
 		return
