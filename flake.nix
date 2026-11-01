@@ -10,22 +10,11 @@
     disko.url = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
     zapret-discord-youtube.url = "github:kartavkun/zapret-discord-youtube";
-    better-swallow.url = "github:afishhh/better-swallow";
     lazygit.url = "github:jesseduffield/lazygit";
 
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
-    dwm.url = "github:Luvrok/dwm";
-    dwm.flake = false;
-    st.url = "github:Luvrok/st";
-    st.flake = false;
-    dwmblocks.url = "github:Luvrok/dwmblocks-async";
-    dwmblocks.flake = false;
-    dmenu.url = "github:Luvrok/dmenu";
-    dmenu.flake = false;
-    slock.url = "github:Luvrok/slock";
-    slock.flake = false;
     textfoxy.url = "github:Luvrok/textfoxy";
     voidsddm.url = "github:Luvrok/VoidSDDM";
     voidsddm.flake = false;
@@ -50,12 +39,7 @@
     rutracker-cf-proxy.url = "git+https://github.com/rofl3228/rutracker-cf-proxy?shallow=1";
     rutracker-cf-proxy.flake = false;
 
-    picom-pijulius.url = "github:pijulius/picom";
-    picom-pijulius.flake = false;
 
-    # nixpkgs lags behind, pinned to a commit so `nix flake update` leaves it
-    llama-cpp.url = "github:ggml-org/llama.cpp/3bb63cbcbfb62056c84fe9e521b0f3d756d29c32";
-    llama-cpp.flake = false;
   };
 
   outputs =
@@ -93,7 +77,7 @@
             };
             extraSpecialArgs = {
               inherit username inputs system;
-              inherit (config) videoDrivers dpi fontSize;
+              inherit (config) videoDrivers fontSize;
               pkgs-pinned = import nixpkgs-pinned { inherit system; };
             };
           };
@@ -133,11 +117,7 @@
           (
             { pkgs, ... }:
             {
-              # Issue: kernel panic "BUG at mm/vmalloc.c:3167" occurring ~once a week since last year, sometimes more often.
-              # Context: AMD + amdgpu with dual-monitor setup (both 120 Hz); may be related (see forum thread).
-              # Best solution yet: pin the Linux 6.12 kernel.
-              # Ref: https://bbs.archlinux.org/viewtopic.php?id=306587
-              boot.kernelPackages = pkgs.linuxPackages_6_12;
+              boot.kernelPackages = pkgs.linuxPackages_latest;
             }
           )
         ];
@@ -222,28 +202,6 @@
             };
           }
           ./hosts/jedha
-        ];
-      };
-
-      devShells.${system}.default = pkgs.mkShell {
-        buildInputs = with pkgs; [
-          stdenv.cc
-          gnumake
-          libXcursor
-          libX11
-          libXinerama
-          libXft
-          libxcb
-          xcbutil
-          freetype
-          fontconfig
-          pkg-config
-          yajl
-          libXres
-          imlib2
-          libxrandr
-          libxcrypt
-          libxext
         ];
       };
     };

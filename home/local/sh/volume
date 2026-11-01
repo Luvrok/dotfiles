@@ -27,14 +27,12 @@ case "$1" in
             wpctl set-mute "$SINK" 0
             wpctl set-volume "$SINK" ${STEP}+
             send_notification
-            pkill -RTMIN+4 dwmblocks
         fi
         ;;
     down)
         wpctl set-mute "$SINK" 0
         wpctl set-volume "$SINK" ${STEP}-
         send_notification
-        pkill -RTMIN+4 dwmblocks
         ;;
     mute)
         wpctl set-mute "$SINK" toggle
@@ -43,7 +41,6 @@ case "$1" in
         else
             send_notification
         fi
-        pkill -RTMIN+4 dwmblocks
         ;;
     *)
         echo "Usage: $0 {up|down|mute}" >&2

@@ -14,12 +14,12 @@
       "/home/tunneluser/.ssh".d = {
         mode = "700";
         user = "tunneluser";
-        group = "tunneluser";
+        group = "users";
       };
       "/home/tunneluser/.ssh/id_ed25519".f = {
         mode = "600";
         user = "tunneluser";
-        group = "tunneluser";
+        group = "users";
       };
     };
   };
@@ -37,6 +37,9 @@
       "reconnect"
       "ServerAliveInterval=15"
       "ServerAliveCountMax=3"
+      # wait-online is off, an early access comes before wifi: ssh retries
+      # once a second for a minute instead of failing the mount at once
+      "ConnectionAttempts=60"
       "noauto"
     ];
   };
@@ -54,6 +57,9 @@
       "reconnect"
       "ServerAliveInterval=15"
       "ServerAliveCountMax=3"
+      # wait-online is off, an early access comes before wifi: ssh retries
+      # once a second for a minute instead of failing the mount at once
+      "ConnectionAttempts=60"
       "noauto"
     ];
   };
@@ -71,6 +77,9 @@
       "reconnect"
       "ServerAliveInterval=15"
       "ServerAliveCountMax=3"
+      # wait-online is off, an early access comes before wifi: ssh retries
+      # once a second for a minute instead of failing the mount at once
+      "ConnectionAttempts=60"
       "noauto"
     ];
   };
@@ -79,9 +88,17 @@
     description = "Persistent SSH tunnel to Jedha";
     wantedBy = [ "multi-user.target" ];
 
+    # not needed at boot: wait for a route to jedha (wifi comes up late,
+    # wait-online is off), quietly, instead of failing every 10 s
+    path = [ pkgs.iproute2 ];
+    preStart = ''
+      until ip route get 192.168.0.217 >/dev/null 2>&1; do sleep 2; done
+    '';
+
     serviceConfig = {
       User = "tunneluser";
       Type = "simple";
+      TimeoutStartSec = "infinity";
 
       Restart = "on-failure";
       RestartSec = 10;

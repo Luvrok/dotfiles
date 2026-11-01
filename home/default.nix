@@ -2,7 +2,6 @@
   pkgs,
   username,
   fontSize,
-  config,
   ...
 }:
 
@@ -10,7 +9,6 @@
   programs.home-manager.enable = true;
 
   imports = [
-    ./picom.nix
     ./packages.nix
     ./services
     ./programs
@@ -20,59 +18,12 @@
   home.username = "${username}";
   home.homeDirectory = "/home/${username}";
 
-  xdg.configFile."greenclip.toml".text = ''
-    [greenclip]
-    blacklisted_applications = []
-    enable_image_support = true
-    history_file = "/home/${username}/.cache/greenclip.history"
-    image_cache_directory = "/tmp/greenclip"
-    max_history_length = 200
-    max_selection_size_bytes = 0
-    trim_space_from_selection = true
-    use_primary_selection_as_input = false
-    static_history = [""]
-  '';
-
   home.file.".local/share/v2rayN/bin/xray/xray".source = "${pkgs.xray}/bin/xray";
   home.file.".local/share/v2rayN/bin/sing_box/sing-box".source = "${pkgs.sing-box}/bin/sing-box";
 
   home.file.".Xresources" = {
     executable = true;
     text = ''
-      ! normal
-      st.normbgcolor:      #000000
-      st.normbordercolor:  #3c3836
-      st.normfgcolor:      #ebdbb2
-
-      ! selected
-      st.selfgcolor:       #fbf1c7
-      st.selbordercolor:   #d65d0e
-      st.selbgcolor:       #000000
-
-      dwm.normbordercolor: #3c3836
-      dwm.normbgcolor: #171717
-      dwm.normfgcolor: #ebdbb2
-      dwm.selbordercolor: #d65d0e
-      dwm.selbgcolor: #d65d0e
-      dwm.selfgcolor: #fbf1c7
-
-      font: JetBrainsMonoNL Nerd Font:size=11
-
-      ! normal
-      normfgcolor:        #ebdbb2
-      normbgcolor:        #171717
-
-      ! selected
-      selfgcolor:         #fbf1c7
-      selbgcolor:         #d65d0e
-
-      ! out
-      outfgcolor:         #ebdbb2
-      outbgcolor:         #171717
-
-      ! border
-      selbordercolor:     #d65d0e
-
       Xcursor.theme: Vanilla-DMZ
       Xcursor.size: 32
 
@@ -114,11 +65,6 @@
       ./programs/rofi/font/font-dpi-low.rasi
     else
       ./programs/rofi/font/font-dpi-high.rasi;
-
-  home.file.".Xmodmap".text = ''
-    keycode  37 = Control_L NoSymbol Control_L
-    keycode  50 = Shift_L NoSymbol Shift_L
-  '';
 
   home.file.".config/.asoundrc".text = ''
     defaults.pcm.card 1

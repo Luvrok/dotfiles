@@ -1,17 +1,10 @@
 # Громкость для бара.
-#   db-volume            — вывести статус
-#   db-volume up | down  — ±2% (если звук не выключен)
-#   db-volume mute       — выключить/включить звук
-# В dwmblocks действие приходит через BLOCK_BUTTON (4/5 — колесо, 2 — средняя кнопка).
+#   bar-volume            — вывести статус
+#   bar-volume up | down  — ±2% (если звук не выключен)
+#   bar-volume mute       — выключить/включить звук
 
 SINK='@DEFAULT_AUDIO_SINK@'
 STEP=2
-
-# Обновить блок в баре сразу: eww в i3, dwmblocks в dwm (что не запущено — молча пропустится)
-refresh() {
-  eww poll volume >/dev/null 2>&1 || true
-  pkill -RTMIN+4 dwmblocks 2>/dev/null || true
-}
 
 getvol() {
   wpctl get-volume "$SINK" | awk '{ print int($2 * 100 + 0.5) }'
@@ -22,11 +15,6 @@ ismuted() {
 }
 
 action="${1:-}"
-case "${BLOCK_BUTTON:-}" in
-  4) action=up ;;
-  5) action=down ;;
-  2) action=mute ;;
-esac
 
 case "$action" in
   up | down)
@@ -42,10 +30,6 @@ case "$action" in
     wpctl set-mute "$SINK" toggle
     ;;
 esac
-
-if [ -n "$action" ]; then
-  refresh
-fi
 
 if ismuted; then
   echo ""

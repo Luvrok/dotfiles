@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   inputs,
   username,
@@ -17,6 +18,9 @@
     ./packages.nix
     ./network.nix
   ];
+
+  # picks the gpu driver (nvidia, amdgpu), x isn't on, xwayland doesn't need it
+  services.xserver.videoDrivers = config.videoDrivers;
 
   time.timeZone = "Europe/Moscow";
 
@@ -116,10 +120,6 @@
     throne = {
       enable = true;
       tunMode.enable = true;
-    };
-    slock = {
-      enable = false;
-      package = pkgs.slock;
     };
     nix-ld.enable = true;
     steam.enable = true;

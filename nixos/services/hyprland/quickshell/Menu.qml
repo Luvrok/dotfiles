@@ -4,8 +4,8 @@ import Quickshell.Wayland
 import Quickshell.Hyprland
 import qs.widgets
 
-// rofi -dmenu in quickshell, drawn like the eww wifi menu
-// (home/programs/eww/wifi-menu) out of the parts in widgets/: the head, a
+// rofi -dmenu in quickshell, built
+// out of the parts in widgets/: the head, a
 // text line, the rows and the keys. it sits under the bar on the right,
 // hyprland slides it in from the right edge and dims the screen around it
 // (layer rule for "menu"). a menu in menus/ sets it up and calls show(rows)

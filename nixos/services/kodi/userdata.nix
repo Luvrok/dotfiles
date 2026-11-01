@@ -14,18 +14,93 @@
 let
   datadir = config.programs.kodi.datadir;
 
-  # iptv simple's lists, iptv-org's free channels: tv -> channels, by group.
-  # an instance per list, its settings in kodi after the first time
-  channels = {
-    "Russia" = "https://iptv-org.github.io/iptv/countries/ru.m3u";
-    "News" = "https://iptv-org.github.io/iptv/categories/news.m3u";
-  };
-  instance = name: ''
+  # the tv channels: one m3u of every list below, made by ./channels.py
+  # (kodi-channels.timer, at login and once a day). nothing left out, a list
+  # a group; a link that doesn't open gets "✗ " before its name. fixes: a
+  # channel's link by its name, where a list's is gone (channel one: its
+  # player on 1tv.ru, e= is when the link ends and the server checks only
+  # that, 2000000000 is 2033; russia 24: smotrim like russia 1). channel
+  # one is dash, inputstream.adaptive's (./addons.nix). kodi goes
+  # straight, from a russian ip: foreign channels are often geo-blocked
+  freeTv = country: "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_${country}.m3u8";
+  iptvOrg = path: "https://iptv-org.github.io/iptv/${path}.m3u";
+  channelsConfig = pkgs.writeText "kodi-channels.json" (
+    builtins.toJSON {
+      # a group: its lists. a country: iptv-org's and free-tv's (where it
+      # has one). the west, australia and new zealand, east asia, argentina,
+      # russia. then the
+      # topics across countries
+      lists =
+        let
+          country = code: freeTvName: [ (iptvOrg "countries/${code}") ] ++ lib.optional (freeTvName != null) (freeTv freeTvName);
+        in
+        {
+          "Russia" = country "ru" "russia";
+          "UK" = country "uk" "uk";
+          "USA" = country "us" "usa";
+          "Canada" = country "ca" "canada";
+          "Australia" = country "au" "australia";
+          "New Zealand" = country "nz" null;
+          "Ireland" = country "ie" "ireland";
+          "Germany" = country "de" "germany";
+          "Austria" = country "at" "austria";
+          "Switzerland" = country "ch" "switzerland";
+          "France" = country "fr" "france";
+          "Belgium" = country "be" "belgium";
+          "Netherlands" = country "nl" "netherlands";
+          "Luxembourg" = country "lu" "luxembourg";
+          "Italy" = country "it" "italy";
+          "Spain" = country "es" "spain";
+          "Portugal" = country "pt" "portugal";
+          "Denmark" = country "dk" "denmark";
+          "Sweden" = country "se" "sweden";
+          "Norway" = country "no" "norway";
+          "Finland" = country "fi" "finland";
+          "Iceland" = country "is" "iceland";
+          "Japan" = country "jp" "japan";
+          "South Korea" = country "kr" "korea";
+          "North Korea" = country "kp" "north_korea";
+          "China" = country "cn" "china";
+          "Argentina" = country "ar" "argentina";
+          "Movies" = [
+            (iptvOrg "categories/movies")
+            (freeTv "zz_movies")
+          ];
+          "News" = [
+            (iptvOrg "categories/news")
+            (freeTv "zz_news_en")
+          ];
+        };
+      fixes =
+        let
+          firstChannel = "https://cdn8.1internet.tv/dash-live3/streams/1tv-dvr/1tvdash.mpd?e=2000000000";
+          russia24 = "https://live.smotrim.ru/vgtrk/0/russia24-hd/index.m3u8";
+        in
+        {
+          "Первый канал" = firstChannel;
+          "Channel One" = firstChannel;
+          "Channel One Russia" = firstChannel;
+          "Perviy Kanal" = firstChannel;
+          "Pervyy Kanal" = firstChannel;
+          "Россия-24" = russia24;
+          "Россия 24" = russia24;
+          "Russia 24" = russia24;
+          "Rossiya 24" = russia24;
+        };
+      timeout = 8;
+      workers = 64;
+    }
+  );
+  channelsFile = "${config.xdg.dataHome}/kodi-channels/channels.m3u";
+  # iptv simple reads it again every hour, a new day's check shows
+  instance = ''
     <settings version="2">
-      <setting id="kodi_addon_instance_name">${name}</setting>
+      <setting id="kodi_addon_instance_name">TV</setting>
       <setting id="kodi_addon_instance_enabled">true</setting>
-      <setting id="m3uPathType">1</setting>
-      <setting id="m3uUrl">${channels.${name}}</setting>
+      <setting id="m3uPathType">0</setting>
+      <setting id="m3uPath">${channelsFile}</setting>
+      <setting id="m3uRefreshMode">1</setting>
+      <setting id="m3uRefreshIntervalMins">60</setting>
     </settings>
   '';
 
@@ -47,12 +122,15 @@ let
         "lookandfeel.font" = "JetBrains Mono";
         "filelists.showparentdiritems" = "false";
       };
-      files = builtins.listToAttrs (
-        lib.imap1 (n: name: {
-          name = "userdata/addon_data/pvr.iptvsimple/instance-settings-${toString n}.xml";
-          value = instance name;
-        }) (builtins.attrNames channels)
-      );
+      files."userdata/addon_data/pvr.iptvsimple/instance-settings-1.xml" = instance;
+      # the lists that were an instance each: gone, if kodi has nothing else
+      # in them that was changed
+      gone = map (n: "userdata/addon_data/pvr.iptvsimple/instance-settings-${toString n}.xml") [
+        2
+        3
+        4
+        5
+      ];
     }
   );
 in
@@ -118,5 +196,23 @@ in
     pagemulti_sync = "3";
     max_threads = "10";
     artwork_quality = "2";
+  };
+
+  systemd.user.services.kodi-channels = {
+    Unit.Description = "Kodi's tv channels, checked";
+    Unit.After = [ "network-online.target" ];
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.python3}/bin/python3 ${./channels.py} ${channelsConfig} ${channelsFile}";
+      Nice = 10;
+    };
+  };
+  systemd.user.timers.kodi-channels = {
+    Unit.Description = "Kodi's tv channels, checked once a day";
+    Timer = {
+      OnStartupSec = "1min";
+      OnUnitActiveSec = "1d";
+    };
+    Install.WantedBy = [ "timers.target" ];
   };
 }

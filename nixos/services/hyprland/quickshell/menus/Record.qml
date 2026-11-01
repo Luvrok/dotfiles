@@ -3,7 +3,7 @@ import Quickshell
 import Quickshell.Hyprland
 import qs
 
-// rofi-recording: sound, quality, fps and what to record, then
+// the screen recorder: sound, quality, fps and what to record, then
 // scripts/record starts it. $mod+Shift+r stops it
 Menu {
     id: menu

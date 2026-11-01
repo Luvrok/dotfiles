@@ -1,7 +1,7 @@
 # windows for eww (deflisten), same as eww-i3-windows: every monitor gets the
 # windows of its open tag and a layout symbol. one json line per sway change:
-#   [{"kind":"layout","output":"DP-2","text":"[2]"},
-#    {"kind":"win","output":"DP-2","id":42,"title":"nvim","selected":true}, ...]
+#   [{"kind":"layout","output":"DP-1","text":"[2]"},
+#    {"kind":"win","output":"DP-1","id":42,"title":"nvim","selected":true}, ...]
 # flat list, each bar picks its own by output. selected is the last focused
 # window of that monitor (dwm's m->sel), lit on both monitors.
 # layout like dwm's ltsymbol: 󰓒 tiling, [n] tabbed/stacked with n tabs,

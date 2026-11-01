@@ -1,7 +1,7 @@
 -- hyprland: the twin of nixos/services/sway/config. same tags, binds,
 -- scratchpads and look, done with hyprland's own layouts and dispatchers.
--- animations like picom in i3 (home/picom.nix). the bar, the wallpaper and
--- the menus (the rofi scripts in i3 and sway) are quickshell, its config is
+-- with animations. the bar, the wallpaper and
+-- the menus (the rofi scripts in sway) are quickshell, its config is
 -- `qs -c hyprland`
 
 local mod = "SUPER"
@@ -80,13 +80,13 @@ hl.config({
     },
 })
 
--- animations, the same timings and curves as picom in i3 (speed is in
+-- animations (speed is in
 -- 100 ms). ease out for moves, ease in-out for fade in, linear fade out
 hl.curve("out", { type = "bezier", points = { { 0.33, 1 }, { 0.68, 1 } } })
 hl.curve("inout", { type = "bezier", points = { { 0.4, 0 }, { 0.2, 1 } } })
 hl.curve("linear", { type = "bezier", points = { { 0, 0 }, { 1, 1 } } })
 
--- tag switch: a 6% drift toward the new tag plus a fade, like i3-ws-anim
+-- tag switch: a 6% drift toward the new tag plus a fade
 hl.animation({ leaf = "workspaces", enabled = true, speed = 2.5, bezier = "out", style = "slidefade 6%" })
 -- scratchpad: slides down like a new window, sinks when it hides
 hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 2.5, bezier = "out", style = "slidefadevert top 6%" })
@@ -106,7 +106,7 @@ hl.animation({ leaf = "fadePopupsOut", enabled = true, speed = 0.6, bezier = "li
 -- monocle hides the windows behind the focused one with this fade, switch
 -- at once like sway's tabs. it also fades active/inactive opacity, unused here
 hl.animation({ leaf = "fadeSwitch", enabled = false })
--- border color changes at once, like i3
+-- border color changes at once
 hl.animation({ leaf = "border", enabled = false })
 hl.animation({ leaf = "borderangle", enabled = false })
 
@@ -120,7 +120,7 @@ hl.layer_rule({ match = { namespace = "^menu$" }, animation = "slide right", dim
 -- the menu closed whenever a popup ran out
 hl.layer_rule({ match = { namespace = "^notification$" }, no_anim = true })
 
--- x11 apps (st, nsxiv, dmenu) read colors and fonts from ~/.Xresources, xrdb
+-- xwayland apps (nsxiv) read colors and fonts from ~/.Xresources, xrdb
 -- below. xwayland starts with hyprland and stays
 hl.env("XCURSOR_THEME", "Vanilla-DMZ")
 hl.env("XCURSOR_SIZE", "32")
@@ -133,9 +133,10 @@ hl.env("QT_QPA_PLATFORM", "wayland;xcb")
 ---- monitors ----
 ------------------
 
--- DP-2 is the main one on the right, DP-1 on the left
-hl.monitor({ output = "DP-2", mode = "2560x1440@120", position = "2560x0", scale = 1 })
-hl.monitor({ output = "DP-1", mode = "2560x1440@120", position = "0x0", scale = 1 })
+-- DP-1 is the main one on the right, DP-2 on the left. DP-1 is the first
+-- connector, so the session starts on it: the focus, the cursor, new windows
+hl.monitor({ output = "DP-1", mode = "2560x1440@120", position = "2560x0", scale = 1 })
+hl.monitor({ output = "DP-2", mode = "2560x1440@120", position = "0x0", scale = 1 })
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
 
 ------------------
@@ -148,10 +149,10 @@ hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" 
 -- 10 is pinned too, so the second monitor starts at 11. when a monitor is
 -- unplugged its pins don't count and the other one gets 1..9
 for i = 1, 10 do
-    hl.workspace_rule({ workspace = tostring(i), monitor = "DP-2" })
+    hl.workspace_rule({ workspace = tostring(i), monitor = "DP-1" })
 end
 for i = 11, 19 do
-    hl.workspace_rule({ workspace = tostring(i), monitor = "DP-1" })
+    hl.workspace_rule({ workspace = tostring(i), monitor = "DP-2" })
 end
 hl.workspace_rule({ workspace = "1", default = true })
 hl.workspace_rule({ workspace = "11", default = true })
@@ -377,10 +378,16 @@ local scratchpads = {
     -- types into it over kitty's remote control)
     spnix = "kitty --class spnix --name spnix --title nix -o font_size=8 -o allow_remote_control=socket-only --listen-on unix:@hypr-nix",
 }
-for name, cmd in pairs(scratchpads) do
-    hl.workspace_rule({ workspace = "special:" .. name, on_created_empty = cmd })
+for name in pairs(scratchpads) do
     hl.window_rule({ match = { class = "^" .. name .. "$" }, workspace = "special:" .. name })
 end
+-- a scratchpad's workspace that comes up empty starts its app
+hl.on("workspace.created", function(ws)
+    local cmd = scratchpads[(ws.name or ""):gsub("^special:", "")]
+    if cmd and ws.is_empty then
+        hl.exec_cmd(cmd)
+    end
+end)
 hl.window_rule({
     match = { class = "^(spterm|spdotfiles|rangerterm)$" },
     float = true,
@@ -444,21 +451,21 @@ hl.bind(mod .. " + Print", hl.dsp.exec_cmd(
 -- XF86. volume and brightness go on while the key is held (the keyboard's
 -- repeat rate), on the lock screen too
 local held = { repeating = true, locked = true }
-hl.bind("XF86AudioMute", hl.dsp.exec_cmd("dwm-volume mute"), { locked = true })
+hl.bind("XF86AudioMute", hl.dsp.exec_cmd("volume mute"), { locked = true })
 hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), { locked = true })
-hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("dwm-volume down"), held)
-hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("dwm-volume up"), held)
-hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("dwm-brightness up"), held)
-hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("dwm-brightness down"), held)
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("volume down"), held)
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("volume up"), held)
+hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightness up"), held)
+hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightness down"), held)
 
 -- monitors: the main one runs at 120 Hz next to the second one and at 240 Hz alone
 hl.bind(mod .. " + F7", function()
-    hl.monitor({ output = "DP-1", mode = "2560x1440@120", disabled = false })
-    hl.monitor({ output = "DP-2", mode = "2560x1440@120" })
+    hl.monitor({ output = "DP-2", mode = "2560x1440@120", disabled = false })
+    hl.monitor({ output = "DP-1", mode = "2560x1440@120" })
 end)
 hl.bind(mod .. " + SHIFT + F7", function()
-    hl.monitor({ output = "DP-1", disabled = true })
-    hl.monitor({ output = "DP-2", mode = "2560x1440@240" })
+    hl.monitor({ output = "DP-2", disabled = true })
+    hl.monitor({ output = "DP-1", mode = "2560x1440@240" })
 end)
 
 -- scratchpads: show/hide, start the app if it's not there
@@ -697,8 +704,8 @@ hl.bind(mod .. " + mouse:274", hl.dsp.window.float())
 ---- autostart ----
 -------------------
 
--- what i3 gets from xserver.nix and the user services: x resources,
--- clipboard history, screen off after 5 min unless audio plays, night colors.
+-- x resources for xwayland apps, clipboard history, screen off after 5 min
+-- unless audio plays, night colors.
 -- hyprland-session.target pulls in graphical-session.target, see default.nix
 hl.on("hyprland.start", function()
     hl.exec_cmd("systemctl --user start hyprland-session.target")

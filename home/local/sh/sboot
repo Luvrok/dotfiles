@@ -1,0 +1,3 @@
+#!/bin/sh
+# snix boot on this machine, or on a server: sboot HOST [ADDR]
+exec snix boot "$@"

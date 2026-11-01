@@ -15,10 +15,13 @@ macros:
   llama: llama-server --port ${PORT} --threads 8
   # pi is the only client, so one slot gets the whole context
   chat: ${llama} -np 1
+  # the same on rocm (nixos/services/llama-swap/default.nix): qwen's mtp is
+  # faster there
+  chat-rocm: llama-server-rocm --port ${PORT} --threads 8 -np 1
   sd: sd-server --listen-ip 127.0.0.1 --listen-port ${PORT} --diffusion-fa
   # only 16 of 64 layers keep kv, so 128k in q4_0 is ~2.3 GiB. ngram-mod speeds up re-typed code
   qwen-args: >
-    ${chat}
+    ${chat-rocm}
     -fa on --cache-type-k q4_0 --cache-type-v q4_0
     --spec-type draft-mtp,ngram-mod --spec-draft-n-max 2
     --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0 --presence-penalty 0
@@ -87,13 +90,16 @@ models:
       --ctx-size 65536
     <<: *qwen-filters
 
-  # moe with 4b active, so the experts --fit moves to the cpu cost little speed
+  # a 128k f16 kv cache made --fit push part of each gemma to the cpu: 56 t/s
+  # for the 26b and the 12b alike (llama-bench, empty context: 129 for the
+  # 26b). q8_0 halves it, gemma barely notices
   "gemma-26b":
     description: "Gemma 4 26B-A4B QAT UD-Q4_K_XL. MoE, fast everyday model."
     cmd: |
       ${chat}
       -m ${models}/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf
       --ctx-size 131072
+      -fa on --cache-type-k q8_0 --cache-type-v q8_0
       --temp 1.0 --top-p 0.95 --top-k 64 --min-p 0
     <<: *gemma-filters
 
@@ -103,6 +109,7 @@ models:
       ${chat}
       -m ${models}/gemma-4-12B-it-qat-UD-Q4_K_XL.gguf
       --ctx-size 131072
+      -fa on --cache-type-k q8_0 --cache-type-v q8_0
       --temp 1.0 --top-p 0.95 --top-k 64 --min-p 0
     <<: *gemma-filters
 

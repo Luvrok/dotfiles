@@ -15,6 +15,5 @@
     ./element-desktop.nix
     ./pi
     ./opencode
-    ./eww
   ];
 }

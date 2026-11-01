@@ -34,13 +34,13 @@ with config.programs.rofi.extraConfig;
   }
 
   layout_cmd () {
-    xkb-switch -s us && pkill -RTMIN+1 dwmblocks
+    :
   }
 
-  _clip_in_primary() { xclip; }
-  _clip_in_clipboard() { xclip -selection clipboard; }
-  _clip_out_primary() { xclip -o; }
-  _clip_out_clipboard() { xclip --selection clipboard -o; }
+  _clip_in_primary() { wl-copy --primary; }
+  _clip_in_clipboard() { wl-copy; }
+  _clip_out_primary() { wl-paste --primary; }
+  _clip_out_clipboard() { wl-paste; }
 
   URL_field='url'
   USERNAME_field='user'
@@ -61,9 +61,8 @@ with config.programs.rofi.extraConfig;
   password_length=16
   fix_layout=true
 
-  # sway sets wl-clipboard
-  clipboard_backend=''${ROFI_PASS_CLIPBOARD_BACKEND:-xclip}
-  backend=xdotool
+  clipboard_backend=wl-clipboard
+  backend=wtype
 
   # Custom Keybindings
   autotype="Control+a"

@@ -17,5 +17,16 @@
     };
 
     tmp.cleanOnBoot = lib.mkDefault true;
+
+    # no boot text on the console: the greeter is on tty1, its lines show
+    # when weston goes away at login. errors are in journalctl
+    consoleLogLevel = 3;
+    kernelParams = [
+      "quiet"
+      "systemd.show_status=false"
+      "rd.systemd.show_status=false"
+      "udev.log_level=3"
+      "rd.udev.log_level=3"
+    ];
   };
 }

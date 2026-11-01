@@ -1,7 +1,7 @@
 # tags of all monitors for eww (deflisten), same as eww-i3-workspaces. every
 # monitor has its own 1..9: the main one is workspaces 1..9, the next ones left
 # to right 11..19, 21..29 (see sway-ws). one json line per sway change:
-#   [{"output":"DP-2","num":1,"label":"scl","focused":true,"visible":true,
+#   [{"output":"DP-1","num":1,"label":"scl","focused":true,"visible":true,
 #     "urgent":false,"occupied":true}, ...]
 # output: the monitor whose bar shows the tag
 # visible: tag is open on that monitor, focused: and the monitor has focus

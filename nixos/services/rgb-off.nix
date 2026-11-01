@@ -1,11 +1,16 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.services.rgb-off;
-  openrgb = lib.getExe' config.services.hardware.openrgb.package "openrgb";
+  openrgb = lib.getExe' pkgs.openrgb "openrgb";
 in
 {
   options.services.rgb-off = {
-    enable = lib.mkEnableOption "turning off rgb at boot with openrgb";
+    enable = lib.mkEnableOption "turning off rgb after boot with openrgb";
 
     devices = lib.mkOption {
       type = lib.types.listOf lib.types.str;
@@ -21,24 +26,31 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # keep the module for udev rules and i2c modules
-    services.hardware.openrgb = {
-      enable = true;
-      motherboard = lib.mkDefault "amd";
-    };
-
-    # server state breaks mystic light writes, so no server
-    systemd.services.openrgb.enable = false;
+    # not services.hardware.openrgb: its udev rules (~5700 lines, 70% of all
+    # rules) slowed udev at boot, the greeter's keyboard came seconds late.
+    # they only let a user run openrgb without root, rgb-off runs as root
+    # and openrgb by hand is with sudo. what's left of the module: the
+    # package and the i2c modules for the ram sticks (smbus on amd)
+    environment.systemPackages = [ pkgs.openrgb ];
+    boot.kernelModules = [
+      "i2c-dev"
+      "i2c-piix4"
+    ];
 
     systemd.services.rgb-off = {
       description = "turn off rgb";
-      wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
         # same config dir as the sudo tests, zone sizes live there
         Environment = "HOME=/root";
         ExecStart = "${openrgb} --noautoconnect ${lib.concatStringsSep " " cfg.devices}";
       };
+    };
+
+    # nothing waits for it: 30 s after boot, off the boot's way
+    systemd.timers.rgb-off = {
+      wantedBy = [ "timers.target" ];
+      timerConfig.OnBootSec = "30s";
     };
   };
 }

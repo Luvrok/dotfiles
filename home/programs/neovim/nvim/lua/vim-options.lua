@@ -45,10 +45,11 @@ vim.wo.relativenumber = true
 vim.opt.hlsearch = false
 vim.opt.incsearch = false
 
--- i3 scripts have no shebang (writeShellApplication adds it), without this
+-- sway scripts have no shebang (writeShellApplication adds it), without this
 -- they open as conf: no bash highlighting, no bashls, no shellcheck
 vim.filetype.add({
 	pattern = {
-		[".*/dotfiles/home/scripts/.*"] = "bash",
+		[".*/dotfiles/nixos/services/sway/scripts/.*"] = "bash",
+		[".*/dotfiles/nixos/services/hyprland/quickshell/scripts/.*"] = "bash",
 	},
 })

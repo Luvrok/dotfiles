@@ -6,9 +6,10 @@
       TERM=xterm ${pkgs.openssh}/bin/ssh "$@"
     '')
     (pkgs.writeShellScriptBin "ocr" ''
-      flameshot gui --raw --accept-on-select \
+      g=$(${pkgs.slurp}/bin/slurp) || exit 0
+      ${pkgs.grim}/bin/grim -g "$g" - \
         | tesseract -l eng+rus stdin stdout 2>/dev/null \
-        | xclip -selection clipboard
+        | ${pkgs.wl-clipboard}/bin/wl-copy
       notify-send "OCR" "Text copied"
     '')
   ];

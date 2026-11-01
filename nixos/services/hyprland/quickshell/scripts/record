@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# rofi-recording for wayland, Record.qml asks the questions and runs this.
+# the screen recorder, Record.qml asks the questions and runs this.
 # wf-recorder grabs and encodes the video (x11grab is x11 only), ffmpeg adds
 # the sound, it can mix the mic and the output, wf-recorder takes one source.
 # wf-recorder records one monitor, fullscreen is the focused one

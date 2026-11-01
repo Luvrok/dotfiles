@@ -82,7 +82,7 @@ PanelWindow {
         if (sel.width < 2 || sel.height < 2)
             return;
         commitText();
-        // flameshot's folder in i3 (home/services/flameshot.nix)
+        // the screenshots folder
         const shots = `${Quickshell.env("HOME")}/HOME/wizzard/media/screenshot`;
         const run = `${Quickshell.env("XDG_RUNTIME_DIR")}/hypr-shot`;
         const file = how === "save" ? `${shots}/${stamp()}.png` : how === "ask" ? `${run}/${stamp()}.png` : `${run}/shot.png`;

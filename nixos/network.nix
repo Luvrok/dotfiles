@@ -39,7 +39,7 @@ in
     usePredictableInterfaceNames = true;
     networkmanager.enable = false;
 
-    # the servers by name (/etc/hosts): ssh root@jedha, sapply-remote, the
+    # the servers by name (/etc/hosts): ssh root@jedha, sapply HOST, the
     # hyprland nix menu. jedha by wifi like jedha-tunnel.nix, its eth is .216
     hosts = {
       "192.168.0.217" = [ "jedha" ];

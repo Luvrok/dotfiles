@@ -16,7 +16,7 @@ movie pipe (radarr/sonarr, см. `../arr/movie pipe.md`), tv через iptv sim
 | `default.nix` | модуль: пакет, источники библиотеки, импорт `userdata.nix` |
 | `package.nix` | kodi из своего nixpkgs (`nixpkgs-kodi`, запинен) с `kodi-keys.patch` + аддоны, `addonIds`, необязательная обёртка с xray-прокси |
 | `kodi-keys.patch` | клавиши на ru-раскладке и `shift+буква` через keymap |
-| `addons.nix` | сами аддоны: majan, tmdb helper, moviepipe, iptv simple, youtube |
+| `addons.nix` | сами аддоны: majan, tmdb helper, moviepipe, iptv simple (каналы Free-TV), inputstream.adaptive, youtube |
 | `userdata.nix` | всё, что kodi читает в `userdata`, и активация home-manager |
 | `userdata.py` | `enable` / `defaults`: включить аддоны и первые настройки |
 | `majan.nix` | сборка скина: `buildKodiAddon` + вызов патчера |

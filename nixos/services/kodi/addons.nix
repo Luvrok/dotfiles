@@ -16,6 +16,7 @@
   signals,
   xdg-utils,
   pvr-iptvsimple,
+  inputstream-adaptive,
   youtube,
 }:
 
@@ -125,6 +126,8 @@ in
   tmdbhelper
   moviepipe
   pvr-iptvsimple
+  # dash and the like for iptv simple: channel one's stream is dash
+  inputstream-adaptive
   # trailers: the films' trailers are its plugin:// links (the scrapers')
   youtube
 ]

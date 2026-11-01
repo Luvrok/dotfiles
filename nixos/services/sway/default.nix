@@ -1,8 +1,7 @@
-# sway: the wayland twin of the i3 session, same tags, binds and bar, no
+# sway: the twin of the hyprland session, same tags and binds, no
 # animations (swayfx has them, but its effect buffers take ~150 mb of vram
-# on two 1440p monitors). sddm lists it next to i3 (its greeter stays on x11, it starts wayland
-# sessions all the same). i3 stays the default session. barnard only, its
-# env.nix imports this
+# on two 1440p monitors). sddm lists it next to hyprland, hyprland is the
+# default session. barnard only, its env.nix imports this
 { lib, pkgs, ... }:
 
 let
@@ -19,7 +18,7 @@ in
   programs.sway = {
     enable = true;
 
-    # no tab bars, like the i3 patch in nixos/overlays: the bar has the titles.
+    # no tab bars: the bar has the titles.
     # 0 is what hide_lone_tab uses for a lone tab, here it's every tab
     package = pkgs.sway.override {
       sway-unwrapped = pkgs.sway-unwrapped.overrideAttrs (old: {
@@ -38,18 +37,16 @@ in
       export NIXOS_OZONE_WL=1
       # qt5 apps without the wayland plugin fall back to x11
       export QT_QPA_PLATFORM="wayland;xcb"
-      # rofi-pass copies with wl-copy (rofi-pass.nix reads it)
-      export ROFI_PASS_CLIPBOARD_BACKEND=wl-clipboard
     '';
 
-    # wayland stand-ins for what i3 uses, started from sway config
+    # started from sway config
     extraPackages = with pkgs; [
-      swayidle # xidlehook
-      sway-audio-idle-inhibit # xidlehook --not-when-audio
-      gammastep # redshift
-      wl-clipboard # xclip
-      cliphist # greenclip
-      grim # flameshot
+      swayidle
+      sway-audio-idle-inhibit
+      gammastep
+      wl-clipboard
+      cliphist
+      grim
       slurp
     ];
   };
@@ -60,7 +57,7 @@ in
   environment.etc."sway/eww".source = ./eww;
 
   # swaymsg comes with sway above, rofi and tesseract from PATH like in
-  # rofi-greenclip and ocr
+  # sway-clip and ocr
   environment.systemPackages = with pkgs; [
     (script "sway-ws" [ jq coreutils ])
     (script "sway-tile" [ jq coreutils ])
@@ -71,10 +68,14 @@ in
     (script "eww-sway-launch" [ eww jq coreutils ])
     (script "eww-sway-workspaces" [ jq ])
     (script "eww-sway-windows" [ jq ])
+    (script "bar-volume" [ wireplumber gawk ])
+    (script "bar-memory" [ procps gawk ])
+    (script "bar-wifi" [ iwd iw iproute2 gawk coreutils ])
+    (script "bar-date" [ coreutils ])
   ];
 
   # the module sets the sway portals: gtk, wlr for screen sharing and
-  # screenshots. the file picker stays yazi like in i3 (xdg module)
+  # screenshots. the file picker stays yazi (xdg module)
   xdg.portal.config.sway."org.freedesktop.impl.portal.FileChooser" = [ "termfilechooser" ];
 
   # gtk on wayland takes theme, icons, font and cursor from dconf through the
@@ -95,8 +96,4 @@ in
       };
     }
   ];
-
-  # the sway module turns it on, then i3 starts xdg autostart files too
-  # (blueman-applet and such). i3 never ran them, sway doesn't either
-  services.xserver.desktopManager.runXdgAutostartIfNone = false;
 }

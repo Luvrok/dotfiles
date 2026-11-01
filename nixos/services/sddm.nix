@@ -16,7 +16,7 @@ in
 
   services.displayManager.sddm = {
     enable = true;
-    wayland.enable = false;
+    wayland.enable = true;
     package = pkgs.kdePackages.sddm;
     theme = "VoidSDDM";
     extraPackages = with pkgs.kdePackages; [ qtsvg ];

@@ -1,10 +1,8 @@
 #!/bin/sh
-
-if nh os switch -u "$HOME/HOME/infra/dotfiles#$USER"
-then
-    notify-send -r 9991 "nixos switch + flake update OK"
-    pw-play "$HOME/.local/media/soundeffect/minecraft-sheep2.mp3" &
-else
-    notify-send -r 9991 "nixos switch FAILED"
-    pw-play "$HOME/.local/media/soundeffect/minecraft-cave.mp3" &
+# flake update, then switch. -b: then boot, reboot after (systemd or
+# kernel in the update). a server: supdate [-b] HOST [ADDR]
+if [ "${1:-}" = -b ]; then
+    shift
+    exec snix update-boot "$@"
 fi
+exec snix update "$@"
