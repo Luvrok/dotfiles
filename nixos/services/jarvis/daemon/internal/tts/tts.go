@@ -57,11 +57,11 @@ func (s *Stream) Err() error {
 	return s.err
 }
 
-// Stream asks for the speech as a stream: it returns once the server
-// answers, the samples follow in C as they're generated
-func (c *Client) Stream(ctx context.Context, ch *config.Character, text, lang string) (*Stream, error) {
+// Stream asks model for the speech as a stream: it returns once the
+// server answers, the samples follow in C as they're generated
+func (c *Client) Stream(ctx context.Context, model string, ch *config.Character, text, lang string) (*Stream, error) {
 	payload := map[string]any{
-		"model":           ch.Voice.Model,
+		"model":           model,
 		"input":           text,
 		"voice":           Voice(ch),
 		"response_format": "pcm",

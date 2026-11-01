@@ -70,7 +70,11 @@ let
       model = "jarvis";
       max_tokens = 200;
     };
-    tts.url = cfg.llamaSwapUrl;
+    tts = {
+      url = cfg.llamaSwapUrl;
+      # the clones' quicker model, "" while it isn't downloaded
+      small_model = if models.tts-base-small != null then "jarvis-tts-small" else "";
+    };
     character = {
       default = cfg.character;
       dir = "/etc/jarvis/characters";
@@ -144,6 +148,12 @@ let
         name = "tts/base";
         path = models.tts-base;
       }
+    ]
+    ++ lib.optional (models.tts-base-small != null) {
+      name = "tts/base-small";
+      path = models.tts-base-small;
+    }
+    ++ [
       {
         name = "tts/kurisu";
         path = models.tts-kurisu;
@@ -192,6 +202,15 @@ let
         "kurisu"
         "amadeus"
       ];
+    };
+  }
+  // lib.optionalAttrs (models.tts-base-small != null) {
+    # the 0.6b base, the same voice library as base
+    small = {
+      port = 8883;
+      path = models.tts-base-small;
+      type = "base";
+      speakers = [ ];
     };
   };
 

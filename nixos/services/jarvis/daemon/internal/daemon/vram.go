@@ -15,6 +15,9 @@ import (
 // jarvis' models in llama-swap: the llm and every character's voice
 func (d *Daemon) ownModels() []string {
 	out := []string{d.cfg.LLM.Model}
+	if d.cfg.TTS.SmallModel != "" {
+		out = append(out, d.cfg.TTS.SmallModel)
+	}
 	for _, id := range d.ids {
 		if m := d.chars[id].Voice.Model; m != "" && !slices.Contains(out, m) {
 			out = append(out, m)
@@ -120,11 +123,15 @@ func (d *Daemon) warm(ch string) {
 			}
 		}()
 	}
-	if c != nil && c.Voice.Model != "" && !d.isLoaded(c.Voice.Model) {
+	model := ""
+	if c != nil {
+		model = d.voiceModel(c)
+	}
+	if model != "" && !d.isLoaded(model) {
 		go func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 			defer cancel()
-			s, err := d.tts.Stream(ctx, c, "Hello.", c.Lang)
+			s, err := d.tts.Stream(ctx, model, c, "Hello.", c.Lang)
 			if err != nil {
 				log.Printf("warm tts: %v", err)
 				return

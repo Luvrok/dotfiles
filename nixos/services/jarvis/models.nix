@@ -80,6 +80,10 @@ in
   # qwen3-tts: the base model clones a clip, the kurisu finetune has its
   # speakers built in
   tts-base = hf "tts-base";
+  # the 0.6b base, for the cloned voices when they should be quicker than
+  # real time (jarvis clones small). null until update-models filled it
+  tts-base-small =
+    if lock ? tts-base-small && lock.tts-base-small.files != { } then hf "tts-base-small" else null;
   tts-kurisu = hf "tts-kurisu";
 
   # piper voices for the build-time clips (refs.nix), .onnx and .onnx.json

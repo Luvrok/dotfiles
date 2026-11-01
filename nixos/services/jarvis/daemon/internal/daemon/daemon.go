@@ -71,6 +71,8 @@ type Daemon struct {
 	loaded []string
 	// seconds of audio each voice model makes per second, from its last answers
 	speed map[string]float64
+	// the cloned voices on cfg.TTS.SmallModel
+	small bool
 
 	kwsMu   sync.Mutex
 	spotter *speech.Spotter
@@ -110,6 +112,7 @@ func New(cfg *config.Config) (*Daemon, error) {
 	if st.Source != "" {
 		d.source = st.Source
 	}
+	d.small = st.Clones == "small" && cfg.TTS.SmallModel != ""
 
 	if d.audio, err = audio.New(); err != nil {
 		return nil, err
@@ -460,7 +463,8 @@ func (d *Daemon) speak(ctx context.Context, ch *config.Character, text, lang str
 	}
 
 	d.setState(Voicing)
-	stream, err := d.tts.Stream(ctx, ch, text, lang)
+	model := d.voiceModel(ch)
+	stream, err := d.tts.Stream(ctx, model, ch, text, lang)
 	// the first audio: the notification loses its "voicing…"
 	var first []float32
 	if err == nil {
@@ -501,7 +505,7 @@ func (d *Daemon) speak(ctx context.Context, ch *config.Character, text, lang str
 		}
 	}()
 	d.mu.Lock()
-	known := d.speed[ch.Voice.Model]
+	known := d.speed[model]
 	d.mu.Unlock()
 	speed, err := d.audio.PlayStream(ctx, src, stream.Rate, speechLength(text), known, func(v float64) { d.level(v, "tts") })
 	// the voice's speed for next time, smoothed: the first answer after a
@@ -511,7 +515,7 @@ func (d *Daemon) speak(ctx context.Context, ch *config.Character, text, lang str
 		if known > 0 {
 			speed = (known + speed) / 2
 		}
-		d.speed[ch.Voice.Model] = speed
+		d.speed[model] = speed
 		d.mu.Unlock()
 	}
 	d.level(0, "tts")
@@ -626,9 +630,43 @@ func (d *Daemon) setSource(id string) {
 	d.broadcast(d.sourcesMsg())
 }
 
+// voiceModel: the llama-swap model a character speaks with. the cloned
+// ones go to the small model while that's picked
+func (d *Daemon) voiceModel(ch *config.Character) string {
+	d.mu.Lock()
+	small := d.small
+	d.mu.Unlock()
+	if small && ch.Voice.Speaker == "" && d.cfg.TTS.SmallModel != "" {
+		return d.cfg.TTS.SmallModel
+	}
+	return ch.Voice.Model
+}
+
+// setClones: "small" or "big", the model of the cloned voices
+func (d *Daemon) setClones(size string) {
+	d.mu.Lock()
+	d.small = size == "small" && d.cfg.TTS.SmallModel != ""
+	d.mu.Unlock()
+	d.saveState()
+	d.broadcast(d.clonesMsg())
+}
+
+func (d *Daemon) clonesMsg() map[string]any {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	size := "big"
+	if d.small {
+		size = "small"
+	}
+	return map[string]any{"type": "clones", "size": size, "small_model": d.cfg.TTS.SmallModel}
+}
+
 func (d *Daemon) saveState() {
 	d.mu.Lock()
 	s := config.State{Character: d.char.ID, Source: d.source}
+	if d.small {
+		s.Clones = "small"
+	}
 	d.mu.Unlock()
 	if err := config.SaveState(s); err != nil {
 		log.Printf("state: %v", err)
@@ -650,7 +688,7 @@ func (d *Daemon) check() []string {
 		}
 		want := []string{d.cfg.LLM.Model}
 		for _, id := range d.ids {
-			want = append(want, d.chars[id].Voice.Model)
+			want = append(want, d.voiceModel(d.chars[id]))
 		}
 		seen := map[string]bool{}
 		for _, m := range want {

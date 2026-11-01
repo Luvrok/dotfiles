@@ -207,6 +207,17 @@ models:
     useModelName: qwen3-tts
     ttl: 600
 
+  # the 0.6b base: the cloned voices quicker than real time (jarvis clones
+  # small), a bit less like the original
+  "jarvis-tts-small":
+    description: "Qwen3-TTS 12Hz 0.6B Base, on GPU. Jarvis' cloned voices, quicker."
+    cmd: jarvis-tts small
+    cmdStop: systemctl stop jarvis-tts-small.service
+    proxy: http://127.0.0.1:8883
+    checkEndpoint: /health
+    useModelName: qwen3-tts
+    ttl: 600
+
   "jarvis-tts-kurisu":
     description: "Qwen3-TTS 12Hz 1.7B Makise Kurisu finetune, on GPU. Kurisu and Amadeus."
     cmd: jarvis-tts kurisu
@@ -264,6 +275,7 @@ routing:
           exclusive: false
           members:
             - jarvis-tts-base
+            - jarvis-tts-small
             - jarvis-tts-kurisu
         "embed":
           swap: false

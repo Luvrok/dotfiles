@@ -22,6 +22,8 @@ type Config struct {
 	} `toml:"llm"`
 	TTS struct {
 		URL string `toml:"url"`
+		// a quicker model for the cloned voices, "" for none
+		SmallModel string `toml:"small_model"`
 	} `toml:"tts"`
 	Character struct {
 		Default string `toml:"default"`
@@ -162,6 +164,8 @@ func LoadCharacters(dir string) (map[string]*Character, []string, error) {
 type State struct {
 	Character string `toml:"character"`
 	Source    string `toml:"source"`
+	// "small": the cloned voices on the small model
+	Clones string `toml:"clones"`
 }
 
 func statePath() string {

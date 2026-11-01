@@ -119,5 +119,19 @@
       "refs/neutral/MAY_0939.txt": "eeb87028bcb9970e93bc91403cf715ef0dcaaf2de892747ba63c6fbc804690c2",
       "refs/neutral/MAY_0939.wav": "8592ea999754090b52884feddc7eeaf46c90d0b9f1a4b905a0fbb1a612b5ef1f"
     }
+  },
+  "tts-base-small": {
+    "repo": "Qwen/Qwen3-TTS-12Hz-0.6B-Base",
+    "rev": "main",
+    "include": [
+      "*"
+    ],
+    "exclude": [
+      "*.md",
+      ".gitattributes",
+      "*.png",
+      "*.jpg"
+    ],
+    "files": {}
   }
 }

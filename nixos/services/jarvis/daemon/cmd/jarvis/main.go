@@ -27,6 +27,8 @@ const usage = `usage: jarvis <command>
   resume                  open it again
   stop                    stop listening or speaking
   unload                  free the vram: the llm and the voices go
+  clones [small|big]      the model of the cloned voices (jarvis, glados,
+                          hal 9000, mayuri): 0.6b quicker, 1.7b closer
   last                    print the last answer
   check                   say what keeps jarvis from working
 `
@@ -62,6 +64,8 @@ func main() {
 		}))
 	case "check":
 		os.Exit(check())
+	case "clones":
+		os.Exit(clones(os.Args[2:]))
 	case "-h", "--help", "help":
 		fmt.Print(usage)
 	default:
@@ -205,4 +209,31 @@ func check() int {
 		return 1
 	}
 	return 0
+}
+
+// clones: print the cloned voices' model, or pick it first
+func clones(args []string) int {
+	// the daemon says which on connect, watch only asks for nothing
+	cmd := map[string]any{"type": "watch"}
+	if len(args) > 0 {
+		if args[0] != "small" && args[0] != "big" {
+			log.Print("jarvis clones small or jarvis clones big")
+			return 2
+		}
+		cmd = map[string]any{"type": "set_clones", "id": args[0]}
+	}
+	return send(cmd, func(m map[string]any) bool {
+		if m["type"] != "clones" {
+			return false
+		}
+		if m["small_model"] == "" {
+			fmt.Println("big (the small model isn't downloaded: run nixos/services/jarvis/update-models tts-base-small)")
+			return true
+		}
+		if len(args) > 0 && m["size"] != args[0] {
+			return false
+		}
+		fmt.Println(m["size"])
+		return true
+	})
 }
