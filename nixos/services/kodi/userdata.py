@@ -74,13 +74,30 @@ def settings(spec):
         os.replace(path + ".part", path)
 
 
+# a settings file nobody changed: kodi wrote it with its defaults, every
+# setting default="true" (the instance's name aside). an add-on that started
+# before ours was there writes one like that (iptv simple: an instance with
+# no list), ours goes over it
+def untouched(path):
+    try:
+        root = ET.parse(path).getroot()
+    except (ET.ParseError, OSError):
+        return False
+    return all(
+        st.get("default") == "true"
+        for st in root.iter("setting")
+        if st.get("id") != "kodi_addon_instance_name"
+    )
+
+
 def files(spec):
     for name, text in spec["files"].items():
         path = os.path.join(datadir, name)
-        if not os.path.exists(path):
+        if not os.path.exists(path) or untouched(path):
             os.makedirs(os.path.dirname(path), exist_ok=True)
-            with open(path, "w") as f:
+            with open(path + ".part", "w") as f:
                 f.write(text)
+            os.replace(path + ".part", path)
 
 
 def defaults(path):
