@@ -27,7 +27,8 @@ let
   channelsConfig = pkgs.writeText "kodi-channels.json" (
     builtins.toJSON {
       # a group: its lists. a country: iptv-org's and free-tv's (where it
-      # has one). the west, australia and new zealand, japan, russia. then the
+      # has one). the west, australia and new zealand, east asia, argentina,
+      # russia. then the
       # topics across countries
       lists =
         let
@@ -57,6 +58,10 @@ let
           "Finland" = country "fi" "finland";
           "Iceland" = country "is" "iceland";
           "Japan" = country "jp" "japan";
+          "South Korea" = country "kr" "korea";
+          "North Korea" = country "kp" "north_korea";
+          "China" = country "cn" "china";
+          "Argentina" = country "ar" "argentina";
           "Movies" = [
             (iptvOrg "categories/movies")
             (freeTv "zz_movies")
