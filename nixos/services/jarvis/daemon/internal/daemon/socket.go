@@ -193,7 +193,7 @@ func (d *Daemon) charactersMsg() map[string]any {
 	list := make([]map[string]any, 0, len(d.ids))
 	for _, id := range d.ids {
 		ch := d.chars[id]
-		list = append(list, map[string]any{"id": id, "name": ch.Name, "icon": ch.Icon, "lang": ch.Lang})
+		list = append(list, map[string]any{"id": id, "name": ch.Name, "icon": ch.Icon, "lang": ch.Lang, "cloned": ch.Voice.Speaker == ""})
 	}
 	d.mu.Lock()
 	defer d.mu.Unlock()

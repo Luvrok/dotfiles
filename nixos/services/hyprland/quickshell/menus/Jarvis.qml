@@ -12,7 +12,8 @@ import qs.widgets
 // notification, so the desktop is free while jarvis thinks and speaks.
 // the big square is the mic, a click on it pauses. space pauses or
 // resumes, c copies the answer, i picks the input, v the character (p
-// plays its greeting), r listens again, u frees the vram. esc stops the
+// plays its greeting, s puts the cloned voices on the quick 0.6b model or
+// back on the 1.7b), r listens again, u frees the vram. esc stops the
 // voice and closes. no daemon: "jarvis is off"
 Menu {
     id: menu
@@ -33,6 +34,10 @@ Menu {
     // main, input or voice
     property string page: "main"
     property string flash: ""
+    // the cloned voices' model: "big" (1.7b) or "small" (0.6b, quicker),
+    // the small one only when it's downloaded
+    property string clones: "big"
+    property bool hasSmall: false
 
     readonly property var persona: characters.find(c => c.id === character) ?? null
     readonly property bool working: ["transcribing", "thinking", "searching", "voicing"].includes(jarvis)
@@ -84,13 +89,19 @@ Menu {
             characters = m.list;
             character = m.selected;
             if (page === "voice")
-                listCharacters();
+                listCharacters(true);
             break;
         case "sources":
             sources = m.list ?? [];
             source = m.selected;
             if (page === "input")
                 listSources();
+            break;
+        case "clones":
+            clones = m.size;
+            hasSmall = (m.small_model ?? "") !== "";
+            if (page === "voice")
+                listCharacters(true);
             break;
         case "error":
             errorText = m.message;
@@ -104,10 +115,12 @@ Menu {
         show(sources.map(s => s.name), active[0]);
     }
 
-    function listCharacters() {
+    // keep: stay on the row the cursor is on, a refresh of the page
+    function listCharacters(keep) {
         active = [Math.max(0, characters.findIndex(c => c.id === character))];
         lines = Math.max(1, Math.min(characters.length, 10));
-        show(characters.map(c => `${c.name}\t${c.lang}`), active[0]);
+        // a cloned voice says which model it's on, the others are 1.7b finetunes
+        show(characters.map(c => `${c.name}\t${c.lang} · ${c.cloned && clones === "small" ? "0.6b" : "1.7b"}`), keep && current >= 0 ? current : active[0]);
     }
 
     function openPage(name) {
@@ -141,14 +154,14 @@ Menu {
 
     title: persona?.name ?? "jarvis"
     icon: persona?.icon || "\u{f06a9}"
-    status: flash !== "" ? flash : jarvis === "off" ? "jarvis is off" : page !== "main" ? page : working ? "" : jarvis
+    status: flash !== "" ? flash : jarvis === "off" ? "jarvis is off" : page === "voice" && hasSmall ? `clones ${clones === "small" ? "0.6b" : "1.7b"}` : page !== "main" ? page : working ? "" : jarvis
     statusAccent: flash !== "" || jarvis === "listening" || jarvis === "speaking" || jarvis === "error"
     // transcribing, thinking, searching and voicing pulse in the head, keys
     // still work
     activity: working ? jarvis : ""
     lines: 0
     menuWidth: ch(46)
-    hints: page === "main" ? [["space", jarvis === "paused" ? "resume" : "pause"], ["c", "copy"], ["i", "input"], ["v", "voice"], ["r", "again"], ["u", "unload"], ["esc", "close"]] : [["j/k", "move"], ["enter", "pick"], ...(page === "voice" ? [["p", "preview"]] : []), ["h", "back"], ["esc", "close"]]
+    hints: page === "main" ? [["space", jarvis === "paused" ? "resume" : "pause"], ["c", "copy"], ["i", "input"], ["v", "voice"], ["r", "again"], ["u", "unload"], ["esc", "close"]] : [["j/k", "move"], ["enter", "pick"], ...(page === "voice" ? [["p", "preview"], ...(hasSmall ? [["s", clones === "small" ? "clones 1.7b" : "clones 0.6b"]] : [])] : []), ["h", "back"], ["esc", "close"]]
     body: page === "main" ? talk : null
 
     onAccepted: index => {
@@ -173,6 +186,13 @@ Menu {
     })
 
     keys: e => {
+        if (page === "voice" && hasSmall && key(e, "s")) {
+            send({
+                type: "set_clones",
+                id: clones === "small" ? "big" : "small"
+            });
+            return true;
+        }
         if (page === "voice" && key(e, "p")) {
             const c = characters[shown[rowsView.currentIndex]];
             if (c)
