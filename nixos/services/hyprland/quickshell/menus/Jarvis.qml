@@ -195,11 +195,12 @@ Menu {
                 type: "listen"
             });
         else if (key(e, "u")) {
+            // the vram is free, nothing left to do here
             send({
                 type: "unload"
             });
             flash = "unloaded";
-            flashEnd.restart();
+            away.start();
         }
         else
             return key(e, "j") || key(e, "k") || e.key === Qt.Key_Return || e.key === Qt.Key_Enter;

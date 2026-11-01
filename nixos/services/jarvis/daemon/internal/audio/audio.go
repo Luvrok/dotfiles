@@ -151,8 +151,8 @@ func (a *Audio) Play(ctx context.Context, samples []float32, rate int, level fun
 // PlayStream plays chunks as they come, until src closes and all of it
 // played. expect is about how long the whole thing is: when the generator
 // is slower than real time (a cold model), it waits until enough is in to
-// play to the end without a gap. a gap anyway stops it until half a second
-// is in again: one pause instead of a stutter
+// play to the end without a gap. a gap anyway stops it until 0.8 s is in
+// again: one pause instead of a stutter
 func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, expect time.Duration, level func(float64)) error {
 	var mu sync.Mutex
 	var buf []float32
@@ -196,7 +196,7 @@ func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, 
 		if since > 300*time.Millisecond && expect > 0 {
 			r := have / since.Seconds()
 			if r < 1 {
-				need = max(need, expect.Seconds()*(1-r)*1.15)
+				need = max(need, expect.Seconds()*(1-r)*1.3)
 			}
 		}
 		if e || have >= need {
@@ -225,7 +225,7 @@ func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, 
 			if !ended && pos >= len(buf) {
 				stalled = true
 			}
-			if stalled && (ended || len(buf)-pos >= rate/2) {
+			if stalled && (ended || len(buf)-pos >= rate*4/5) {
 				stalled = false
 			}
 			n := min(int(frames), len(buf)-pos)

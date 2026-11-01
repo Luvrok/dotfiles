@@ -41,15 +41,16 @@ func New(searxng, notesMCP, notesLibrary string) *Set {
 
 var webSearch = llm.Tool{
 	Name: "web_search",
-	Description: "Search the internet. Call it only when the user explicitly asks you to search, " +
-		"look something up online or check the latest news. Never call it on your own initiative.",
+	Description: "Search the internet. Call it right away, without asking first, when the user asks " +
+		"you to search, look something up, find out or check something online: news, weather, prices, " +
+		"versions, anything recent. Don't call it for what you can answer yourself.",
 	Parameters: json.RawMessage(`{"type":"object","properties":{"query":{"type":"string","description":"what to search for"}},"required":["query"]}`),
 }
 
 var searchNotes = llm.Tool{
 	Name: "search_notes",
-	Description: "Search the user's own Obsidian notes (Russian and English). Call it only when " +
-		"the user explicitly asks about their notes. Never call it on your own initiative.",
+	Description: "Search the user's own Obsidian notes (Russian and English). Call it right away, " +
+		"without asking first, when the user asks about their notes or what they wrote down.",
 	Parameters: json.RawMessage(`{"type":"object","properties":{"query":{"type":"string","description":"what to look for in the notes"}},"required":["query"]}`),
 }
 
