@@ -165,7 +165,11 @@ let
     rev = "783bf0e51596f1eb1e70124258f0e1ea4bf3b40a";
     hash = "sha256-8xQPUgXGF0SXMefDSiCDVw8f5g1jGmSk4lVmTE4EivY=";
   };
-  ttsImage = "localhost/jarvis-tts:${builtins.substring 0 7 ttsSrc.rev}";
+  # Dockerfile.rocm's FROM (rocm6.3.1, ubuntu 22.04, py3.12, torch 2.6.0)
+  # was never published. this one has the same python and torch, and is
+  # 10 GB instead of 24 for rocm 6
+  ttsBase = "docker.io/rocm/pytorch:rocm7.1_ubuntu24.04_py3.12_pytorch_release_2.6.0";
+  ttsImage = "localhost/jarvis-tts:${builtins.substring 0 7 ttsSrc.rev}-rocm7.1";
 
   # the same ports as proxy in llama-swap/config.yaml
   ttsServers = {
@@ -407,7 +411,7 @@ in
           };
           script = ''
             ${podman} image exists ${ttsImage} ||
-              ${podman} build --network=host -t ${ttsImage} -f Dockerfile.rocm ${ttsSrc}
+              ${podman} build --network=host --from ${ttsBase} -t ${ttsImage} -f Dockerfile.rocm ${ttsSrc}
           '';
         };
 
