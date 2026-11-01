@@ -13,11 +13,10 @@
 
 let
   cfg = config.services.jarvis;
-  models = import ./models.nix {
-    inherit pkgs lib;
-    # xray's mixed inbound (hosts/barnard/xray.nix), the same as docs-mcp's
-    proxy = if config.services.xray.enable then "http://127.0.0.1:10808" else null;
-  };
+  # xray's mixed inbound (hosts/barnard/xray.nix), the same as docs-mcp's:
+  # the hub's lfs cdn and docker hub are cut off without it
+  proxy = if config.services.xray.enable then "http://127.0.0.1:10808" else null;
+  models = import ./models.nix { inherit pkgs lib proxy; };
   refs = import ./refs.nix { inherit pkgs lib models; };
   quickshell = ../hyprland/quickshell;
   podman = lib.getExe config.virtualisation.podman.package;
@@ -385,6 +384,22 @@ in
           description = "jarvis: build the qwen3-tts server image";
           after = [ "network-online.target" ];
           wants = [ "network-online.target" ];
+          # the dockerfile's FROM is a short name (rocm/pytorch), this host has
+          # no registries.conf to say where those live
+          environment = {
+            CONTAINERS_REGISTRIES_CONF = pkgs.writeText "jarvis-registries.conf" ''
+              unqualified-search-registries = ["docker.io"]
+            '';
+          }
+          // lib.optionalAttrs (proxy != null) {
+            # podman pulls through it, and hands it to the build's RUN steps
+            # (pip, git): --network=host, so 127.0.0.1 is still xray
+            HTTPS_PROXY = proxy;
+            HTTP_PROXY = proxy;
+            https_proxy = proxy;
+            http_proxy = proxy;
+            NO_PROXY = "127.0.0.1,localhost";
+          };
           serviceConfig = {
             Type = "oneshot";
             RemainAfterExit = true;
@@ -392,7 +407,7 @@ in
           };
           script = ''
             ${podman} image exists ${ttsImage} ||
-              ${podman} build -t ${ttsImage} -f Dockerfile.rocm ${ttsSrc}
+              ${podman} build --network=host -t ${ttsImage} -f Dockerfile.rocm ${ttsSrc}
           '';
         };
 
