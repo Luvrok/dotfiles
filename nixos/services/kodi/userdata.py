@@ -124,10 +124,20 @@ def files(spec):
         os.replace(path + ".part", path)
 
 
+# a file of ours no longer: gone, unless something in it besides the list
+# was changed in kodi
+def gone(spec):
+    for name in spec.get("gone", []):
+        path = os.path.join(datadir, name)
+        if os.path.exists(path) and ours_may_replace(path, "<settings/>"):
+            os.remove(path)
+
+
 def defaults(path):
     with open(path) as f:
         found = json.load(f)
     files(found)
+    gone(found)
     if not running():
         settings(found)
 
