@@ -437,6 +437,8 @@ hl.bind(mod .. " + a", qs("menu open tools"))
 hl.bind(mod .. " + x", qs("menu open windows"))
 -- the keys of hyprland, librewolf and nvim (quickshell/keys.conf)
 hl.bind(mod .. " + slash", qs("menu open keys"))
+-- jarvis, the voice assistant: it listens as soon as the menu opens
+hl.bind(mod .. " + CTRL + j", qs("menu open jarvis"))
 hl.bind(mod .. " + SHIFT + n", qs("notifications close"))
 hl.bind(mod .. " + o", hl.dsp.exec_cmd("kitty --class movies -e yazi /media/outer-1"))
 -- the same folders as a library, kodi
