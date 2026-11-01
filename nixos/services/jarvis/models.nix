@@ -3,8 +3,15 @@
 # in models.lock.json: a repo, the commit and a sha256 per file, which
 # ./update-models fills in from the hub's api (lfs files carry their
 # sha256 there, so nothing big is downloaded for it). no voice files are in
-# the dotfiles, only these
-{ pkgs, lib }:
+# the dotfiles, only these. huggingface.co answers with a redirect to its
+# lfs cdn, and that one is cut off here (tls eof), so the hub's files come
+# through proxy (xray's inbound) when there is one: a fixed-output fetch
+# shares the host's network, 127.0.0.1 is the host
+{
+  pkgs,
+  lib,
+  proxy ? null,
+}:
 
 let
   sherpa = "https://github.com/k2-fsa/sherpa-onnx/releases/download";
@@ -35,6 +42,10 @@ let
             name = lib.strings.sanitizeDerivationName (baseNameOf path);
             url = "https://huggingface.co/${e.repo}/resolve/${e.rev}/${path}";
             inherit sha256;
+            curlOptsList = lib.optionals (proxy != null) [
+              "--proxy"
+              proxy
+            ];
           };
         }) e.files
       );

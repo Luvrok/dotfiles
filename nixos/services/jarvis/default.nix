@@ -13,7 +13,11 @@
 
 let
   cfg = config.services.jarvis;
-  models = import ./models.nix { inherit pkgs lib; };
+  models = import ./models.nix {
+    inherit pkgs lib;
+    # xray's mixed inbound (hosts/barnard/xray.nix), the same as docs-mcp's
+    proxy = if config.services.xray.enable then "http://127.0.0.1:10808" else null;
+  };
   refs = import ./refs.nix { inherit pkgs lib models; };
   quickshell = ../hyprland/quickshell;
   podman = lib.getExe config.virtualisation.podman.package;
