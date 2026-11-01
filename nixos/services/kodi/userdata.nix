@@ -14,24 +14,36 @@
 let
   datadir = config.programs.kodi.datadir;
 
-  # iptv simple's lists: tv -> channels, by group. an instance per list,
-  # its settings in kodi after the first time (./userdata.py writes a file
-  # only when it isn't there: a new url here needs the old
-  # instance-settings-N.xml gone). free-tv keeps to free channels, one
-  # working url each, the federal ones from their own cdns (iptv-org's
-  # links with tokens in them died): github.com/Free-TV/IPTV. channel one
-  # is dash (.mpd), inputstream.adaptive plays it (./addons.nix)
+  # iptv simple's lists: tv -> channels, by group, an instance per list
+  # (./userdata.py writes them, a new one here goes over kodi's copy unless
+  # something else in it was changed in kodi). russia: ours, the channels
+  # that played from here with free-tv's dead links fixed
+  # (./channels/russia.m3u). uk and usa: free-tv's, free channels only
+  # (github.com/Free-TV/IPTV). movies and news: iptv-org's, wider, more of
+  # them dead. foreign ones are often geo-blocked: kodi goes straight, from
+  # a russian ip. dash (channel one's .mpd) is inputstream.adaptive's
+  # (./addons.nix)
+  freeTv = country: "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_${country}.m3u8";
   channels = {
-    "Russia" = "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_russia.m3u8";
+    "Russia".path = "${./channels/russia.m3u}";
+    "UK".url = freeTv "uk";
+    "USA".url = freeTv "usa";
+    "Movies".url = "https://iptv-org.github.io/iptv/categories/movies.m3u";
+    "News".url = "https://iptv-org.github.io/iptv/categories/news.m3u";
   };
-  instance = name: ''
-    <settings version="2">
-      <setting id="kodi_addon_instance_name">${name}</setting>
-      <setting id="kodi_addon_instance_enabled">true</setting>
-      <setting id="m3uPathType">1</setting>
-      <setting id="m3uUrl">${channels.${name}}</setting>
-    </settings>
-  '';
+  instance =
+    name:
+    let
+      list = channels.${name};
+    in
+    ''
+      <settings version="2">
+        <setting id="kodi_addon_instance_name">${name}</setting>
+        <setting id="kodi_addon_instance_enabled">true</setting>
+        <setting id="m3uPathType">${if list ? path then "0" else "1"}</setting>
+        <setting id="${if list ? path then "m3uPath" else "m3uUrl"}">${list.path or list.url}</setting>
+      </settings>
+    '';
 
   # kodi puts its libraries (rtmpdump, libnfs...) in LD_LIBRARY_PATH, mpv
   # shouldn't load them over its own, nor take kodi's proxy. -- for a file

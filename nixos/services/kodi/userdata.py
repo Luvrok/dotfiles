@@ -74,30 +74,54 @@ def settings(spec):
         os.replace(path + ".part", path)
 
 
-# a settings file nobody changed: kodi wrote it with its defaults, every
-# setting default="true" (the instance's name aside). an add-on that started
-# before ours was there writes one like that (iptv simple: an instance with
-# no list), ours goes over it
-def untouched(path):
+# a settings file of ours goes over kodi's copy of it unless something else
+# in it was changed in kodi. kodi writes every setting back with
+# default="true" on the ones nobody set: the ones ours sets (the list's url)
+# may differ, the rest must be defaults. a copy kodi made with its own
+# defaults only (an add-on that started before ours was there: iptv simple
+# with no list) is the same case
+# what says which list an iptv simple instance is: a url or a file, either
+# is ours whichever one the instance had
+LIST = {
+    "kodi_addon_instance_name",
+    "kodi_addon_instance_enabled",
+    "m3uPathType",
+    "m3uPath",
+    "m3uUrl",
+}
+
+
+def ours_may_replace(path, text):
     try:
         root = ET.parse(path).getroot()
+        mine = {st.get("id") for st in ET.fromstring(text).iter("setting")} | LIST
     except (ET.ParseError, OSError):
         return False
     return all(
         st.get("default") == "true"
         for st in root.iter("setting")
-        if st.get("id") != "kodi_addon_instance_name"
+        if st.get("id") not in mine
     )
+
+
+def same(path, text):
+    try:
+        theirs = {st.get("id"): (st.text or "").strip() for st in ET.parse(path).getroot().iter("setting")}
+        mine = {st.get("id"): (st.text or "").strip() for st in ET.fromstring(text).iter("setting")}
+    except (ET.ParseError, OSError):
+        return False
+    return all(theirs.get(k) == v for k, v in mine.items())
 
 
 def files(spec):
     for name, text in spec["files"].items():
         path = os.path.join(datadir, name)
-        if not os.path.exists(path) or untouched(path):
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            with open(path + ".part", "w") as f:
-                f.write(text)
-            os.replace(path + ".part", path)
+        if os.path.exists(path) and (same(path, text) or not ours_may_replace(path, text)):
+            continue
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path + ".part", "w") as f:
+            f.write(text)
+        os.replace(path + ".part", path)
 
 
 def defaults(path):
