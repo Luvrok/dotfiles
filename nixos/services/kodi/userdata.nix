@@ -14,11 +14,15 @@
 let
   datadir = config.programs.kodi.datadir;
 
-  # iptv simple's lists, iptv-org's free channels: tv -> channels, by group.
-  # an instance per list, its settings in kodi after the first time
+  # iptv simple's lists: tv -> channels, by group. an instance per list,
+  # its settings in kodi after the first time (./userdata.py writes a file
+  # only when it isn't there: a new url here needs the old
+  # instance-settings-N.xml gone). free-tv keeps to free channels, one
+  # working url each, the federal ones from their own cdns (iptv-org's
+  # links with tokens in them died): github.com/Free-TV/IPTV. channel one
+  # is dash (.mpd), inputstream.adaptive plays it (./addons.nix)
   channels = {
-    "Russia" = "https://iptv-org.github.io/iptv/countries/ru.m3u";
-    "News" = "https://iptv-org.github.io/iptv/categories/news.m3u";
+    "Russia" = "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_russia.m3u8";
   };
   instance = name: ''
     <settings version="2">

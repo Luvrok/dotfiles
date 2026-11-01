@@ -205,7 +205,7 @@
 				<param name="top" value="home_hub_row1_y"/>
 				<param name="index" value="01"/>
 				<param name="label" value="Channels"/>
-				<param name="sub" value="iptv-org"/>
+				<param name="sub" value="Free-TV"/>
 				<param name="path" value="pvr://channels/tv/*"/>
 				<param name="onup" value="9007"/>
 				<param name="ondown" value="9252"/>
