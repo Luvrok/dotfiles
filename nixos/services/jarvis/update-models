@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# fills models.lock.json from the hugging face api: each repo's rev becomes
+# its commit, and every file that matches include and not exclude gets its
+# sha256. lfs files carry it in the api, the small ones are downloaded and
+# hashed. run it after changing a repo or a rev:
+#   nixos/services/jarvis/update-models            all of them
+#   nixos/services/jarvis/update-models mayuri     one
+# then look at the files it picked: a repo with several checkpoints needs
+# a narrower include
+set -euo pipefail
+
+cd "$(dirname "$0")"
+lock=models.lock.json
+api=https://huggingface.co/api/models
+tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
+
+names=("$@")
+[ ${#names[@]} -gt 0 ] || mapfile -t names < <(jq -r 'keys[]' "$lock")
+
+# bash globs, * matches / too
+matches() {
+  local path=$1 globs=$2 g
+  while IFS= read -r g; do
+    [ -n "$g" ] || continue
+    # shellcheck disable=SC2053
+    [[ $path == $g ]] && return 0
+  done <<<"$globs"
+  return 1
+}
+
+for name in "${names[@]}"; do
+  repo=$(jq -er --arg n "$name" '.[$n].repo' "$lock")
+  rev=$(jq -r --arg n "$name" '.[$n].rev' "$lock")
+  include=$(jq -r --arg n "$name" '.[$n].include[]' "$lock")
+  exclude=$(jq -r --arg n "$name" '.[$n].exclude[]' "$lock")
+
+  sha=$(curl -fsS "$api/$repo/revision/$rev" | jq -er .sha)
+  echo "$name: $repo @ $sha" >&2
+
+  files='{}'
+  while IFS=$'\t' read -r path oid; do
+    matches "$path" "$include" || continue
+    ! matches "$path" "$exclude" || continue
+    if [ "$oid" = "-" ]; then
+      oid=$(curl -fsSL "https://huggingface.co/$repo/resolve/$sha/$path" | sha256sum | cut -d' ' -f1)
+    fi
+    echo "  $path" >&2
+    files=$(jq --arg p "$path" --arg h "$oid" '. + {($p): $h}' <<<"$files")
+  done < <(curl -fsS "$api/$repo/tree/$sha?recursive=true" |
+    jq -r '.[] | select(.type == "file") | [.path, (.lfs.oid // "-")] | @tsv')
+
+  [ "$files" != '{}' ] || { echo "$name: nothing matched in $repo" >&2; exit 1; }
+  jq --arg n "$name" --arg s "$sha" --argjson f "$files" \
+    '.[$n].rev = $s | .[$n].files = $f' "$lock" >"$tmp"
+  cp "$tmp" "$lock"
+done

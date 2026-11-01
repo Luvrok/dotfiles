@@ -1,0 +1,10 @@
+name = "GLaDOS"
+wake = "hey glados"
+lang = "auto"
+icon = "󰃫"
+
+# a clone on the base model, its clip is made with piper at build time
+[voice]
+model = "jarvis-tts-base"
+ref = "ref.wav"
+ref_text = "ref.txt"

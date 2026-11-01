@@ -1,0 +1,10 @@
+name = "Shiina Mayuri"
+wake = "hey mayuri"
+lang = "auto"
+icon = "󰋑"
+
+# a clone on the base model, the clip and its text come from her repo
+[voice]
+model = "jarvis-tts-base"
+ref = "ref.wav"
+ref_text = "ref.txt"

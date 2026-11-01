@@ -113,6 +113,19 @@ models:
       --temp 1.0 --top-p 0.95 --top-k 64 --min-p 0
     <<: *gemma-filters
 
+  # the voice assistant (nixos/services/jarvis): gemma-12b with a short
+  # context, loaded for 10 minutes after a question, so the next one is instant
+  "jarvis":
+    description: "Gemma 4 12B QAT UD-Q4_K_XL, 8K. Jarvis, the voice assistant."
+    cmd: |
+      ${chat}
+      -m ${models}/gemma-4-12B-it-qat-UD-Q4_K_XL.gguf
+      --ctx-size 8192
+      -fa on --cache-type-k q8_0 --cache-type-v q8_0
+      --temp 1.0 --top-p 0.95 --top-k 64 --min-p 0
+    ttl: 600
+    <<: *gemma-filters
+
   # thinking can't be turned off, only reasoning_effort low, medium or high
   "gpt-oss":
     description: "gpt-oss-20b MXFP4. MoE, fast, web search."
@@ -182,6 +195,27 @@ models:
       -H 1024
     <<: *sd
 
+  # jarvis' voices: qwen3-tts servers in podman (nixos/services/jarvis),
+  # jarvis-tts starts their unit and lives while it runs. fixed ports, the
+  # same as there. the server knows itself as qwen3-tts
+  "jarvis-tts-base":
+    description: "Qwen3-TTS 12Hz 1.7B Base, on GPU. Jarvis' cloned voices."
+    cmd: jarvis-tts base
+    cmdStop: systemctl stop jarvis-tts-base.service
+    proxy: http://127.0.0.1:8881
+    checkEndpoint: /health
+    useModelName: qwen3-tts
+    ttl: 600
+
+  "jarvis-tts-kurisu":
+    description: "Qwen3-TTS 12Hz 1.7B Makise Kurisu finetune, on GPU. Kurisu and Amadeus."
+    cmd: jarvis-tts kurisu
+    cmdStop: systemctl stop jarvis-tts-kurisu.service
+    proxy: http://127.0.0.1:8882
+    checkEndpoint: /health
+    useModelName: qwen3-tts
+    ttl: 600
+
   # docs-mcp keys its index on the alias, so a new model or quant needs a new alias here and in docs-mcp
   "embed":
     description: "EmbeddingGemma 2 BF16, CPU. pi-memory, docs-mcp."
@@ -218,11 +252,19 @@ routing:
             - qwen-uncensored-vision
             - gemma-26b
             - gemma-12b
+            - jarvis
             - gpt-oss
             - z-image
             - flux2-klein
             - qwen-image
             - qwen-image-2.1
+        # one tts at a time, next to jarvis: loading one never unloads it
+        "jarvis-tts":
+          swap: true
+          exclusive: false
+          members:
+            - jarvis-tts-base
+            - jarvis-tts-kurisu
         "embed":
           swap: false
           exclusive: false

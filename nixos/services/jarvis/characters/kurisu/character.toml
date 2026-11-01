@@ -1,0 +1,9 @@
+name = "Makise Kurisu"
+wake = "hey kurisu"
+lang = "auto"
+icon = "󰙍"
+
+# starrydark's custom-voice finetune, no clip needed
+[voice]
+model = "jarvis-tts-kurisu"
+speaker = "kurisu"

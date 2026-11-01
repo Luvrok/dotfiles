@@ -11,6 +11,8 @@
     ./llama-swap
     ./llama-swap/searxng.nix
     ./rgb-off.nix
+    # the voice assistant, off unless a host turns it on
+    ./jarvis
   ];
 
   services = {

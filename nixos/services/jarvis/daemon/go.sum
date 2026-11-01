@@ -1,0 +1,4 @@
+github.com/BurntSushi/toml v1.6.0 h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk=
+github.com/BurntSushi/toml v1.6.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
+github.com/gen2brain/malgo v0.11.27 h1:iD/VV+AYELEt1pK9O3efj3zu0p8oTA3Gp+9BWd/RNmI=
+github.com/gen2brain/malgo v0.11.27/go.mod h1:xLVG3ROA33Bzol1quF3e4ehqcFuqh8QK4B8T6LQUs/M=

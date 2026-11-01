@@ -1,0 +1,415 @@
+# jarvis: a local voice assistant. the go daemon listens (wake word, vad
+# and whisper on the cpu), gemma 4 12b in llama-swap answers as the active
+# character, qwen3-tts in llama-swap speaks it in that character's voice.
+# the menu is quickshell's menus/Jarvis.qml. off by default, a host turns
+# it on with services.jarvis.enable once models.lock.json is filled
+# (./update-models). off means nothing here: no unit, no config, no models
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+
+let
+  cfg = config.services.jarvis;
+  models = import ./models.nix { inherit pkgs lib; };
+  refs = import ./refs.nix { inherit pkgs lib models; };
+  quickshell = ../hyprland/quickshell;
+  podman = lib.getExe config.virtualisation.podman.package;
+  modelsDir = "/var/lib/models/jarvis";
+
+  jarvis = pkgs.buildGoModule {
+    pname = "jarvis";
+    version = "0.1";
+    src = ./daemon;
+    vendorHash = "sha256-nqwWB7qzj522G0OKHsuZTCgPbJV3kr+3xwqyZcTdN08=";
+    subPackages = [ "cmd/jarvis" ];
+    env.CGO_ENABLED = 1;
+    buildInputs = [ pkgs.sherpa-onnx ];
+    nativeBuildInputs = [ pkgs.patchelf ];
+    # miniaudio opens libpulse at runtime, by name
+    postFixup = ''
+      patchelf --add-rpath ${lib.getLib pkgs.libpulseaudio}/lib $out/bin/jarvis
+    '';
+    meta.mainProgram = "jarvis";
+  };
+
+  characterDirs = lib.attrNames (
+    lib.filterAttrs (_: t: t == "directory") (builtins.readDir ./characters)
+  );
+  characterOf = id: builtins.fromTOML (builtins.readFile (./characters + "/${id}/character.toml"));
+  cloned = lib.filter (id: (characterOf id).voice.speaker or "" == "") characterDirs;
+
+  # the characters, each with wake.txt: its wake phrase in the kws model's
+  # bpe tokens, "▁HE Y ▁J AR VI S @HEY_JARVIS"
+  characters =
+    pkgs.runCommandLocal "jarvis-characters"
+      { nativeBuildInputs = [ (pkgs.python3.withPackages (p: [ p.sentencepiece ])) ]; }
+      ''
+        cp -r ${./characters} $out
+        chmod -R u+w $out
+        python3 - $out ${models.kws}/bpe.model <<'EOF'
+        import pathlib, sys, tomllib
+        import sentencepiece as spm
+        sp = spm.SentencePieceProcessor(model_file=sys.argv[2])
+        for d in sorted(pathlib.Path(sys.argv[1]).iterdir()):
+            wake = tomllib.loads((d / "character.toml").read_text()).get("wake", "").strip().upper()
+            if wake:
+                tokens = " ".join(sp.encode(wake, out_type=str))
+                (d / "wake.txt").write_text(f"{tokens} @{wake.replace(' ', '_')}\n")
+        EOF
+      '';
+
+  configFile = (pkgs.formats.toml { }).generate "jarvis.toml" {
+    llm = {
+      url = cfg.llamaSwapUrl;
+      model = "jarvis";
+      max_tokens = 200;
+    };
+    tts.url = cfg.llamaSwapUrl;
+    character = {
+      default = cfg.character;
+      dir = "/etc/jarvis/characters";
+      base_prompt = "/etc/jarvis/prompts/base.md";
+      refs = "${modelsDir}/refs";
+    };
+    stt = {
+      model = "${modelsDir}/stt/whisper-small";
+      threads = 4;
+    };
+    vad.model = "${modelsDir}/silero_vad.onnx";
+    wake_word = {
+      inherit (cfg.wakeWord) enable;
+      model = "${modelsDir}/kws";
+    };
+    audio = {
+      inherit (cfg.audio) source;
+      silence_ms = 1000;
+      max_record_s = 30;
+    };
+    history = {
+      inherit (cfg.history) turns;
+      forget_after_s = 600;
+    };
+    ui = {
+      open_cmd = cfg.openCmd;
+      inherit (cfg) notify;
+      ready_sound = "/etc/jarvis/sounds/ready.ogg";
+    };
+  };
+
+  # the tts server's voice library: a profile per cloned character, the
+  # daemon asks for voice "clone:<id>"
+  voices = pkgs.linkFarm "jarvis-voices" (
+    lib.concatMap (id: [
+      {
+        name = "profiles/${id}/meta.json";
+        path = pkgs.runCommandLocal "jarvis-voice-${id}.json" { nativeBuildInputs = [ pkgs.jq ]; } ''
+          jq -n --arg id ${id} --rawfile text ${refs.${id}}/ref.txt \
+            '{name: $id, profile_id: $id, ref_audio_filename: "ref.wav", ref_text: $text, x_vector_only_mode: false, language: "Auto"}' > $out
+        '';
+      }
+      {
+        name = "profiles/${id}/ref.wav";
+        path = "${refs.${id}}/ref.wav";
+      }
+    ]) cloned
+  );
+
+  # what /var/lib/models/jarvis links to
+  modelTree = pkgs.linkFarm "jarvis-models" (
+    [
+      {
+        name = "stt/whisper-small";
+        path = models.whisper-small;
+      }
+      {
+        name = "kws";
+        path = models.kws;
+      }
+      {
+        name = "silero_vad.onnx";
+        path = models.silero-vad;
+      }
+      {
+        name = "tts/base";
+        path = models.tts-base;
+      }
+      {
+        name = "tts/kurisu";
+        path = models.tts-kurisu;
+      }
+      {
+        name = "tts/voices";
+        path = voices;
+      }
+    ]
+    ++ map (id: {
+      name = "refs/${id}";
+      path = refs.${id};
+    }) cloned
+  );
+
+  # the tts: no llama.cpp server for qwen3-tts (llama-server has no
+  # /v1/audio/speech, llama-tts is a cli), so Qwen3-TTS-Openai-Fastapi's
+  # rocm image, built here once with podman. llama-swap starts a server
+  # through its unit (llama-swap is a sandboxed dynamic user, root runs
+  # podman) and stops it with cmdStop
+  ttsSrc = pkgs.fetchFromGitHub {
+    owner = "groxaxo";
+    repo = "Qwen3-TTS-Openai-Fastapi";
+    rev = "783bf0e51596f1eb1e70124258f0e1ea4bf3b40a";
+    hash = "sha256-8xQPUgXGF0SXMefDSiCDVw8f5g1jGmSk4lVmTE4EivY=";
+  };
+  ttsImage = "localhost/jarvis-tts:${builtins.substring 0 7 ttsSrc.rev}";
+
+  # the same ports as proxy in llama-swap/config.yaml
+  ttsServers = {
+    base = {
+      port = 8881;
+      path = models.tts-base;
+      type = "base";
+      speakers = [ ];
+    };
+    kurisu = {
+      port = 8882;
+      path = models.tts-kurisu;
+      type = "customvoice";
+      speakers = [
+        "kurisu"
+        "amadeus"
+      ];
+    };
+  };
+
+  ttsConfig =
+    name: s:
+    (pkgs.formats.yaml { }).generate "jarvis-tts-${name}.yaml" {
+      default_model = name;
+      models.${name} = {
+        hf_id = "${s.path}";
+        inherit (s) type;
+      };
+      # no torch.compile: a cold load in seconds, not minutes
+      optimization = {
+        attention = "flash_attention_2";
+        use_compile = false;
+        use_cuda_graphs = false;
+        use_fast_codebook = true;
+      };
+      server = {
+        host = "127.0.0.1";
+        inherit (s) port;
+      };
+      voices = map (v: {
+        name = v;
+        language = "English";
+      }) s.speakers;
+    };
+
+  # llama-swap's cmd: start the unit, live while it runs
+  jarvis-tts = pkgs.writeShellApplication {
+    name = "jarvis-tts";
+    runtimeInputs = [ pkgs.systemd ];
+    text = ''
+      unit="jarvis-tts-$1.service"
+      trap 'systemctl stop "$unit"; exit 0' TERM INT
+      systemctl start "$unit"
+      while systemctl is-active -q "$unit"; do
+        sleep 2 &
+        wait $!
+      done
+      exit 1
+    '';
+  };
+
+  # no rounded shapes in jarvis' qml, ever
+  noRadius = pkgs.runCommandLocal "jarvis-no-radius" { } ''
+    if grep -n radius ${quickshell}/menus/Jarvis.qml ${quickshell}/widgets/MicTile.qml; then
+      echo "jarvis: radius in the qml above, its shapes stay square" >&2
+      exit 1
+    fi
+    touch $out
+  '';
+in
+{
+  options.services.jarvis = {
+    enable = lib.mkEnableOption "jarvis, the local voice assistant";
+    character = lib.mkOption {
+      type = lib.types.str;
+      default = "jarvis";
+      description = "The character at the start, a folder in characters/. The menu's pick wins after.";
+    };
+    wakeWord.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Listen for the active character's wake phrase.";
+    };
+    audio.source = lib.mkOption {
+      type = lib.types.str;
+      default = "default";
+      description = "The input device. The menu's pick wins after.";
+    };
+    history.turns = lib.mkOption {
+      type = lib.types.int;
+      default = 6;
+      description = "Exchanges kept for the next question.";
+    };
+    notify = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "A notification with the answer while the menu is closed.";
+    };
+    llamaSwapUrl = lib.mkOption {
+      type = lib.types.str;
+      default = "http://127.0.0.1:11434";
+      description = "llama-swap, it serves the llm and the tts.";
+    };
+    openCmd = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [
+        "qs"
+        "-c"
+        "hyprland"
+        "ipc"
+        "call"
+        "menu"
+        "open"
+        "jarvis"
+      ];
+      description = "What the wake word runs to open the menu.";
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = lib.elem cfg.character characterDirs;
+        message = "services.jarvis.character: no characters/${cfg.character}";
+      }
+    ];
+
+    environment.systemPackages = [ jarvis ];
+
+    environment.etc = {
+      "jarvis/config.toml".source = configFile;
+      "jarvis/characters".source = characters;
+      "jarvis/prompts".source = ./prompts;
+      "jarvis/sounds".source = ./sounds;
+    };
+
+    # the models, readable by the user, llama-swap and the tts containers
+    systemd.tmpfiles.rules = [
+      "d /var/lib/models 0755 root root -"
+      "L+ ${modelsDir} - - - - ${modelTree}"
+    ];
+
+    system.checks = [ noRadius ];
+
+    systemd.user.services.jarvis = {
+      description = "jarvis voice assistant";
+      partOf = [ "graphical-session.target" ];
+      after = [ "graphical-session.target" ];
+      wantedBy = [ "graphical-session.target" ];
+      # notify-send, pw-play and qs, from PATH
+      path = [
+        pkgs.libnotify
+        pkgs.pipewire
+        pkgs.quickshell
+      ];
+      serviceConfig = {
+        ExecStart = "${lib.getExe jarvis} daemon";
+        Restart = "on-failure";
+        RestartSec = 5;
+      };
+    };
+
+    virtualisation.podman.enable = true;
+
+    systemd.services =
+      lib.mapAttrs' (
+        name: s:
+        lib.nameValuePair "jarvis-tts-${name}" {
+          description = "jarvis: qwen3-tts ${name} on :${toString s.port}";
+          requires = [ "jarvis-tts-image.service" ];
+          after = [ "jarvis-tts-image.service" ];
+          serviceConfig = {
+            ExecStart = lib.escapeShellArgs [
+              podman
+              "run"
+              "--rm"
+              "--replace"
+              "--name=jarvis-tts-${name}"
+              "--network=host"
+              "--ipc=host"
+              "--device=/dev/kfd"
+              "--device=/dev/dri"
+              "--security-opt=seccomp=unconfined"
+              # the dgpu only, like llama-swap
+              "-e"
+              "HIP_VISIBLE_DEVICES=0"
+              "-e"
+              "HOST=127.0.0.1"
+              "-e"
+              "PORT=${toString s.port}"
+              "-e"
+              "TTS_BACKEND=optimized"
+              "-e"
+              "TTS_CONFIG=/etc/jarvis-tts.yaml"
+              "-e"
+              "VOICE_LIBRARY_DIR=${voices}"
+              "-e"
+              "TTS_WARMUP_ON_START=false"
+              "-e"
+              "GPU_KEEPALIVE_INTERVAL=0"
+              "-e"
+              "HF_HUB_OFFLINE=1"
+              "-v"
+              "/nix/store:/nix/store:ro"
+              "-v"
+              "${ttsConfig name s}:/etc/jarvis-tts.yaml:ro"
+              ttsImage
+            ];
+            ExecStop = "${podman} stop -t 10 jarvis-tts-${name}";
+          };
+        }
+      ) ttsServers
+      // {
+        # the image is big (rocm pytorch), built once per pinned commit
+        jarvis-tts-image = {
+          description = "jarvis: build the qwen3-tts server image";
+          after = [ "network-online.target" ];
+          wants = [ "network-online.target" ];
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+            TimeoutStartSec = "3h";
+          };
+          script = ''
+            ${podman} image exists ${ttsImage} ||
+              ${podman} build -t ${ttsImage} -f Dockerfile.rocm ${ttsSrc}
+          '';
+        };
+
+        # jarvis-tts, and systemctl for cmdStop
+        llama-swap.path = [
+          jarvis-tts
+          pkgs.systemd
+        ];
+      };
+
+    # llama-swap starts and stops the tts units without a password
+    security.polkit.extraConfig = ''
+      polkit.addRule(function (action, subject) {
+        if (action.id == "org.freedesktop.systemd1.manage-units" &&
+            subject.user == "llama-swap" &&
+            /^jarvis-tts-[a-z]+\.service$/.test(action.lookup("unit"))) {
+          var verb = action.lookup("verb");
+          if (verb == "start" || verb == "stop")
+            return polkit.Result.YES;
+        }
+      });
+    '';
+  };
+}

@@ -1,0 +1,44 @@
+{
+  "tts-base": {
+    "repo": "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
+    "rev": "main",
+    "include": ["*"],
+    "exclude": ["*.md", ".gitattributes", "*.png", "*.jpg"],
+    "files": {}
+  },
+  "tts-kurisu": {
+    "repo": "starrydark/Makise_Kurisu_Qwen3_TTS",
+    "rev": "main",
+    "include": ["*"],
+    "exclude": ["*.md", ".gitattributes", "*.png", "*.jpg", "*.wav", "*.mp3"],
+    "files": {}
+  },
+  "piper-jarvis": {
+    "repo": "jgkawell/jarvis",
+    "rev": "main",
+    "include": ["*high*.onnx", "*high*.onnx.json"],
+    "exclude": [],
+    "files": {}
+  },
+  "piper-glados": {
+    "repo": "csukuangfj/vits-piper-en_US-glados-high",
+    "rev": "main",
+    "include": ["*.onnx", "*.onnx.json"],
+    "exclude": [],
+    "files": {}
+  },
+  "piper-hal9000": {
+    "repo": "OccultAI/HAL-9000-Piper-TTS",
+    "rev": "main",
+    "include": ["*.onnx", "*.onnx.json"],
+    "exclude": [],
+    "files": {}
+  },
+  "mayuri": {
+    "repo": "SteinsGateSg/mayuri-voice",
+    "rev": "main",
+    "include": ["refs/*"],
+    "exclude": [],
+    "files": {}
+  }
+}

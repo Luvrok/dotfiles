@@ -1,0 +1,9 @@
+name = "Amadeus"
+wake = "hey amadeus"
+lang = "auto"
+icon = "󰘚"
+
+# the same finetune as kurisu, its other speaker
+[voice]
+model = "jarvis-tts-kurisu"
+speaker = "amadeus"
