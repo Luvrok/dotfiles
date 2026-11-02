@@ -1,6 +1,7 @@
 -- the open buffers at the top, like editor tabs. no backgrounds, the
--- current one is orange. starts right of neo-tree (offsets), the line
--- above the tree stays empty
+-- current one is orange. starts right of neo-tree (offsets), above the
+-- tree goes the project's path, neo-tree's own root line is hidden.
+-- shown while a file is open, hidden on the dashboard
 local colors = {
 	accent = "#d65d0e",
 	fg = "#ebdbb2",
@@ -28,6 +29,22 @@ return {
 		end
 		return keys
 	end,
+	init = function()
+		-- the bar while at least one file is open: a listed buffer with a
+		-- name, not the dashboard or an empty [No Name]
+		local function update()
+			local files = vim.tbl_filter(function(b)
+				return b.name ~= "" and vim.bo[b.bufnr].buftype == ""
+			end, vim.fn.getbufinfo({ buflisted = 1 }))
+			vim.o.showtabline = #files > 0 and 2 or 0
+		end
+		vim.api.nvim_create_autocmd({ "BufAdd", "BufDelete", "BufWipeout", "BufEnter", "BufFilePost" }, {
+			group = vim.api.nvim_create_augroup("user-bufferline", { clear = true }),
+			-- a deleted buffer is still listed during its event
+			callback = vim.schedule_wrap(update),
+		})
+		update()
+	end,
 	opts = function()
 		local hl = function(fg, extra)
 			return vim.tbl_extend("force", { fg = fg, bg = "NONE" }, extra or {})
@@ -45,12 +62,22 @@ return {
 				separator_style = { "", "" },
 				indicator = { style = "none" },
 				diagnostics = false,
+				-- bufferline shows itself from 2 buffers, here from 1 (below)
 				always_show_bufferline = true,
+				auto_toggle_bufferline = false,
 				max_name_length = 24,
 				tab_size = 0,
 				-- the bar starts where neo-tree ends, nothing over the tree
 				offsets = {
-					{ filetype = "neo-tree", text = "", highlight = "BufferLineFill", separator = false },
+					{
+						filetype = "neo-tree",
+						text = function()
+							return vim.fn.fnamemodify(vim.fn.getcwd(), ":~")
+						end,
+						text_align = "left",
+						highlight = "NeoTreeRootName",
+						separator = false,
+					},
 				},
 				-- Snacks.bufdelete keeps the window (and neo-tree next to it)
 				close_command = function(buf)

@@ -15,6 +15,8 @@ return {
 			width = 40,
 		},
 		close_if_last_window = true,
+		-- the path is above the tree, in bufferline's offset
+		hide_root_node = true,
 		filesystem = {
 			filtered_items = {
 				visible = true,
