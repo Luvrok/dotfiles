@@ -12,6 +12,7 @@
     # off until the host turns them on
     ../hyprland
     ../docs-mcp
+    ../omniroute
     ../notes-mcp
     ../opencode-keys.nix
   ];

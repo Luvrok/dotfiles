@@ -36,6 +36,8 @@ in
     docs-mcp.enable = true;
     # the obsidian vault's index for pi, vectors from llama-swap
     notes-mcp.enable = true;
+    # the free tiers behind one endpoint for opencode, with fallback
+    omniroute.enable = true;
     # api keys of opencode's free tiers
     opencode-keys.enable = true;
   };

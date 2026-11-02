@@ -17,6 +17,24 @@
   "autoupdate": false,
   "_comment": "llama-swap: the local models, the same as pi/models.json (ids, contexts from modules/nixos/llama-swap/config.yaml)",
   "provider": {
+    "omniroute": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "OmniRoute (free tiers, fallback)",
+      "options": {
+        "baseURL": "http://127.0.0.1:20128/v1",
+        "apiKey": "none"
+      },
+      "models": {
+        "auto": {
+          "name": "OmniRoute auto",
+          "tool_call": true,
+          "limit": {
+            "context": 131072,
+            "output": 16384
+          }
+        }
+      }
+    },
     "llama-swap": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "llama-swap (local)",

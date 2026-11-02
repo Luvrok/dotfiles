@@ -8,6 +8,7 @@
 #   cerebras    cloud.cerebras.ai
 #   mistral     console.mistral.ai
 #   zai         z.ai/manage-apikey
+#   omniroute   its own key, Dashboard, Endpoints (modules/nixos/omniroute)
 # github-copilot has no key, it logs in with /connect in opencode
 {
   config,
