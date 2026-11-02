@@ -177,7 +177,7 @@ in
             ExecStartPre = [
               "-${ip} netns add ${ns}"
             ];
-            ExecStart = "${lib.getExe pkgs.tun2socks} -device tun://${dev} -proxy socks5://${cfg.netns.socks} -loglevel warn";
+            ExecStart = "${lib.getExe pkgs.tun2socks} --device tun://${dev} --proxy socks5://${cfg.netns.socks} --loglevel warn";
             ExecStartPost = nsUp;
             ExecStopPost = "-${ip} netns del ${ns}";
             Restart = "on-failure";
