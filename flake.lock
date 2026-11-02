@@ -116,6 +116,31 @@
         "url": "https://github.com/Luvrok/jarvis"
       }
     },
+    "kodi": {
+      "inputs": {
+        "kodi-infotagger": "kodi-infotagger",
+        "kodi-jurialmunkey": "kodi-jurialmunkey",
+        "kodi-skins": "kodi-skins",
+        "kodi-skinvariables": "kodi-skinvariables",
+        "kodi-tmdbhelper": "kodi-tmdbhelper",
+        "nixpkgs-kodi": "nixpkgs-kodi",
+        "rutracker-cf-proxy": "rutracker-cf-proxy"
+      },
+      "locked": {
+        "lastModified": 1793614249,
+        "narHash": "sha256-IgZcBbZ8mIj0Lyzr7KKhGl38FtwiQpb0FmsesKejFTo=",
+        "ref": "refs/heads/main",
+        "rev": "395fbe913fb68bc9e0c45c96536985c00f69fb77",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/Luvrok/kodi"
+      },
+      "original": {
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/Luvrok/kodi"
+      }
+    },
     "kodi-infotagger": {
       "flake": false,
       "locked": {
@@ -363,16 +388,10 @@
         "disko": "disko",
         "home-manager": "home-manager",
         "jarvis": "jarvis",
-        "kodi-infotagger": "kodi-infotagger",
-        "kodi-jurialmunkey": "kodi-jurialmunkey",
-        "kodi-skins": "kodi-skins",
-        "kodi-skinvariables": "kodi-skinvariables",
-        "kodi-tmdbhelper": "kodi-tmdbhelper",
+        "kodi": "kodi",
         "lazygit": "lazygit",
         "nixpkgs": "nixpkgs_3",
-        "nixpkgs-kodi": "nixpkgs-kodi",
         "nixpkgs-pinned": "nixpkgs-pinned",
-        "rutracker-cf-proxy": "rutracker-cf-proxy",
         "sops-nix": "sops-nix",
         "textfoxy": "textfoxy",
         "voidsddm": "voidsddm",
