@@ -43,6 +43,15 @@ in
     notes-mcp.enable = true;
     # api keys of opencode's free tiers
     opencode-keys.enable = true;
+    # wine for games, in its own prefix (wine-games, winetricks-games)
+    wine-gaming.enable = true;
+    # sober, vinegar and the tools of studio. flathub goes through xray
+    roblox = {
+      enable = true;
+      proxy = lib.mkIf config.services.xray.enable "http://127.0.0.1:10808";
+      # roblox-player and roblox-studio go through xray's mixed inbound
+      netns.enable = config.services.xray.enable;
+    };
   };
 
   # the gpu driver and the font size of the desktop (modules/nixos/desktop)

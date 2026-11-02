@@ -14,5 +14,7 @@
     ../docs-mcp
     ../notes-mcp
     ../opencode-keys.nix
+    ../wine-gaming
+    ../roblox
   ];
 }
