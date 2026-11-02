@@ -1,49 +1,51 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
--- UI and behavior
-vim.o.number = true
-vim.o.mouse = "a"
-vim.o.showmode = false
+local o = vim.opt
 
+-- ui
+o.number = true
+o.relativenumber = true
+o.cursorline = true
+o.signcolumn = "yes"
+o.showmode = false
+o.laststatus = 3 -- one statusline for all windows
+o.scrolloff = 10
+o.wrap = true
+o.breakindent = true
+o.list = true
+o.listchars = { tab = "  ", trail = "·", nbsp = "␣" }
+o.background = "dark"
+
+-- behavior
+o.mouse = "a"
+o.undofile = true
+o.swapfile = false
+o.confirm = true
+o.splitright = true
+o.splitbelow = true
+o.updatetime = 250
+o.timeoutlen = 300
+o.inccommand = "split"
+
+-- the clipboard provider is slow to load, after startup
 vim.schedule(function()
-	vim.o.clipboard = "unnamedplus"
+	o.clipboard = "unnamedplus"
 end)
 
-vim.o.breakindent = true
-vim.o.undofile = true
-vim.o.ignorecase = true
-vim.o.smartcase = true
-vim.o.signcolumn = "yes"
-vim.o.background = "dark"
-vim.o.updatetime = 250
-vim.o.timeoutlen = 300
-vim.o.splitright = true
-vim.o.splitbelow = true
-vim.o.list = true
-vim.opt.listchars = { tab = "  ", trail = "·", nbsp = "␣" }
-vim.o.inccommand = "split"
-vim.o.cursorline = true
--- vim.opt.cursorcolumn = true
-vim.o.scrolloff = 10
-vim.o.confirm = true
-vim.opt.swapfile = false
-vim.opt.laststatus = 3 -- чтобы статусбар был общий (красивее)
-vim.opt.wrap = true
+-- search: case smart, no highlight while typing or after
+o.ignorecase = true
+o.smartcase = true
+o.hlsearch = false
+o.incsearch = false
 
--- tabs
-vim.opt.expandtab = true
-vim.opt.shiftwidth = 2
-vim.opt.tabstop = 2
-vim.opt.softtabstop = 2
-vim.opt.smartindent = true
-vim.opt.autoindent = true
-
-vim.wo.relativenumber = true
-
--- disable search, dont like it
-vim.opt.hlsearch = false
-vim.opt.incsearch = false
+-- indent: 2 spaces, indent-o-matic takes the file's own. indentexpr comes
+-- from the filetype or treesitter (plugins/treesitter.lua)
+o.expandtab = true
+o.shiftwidth = 2
+o.tabstop = 2
+o.softtabstop = 2
+o.autoindent = true
 
 -- quickshell scripts have no shebang (writeShellApplication adds it), without this
 -- they open as conf: no bash highlighting, no bashls, no shellcheck

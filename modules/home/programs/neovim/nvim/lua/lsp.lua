@@ -5,25 +5,22 @@
 local flake = vim.env.HOME .. "/HOME/infra/dotfiles"
 -- hostName = username, which is also the nixosConfigurations name
 local host = vim.uv.os_gethostname()
+local flakeExpr = ('(builtins.getFlake "%s")'):format(flake)
 
 vim.lsp.config("nixd", {
 	-- nixd logs every request to stderr and nvim writes all of it to lsp.log as errors
 	cmd = { "nixd", "--log=error" },
 	settings = {
 		nixd = {
-			nixpkgs = {
-				expr = ('import (builtins.getFlake "%s").inputs.nixpkgs { }'):format(flake),
-			},
-			formatting = {
-				command = { "nixfmt" },
-			},
+			nixpkgs = { expr = ("import %s.inputs.nixpkgs { }"):format(flakeExpr) },
+			formatting = { command = { "nixfmt" } },
 			options = {
 				nixos = {
-					expr = ('(builtins.getFlake "%s").nixosConfigurations."%s".options'):format(flake, host),
+					expr = ('%s.nixosConfigurations."%s".options'):format(flakeExpr, host),
 				},
 				home_manager = {
-					expr = ('(builtins.getFlake "%s").nixosConfigurations."%s".options.home-manager.users.type.getSubOptions []'):format(
-						flake,
+					expr = ('%s.nixosConfigurations."%s".options.home-manager.users.type.getSubOptions []'):format(
+						flakeExpr,
 						host
 					),
 				},
@@ -71,10 +68,8 @@ vim.lsp.config("gopls", {
 
 vim.lsp.config("bashls", {
 	settings = {
-		bashIde = {
-			-- same exclude as writeShellApplication in modules/home/packages.nix
-			shellcheckArguments = "--exclude=SC2016",
-		},
+		-- $vars in single quotes are on purpose in the jq and awk scripts
+		bashIde = { shellcheckArguments = "--exclude=SC2016" },
 	},
 })
 
@@ -85,6 +80,15 @@ vim.lsp.config("tinymist", {
 		semanticTokens = "enable",
 	},
 })
+
+-- the qml modules of qt and quickshell (import QtQuick, import Quickshell),
+-- the paths come from nix (lua/nix.lua, written by the neovim home module)
+local ok, nix = pcall(require, "nix")
+local qmlls = { "qmlls" }
+for _, path in ipairs(ok and nix.qmlImportPaths or {}) do
+	vim.list_extend(qmlls, { "-I", path })
+end
+vim.lsp.config("qmlls", { cmd = qmlls })
 
 -- prettierd formats these, keep the servers out of it
 for _, name in ipairs({ "html", "cssls", "jsonls" }) do
@@ -106,6 +110,7 @@ vim.lsp.enable({
 	"cssls",
 	"jsonls",
 	"yamlls",
+	"qmlls",
 })
 
 -- inlay hints in every buffer whose server has them (gopls, lua_ls, clangd, ...)
@@ -117,19 +122,4 @@ vim.diagnostic.config({
 		border = "rounded",
 		source = "if_many",
 	},
-})
-
-vim.api.nvim_create_autocmd("CursorHold", {
-	callback = function()
-		vim.diagnostic.open_float({
-			focus = false,
-			scope = "cursor",
-			close_events = {
-				"BufLeave",
-				"CursorMoved",
-				"InsertEnter",
-				"FocusLost",
-			},
-		})
-	end,
 })

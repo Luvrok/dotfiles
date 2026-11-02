@@ -24,7 +24,9 @@ return {
 				mappings = {
 					["u"] = "navigate_up",
 					["."] = "set_root",
-					["q"] = function() vim.cmd("confirm qall") end,
+					["q"] = function()
+						vim.cmd("confirm qall")
+					end,
 				},
 			},
 			follow_current_file = { enabled = true },

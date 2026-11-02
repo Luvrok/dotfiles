@@ -15,44 +15,28 @@ return {
 						key = "g",
 						desc = "find text",
 						action = function()
-							require("telescope.builtin").live_grep({
-								prompt_title = "search",
-								results_title = "files",
-								preview_title = "preview",
-							})
+							require("util.pick").grep()
 						end,
 					},
 					{
 						key = "r",
 						desc = "recent files",
 						action = function()
-							require("telescope.builtin").oldfiles({
-								prompt_title = "search",
-								results_title = "files",
-								preview_title = "preview",
-							})
+							require("util.pick").recent()
 						end,
 					},
 					{
 						key = "f",
 						desc = "find file",
 						action = function()
-							require("telescope.builtin").find_files({
-								prompt_title = "search",
-								results_title = "files",
-								preview_title = "preview",
-							})
+							require("util.pick").files()
 						end,
 					},
 					{
 						key = "p",
 						desc = "projects",
 						action = function()
-							require("telescope").extensions.projects.projects({
-								prompt_title = "search",
-								results_title = "projects",
-								preview_title = "preview",
-							})
+							require("util.pick").projects()
 						end,
 					},
 					{ key = "q", desc = "quit", action = ":qa" },

@@ -64,6 +64,7 @@
       vscode-langservers-extracted
       yaml-language-server
       tinymist
+      kdePackages.qtdeclarative # qmlls and qmlformat, for quickshell
 
       # --- networking ---
       dig

@@ -12,6 +12,7 @@ return {
 			nix = { "nixfmt" },
 			sql = { "sql_formatter" },
 			typst = { "typstyle" },
+			qml = { "qmlformat" },
 
 			html = { "prettierd" },
 			css = { "prettierd" },

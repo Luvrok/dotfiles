@@ -1,78 +1,69 @@
-local map = vim.keymap.set
-local opts = { silent = true }
+local map = function(mode, lhs, rhs, opts)
+	vim.keymap.set(mode, lhs, rhs, vim.tbl_extend("force", { silent = true }, opts or {}))
+end
 
--- disable default undo/redo keys (prevent accidental presses)
-vim.keymap.set("n", "u", "<Nop>", { noremap = true, silent = true })
-vim.keymap.set("n", "<C-r>", "<Nop>", { noremap = true, silent = true })
+-- undo and redo on ctrl+z and ctrl+y, u and ctrl+r do nothing
+map({ "n", "x" }, "u", "<Nop>")
+map({ "n", "x" }, "<C-r>", "<Nop>")
+map("n", "<C-z>", "u")
+map("n", "<C-y>", "<C-r>")
+-- in visual mode u lowercases the selection, so leave it first
+map("x", "<C-z>", "<Esc>u")
+map("x", "<C-y>", "<Esc><C-r>")
+map("i", "<C-z>", "<C-o>u")
+map("i", "<C-y>", "<C-o><C-r>")
 
-vim.keymap.set("x", "u", "<Nop>", { noremap = true, silent = true })
-vim.keymap.set("x", "<C-r>", "<Nop>", { noremap = true, silent = true })
+-- windows
+map("n", "<C-h>", "<C-w>h")
+map("n", "<C-j>", "<C-w>j")
+map("n", "<C-k>", "<C-w>k")
+map("n", "<C-l>", "<C-w>l")
 
--- remap undo/redo to Ctrl+Z / Ctrl+Y
-map("n", "<C-z>", "u", { noremap = true, silent = true })
-map("n", "<C-y>", "<C-r>", { noremap = true, silent = true })
+-- system clipboard
+map("n", "<C-c>", '"+y')
+map("n", "<C-x>", '"+d')
+map("x", "<C-c>", '"+ygv')
+map("x", "<C-x>", '"+dgv')
+map({ "n", "x" }, "<C-v>", '"+p')
+map("i", "<C-v>", "<C-r>+")
+map({ "n", "i", "x" }, "<C-a>", "<Esc>ggVG", { desc = "Select all" })
 
-map("i", "<C-z>", "<C-o>u", { noremap = true, silent = true })
-map("i", "<C-y>", "<C-o><C-r>", { noremap = true, silent = true })
+-- buffers and tabs. ctrl+w closes the buffer, so the <C-w> window
+-- commands are gone: splits are :vsp and :sp
+map("n", "<C-t>", "<cmd>tabnew<CR>")
+map("n", "<C-w>", "<cmd>bd<CR>", { desc = "Close buffer" })
+map("n", "<A-Right>", "<cmd>bnext<CR>")
+map("n", "<A-Left>", "<cmd>bprevious<CR>")
 
-map("v", "<C-z>", "u", { noremap = true, silent = true })
-map("v", "<C-y>", "<C-r>", { noremap = true, silent = true })
+-- save, quit
+map({ "n", "i", "x" }, "<C-s>", "<cmd>silent w<CR>", { desc = "Save" })
+map("n", "q", "<cmd>confirm qall<CR>", { desc = "Quit all" })
+map("x", "q", "<Nop>")
 
--- Window navigation
-map("n", "<C-h>", "<C-w><C-h>", opts)
-map("n", "<C-l>", "<C-w><C-l>", opts)
-map("n", "<C-j>", "<C-w><C-j>", opts)
-map("n", "<C-k>", "<C-w><C-k>", opts)
+-- off: search jumps, visual block
+map("n", "n", "<Nop>")
+map("n", "N", "<Nop>")
+map({ "n", "i", "x" }, "<C-q>", "<Nop>")
 
--- Clipboard
-map("n", "<C-c>", '"+y', opts)
-map("n", "<C-x>", '"+d', opts)
-map("x", "<C-c>", '"+ygv', opts)
-map("x", "<C-x>", '"+dgv', opts)
-map({ "n", "x" }, "<C-v>", '"+p', opts)
-map("i", "<C-v>", "<C-r>+", opts)
+-- delete a word back in insert mode
+map("i", "<C-BS>", "<C-w>")
+map("i", "<C-h>", "<C-w>")
+map("i", "<M-BS>", "<C-w>")
 
--- Buffers and tabs
-map("n", "<C-t>", ":tabnew<CR>", opts)
-map("n", "<C-w>", ":bd<CR>", opts)
-map("n", "<A-Right>", ":bnext<CR>", opts)
-map("n", "<A-Left>", ":bprevious<CR>", opts)
-
--- Search and diagnostics
-map("n", "<Esc>", "<cmd>nohlsearch<CR>", opts)
-
--- disable search, dont like it
-map("n", "n", "<Nop>", { desc = "Disable next search result" })
-map("n", "N", "<Nop>", { desc = "Disable previous search result" })
-
--- Delete words with CTRL-Backspace/Alt-Backspace in insert mode
-map("i", "<C-BS>", "<C-w>", { silent = true })
-map("i", "<C-h>", "<C-w>", { silent = true })
-map("i", "<M-BS>", "<C-w>", { silent = true })
-
--- Disable annoying stuff with q
-map({ "n", "v" }, "q", "<Nop>", { silent = true })
-map("n", "q", "<cmd>confirm qall<cr>", { desc = "Quit all" })
-
--- Disable annoying visual-blocks mode
-map({ "i", "n", "v" }, "<C-q>", "<Nop>", { silent = true })
-
-map({ "n", "i", "v" }, "<C-s>", function()
-	vim.cmd("silent w")
-end, opts)
-
--- Keep visual selection after indenting
-map("v", ">", ">gv")
-map("v", "<", "<gv")
+-- keep the selection after indenting
+map("x", ">", ">gv")
+map("x", "<", "<gv")
 
 -- toggle comment with the built-in gc. gcc and gc are mappings themselves, so remap
-map("n", "<C-/>", "gcc", { remap = true, silent = true, desc = "Toggle comment" })
-map("x", "<C-/>", "gcgv", { remap = true, silent = true, desc = "Toggle comment" })
-map("i", "<C-/>", "<Esc>gccgi", { remap = true, silent = true, desc = "Toggle comment" })
+map("n", "<C-/>", "gcc", { remap = true, desc = "Toggle comment" })
+map("x", "<C-/>", "gcgv", { remap = true, desc = "Toggle comment" })
+map("i", "<C-/>", "<Esc>gccgi", { remap = true, desc = "Toggle comment" })
 
--- shift scroll
--- map({ "n", "i", "v" }, "<S-ScrollWheelUp>", "zh", { noremap = true, silent = true })
--- map({ "n", "i", "v" }, "<S-ScrollWheelDown>", "zl", { noremap = true, silent = true })
-
--- select all
-map({ "n", "i", "x" }, "<C-a>", "<Esc>ggVG", { noremap = true, silent = true })
+-- lsp. nvim has the rest by default: K hover, grn rename, gra code action,
+-- grr references, gri implementation, grt type, gO symbols, [d ]d diagnostics
+map("n", "gd", vim.lsp.buf.definition, { desc = "Go to definition" })
+map("n", "gD", vim.lsp.buf.declaration, { desc = "Go to declaration" })
+map("n", "<leader>d", vim.diagnostic.setloclist, { desc = "Diagnostics of the buffer" })
+map("n", "<leader>ih", function()
+	vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
+end, { desc = "Toggle inlay hints" })
