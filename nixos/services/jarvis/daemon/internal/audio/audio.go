@@ -146,7 +146,7 @@ func (a *Audio) Play(ctx context.Context, samples []float32, rate int, level fun
 	src := make(chan []float32, 1)
 	src <- samples
 	close(src)
-	_, err := a.PlayStream(ctx, src, rate, 0, 0, level)
+	_, err := a.PlayStream(ctx, src, rate, 0, 0, nil, level)
 	return err
 }
 
@@ -156,7 +156,8 @@ func (a *Audio) Play(ctx context.Context, samples []float32, rate int, level fun
 // it's measured on the first chunks). a generator slower than real time
 // gets a head start long enough to play to the end without a gap; a gap
 // anyway stops it until 0.8 s is in again. it returns the speed it saw
-func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, expect time.Duration, speed float64, level func(float64)) (float64, error) {
+// started runs once, when the sound really starts
+func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, expect time.Duration, speed float64, started func(), level func(float64)) (float64, error) {
 	var mu sync.Mutex
 	var buf []float32
 	ended := false
@@ -305,6 +306,9 @@ func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, 
 	defer dev.Uninit()
 	if err := dev.Start(); err != nil {
 		return 0, fmt.Errorf("playback: %w", err)
+	}
+	if started != nil {
+		started()
 	}
 	tick := time.NewTicker(33 * time.Millisecond)
 	defer tick.Stop()

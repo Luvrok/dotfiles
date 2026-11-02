@@ -494,11 +494,6 @@ func (d *Daemon) speak(ctx context.Context, ch *config.Character, text, lang str
 		return
 	}
 
-	// the menu comes back for the answer: to read it, and r to reply
-	if announce && d.viewers() == 0 && len(d.cfg.UI.OpenCmd) > 0 {
-		notify.Run(d.cfg.UI.OpenCmd)
-	}
-	d.setState(Speaking)
 	src := make(chan []float32, 1)
 	src <- first
 	// all of the voice, counted, for its seconds per character
@@ -521,7 +516,16 @@ func (d *Daemon) speak(ctx context.Context, ch *config.Character, text, lang str
 		perChar = 1.0 / 14
 	}
 	expect := time.Duration(chars * perChar * float64(time.Second))
-	speed, err := d.audio.PlayStream(ctx, src, stream.Rate, expect, known, func(v float64) { d.level(v, "tts") })
+	// voicing until the head start is in, speaking when the sound starts.
+	// the menu comes back for the answer right then: to read it, and r to
+	// reply
+	started := func() {
+		if announce && d.viewers() == 0 && len(d.cfg.UI.OpenCmd) > 0 {
+			notify.Run(d.cfg.UI.OpenCmd)
+		}
+		d.setState(Speaking)
+	}
+	speed, err := d.audio.PlayStream(ctx, src, stream.Rate, expect, known, started, func(v float64) { d.level(v, "tts") })
 	// the voice's speed for next time, the lower of the last two: a wobble
 	// down costs a gap, a wobble up only a moment of waiting
 	if speed > 0 {
