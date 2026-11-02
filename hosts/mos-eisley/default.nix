@@ -4,10 +4,11 @@
   imports = [
     # ./disk-config.nix
     ./hardware-configuration.nix
-    ../../modules/nixos/small-disk.nix
     ./network.nix
     ./nginx.nix
   ];
+
+  dotfiles.small-disk.enable = true;
 
   sops.defaultSopsFile = ../../secrets/mos-eisley.yaml;
 

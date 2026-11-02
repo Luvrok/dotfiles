@@ -3,7 +3,7 @@
 # cpu). read-only search over MCP for pi (pi/mcp.json, the notes skill).
 # the vault is scraped as one library, "notes": a full scrape when the
 # scrape args change, else a refresh every 30 min that skips unchanged notes.
-# barnard only, hosts/barnard imports this
+# needs llama-swap, so a desktop host (modules/nixos/desktop)
 {
   config,
   lib,
@@ -13,6 +13,7 @@
 }:
 
 let
+  cfg = config.dotfiles.notes-mcp;
   port = 6281;
   dataDir = "/var/lib/notes-mcp";
   vault = "/home/${username}/HOME/wizzard/Holocron";
@@ -121,53 +122,57 @@ let
   };
 in
 {
-  # the image runs as uid 1000, the vault's owner reads it the same
-  systemd.tmpfiles.rules = [ "d ${dataDir} 0750 1000 1000 -" ];
+  options.dotfiles.notes-mcp.enable = lib.mkEnableOption "the obsidian vault's mcp index";
 
-  environment.systemPackages = [ notes-mcp ];
+  config = lib.mkIf cfg.enable {
+    # the image runs as uid 1000, the vault's owner reads it the same
+    systemd.tmpfiles.rules = [ "d ${dataDir} 0750 1000 1000 -" ];
 
-  virtualisation.oci-containers.containers.notes-mcp = {
-    inherit image environment volumes;
-    # only /mcp, search tools only, an agent can't start a scrape
-    cmd = [
-      "mcp"
-      "--read-only"
-    ];
-    extraOptions = [
-      "--network=host"
-      "--memory=1g"
-      "--init"
-    ];
-  };
+    environment.systemPackages = [ notes-mcp ];
 
-  systemd.services.podman-notes-mcp = {
-    wants = [ "llama-swap.service" ];
-    after = [ "llama-swap.service" ];
-    # the first start asks embed for its vector size, this waits for it
-    serviceConfig.ExecStartPre = lib.mkAfter [
-      "${lib.getExe pkgs.curl} -sf -o /dev/null --retry 30 --retry-delay 2 --retry-all-errors ${llamaSwap}/upstream/${embeddingModel}/health"
-    ];
-  };
-
-  systemd.services.notes-mcp-sync = {
-    wants = [ "podman-notes-mcp.service" ];
-    after = [ "podman-notes-mcp.service" ];
-    restartIfChanged = false;
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = lib.getExe sync;
-      StateDirectory = "notes-mcp-sync";
-      KillMode = "mixed";
-      ExecStopPost = "-${podman} stop --filter label=notes-mcp-unit=notes-mcp-sync";
-      Nice = 10;
+    virtualisation.oci-containers.containers.notes-mcp = {
+      inherit image environment volumes;
+      # only /mcp, search tools only, an agent can't start a scrape
+      cmd = [
+        "mcp"
+        "--read-only"
+      ];
+      extraOptions = [
+        "--network=host"
+        "--memory=1g"
+        "--init"
+      ];
     };
-  };
-  systemd.timers.notes-mcp-sync = {
-    wantedBy = [ "timers.target" ];
-    restartTriggers = [ scrapeKey ];
-    timerConfig = {
-      OnActiveSec = "2min";
-      OnUnitInactiveSec = "30min";
+
+    systemd.services.podman-notes-mcp = {
+      wants = [ "llama-swap.service" ];
+      after = [ "llama-swap.service" ];
+      # the first start asks embed for its vector size, this waits for it
+      serviceConfig.ExecStartPre = lib.mkAfter [
+        "${lib.getExe pkgs.curl} -sf -o /dev/null --retry 30 --retry-delay 2 --retry-all-errors ${llamaSwap}/upstream/${embeddingModel}/health"
+      ];
+    };
+
+    systemd.services.notes-mcp-sync = {
+      wants = [ "podman-notes-mcp.service" ];
+      after = [ "podman-notes-mcp.service" ];
+      restartIfChanged = false;
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = lib.getExe sync;
+        StateDirectory = "notes-mcp-sync";
+        KillMode = "mixed";
+        ExecStopPost = "-${podman} stop --filter label=notes-mcp-unit=notes-mcp-sync";
+        Nice = 10;
+      };
+    };
+    systemd.timers.notes-mcp-sync = {
+      wantedBy = [ "timers.target" ];
+      restartTriggers = [ scrapeKey ];
+      timerConfig = {
+        OnActiveSec = "2min";
+        OnUnitInactiveSec = "30min";
+      };
     };
   };
 }

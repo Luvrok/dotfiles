@@ -12,8 +12,10 @@
     ../llama-swap
     ../llama-swap/searxng.nix
     ../rgb-off.nix
-    # the voice assistant (Luvrok/jarvis), off unless a host turns it on
+    # the voice assistant (Luvrok/jarvis) and kodi with its downloads
+    # (Luvrok/kodi), off unless a host turns them on
     inputs.jarvis.nixosModules.default
+    inputs.kodi.nixosModules.default
   ];
 
   services = {

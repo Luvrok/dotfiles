@@ -1,5 +1,5 @@
-# api keys of opencode's providers (modules/home/programs/opencode), barnard only,
-# hosts/barnard imports this. the keys go in secrets/opencode.json (sops
+# api keys of opencode's providers (modules/home/programs/opencode), on a
+# host with sops-nix. the keys go in secrets/opencode.json (sops
 # secrets/opencode.json, then git add), one per provider id, each optional:
 #   google      aistudio.google.com/apikey
 #   groq        console.groq.com/keys
@@ -10,12 +10,15 @@
 #   zai         z.ai/manage-apikey
 # github-copilot has no key, it logs in with /connect in opencode
 {
+  config,
   lib,
+  options,
   username,
   ...
 }:
 
 let
+  cfg = config.dotfiles.opencode-keys;
   secretsFile = ../../secrets/opencode.json;
   hasSecrets = builtins.pathExists secretsFile;
   # sops keeps the names in clear, so only the keys that are there get a secret
@@ -24,19 +27,27 @@ let
   );
 in
 {
-  warnings = lib.optional (
-    !hasSecrets
-  ) "secrets/opencode.json is missing (or not git added): opencode has only the free models of Zen";
+  options.dotfiles.opencode-keys.enable = lib.mkEnableOption "opencode's api keys from sops";
 
-  sops.secrets = lib.listToAttrs (
-    map (
-      id:
-      lib.nameValuePair "opencode/${id}" {
-        sopsFile = secretsFile;
-        format = "json";
-        key = id;
-        owner = username;
-      }
-    ) ids
+  # sops.secrets exists only on a host with sops-nix
+  config = lib.mkIf cfg.enable (
+    {
+      warnings = lib.optional (
+        !hasSecrets
+      ) "secrets/opencode.json is missing (or not git added): opencode has only the free models of Zen";
+    }
+    // lib.optionalAttrs (options ? sops) {
+      sops.secrets = lib.listToAttrs (
+        map (
+          id:
+          lib.nameValuePair "opencode/${id}" {
+            sopsFile = secretsFile;
+            format = "json";
+            key = id;
+            owner = username;
+          }
+        ) ids
+      );
+    }
   );
 }

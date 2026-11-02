@@ -13,18 +13,7 @@ let
   hasArrSecrets = builtins.pathExists arrSecrets;
 in
 {
-  imports = [
-    ./xray.nix
-    # the obsidian vault's index for pi, vectors from llama-swap
-    ../../modules/nixos/notes-mcp
-    # the wayland session
-    ../../modules/nixos/hyprland
-    # kodi, the movies and series of /media/outer-1 played in mpv, and
-    # their downloads: radarr, sonarr, qbittorrent, subtitles (Luvrok/kodi)
-    inputs.kodi.nixosModules.default
-    # api keys of opencode's free tiers
-    ../../modules/nixos/opencode-keys.nix
-  ];
+  imports = [ ./xray.nix ];
 
   # the voice assistant (Luvrok/jarvis): its models in llama-swap's
   # config.yaml, its menu in quickshell (hyprland's default.nix checks it)
@@ -40,6 +29,14 @@ in
   sops.defaultSopsFormat = "yaml";
   sops.age.keyFile = "/var/lib/sops-nix/key.txt";
   sops.age.generateKey = true;
+
+  dotfiles = {
+    hyprland.enable = true;
+    # the obsidian vault's index for pi, vectors from llama-swap
+    notes-mcp.enable = true;
+    # api keys of opencode's free tiers
+    opencode-keys.enable = true;
+  };
 
   # the gpu driver and the font size of the desktop (modules/nixos/desktop)
   videoDrivers = [ "amdgpu" ];

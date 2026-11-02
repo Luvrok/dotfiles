@@ -86,6 +86,7 @@
           inherit inputs system;
         };
         modules = [
+          ./modules/nixos
           ./modules/nixos/desktop
           ./modules/nixos/hardware/amd.nix
           ./hosts/barnard/hardware-configuration.nix
@@ -125,6 +126,7 @@
           inherit inputs system;
         };
         modules = [
+          ./modules/nixos
           ./modules/nixos/desktop
           ./modules/nixos/hardware/nvidia.nix
           ./hosts/dash/hardware-configuration.nix
@@ -156,6 +158,7 @@
         };
         modules = [
           disko.nixosModules.disko
+          ./modules/nixos
           ./hosts/kessel
           ./hosts/kessel/disk-config.nix
         ];
@@ -169,6 +172,7 @@
         modules = [
           sops-nix.nixosModules.sops
           disko.nixosModules.disko
+          ./modules/nixos
           ./hosts/mos-eisley
           ./hosts/mos-eisley/disk-config.nix
         ];
@@ -190,6 +194,7 @@
               configName = "general(ALT)";
             };
           }
+          ./modules/nixos
           ./hosts/jedha
         ];
       };

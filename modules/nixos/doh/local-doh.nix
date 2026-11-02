@@ -1,6 +1,12 @@
-{ pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
+  cfg = config.dotfiles.doh-local;
   cert = pkgs.runCommand "dnscrypt-local-doh-cert" { nativeBuildInputs = [ pkgs.openssl ]; } ''
     mkdir -p $out
 
@@ -29,12 +35,16 @@ let
   '';
 in
 {
-  services.dnscrypt-proxy.settings.local_doh = {
-    listen_addresses = [ "127.0.0.1:3053" ];
-    path = "/dns-query";
-    cert_file = "${cert}/server.crt";
-    cert_key_file = "${cert}/server.key";
-  };
+  options.dotfiles.doh-local.enable = lib.mkEnableOption "a local doh endpoint on dnscrypt-proxy, for the browsers";
 
-  environment.etc."dnscrypt-proxy/local-doh-ca.crt".source = "${cert}/ca.crt";
+  config = lib.mkIf cfg.enable {
+    services.dnscrypt-proxy.settings.local_doh = {
+      listen_addresses = [ "127.0.0.1:3053" ];
+      path = "/dns-query";
+      cert_file = "${cert}/server.crt";
+      cert_key_file = "${cert}/server.key";
+    };
+
+    environment.etc."dnscrypt-proxy/local-doh-ca.crt".source = "${cert}/ca.crt";
+  };
 }

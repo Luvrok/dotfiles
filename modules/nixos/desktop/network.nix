@@ -1,7 +1,7 @@
 { username, ... }:
 
 let
-  # DNS comes only from modules/doh.nix, so DNS servers pushed by DHCP/RA
+  # DNS comes only from modules/nixos/doh, so DNS servers pushed by DHCP/RA
   # (the ISP's, spoofable) are ignored.
   # Lower metric wins: ethernet is preferred over wifi when both are up.
   mkLink = name: metric: {
@@ -26,10 +26,8 @@ let
   };
 in
 {
-  imports = [
-    ../doh
-    ../doh/local-doh.nix
-  ];
+  dotfiles.doh.enable = true;
+  dotfiles.doh-local.enable = true;
 
   networking = {
     hostName = "${username}";
