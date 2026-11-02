@@ -13,8 +13,7 @@
 ## Tools
 
 - Web search: the `searxng_*` tools, by the rules below.
-- Library docs: the `docs` skill first, web search after.
-- The user's Obsidian notes: the `notes` skill.
+- The user's Obsidian notes, to find, read or edit them: the `obsidian` skill.
 
 ## Safety
 

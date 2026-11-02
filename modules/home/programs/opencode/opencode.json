@@ -152,13 +152,15 @@
       "*/opencode.json": "deny",
       "*/opencode.jsonc": "deny",
       ".opencode/**": "deny",
-      "*/.opencode/**": "deny"
+      "*/.opencode/**": "deny",
+      "~/HOME/wizzard/Holocron/.obsidian/**": "deny"
     },
     "external_directory": {
       "*": "deny",
       "~/.config/opencode/**": "allow",
       "~/.local/share/opencode/**": "allow",
-      "/nix/store/**": "allow"
+      "/nix/store/**": "allow",
+      "~/HOME/wizzard/Holocron/**": "allow"
     },
     "bash": {
       "*": "allow",
