@@ -61,5 +61,7 @@ in
     "opencode/skills/docs".source = ./skills/docs;
     "opencode/AGENTS.md".source = ./AGENTS.md;
     "opencode/commands".source = ./commands;
+    # a notification when a permission rule says "ask"
+    "opencode/plugins/notify.js".source = ./notify.js;
   };
 }
