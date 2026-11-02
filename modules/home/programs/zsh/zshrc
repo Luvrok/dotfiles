@@ -87,6 +87,33 @@ zstyle ":fzf-tab:complete:cd:*" fzf-preview "ls --color=always \${realpath}"
 
 function _ps_aux_grep() { command ps aux | grep --color=auto "$1" }
 
+# a hugging face file with aria2: 8 connections, resumable (run it again
+# after a break), through xray. hf download goes through the hub's xet,
+# that crawls through a proxy, a plain resolve url doesn't
+#   hfget unsloth/Qwen3.5-4B-GGUF Qwen3.5-4B-UD-Q4_K_XL.gguf [dir]
+#   hfget https://huggingface.co/<repo>/resolve/main/<file> [dir]
+# dir is /var/lib/models, with sudo when it isn't writable. no proxy:
+# HFGET_PROXY= hfget ...
+function hfget() {
+  local url dir
+  if [[ $1 == https://* ]]; then
+    url=$1
+    dir=${2:-/var/lib/models}
+  elif [[ -n $1 && -n $2 ]]; then
+    url="https://huggingface.co/$1/resolve/main/$2"
+    dir=${3:-/var/lib/models}
+  else
+    echo "hfget <repo> <file> [dir]  or  hfget <url> [dir]" >&2
+    return 2
+  fi
+  local file=${${url%%\?*}:t}
+  local proxy=${HFGET_PROXY-http://127.0.0.1:10808}
+  local -a sudo args
+  [[ -w $dir ]] || sudo=(sudo)
+  [[ -n $proxy ]] && args=(--all-proxy=$proxy)
+  $sudo aria2c -x 8 -s 8 -c --file-allocation=falloc $args -d $dir -o $file $url
+}
+
 alias ll='ls -lah --color'
 alias la='ls -A --color'
 alias dt='cd $HOME/HOME/infra/dotfiles'
