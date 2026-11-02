@@ -1,7 +1,7 @@
 -- the open buffers at the top, like editor tabs. no backgrounds, the
 -- current one is orange. starts right of neo-tree (offsets), above the
 -- tree goes the project's path, neo-tree's own root line is hidden.
--- shown while a file is open, hidden on the dashboard
+-- shown while a file or neo-tree is open, hidden on the dashboard
 local colors = {
 	accent = "#d65d0e",
 	fg = "#ebdbb2",
@@ -30,17 +30,30 @@ return {
 		return keys
 	end,
 	init = function()
-		-- the bar while at least one file is open: a listed buffer with a
-		-- name, not the dashboard or an empty [No Name]
+		-- the bar while a file is open (a listed buffer with a name, not the
+		-- dashboard or an empty [No Name]) or neo-tree is, for its path
 		local function update()
 			local files = vim.tbl_filter(function(b)
 				return b.name ~= "" and vim.bo[b.bufnr].buftype == ""
 			end, vim.fn.getbufinfo({ buflisted = 1 }))
-			vim.o.showtabline = #files > 0 and 2 or 0
+			local tree = vim.iter(vim.api.nvim_tabpage_list_wins(0)):any(function(w)
+				return vim.bo[vim.api.nvim_win_get_buf(w)].filetype == "neo-tree"
+			end)
+			vim.o.showtabline = (#files > 0 or tree) and 2 or 0
 		end
-		vim.api.nvim_create_autocmd({ "BufAdd", "BufDelete", "BufWipeout", "BufEnter", "BufFilePost" }, {
+		vim.api.nvim_create_autocmd({
+			"BufAdd",
+			"BufDelete",
+			"BufWipeout",
+			"BufEnter",
+			"BufFilePost",
+			"BufWinEnter",
+			"WinClosed",
+			"TabEnter",
+		}, {
 			group = vim.api.nvim_create_augroup("user-bufferline", { clear = true }),
-			-- a deleted buffer is still listed during its event
+			-- a deleted buffer is still listed and a closed window still there
+			-- during their events
 			callback = vim.schedule_wrap(update),
 		})
 		update()
@@ -66,6 +79,10 @@ return {
 				always_show_bufferline = true,
 				auto_toggle_bufferline = false,
 				max_name_length = 24,
+				-- no empty [No Name] in the bar, a new unsaved one with text stays
+				custom_filter = function(buf)
+					return vim.api.nvim_buf_get_name(buf) ~= "" or vim.bo[buf].modified
+				end,
 				tab_size = 0,
 				-- the bar starts where neo-tree ends, nothing over the tree
 				offsets = {
