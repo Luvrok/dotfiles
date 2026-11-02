@@ -127,10 +127,10 @@
         "rutracker-cf-proxy": "rutracker-cf-proxy"
       },
       "locked": {
-        "lastModified": 1793614249,
-        "narHash": "sha256-IgZcBbZ8mIj0Lyzr7KKhGl38FtwiQpb0FmsesKejFTo=",
+        "lastModified": 1793614581,
+        "narHash": "sha256-+kS7BL+3gFVC0MdRNsRPg6bPhvxxk5bXm0H9Dus86W4=",
         "ref": "refs/heads/main",
-        "rev": "395fbe913fb68bc9e0c45c96536985c00f69fb77",
+        "rev": "917fea84d1cdd268afef12dfcf49fcfb4298bb87",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/Luvrok/kodi"
