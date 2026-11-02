@@ -1,10 +1,10 @@
--- the open buffers at the top, like editor tabs. starts right of neo-tree
--- (offsets), the space above the tree stays empty
+-- the open buffers at the top, like editor tabs. no backgrounds, the
+-- current one is orange. starts right of neo-tree (offsets), the line
+-- above the tree stays empty
 local colors = {
 	accent = "#d65d0e",
 	fg = "#ebdbb2",
 	dim = "#928374",
-	bg = "#282828",
 }
 
 return {
@@ -50,7 +50,7 @@ return {
 				tab_size = 0,
 				-- the bar starts where neo-tree ends, nothing over the tree
 				offsets = {
-					{ filetype = "neo-tree", text = "", highlight = "Normal", separator = false },
+					{ filetype = "neo-tree", text = "", highlight = "BufferLineFill", separator = false },
 				},
 				-- Snacks.bufdelete keeps the window (and neo-tree next to it)
 				close_command = function(buf)
@@ -64,24 +64,24 @@ return {
 				fill = hl(colors.dim),
 				background = hl(colors.dim),
 				buffer_visible = hl(colors.dim),
-				buffer_selected = hl(colors.accent, { bg = colors.bg, bold = true, italic = false }),
+				buffer_selected = hl(colors.accent, { bold = true, italic = false }),
 				modified = hl(colors.dim),
 				modified_visible = hl(colors.dim),
-				modified_selected = hl(colors.accent, { bg = colors.bg }),
+				modified_selected = hl(colors.accent),
 				duplicate = hl(colors.dim, { italic = false }),
 				duplicate_visible = hl(colors.dim, { italic = false }),
-				duplicate_selected = hl(colors.fg, { bg = colors.bg, italic = false }),
+				duplicate_selected = hl(colors.fg, { italic = false }),
 				tab = hl(colors.dim),
-				tab_selected = hl(colors.accent, { bg = colors.bg }),
+				tab_selected = hl(colors.accent),
 				tab_separator = hl(colors.dim),
-				tab_separator_selected = hl(colors.dim, { bg = colors.bg }),
+				tab_separator_selected = hl(colors.dim),
 				pick = hl(colors.accent, { bold = true, italic = false }),
 				pick_visible = hl(colors.accent, { bold = true, italic = false }),
-				pick_selected = hl(colors.accent, { bg = colors.bg, bold = true, italic = false }),
-				offset_separator = hl(colors.bg),
-				separator = hl(colors.bg),
-				separator_visible = hl(colors.bg),
-				separator_selected = hl(colors.bg, { bg = colors.bg }),
+				pick_selected = hl(colors.accent, { bold = true, italic = false }),
+				offset_separator = hl(colors.dim),
+				separator = hl(colors.dim),
+				separator_visible = hl(colors.dim),
+				separator_selected = hl(colors.dim),
 			},
 		}
 	end,

@@ -63,8 +63,11 @@ return {
 			["@lsp.type.keyword"] = { fg = "#cc241d" },
 
 			SignColumn = { bg = "NONE" },
-			TabLineFill = { bg = "#282828" },
-			TabLineSel = { bg = "#282828" },
+			-- the tabline (bufferline) on the terminal's background: a group
+			-- without a bg there takes TabLineFill's, over neo-tree too
+			TabLine = { bg = "NONE" },
+			TabLineFill = { bg = "NONE" },
+			TabLineSel = { bg = "NONE" },
 			CursorLine = { bg = "#282828" },
 			Visual = { bg = "#3c3836" },
 
