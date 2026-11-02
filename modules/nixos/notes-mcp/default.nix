@@ -1,6 +1,6 @@
 # notes-mcp: the obsidian vault in a docs-mcp-server container, its own
 # database, the vectors from llama-swap's embed (embeddinggemma-2, on the
-# cpu). read-only search over MCP for pi (pi/mcp.json, the notes skill).
+# cpu). read-only search over MCP for pi (modules/home/programs/pi).
 # the vault is scraped as one library, "notes": a full scrape when the
 # scrape args change, else a refresh every 30 min that skips unchanged notes.
 # needs llama-swap, so a desktop host (modules/nixos/desktop)

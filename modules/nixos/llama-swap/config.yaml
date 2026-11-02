@@ -64,7 +64,7 @@ x-sd: &sd
   checkEndpoint: none
   ttl: 120
 
-# each llm's --ctx-size is repeated as contextWindow in pi/models.json
+# each llm's --ctx-size is repeated as contextWindow in modules/home/programs/pi/models.json
 models:
   "qwen":
     description: "Qwen3.8 27B UD-IQ3_XXS, on GPU, 128K. Coding and agents."

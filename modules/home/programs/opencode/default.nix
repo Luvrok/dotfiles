@@ -5,8 +5,6 @@
   ...
 }:
 let
-  repo = ../../../../opencode;
-
   # all of opencode through xray (127.0.0.1:10808): gemini answers "user
   # location is not supported" to a direct request. its bash commands get
   # the same env, as pi's shellCommandPrefix. loopback stays direct for docs
@@ -48,7 +46,7 @@ let
   # provider in both gets both
   settings = pkgs.runCommand "opencode.json" { nativeBuildInputs = [ pkgs.jq ]; } ''
     jq --argjson p ${lib.escapeShellArg (builtins.toJSON providers)} '.provider = ((.provider // {}) * $p) | del(._comment)' \
-      ${repo}/opencode.json > $out
+      ${./opencode.json} > $out
   '';
 in
 {
@@ -58,8 +56,8 @@ in
   # config stays read-only, so the agent can't rewrite its own policy
   xdg.configFile = {
     "opencode/opencode.json".source = settings;
-    "opencode/skills/notes".source = "${repo}/skills/notes";
-    "opencode/AGENTS.md".source = "${repo}/AGENTS.md";
-    "opencode/commands".source = "${repo}/commands";
+    "opencode/skills/notes".source = ./skills/notes;
+    "opencode/AGENTS.md".source = ./AGENTS.md;
+    "opencode/commands".source = ./commands;
   };
 }

@@ -5,9 +5,6 @@
   ...
 }:
 let
-  repo = "${config.home.homeDirectory}/HOME/infra/dotfiles/pi";
-  inherit (config.lib.file) mkOutOfStoreSymlink;
-
   # npm prefix outside the read-only store and node for packages, no overlay so useGlobalPkgs works
   pi = pkgs.symlinkJoin {
     name = "pi-coding-agent-wrapped";
@@ -27,18 +24,27 @@ in
     pkgs.python3Packages.huggingface-hub
   ];
 
-  # out of store: pi writes settings.json and mcp.json itself, a store file is read-only
+  # contextWindow in models.json repeats --ctx-size from
+  # modules/nixos/llama-swap/config.yaml, change both. the packages in
+  # settings.json are pinned: extensions run with the user's rights
   home.file = {
-    ".pi/agent/settings.json".source = mkOutOfStoreSymlink "${repo}/settings.json";
-    ".pi/agent/models.json".source = mkOutOfStoreSymlink "${repo}/models.json";
-    ".pi/agent/mcp.json".source = mkOutOfStoreSymlink "${repo}/mcp.json";
-    ".pi/web-search.json".source = mkOutOfStoreSymlink "${repo}/web-search.json";
+    ".pi/agent/models.json".source = ./models.json;
+    ".pi/agent/AGENTS.md".source = ./AGENTS.md;
+    ".pi/web-search.json".source = ./web-search.json;
     ".pi/agent/extensions/pi-permission-system/config.json".source =
-      mkOutOfStoreSymlink "${repo}/extensions/pi-permission-system/config.json";
-    # one link per skill
-    ".pi/agent/skills/qwen-generate".source = mkOutOfStoreSymlink "${repo}/skills/qwen-generate";
-    # read-only, pi doesn't write it
-    ".pi/agent/AGENTS.md".source = ../../../../pi/AGENTS.md;
-    ".pi/agent/skills/notes".source = mkOutOfStoreSymlink "${repo}/skills/notes";
+      ./extensions/pi-permission-system/config.json;
+    ".pi/agent/skills/notes".source = ./skills/notes;
+    ".pi/agent/skills/qwen-generate".source = ./skills/qwen-generate;
   };
+
+  # pi writes these itself (/model, /thinking, /mcp, lastChangelogVersion),
+  # so they are copies, not store links. every switch puts the repo's back
+  home.activation.piConfig = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    run mkdir -p "$HOME/.pi/agent"
+    for f in settings.json mcp.json; do
+      run rm -f "$HOME/.pi/agent/$f"
+    done
+    run install -m 644 ${./settings.json} "$HOME/.pi/agent/settings.json"
+    run install -m 644 ${./mcp.json} "$HOME/.pi/agent/mcp.json"
+  '';
 }
