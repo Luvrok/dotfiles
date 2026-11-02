@@ -182,7 +182,7 @@ hl.window_rule({ match = { title = "^Picture-in-Picture$" }, float = true, size 
 hl.window_rule({ match = { title = ".*termfilechooser.*" }, float = true, size = { 1000, 700 }, center = true })
 hl.window_rule({ match = { class = "^dragon-drop$" }, float = true, center = true })
 hl.window_rule({ match = { class = "^ffplay$", title = "^android-webcam$" }, float = true })
--- kodi (nixos/services/kodi) has no border, like a fullscreen window
+-- kodi (Luvrok/kodi) has no border, like a fullscreen window
 hl.window_rule({ match = { class = "^[Kk]odi$" }, border_size = 0 })
 
 -- apps ask to be maximized (kitty after a nixpkgs update): a maximized window

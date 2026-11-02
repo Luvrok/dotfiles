@@ -2,9 +2,16 @@
   config,
   lib,
   pkgs,
+  inputs,
+  username,
   ...
 }:
 
+let
+  # the logins of the downloads, sops secrets/arr.yaml, then git add
+  arrSecrets = ../../secrets/arr.yaml;
+  hasArrSecrets = builtins.pathExists arrSecrets;
+in
 {
   imports = [
     ../../nixos/config/barnard.nix
@@ -16,10 +23,9 @@
     # the wayland sessions
     ../../nixos/services/sway
     ../../nixos/services/hyprland
-    # the movies and series of /media/outer-1, played in mpv
-    ../../nixos/services/kodi
-    # their downloads: radarr, sonarr, qbittorrent, subtitles
-    ../../nixos/services/arr
+    # kodi, the movies and series of /media/outer-1 played in mpv, and
+    # their downloads: radarr, sonarr, qbittorrent, subtitles (Luvrok/kodi)
+    inputs.kodi.nixosModules.default
     # api keys of opencode's free tiers
     ../../nixos/services/opencode-keys.nix
   ];
@@ -32,6 +38,32 @@
     proxy = lib.mkIf config.services.xray.enable "http://127.0.0.1:10808";
     # the notes' own docs-mcp-server (nixos/services/notes-mcp)
     tools.notesMcp = "http://127.0.0.1:6281/mcp";
+  };
+
+  services.kodi = {
+    enable = true;
+    user = username;
+    # radarr, sonarr, prowlarr and bazarr: their servers are behind
+    # cloudflare, the provider stalls it
+    proxy = lib.mkIf config.services.xray.enable "http://127.0.0.1:10808";
+    arr.secrets = lib.mkIf hasArrSecrets config.sops.secrets.arr.path;
+    # jedha's subtitle-translator through jedha-tunnel.nix, then the same
+    # from outside
+    arr.translators = [
+      "http://127.0.0.1:5390/subtitle-translator"
+      "https://lt.vxrnt.ru/subtitle-translator"
+    ];
+  };
+  warnings = lib.optional (
+    !hasArrSecrets
+  ) "secrets/arr.yaml is missing (or not git added): no rutracker, opensubtitles.com or translations";
+  # the whole file, a key that isn't there is just not used
+  sops.secrets.arr = lib.mkIf hasArrSecrets {
+    sopsFile = arrSecrets;
+    format = "yaml";
+    key = "";
+    owner = username;
+    restartUnits = [ "arr-setup.service" ];
   };
 
   # the sddm greeter runs in weston, on the first output: DP-1, the main one
