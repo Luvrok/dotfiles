@@ -426,6 +426,12 @@ in
               "GPU_KEEPALIVE_INTERVAL=0"
               "-e"
               "HF_HUB_OFFLINE=1"
+              # glibc keeps what torch frees while loading in its arenas,
+              # gigabytes of ram for nothing: fewer arenas, given back sooner
+              "-e"
+              "MALLOC_ARENA_MAX=2"
+              "-e"
+              "MALLOC_TRIM_THRESHOLD_=67108864"
               "-v"
               "/nix/store:/nix/store:ro"
               "-v"
