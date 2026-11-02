@@ -50,7 +50,8 @@ x-qwen-filters: &qwen-filters
           enable_thinking: false
 
 # jarvis never thinks, whatever a request asks for: it only talks, and
-# thinking would come before the first spoken word
+# thinking would come before the first spoken word. --reasoning off in each
+# jarvis cmd does it on the server, this for the requests
 x-jarvis-filters: &jarvis-filters
   filters:
     setParamsByID:
@@ -141,6 +142,7 @@ models:
       --cache-ram 0
       -fa on --cache-type-k q8_0 --cache-type-v q8_0
       --temp 1.0 --top-p 0.95 --top-k 64 --min-p 0
+      --reasoning off
     ttl: 600
     <<: *jarvis-filters
 
@@ -157,7 +159,7 @@ models:
       --cache-ram 0
       -fa on --cache-type-k q8_0 --cache-type-v q8_0
       --temp 0.7 --top-p 0.8 --top-k 20 --min-p 0 --presence-penalty 1.5
-      --chat-template-kwargs '{"enable_thinking":false}'
+      --reasoning off
     ttl: 600
     <<: *jarvis-filters
 
@@ -170,7 +172,7 @@ models:
       --cache-ram 0
       -fa on --cache-type-k q8_0 --cache-type-v q8_0
       --temp 0.7 --top-p 0.8 --top-k 20 --min-p 0 --presence-penalty 1.5
-      --chat-template-kwargs '{"enable_thinking":false}'
+      --reasoning off
     ttl: 600
     <<: *jarvis-filters
 
