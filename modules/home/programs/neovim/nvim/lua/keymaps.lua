@@ -29,11 +29,13 @@ map("i", "<C-v>", "<C-r>+")
 map({ "n", "i", "x" }, "<C-a>", "<Esc>ggVG", { desc = "Select all" })
 
 -- buffers and tabs. ctrl+w closes the buffer, so the <C-w> window
--- commands are gone: splits are :vsp and :sp
+-- commands are gone: splits are :vsp and :sp. Snacks.bufdelete keeps the
+-- window, neo-tree doesn't take over the screen. alt+left/right go through
+-- the buffers (plugins/bufferline.lua)
 map("n", "<C-t>", "<cmd>tabnew<CR>")
-map("n", "<C-w>", "<cmd>bd<CR>", { desc = "Close buffer" })
-map("n", "<A-Right>", "<cmd>bnext<CR>")
-map("n", "<A-Left>", "<cmd>bprevious<CR>")
+map("n", "<C-w>", function()
+	Snacks.bufdelete()
+end, { desc = "Close buffer" })
 
 -- save, quit
 map({ "n", "i", "x" }, "<C-s>", "<cmd>silent w<CR>", { desc = "Save" })
