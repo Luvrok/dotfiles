@@ -33,7 +33,7 @@ in
     ".pi/web-search.json".source = ./web-search.json;
     ".pi/agent/extensions/pi-permission-system/config.json".source =
       ./extensions/pi-permission-system/config.json;
-    ".pi/agent/skills/notes".source = ./skills/notes;
+    ".pi/agent/skills/obsidian".source = ./skills/obsidian;
     ".pi/agent/skills/qwen-generate".source = ./skills/qwen-generate;
   };
 

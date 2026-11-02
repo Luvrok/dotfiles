@@ -56,7 +56,7 @@ in
   # config stays read-only, so the agent can't rewrite its own policy
   xdg.configFile = {
     "opencode/opencode.json".source = settings;
-    "opencode/skills/notes".source = ./skills/notes;
+    "opencode/skills/obsidian".source = ./skills/obsidian;
     "opencode/AGENTS.md".source = ./AGENTS.md;
     "opencode/commands".source = ./commands;
   };

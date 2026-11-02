@@ -26,13 +26,15 @@
       "~/.pi/agent/settings.json": "deny",
       "~/.pi/agent/mcp.json": "deny",
       "*/.git/*": "deny",
-      "*/.pi/*": "deny"
+      "*/.pi/*": "deny",
+      "~/HOME/wizzard/Holocron/.obsidian/*": "deny"
     },
 
     "external_directory": {
       "*": "deny",
       "~/.pi/*": "allow",
-      "~/.local/share/pi/*": "allow"
+      "~/.local/share/pi/*": "allow",
+      "~/HOME/wizzard/Holocron/*": "allow"
     },
 
     "external_directory_read": {
@@ -42,7 +44,6 @@
 
     "mcp": {
       "*": "ask",
-      "docs": "allow",
       "notes": "allow"
     },
 
