@@ -27,7 +27,8 @@
       "~/.pi/agent/mcp.json": "deny",
       "*/.git/*": "deny",
       "*/.pi/*": "deny",
-      "~/HOME/wizzard/Holocron/.obsidian/*": "deny"
+      "~/HOME/wizzard/Holocron/.obsidian/*": "deny",
+      "~/HOME/wizzard/Holocron/.git/*": "deny"
     },
 
     "external_directory": {
