@@ -113,7 +113,7 @@ models:
       --temp 1.0 --top-p 0.95 --top-k 64 --min-p 0
     <<: *gemma-filters
 
-  # the voice assistant (nixos/services/jarvis): gemma-12b with a short
+  # the voice assistant (Luvrok/jarvis): gemma-12b with a short
   # context, loaded for 10 minutes after a question, so the next one is
   # instant. gemma 4's per-layer embeddings stay in ram, not vram, and the
   # default lazy mode reads only tensors over 4 GiB from disk: it kept ~7 GiB
@@ -203,7 +203,7 @@ models:
       -H 1024
     <<: *sd
 
-  # jarvis' voices: qwen3-tts servers in podman (nixos/services/jarvis),
+  # jarvis' voices: qwen3-tts servers in podman (Luvrok/jarvis),
   # jarvis-tts starts their unit and lives while it runs. fixed ports, the
   # same as there. the server knows itself as qwen3-tts
   "jarvis-tts-base":

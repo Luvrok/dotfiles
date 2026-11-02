@@ -39,6 +39,10 @@
     rutracker-cf-proxy.url = "git+https://github.com/rofl3228/rutracker-cf-proxy?shallow=1";
     rutracker-cf-proxy.flake = false;
 
+    # the voice assistant, services.jarvis (Luvrok/jarvis). its menu and
+    # bar icon are in nixos/services/hyprland/quickshell
+    jarvis.url = "git+https://github.com/Luvrok/jarvis?shallow=1";
+    jarvis.inputs.nixpkgs.follows = "nixpkgs";
 
   };
 

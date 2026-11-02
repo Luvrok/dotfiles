@@ -28,6 +28,13 @@
       cp ${./hyprland.lua} $out
     '';
   environment.etc."xdg/quickshell/hyprland".source = ./quickshell;
+  # jarvis' menu and bar icon (Luvrok/jarvis): its build checks them, no
+  # rounded shapes
+  services.jarvis.ui.qmlFiles = [
+    ./quickshell/menus/Jarvis.qml
+    ./quickshell/widgets/MicTile.qml
+    ./quickshell/widgets/JarvisBar.qml
+  ];
   # the lock screen's password (quickshell/Lock.qml, PamContext "quickshell")
   security.pam.services.quickshell = { };
 

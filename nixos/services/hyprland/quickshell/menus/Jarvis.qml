@@ -4,7 +4,7 @@ import Quickshell.Io
 import qs
 import qs.widgets
 
-// jarvis, the voice assistant (nixos/services/jarvis): the daemon listens,
+// jarvis, the voice assistant (Luvrok/jarvis): the daemon listens,
 // the llm answers as the character, the tts speaks it. this menu talks to
 // the daemon over its socket while it's open and starts listening when it
 // opens. once the question is heard it slides away, the bar's mic

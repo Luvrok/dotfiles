@@ -1,5 +1,6 @@
 {
   pkgs,
+  inputs,
   ...
 }:
 
@@ -11,8 +12,8 @@
     ./llama-swap
     ./llama-swap/searxng.nix
     ./rgb-off.nix
-    # the voice assistant, off unless a host turns it on
-    ./jarvis
+    # the voice assistant (Luvrok/jarvis), off unless a host turns it on
+    inputs.jarvis.nixosModules.default
   ];
 
   services = {

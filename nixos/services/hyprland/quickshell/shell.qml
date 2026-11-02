@@ -388,7 +388,7 @@ ShellRoot {
             onDone: shell.close("windows")
         }
     }
-    // jarvis (nixos/services/jarvis), it says "jarvis is off" without its daemon
+    // jarvis (Luvrok/jarvis), it says "jarvis is off" without its daemon
     LazyLoader {
         active: shell.menu === "jarvis"
         Jarvis {

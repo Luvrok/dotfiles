@@ -1,4 +1,9 @@
-{ lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   imports = [
@@ -18,6 +23,16 @@
     # api keys of opencode's free tiers
     ../../nixos/services/opencode-keys.nix
   ];
+
+  # the voice assistant (Luvrok/jarvis): its models in llama-swap's
+  # config.yaml, its menu in quickshell (hyprland's default.nix checks it)
+  services.jarvis = {
+    enable = true;
+    # the hub's lfs cdn and docker hub need xray's mixed inbound
+    proxy = lib.mkIf config.services.xray.enable "http://127.0.0.1:10808";
+    # the notes' own docs-mcp-server (nixos/services/notes-mcp)
+    tools.notesMcp = "http://127.0.0.1:6281/mcp";
+  };
 
   # the sddm greeter runs in weston, on the first output: DP-1, the main one
   # on the right. us,ru like the sessions, the theme's color under it.
