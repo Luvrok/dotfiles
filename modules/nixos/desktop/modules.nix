@@ -11,6 +11,7 @@
     ../gtk
     # off until the host turns them on
     ../hyprland
+    ../docs-mcp
     ../notes-mcp
     ../opencode-keys.nix
   ];

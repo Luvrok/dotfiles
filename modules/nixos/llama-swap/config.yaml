@@ -235,9 +235,9 @@ models:
     useModelName: qwen3-tts
     ttl: 600
 
-  # notes-mcp keys its index on the alias, so a new model or quant needs a new alias here and in notes-mcp
+  # docs-mcp and notes-mcp key their index on the alias, so a new model or quant needs a new alias here and in both
   "embed":
-    description: "EmbeddingGemma 2 BF16, CPU. pi-memory, notes-mcp."
+    description: "EmbeddingGemma 2 BF16, CPU. pi-memory, docs-mcp, notes-mcp."
     cmd: ${embed-args}
     aliases:
       - embeddinggemma-2-bf16

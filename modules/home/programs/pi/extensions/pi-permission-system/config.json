@@ -45,6 +45,7 @@
 
     "mcp": {
       "*": "ask",
+      "docs": "allow",
       "notes": "allow"
     },
 
