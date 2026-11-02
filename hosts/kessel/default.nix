@@ -4,9 +4,10 @@
   imports = [
     # ./disk-config.nix
     ./hardware-configuration.nix
-    ../../modules/small-disk.nix
     ./network.nix
   ];
+
+  dotfiles.small-disk.enable = true;
 
   nix.settings = {
     experimental-features = [

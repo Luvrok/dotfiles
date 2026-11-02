@@ -19,26 +19,15 @@
     voidsddm.url = "github:Luvrok/VoidSDDM";
     voidsddm.flake = false;
 
-    # kodi and its add-ons (nixos/services/kodi), pinned to a commit each:
-    # `nix flake update` leaves them, kodi is built with a patch
-    # (kodi-keys.patch) and majan with patches that want its exact xml.
-    # moving one is changing its rev here, then `nix flake lock`
-    nixpkgs-kodi.url = "git+https://github.com/NixOS/nixpkgs?shallow=1&rev=02c087f3fe673c9e317f206a627cb6b910336dbe";
-    kodi-skins.url = "git+https://github.com/KarmaMole/kodi-skins?shallow=1&rev=0f6a3246f1aa41e82f895366709d2bcaaa87e6fc";
-    kodi-skins.flake = false;
-    kodi-skinvariables.url = "git+https://github.com/jurialmunkey/script.skinvariables?ref=nexus&shallow=1&rev=9c20ea9bcf67fcb4370a5771da08b6cf7bdb676e";
-    kodi-skinvariables.flake = false;
-    kodi-tmdbhelper.url = "git+https://github.com/jurialmunkey/plugin.video.themoviedb.helper?ref=nexus&shallow=1&rev=edae17cb8bfc69d1f614ff44b2490ecd6bd5e9a0";
-    kodi-tmdbhelper.flake = false;
-    kodi-jurialmunkey.url = "git+https://github.com/jurialmunkey/script.module.jurialmunkey?shallow=1&rev=8f42fb5f4698f3e4552f38955964b2f3843dba69";
-    kodi-jurialmunkey.flake = false;
-    kodi-infotagger.url = "git+https://github.com/jurialmunkey/script.module.infotagger?shallow=1&rev=0118f53c9cf68a6625794d07af607cac1e920064";
-    kodi-infotagger.flake = false;
+    # kodi, its library and the downloads for it: services.kodi
+    # (Luvrok/kodi). kodi's own nixpkgs and add-ons are pinned there, no
+    # follows: kodi builds from source with a patch, its pin keeps that rare
+    kodi.url = "git+https://github.com/Luvrok/kodi?shallow=1";
 
-    # rutracker through cloudflare for prowlarr (nixos/services/arr)
-    rutracker-cf-proxy.url = "git+https://github.com/rofl3228/rutracker-cf-proxy?shallow=1";
-    rutracker-cf-proxy.flake = false;
-
+    # the voice assistant, services.jarvis (Luvrok/jarvis). its menu and
+    # bar icon are in modules/nixos/hyprland/quickshell
+    jarvis.url = "git+https://github.com/Luvrok/jarvis?shallow=1";
+    jarvis.inputs.nixpkgs.follows = "nixpkgs";
 
   };
 
@@ -73,7 +62,7 @@
             useUserPackages = true;
             backupFileExtension = "backup";
             users.${username} = {
-              imports = [ "${self}/home" ];
+              imports = [ "${self}/modules/home" ];
             };
             extraSpecialArgs = {
               inherit username inputs system;
@@ -97,10 +86,11 @@
           inherit inputs system;
         };
         modules = [
-          ./nixos
-          ./nixos/hardware/amd.nix
+          ./modules/nixos
+          ./modules/nixos/desktop
+          ./modules/nixos/hardware/amd.nix
           ./hosts/barnard/hardware-configuration.nix
-          ./hosts/barnard/env.nix
+          ./hosts/barnard
 
           sops-nix.nixosModules.sops
 
@@ -136,10 +126,11 @@
           inherit inputs system;
         };
         modules = [
-          ./nixos
-          ./nixos/hardware/nvidia.nix
-          ./hosts/alderaan/hardware-configuration.nix
-          ./hosts/alderaan/env.nix
+          ./modules/nixos
+          ./modules/nixos/desktop
+          ./modules/nixos/hardware/nvidia.nix
+          ./hosts/dash/hardware-configuration.nix
+          ./hosts/dash
 
           zapret-discord-youtube.nixosModules.default
           {
@@ -167,6 +158,7 @@
         };
         modules = [
           disko.nixosModules.disko
+          ./modules/nixos
           ./hosts/kessel
           ./hosts/kessel/disk-config.nix
         ];
@@ -180,6 +172,7 @@
         modules = [
           sops-nix.nixosModules.sops
           disko.nixosModules.disko
+          ./modules/nixos
           ./hosts/mos-eisley
           ./hosts/mos-eisley/disk-config.nix
         ];
@@ -201,6 +194,7 @@
               configName = "general(ALT)";
             };
           }
+          ./modules/nixos
           ./hosts/jedha
         ];
       };

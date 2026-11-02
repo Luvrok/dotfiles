@@ -95,6 +95,52 @@
         "type": "github"
       }
     },
+    "jarvis": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793613646,
+        "narHash": "sha256-Q5kWLuLg2NTs/txFQE0CkQqkLIW3x3QCvo0wnHk43+c=",
+        "ref": "refs/heads/main",
+        "rev": "a2280a0d9872693e76383f434a536981742732cb",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/Luvrok/jarvis"
+      },
+      "original": {
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/Luvrok/jarvis"
+      }
+    },
+    "kodi": {
+      "inputs": {
+        "kodi-infotagger": "kodi-infotagger",
+        "kodi-jurialmunkey": "kodi-jurialmunkey",
+        "kodi-skins": "kodi-skins",
+        "kodi-skinvariables": "kodi-skinvariables",
+        "kodi-tmdbhelper": "kodi-tmdbhelper",
+        "nixpkgs-kodi": "nixpkgs-kodi",
+        "rutracker-cf-proxy": "rutracker-cf-proxy"
+      },
+      "locked": {
+        "lastModified": 1793614581,
+        "narHash": "sha256-+kS7BL+3gFVC0MdRNsRPg6bPhvxxk5bXm0H9Dus86W4=",
+        "ref": "refs/heads/main",
+        "rev": "917fea84d1cdd268afef12dfcf49fcfb4298bb87",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/Luvrok/kodi"
+      },
+      "original": {
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/Luvrok/kodi"
+      }
+    },
     "kodi-infotagger": {
       "flake": false,
       "locked": {
@@ -341,16 +387,11 @@
       "inputs": {
         "disko": "disko",
         "home-manager": "home-manager",
-        "kodi-infotagger": "kodi-infotagger",
-        "kodi-jurialmunkey": "kodi-jurialmunkey",
-        "kodi-skins": "kodi-skins",
-        "kodi-skinvariables": "kodi-skinvariables",
-        "kodi-tmdbhelper": "kodi-tmdbhelper",
+        "jarvis": "jarvis",
+        "kodi": "kodi",
         "lazygit": "lazygit",
         "nixpkgs": "nixpkgs_3",
-        "nixpkgs-kodi": "nixpkgs-kodi",
         "nixpkgs-pinned": "nixpkgs-pinned",
-        "rutracker-cf-proxy": "rutracker-cf-proxy",
         "sops-nix": "sops-nix",
         "textfoxy": "textfoxy",
         "voidsddm": "voidsddm",

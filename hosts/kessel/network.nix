@@ -2,7 +2,7 @@
 
 {
   # DNS: resolved -> dnscrypt-proxy -> DoH
-  imports = [ ../../modules/doh ];
+  dotfiles.doh.enable = true;
 
   networking = {
     hostName = "kessel";

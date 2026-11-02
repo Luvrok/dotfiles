@@ -7,7 +7,7 @@
 # boot. xray.json is git-crypted like the other hosts' (.gitattributes), the
 # service is off while it's missing
 let
-  hasConfig = builtins.pathExists ./xray-v.json;
+  hasConfig = builtins.pathExists ./xray.json;
 in
 {
   warnings = lib.optional (
@@ -16,7 +16,7 @@ in
 
   services.xray = lib.mkIf hasConfig {
     enable = true;
-    settingsFile = ./xray-v.json;
+    settingsFile = ./xray.json;
   };
 
   systemd.services.xray = lib.mkIf hasConfig {

@@ -18,8 +18,6 @@
     ./miniflux.nix
     ./rsshub.nix
     ./polymarket.nix
-    # ./embeddings.nix
-    # ./docs-mcp
   ];
 
   sops.defaultSopsFile = ../../secrets/barnard.yaml;
@@ -38,7 +36,7 @@
     };
   };
 
-  # 4 GB and no swap, llama-server and docs-mcp came on top
+  # 4 GB and no swap
   zramSwap.enable = true;
 
   boot.loader.grub = {
