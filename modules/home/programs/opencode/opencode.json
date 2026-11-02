@@ -4,14 +4,6 @@
   "small_model": "opencode/deepseek-v4.1-flash-free",
   "enabled_providers": [
     "opencode",
-    "google",
-    "groq",
-    "nvidia",
-    "openrouter",
-    "cerebras",
-    "mistral",
-    "zai",
-    "github-copilot",
     "llama-swap"
   ],
   "autoupdate": false,
