@@ -102,10 +102,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1793583100,
-        "narHash": "sha256-5XuLe4FhePP2HLyj4uUZrKsrxCQ4xungmqo2B+ZhfcI=",
+        "lastModified": 1793613646,
+        "narHash": "sha256-Q5kWLuLg2NTs/txFQE0CkQqkLIW3x3QCvo0wnHk43+c=",
         "ref": "refs/heads/main",
-        "rev": "357e766a58502fdc05713d0522b204ab50b1db22",
+        "rev": "a2280a0d9872693e76383f434a536981742732cb",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/Luvrok/jarvis"
