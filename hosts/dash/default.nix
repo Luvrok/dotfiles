@@ -1,6 +1,8 @@
 { ... }:
 
 {
+  imports = [ ../../modules/nixos/hyprland ];
+
   # the gpu driver and the font size of the desktop (modules/nixos/desktop)
   videoDrivers = [ "nvidia" ];
   fontSize = 14;

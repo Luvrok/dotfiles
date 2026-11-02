@@ -1,13 +1,33 @@
-{ config, pkgs, ... }: 
+{ pkgs, ... }:
 
+let
+  # SEARXNG_SECRET, made once on the host. it signs cookies and image proxy
+  # urls of an instance only 127.0.0.1 sees, nothing to keep in sops
+  secretFile = "/var/lib/searxng-secret/env";
+in
 {
-  sops.secrets.searxng-env = { };
+  systemd.services.searxng-secret = {
+    description = "Make the searxng secret key";
+    before = [ "searx-init.service" ];
+    requiredBy = [ "searx-init.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      StateDirectory = "searxng-secret";
+      StateDirectoryMode = "0700";
+      UMask = "0077";
+    };
+    script = ''
+      [ -s ${secretFile} ] ||
+        echo "SEARXNG_SECRET=$(${pkgs.openssl}/bin/openssl rand -hex 32)" > ${secretFile}
+    '';
+  };
 
   services.searx = {
     enable = true;
     package = pkgs.searxng;
 
-    environmentFile = config.sops.secrets.searxng-env.path;
+    environmentFile = secretFile;
 
     settings = {
       server = {

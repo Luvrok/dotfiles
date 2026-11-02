@@ -1,5 +1,5 @@
 # hyprland: the desktop session. the bar, the wallpaper, the notifications
-# and the menus are quickshell. barnard only, hosts/barnard imports this
+# and the menus are quickshell. the hosts import this
 {
   config,
   lib,
@@ -8,6 +8,8 @@
 }:
 
 {
+  services.displayManager.defaultSession = "hyprland";
+
   programs.hyprland = {
     enable = true;
     package = pkgs.hyprland;

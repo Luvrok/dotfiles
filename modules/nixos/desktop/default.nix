@@ -128,10 +128,5 @@
     dconf.enable = true;
   };
 
-  sops.defaultSopsFile = ../../../secrets/barnard.yaml;
-  sops.defaultSopsFormat = "yaml";
-  sops.age.keyFile = "/var/lib/sops-nix/key.txt";
-  sops.age.generateKey = true;
-
   system.stateVersion = "26.05";
 }

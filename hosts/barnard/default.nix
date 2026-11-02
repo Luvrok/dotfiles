@@ -36,6 +36,11 @@ in
     tools.notesMcp = "http://127.0.0.1:6281/mcp";
   };
 
+  sops.defaultSopsFile = ../../secrets/barnard.yaml;
+  sops.defaultSopsFormat = "yaml";
+  sops.age.keyFile = "/var/lib/sops-nix/key.txt";
+  sops.age.generateKey = true;
+
   # the gpu driver and the font size of the desktop (modules/nixos/desktop)
   videoDrivers = [ "amdgpu" ];
   fontSize = 11;
