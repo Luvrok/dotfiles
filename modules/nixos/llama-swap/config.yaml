@@ -49,6 +49,15 @@ x-qwen-filters: &qwen-filters
         chat_template_kwargs:
           enable_thinking: false
 
+# jarvis never thinks, whatever a request asks for: it only talks, and
+# thinking would come before the first spoken word
+x-jarvis-filters: &jarvis-filters
+  filters:
+    setParamsByID:
+      "${MODEL_ID}":
+        chat_template_kwargs:
+          enable_thinking: false
+
 x-gemma-filters: &gemma-filters
   filters:
     setParamsByID:
@@ -118,9 +127,10 @@ models:
   # instant. gemma 4's per-layer embeddings stay in ram, not vram, and the
   # default lazy mode reads only tensors over 4 GiB from disk: it kept ~7 GiB
   # of ram while it waited. --lazy-mode on reads their rows on demand.
-  # --cache-ram 0: llama-server keeps up to 8 GiB of old prompts in ram by
-  # default, and jarvis' prompt changes every minute (its clock), so that
-  # cache only grew. the slot's own cache in vram still reuses the history
+  # --cache-ram 0: llama-server would keep up to 8 GiB of old prompts in ram,
+  # the slot's own cache in vram is all jarvis needs: its prompt starts the
+  # same every time (the time and the lore are in the last message), so a
+  # question reads only its own tokens
   "jarvis":
     description: "Gemma 4 12B QAT UD-Q4_K_XL, 8K. Jarvis, the voice assistant."
     cmd: |
@@ -132,7 +142,37 @@ models:
       -fa on --cache-type-k q8_0 --cache-type-v q8_0
       --temp 1.0 --top-p 0.95 --top-k 64 --min-p 0
     ttl: 600
-    <<: *gemma-filters
+    <<: *jarvis-filters
+
+  # jarvis on qwen3.5's small dense models, picked in its menu: quicker
+  # than gemma-12b, to read the prompt and to answer. sampling from qwen's
+  # card for no thinking. hf download unsloth/Qwen3.5-9B-GGUF --include
+  # "*UD-Q4_K_XL*" --local-dir /var/lib/models, the same for 4B
+  "jarvis-qwen-9b":
+    description: "Qwen3.5 9B UD-Q4_K_XL, 8K. Jarvis, quicker."
+    cmd: |
+      ${chat}
+      -m ${models}/Qwen3.5-9B-UD-Q4_K_XL.gguf
+      --ctx-size 8192
+      --cache-ram 0
+      -fa on --cache-type-k q8_0 --cache-type-v q8_0
+      --temp 0.7 --top-p 0.8 --top-k 20 --min-p 0 --presence-penalty 1.5
+      --chat-template-kwargs '{"enable_thinking":false}'
+    ttl: 600
+    <<: *jarvis-filters
+
+  "jarvis-qwen-4b":
+    description: "Qwen3.5 4B UD-Q4_K_XL, 8K. Jarvis, quickest."
+    cmd: |
+      ${chat}
+      -m ${models}/Qwen3.5-4B-UD-Q4_K_XL.gguf
+      --ctx-size 8192
+      --cache-ram 0
+      -fa on --cache-type-k q8_0 --cache-type-v q8_0
+      --temp 0.7 --top-p 0.8 --top-k 20 --min-p 0 --presence-penalty 1.5
+      --chat-template-kwargs '{"enable_thinking":false}'
+    ttl: 600
+    <<: *jarvis-filters
 
   # thinking can't be turned off, only reasoning_effort low, medium or high
   "gpt-oss":
@@ -272,6 +312,8 @@ routing:
             - gemma-26b
             - gemma-12b
             - jarvis
+            - jarvis-qwen-9b
+            - jarvis-qwen-4b
             - gpt-oss
             - z-image
             - flux2-klein

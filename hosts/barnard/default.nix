@@ -21,8 +21,13 @@ in
     enable = true;
     # the hub's lfs cdn and docker hub need xray's mixed inbound
     proxy = lib.mkIf config.services.xray.enable "http://127.0.0.1:10808";
-    # the notes' docs-mcp-server (modules/nixos/notes-mcp)
-    tools.notesMcp = "http://127.0.0.1:6281/mcp";
+    # the llms in llama-swap's config.yaml, picked in the menu. the web
+    # search stays (the local searxng), the notes are off: jarvis only talks
+    llms = {
+      jarvis = "Gemma 4 12B";
+      jarvis-qwen-9b = "Qwen3.5 9B";
+      jarvis-qwen-4b = "Qwen3.5 4B";
+    };
   };
 
   sops.defaultSopsFile = ../../secrets/barnard.yaml;
