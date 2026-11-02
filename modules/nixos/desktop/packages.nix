@@ -18,6 +18,7 @@
       gnugrep
       ripgrep
       wget
+      aria2 # hfget in zsh
       expect
 
       # --- development ---
