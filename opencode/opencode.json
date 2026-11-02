@@ -15,7 +15,7 @@
     "llama-swap"
   ],
   "autoupdate": false,
-  "_comment": "llama-swap: the local models, the same as pi/models.json (ids, contexts from nixos/services/llama-swap/config.yaml)",
+  "_comment": "llama-swap: the local models, the same as pi/models.json (ids, contexts from modules/nixos/llama-swap/config.yaml)",
   "provider": {
     "llama-swap": {
       "npm": "@ai-sdk/openai-compatible",

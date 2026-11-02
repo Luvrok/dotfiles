@@ -1,7 +1,7 @@
 #!/bin/sh
 # nixos on this machine or a server, the core of sapply, sboot, supdate and
 # sclean (they call this). a server is its flake name, ssh goes to
-# root@<host> (/etc/hosts has them, nixos/network.nix) or to an address
+# root@<host> (/etc/hosts has them, modules/nixos/desktop/network.nix) or to an address
 #   snix ACTION            this machine
 #   snix ACTION HOST [ADDR] a server
 #     switch       build and switch now

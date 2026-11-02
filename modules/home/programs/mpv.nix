@@ -3,7 +3,7 @@
 {
   programs.mpv = {
     enable = true;
-    # the keys are in nixos/overlays/mpv/input.conf, the settings in
+    # the keys are in modules/nixos/desktop/overlays/mpv/input.conf, the settings in
     # mpv-config's script-opts
     scripts = with pkgs.mpvScripts; [
       # the hyprland bar and player menu see it (quickshell's Media.qml)

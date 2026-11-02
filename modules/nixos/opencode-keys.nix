@@ -1,5 +1,5 @@
-# api keys of opencode's providers (home/programs/opencode), barnard only,
-# its env.nix imports this. the keys go in secrets/opencode.json (sops
+# api keys of opencode's providers (modules/home/programs/opencode), barnard only,
+# hosts/barnard imports this. the keys go in secrets/opencode.json (sops
 # secrets/opencode.json, then git add), one per provider id, each optional:
 #   google      aistudio.google.com/apikey
 #   groq        console.groq.com/keys

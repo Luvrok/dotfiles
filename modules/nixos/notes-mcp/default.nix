@@ -4,7 +4,7 @@
 # the cpu). read-only search over MCP for pi (pi/mcp.json, the notes skill).
 # the vault is scraped as one library, "notes": a full scrape when the
 # scrape args change, else a refresh every 30 min that skips unchanged notes.
-# barnard only, its env.nix imports this
+# barnard only, hosts/barnard imports this
 {
   config,
   lib,

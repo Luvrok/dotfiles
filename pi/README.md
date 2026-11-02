@@ -1,6 +1,6 @@
 # pi
 
-Plain config for [pi](https://pi.dev) with local models behind llama-swap. On NixOS, `home/programs/pi` links these files into `~/.pi`. Elsewhere, link them by hand.
+Plain config for [pi](https://pi.dev) with local models behind llama-swap. On NixOS, `modules/home/programs/pi` links these files into `~/.pi`. Elsewhere, link them by hand.
 
 | File | Goes to |
 |---|---|
@@ -27,14 +27,14 @@ ln -s $d/extensions/pi-permission-system/config.json ~/.pi/agent/extensions/pi-p
 ln -s $d/skills/* ~/.pi/agent/skills/
 ```
 
-- The `docs` entry in `mcp.json` and `skills/docs` need the docs-mcp container (`nixos/services/docs-mcp`). Remove both on Debian.
+- The `docs` entry in `mcp.json` and `skills/docs` need the docs-mcp container (`modules/nixos/docs-mcp`). Remove both on Debian.
 - `skills/qwen-generate` needs `qwen-batch` and the models in `/var/lib/models`.
 - `web-search.json` sends web requests through xray on `127.0.0.1:10808`. Drop `proxy` and `ssrf` if it isn't running.
 
 ## Notes
 
 - pi writes `settings.json` and `mcp.json` itself (`/model`, `/thinking`, `/mcp`, `lastChangelogVersion`), so they are links to this repo, not store files. Expect them to show up in `git diff`.
-- `contextWindow` in `models.json` repeats `--ctx-size` from `nixos/services/llama-swap/config.yaml`. Change both.
+- `contextWindow` in `models.json` repeats `--ctx-size` from `modules/nixos/llama-swap/config.yaml`. Change both.
 - `apiKey` is `"none"` because pi requires one, llama-swap ignores it.
 - Packages are pinned: extensions run with full user rights, and pi-permission-system ships breaking majors. Bump by hand after reading the changelog.
 - Compaction fires when `contextTokens > contextWindow - reserveTokens`. `reserveTokens` equals `maxTokens`, so a full reply always fits. The vision model has a 64k window, so it gets its own smaller values in `compaction.modelOverrides`.
@@ -44,7 +44,7 @@ ln -s $d/skills/* ~/.pi/agent/skills/
 - Qwen's template knows low, medium and xhigh, so high maps to xhigh. Gemma's template is on/off only. gpt-oss can't stop thinking.
 - `mcp.json`: `direct` exposure because a local model calls declared tools more reliably than codemode scripts. `fetch_url` is hidden, pi-web-access's `fetch_content` does that. `timeout` is 120 s because embedding a query waits while embed is busy with a sync.
 - `web-search.json`: `provider` is `searxng` only, `auto` would silently fall back to Exa. Loopback SearXNG passes the SSRF guard alone, so no `ssrf.allowRanges` that would let `fetch_content` reach local services. YouTube and video are off without Gemini keys.
-- Web traffic goes only through xray: `fetch_content` uses `proxy` with no direct fallback, `ssrf.trustEnvProxy` skips the local DNS lookup so hostnames resolve on the proxy side, and SearXNG has `outgoing.proxies` in `nixos/services/llama-swap/searxng.nix`. With xray down, search and fetch fail instead of going direct.
+- Web traffic goes only through xray: `fetch_content` uses `proxy` with no direct fallback, `ssrf.trustEnvProxy` skips the local DNS lookup so hostnames resolve on the proxy side, and SearXNG has `outgoing.proxies` in `modules/nixos/llama-swap/searxng.nix`. With xray down, search and fetch fail instead of going direct.
 - `shellCommandPrefix` exports the proxy variables before every bash command of the agent, so curl, wget, git, npm, pip, python and go go through xray, and node `fetch` with `NODE_USE_ENV_PROXY`. Loopback stays direct. It only works for programs that read these variables, and the agent can unset them. ssh, nc, ping and plain DNS ignore them. pi's own requests are not affected.
 
 ## Permissions

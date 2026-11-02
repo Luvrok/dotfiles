@@ -72,7 +72,7 @@ vim.lsp.config("gopls", {
 vim.lsp.config("bashls", {
 	settings = {
 		bashIde = {
-			-- same exclude as writeShellApplication in home/packages.nix
+			-- same exclude as writeShellApplication in modules/home/packages.nix
 			shellcheckArguments = "--exclude=SC2016",
 		},
 	},

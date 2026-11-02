@@ -10,7 +10,7 @@ let
   # all of opencode through xray (127.0.0.1:10808): gemini answers "user
   # location is not supported" to a direct request. its bash commands get
   # the same env, as pi's shellCommandPrefix. loopback stays direct for docs
-  # and searxng. lsp servers and formatters come from nixos/packages.nix, a
+  # and searxng. lsp servers and formatters come from modules/nixos/desktop/packages.nix, a
   # downloaded binary doesn't run on nixos
   proxy = "http://127.0.0.1:10808";
   noProxy = "localhost,127.0.0.1,::1";
@@ -36,7 +36,7 @@ let
     '';
   };
 
-  # keys from nixos/services/opencode-keys.nix. opencode reads the files
+  # keys from modules/nixos/opencode-keys.nix. opencode reads the files
   # itself, they are not in its env, so the agent's commands don't get them
   keys = lib.filterAttrs (n: _: lib.hasPrefix "opencode/" n) (osConfig.sops.secrets or { });
   providers = lib.mapAttrs' (

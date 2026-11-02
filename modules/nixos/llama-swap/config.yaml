@@ -15,7 +15,7 @@ macros:
   llama: llama-server --port ${PORT} --threads 8
   # pi is the only client, so one slot gets the whole context
   chat: ${llama} -np 1
-  # the same on rocm (nixos/services/llama-swap/default.nix): qwen's mtp is
+  # the same on rocm (modules/nixos/llama-swap/default.nix): qwen's mtp is
   # faster there
   chat-rocm: llama-server-rocm --port ${PORT} --threads 8 -np 1
   sd: sd-server --listen-ip 127.0.0.1 --listen-port ${PORT} --diffusion-fa

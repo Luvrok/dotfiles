@@ -49,7 +49,7 @@ vim.opt.incsearch = false
 -- they open as conf: no bash highlighting, no bashls, no shellcheck
 vim.filetype.add({
 	pattern = {
-		[".*/dotfiles/nixos/services/sway/scripts/.*"] = "bash",
-		[".*/dotfiles/nixos/services/hyprland/quickshell/scripts/.*"] = "bash",
+		[".*/dotfiles/modules/nixos/sway/scripts/.*"] = "bash",
+		[".*/dotfiles/modules/nixos/hyprland/quickshell/scripts/.*"] = "bash",
 	},
 })

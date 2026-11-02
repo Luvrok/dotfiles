@@ -13,7 +13,7 @@ let
   };
 
   # hyprland's quickshell asks while it runs (hypr-pinentry, from
-  # nixos/services/hyprland), rofi otherwise. a full path, gpg-agent's PATH
+  # modules/nixos/hyprland), rofi otherwise. a full path, gpg-agent's PATH
   # may not have it
   pinentry = pkgs.writeShellScriptBin "pinentry" ''
     hypr=/run/current-system/sw/bin/hypr-pinentry

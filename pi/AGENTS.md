@@ -1,6 +1,6 @@
 # Global rules
 
-pi's global context (~/.pi/agent/AGENTS.md, home/programs/pi), loaded in every session.
+pi's global context (~/.pi/agent/AGENTS.md, modules/home/programs/pi), loaded in every session.
 
 ## Web search
 

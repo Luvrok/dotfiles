@@ -1,7 +1,7 @@
 # hyprland: the twin of the sway session on hyprland's own layouts and
 # dispatchers, with animations. the bar, the wallpaper and the menus that do
 # what the rofi scripts do are quickshell. sddm lists it next to sway, it's
-# the default session. barnard only, its env.nix imports this
+# the default session. barnard only, hosts/barnard imports this
 {
   config,
   lib,
@@ -50,7 +50,7 @@
       text = builtins.readFile ./quickshell/scripts/askpass;
     })
     # rofi -dmenu for scripts, the librewolf tab switcher's host uses it
-    # while quickshell runs (home/programs/librewolf)
+    # while quickshell runs (modules/home/programs/librewolf)
     (writeShellApplication {
       name = "hypr-dmenu";
       runtimeInputs = [
@@ -65,7 +65,7 @@
     (writers.writePython3Bin "hypr-savefile" {
       libraries = [ python3Packages.jeepney ];
     } (builtins.readFile ./quickshell/scripts/savefile))
-    # pinentry for gpg-agent, the same menu. home/programs/gpg.nix picks it
+    # pinentry for gpg-agent, the same menu. modules/home/programs/gpg.nix picks it
     # while quickshell runs
     (writeShellApplication {
       name = "hypr-pinentry";
@@ -120,7 +120,7 @@
   };
 
   # quickshell is the notification server here (quickshell/Notifs.qml). dunst
-  # (home/services/dunst.nix) starts on the first notification over d-bus,
+  # (modules/home/services/dunst.nix) starts on the first notification over d-bus,
   # so it stays off while a hyprland runs. sway still gets it
   systemd.user.units."dunst.service" = {
     overrideStrategy = "asDropin";

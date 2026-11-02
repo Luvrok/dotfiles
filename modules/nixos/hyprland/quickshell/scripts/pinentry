@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # pinentry for gpg-agent on hyprland: speaks assuan with gpg-agent, the
 # quickshell askpass menu asks (Askpass.qml), like pinentry-rofi but with
-# the menu's dim. home/programs/gpg.nix picks it while the session's
+# the menu's dim. modules/home/programs/gpg.nix picks it while the session's
 # quickshell runs, pinentry-rofi otherwise. default.nix installs it as
 # hypr-pinentry
 #   hypr-pinentry          the pinentry

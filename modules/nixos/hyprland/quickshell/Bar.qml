@@ -7,7 +7,7 @@ import Quickshell.Wayland
 import Quickshell.Services.Pipewire
 import qs.widgets
 
-// dwm-like bar, the twin of nixos/services/sway/eww: tags, the windows of
+// dwm-like bar, the twin of modules/nixos/sway/eww: tags, the windows of
 // the open tag as squares, status. hyprland hides it under fullscreen
 // windows
 PanelWindow {

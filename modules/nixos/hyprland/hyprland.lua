@@ -1,4 +1,4 @@
--- hyprland: the twin of nixos/services/sway/config. same tags, binds,
+-- hyprland: the twin of modules/nixos/sway/config. same tags, binds,
 -- scratchpads and look, done with hyprland's own layouts and dispatchers.
 -- with animations. the bar, the wallpaper and
 -- the menus (the rofi scripts in sway) are quickshell, its config is

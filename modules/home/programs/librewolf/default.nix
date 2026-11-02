@@ -178,7 +178,7 @@ in
     };
 
     config = {
-      # the colors of the quickshell menus (nixos/services/hyprland/quickshell/Theme.qml)
+      # the colors of the quickshell menus (modules/nixos/hyprland/quickshell/Theme.qml)
       background.color = "#171717";
 
       border = {

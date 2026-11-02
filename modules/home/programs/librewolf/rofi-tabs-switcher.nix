@@ -12,7 +12,7 @@ let
   };
 
   # the helper's rofi: the quickshell menu while hyprland's quickshell runs
-  # (hypr-dmenu, nixos/services/hyprland), rofi in sway
+  # (hypr-dmenu, modules/nixos/hyprland), rofi in sway
   rofiShim = writeShellScriptBin "rofi" ''
     dmenu=/run/current-system/sw/bin/hypr-dmenu
     if [ -x "$dmenu" ] && "$dmenu" --check; then

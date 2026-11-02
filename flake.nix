@@ -25,7 +25,7 @@
     kodi.url = "git+https://github.com/Luvrok/kodi?shallow=1";
 
     # the voice assistant, services.jarvis (Luvrok/jarvis). its menu and
-    # bar icon are in nixos/services/hyprland/quickshell
+    # bar icon are in modules/nixos/hyprland/quickshell
     jarvis.url = "git+https://github.com/Luvrok/jarvis?shallow=1";
     jarvis.inputs.nixpkgs.follows = "nixpkgs";
 
