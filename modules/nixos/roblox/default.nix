@@ -84,6 +84,16 @@ let
   roblox-studio = pkgs.writeShellScriptBin "roblox-studio" ''
     exec ${lib.getExe roblox-run} vinegar "$@"
   '';
+
+  # the launcher's entries. the ones of sober and vinegar start without the
+  # proxy, "(proxy)" is the name of these
+  entry =
+    name: desktopName: icon: exec:
+    pkgs.makeDesktopItem {
+      inherit name desktopName icon exec;
+      categories = [ "Game" ];
+      startupWMClass = name;
+    };
 in
 {
   options.dotfiles.roblox = {
@@ -201,6 +211,8 @@ in
           roblox-run
           roblox-player
           roblox-studio
+          (entry "roblox-player" "Roblox (proxy)" soberId "${lib.getExe roblox-player}")
+          (entry "roblox-studio" "Roblox Studio (proxy)" "org.vinegarhq.Vinegar" "${lib.getExe roblox-studio}")
         ];
       })
 
