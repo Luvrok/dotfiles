@@ -1,6 +1,7 @@
-# notes-mcp: the obsidian vault in a docs-mcp-server container, its own
-# database, the vectors from llama-swap's embed (embeddinggemma-2, on the
-# cpu). read-only search over MCP for pi (modules/home/programs/pi).
+# notes-mcp: the obsidian vault in its own docs-mcp-server, apart from the
+# docs index (../docs-mcp): its own container, port and database, the same
+# image and the same vectors from llama-swap's embed (embeddinggemma-2, on
+# the cpu). read-only search over MCP for pi (modules/home/programs/pi).
 # the vault is scraped as one library, "notes": a full scrape when the
 # scrape args change, else a refresh every 30 min that skips unchanged notes.
 # needs llama-swap, so a desktop host (modules/nixos/desktop)
@@ -20,7 +21,7 @@ let
   # the vault inside the containers
   mount = "/notes";
   library = "notes";
-  # no latest: a new release can migrate the db
+  # the same as ../docs-mcp, no latest: a new release can migrate the db
   image = "ghcr.io/arabold/docs-mcp-server:3.3.0";
   llamaSwap = "http://127.0.0.1:${toString config.services.llama-swap.port}";
   # an alias of embed in llama-swap/config.yaml, the index is keyed on it
@@ -33,7 +34,7 @@ let
       inherit embeddingModel;
     };
     scraper.security.fileAccess.allowedRoots = [ mount ];
-    # embed is one llama-server, pi-memory uses it too
+    # embed is one llama-server, docs-mcp and pi-memory use it too
     embeddings.requestTimeoutMs = 300000;
   };
 

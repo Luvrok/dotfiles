@@ -1,22 +1,19 @@
 ---
 name: obsidian
-description: Find, read and edit the user's Obsidian notes (the vault ~/HOME/wizzard/Holocron, the mcp__notes__* search). Use when the user asks what is in their notes, asks to find, write, update or organize a note, or asks about something their notes may cover.
+description: Write, update or organize the user's Obsidian notes (the vault ~/HOME/wizzard/Holocron). Use when the user asks to create a note, add to one, change, restructure or link notes. To only find or answer from notes, use the notes skill.
 ---
 
-# The user's Obsidian vault
+# Editing the user's Obsidian vault
 
-The vault is `~/HOME/wizzard/Holocron`: plain markdown files, in Russian and English, a note can be in either language whatever the language of the question. It can be large. Never read it whole, never list it recursively, never grep it without a pattern that narrows it down: open only the notes the task needs.
+The vault is `~/HOME/wizzard/Holocron`: plain markdown files, in Russian and English. It can be large. Never read it whole, never list it recursively, never grep it without a pattern that narrows it down: open only the notes the task needs.
 
-## Finding a note
+## Finding the note to edit
 
-- By meaning: `mcp__notes__search_docs` with `library` "notes", a short `query` and `limit` 5 to 10. Search in both languages, once in Russian, once in English. Nothing useful: rephrase once in each language (synonyms, abbreviations like спб for Санкт-Петербург).
+- By meaning: the notes skill. A search result's url is `file:///notes/<path>`, its file is `~/HOME/wizzard/Holocron/<path>` (url-decoded).
 - By exact text, a tag, a link or a file name: `rg` and `fd` in the vault, for example `rg -l '\[\[Name' ~/HOME/wizzard/Holocron`, `rg -l '#tag\b' ~/HOME/wizzard/Holocron`, `fd -i name ~/HOME/wizzard/Holocron`.
 - The search index refreshes every 30 minutes. A note created or changed since then is found only by `rg` and `fd`.
-- Say the notes have nothing only after both ways.
 
-## Reading
-
-Read the note's file with the read tool. A search result's url is `file:///notes/<path>`, its file is `~/HOME/wizzard/Holocron/<path>` (url-decoded). Read the whole note, the relevant part is often under a later heading. Follow its `[[links]]` only when the question needs them.
+Read the whole note with the read tool before changing it.
 
 ## Writing
 
@@ -31,5 +28,3 @@ Before the first new note of a session, read `.obsidian/app.json` (`newFileFolde
 - Never touch `.obsidian/` or `.git/`, never run git in the vault: a timer commits it every 10 minutes and the user rolls back from there. Never delete a note: name the ones to delete and let the user do it.
 - Obsidian picks up changed files by itself, nothing to reload.
 - At the end, list the notes created or changed, by path.
-
-Answer from the note text and name the note's path. Reply in the language of the user's question.

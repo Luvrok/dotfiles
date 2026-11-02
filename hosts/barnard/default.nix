@@ -32,6 +32,8 @@ in
 
   dotfiles = {
     hyprland.enable = true;
+    # the docs index for pi and opencode, vectors from llama-swap
+    docs-mcp.enable = true;
     # the obsidian vault's index for pi, vectors from llama-swap
     notes-mcp.enable = true;
     # api keys of opencode's free tiers
