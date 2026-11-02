@@ -28,7 +28,7 @@ Before the first new note of a session, read `.obsidian/app.json` (`newFileFolde
 - A new note: one topic, the file name is its title (Obsidian shows the file name), none of `* " \ / < > : | ? # ^ [ ]` in it.
 - A change: small edits in place, not a rewrite of the whole note. Keep the user's wording.
 - Renaming or moving: Obsidian updates links only when it renames a note itself. Ask the user to do it in Obsidian; if they want it done here, update every `[[Old name` that `rg` finds.
-- Never touch `.obsidian/`. Never delete a note: name the ones to delete and let the user do it.
+- Never touch `.obsidian/` or `.git/`, never run git in the vault: a timer commits it every 10 minutes and the user rolls back from there. Never delete a note: name the ones to delete and let the user do it.
 - Obsidian picks up changed files by itself, nothing to reload.
 - At the end, list the notes created or changed, by path.
 

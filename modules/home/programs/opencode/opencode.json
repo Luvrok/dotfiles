@@ -153,7 +153,8 @@
       "*/opencode.jsonc": "deny",
       ".opencode/**": "deny",
       "*/.opencode/**": "deny",
-      "~/HOME/wizzard/Holocron/.obsidian/**": "deny"
+      "~/HOME/wizzard/Holocron/.obsidian/**": "deny",
+      "~/HOME/wizzard/Holocron/.git/**": "deny"
     },
     "external_directory": {
       "*": "deny",
