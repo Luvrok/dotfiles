@@ -5,7 +5,7 @@
   ...
 }:
 let
-  repo = ../../../opencode;
+  repo = ../../../../opencode;
 
   # all of opencode through xray (127.0.0.1:10808): gemini answers "user
   # location is not supported" to a direct request. its bash commands get

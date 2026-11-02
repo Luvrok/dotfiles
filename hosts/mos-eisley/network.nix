@@ -2,7 +2,7 @@
 
 {
   # DNS: resolved -> dnscrypt-proxy -> DoH
-  imports = [ ../../modules/doh ];
+  imports = [ ../../modules/nixos/doh ];
 
   networking = {
     hostName = "mos-eisley";

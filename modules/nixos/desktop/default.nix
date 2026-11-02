@@ -9,8 +9,8 @@
 {
   imports = [
     ./overlays
-    ./services
-    ./modules
+    ./services.nix
+    ./modules.nix
     ./security.nix
     ./options.nix
     ./boot.nix
@@ -128,7 +128,7 @@
     dconf.enable = true;
   };
 
-  sops.defaultSopsFile = ../secrets/barnard.yaml;
+  sops.defaultSopsFile = ../../../secrets/barnard.yaml;
   sops.defaultSopsFormat = "yaml";
   sops.age.keyFile = "/var/lib/sops-nix/key.txt";
   sops.age.generateKey = true;

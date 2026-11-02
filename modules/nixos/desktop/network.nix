@@ -27,8 +27,8 @@ let
 in
 {
   imports = [
-    ../modules/doh
-    ../modules/doh/local-doh.nix
+    ../doh
+    ../doh/local-doh.nix
   ];
 
   networking = {

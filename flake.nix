@@ -62,7 +62,7 @@
             useUserPackages = true;
             backupFileExtension = "backup";
             users.${username} = {
-              imports = [ "${self}/home" ];
+              imports = [ "${self}/modules/home" ];
             };
             extraSpecialArgs = {
               inherit username inputs system;
@@ -86,10 +86,10 @@
           inherit inputs system;
         };
         modules = [
-          ./nixos
-          ./nixos/hardware/amd.nix
+          ./modules/nixos/desktop
+          ./modules/nixos/hardware/amd.nix
           ./hosts/barnard/hardware-configuration.nix
-          ./hosts/barnard/env.nix
+          ./hosts/barnard
 
           sops-nix.nixosModules.sops
 
@@ -125,10 +125,10 @@
           inherit inputs system;
         };
         modules = [
-          ./nixos
-          ./nixos/hardware/nvidia.nix
-          ./hosts/alderaan/hardware-configuration.nix
-          ./hosts/alderaan/env.nix
+          ./modules/nixos/desktop
+          ./modules/nixos/hardware/nvidia.nix
+          ./hosts/dash/hardware-configuration.nix
+          ./hosts/dash
 
           zapret-discord-youtube.nixosModules.default
           {

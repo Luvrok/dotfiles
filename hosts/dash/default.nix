@@ -1,9 +1,9 @@
 { ... }:
 
 {
-  imports = [
-    ../../nixos/config/alderaan.nix
-  ];
+  # the gpu driver and the font size of the desktop (modules/nixos/desktop)
+  videoDrivers = [ "nvidia" ];
+  fontSize = 14;
 
   environment.sessionVariables = {
     XFT_DPI = "192";

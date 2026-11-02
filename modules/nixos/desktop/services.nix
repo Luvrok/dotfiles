@@ -6,12 +6,12 @@
 
 {
   imports = [
-    ./jedha-tunnel.nix
-    ./sddm.nix
-    ./syncthing.nix
-    ./llama-swap
-    ./llama-swap/searxng.nix
-    ./rgb-off.nix
+    ../jedha-tunnel.nix
+    ../sddm.nix
+    ../syncthing.nix
+    ../llama-swap
+    ../llama-swap/searxng.nix
+    ../rgb-off.nix
     # the voice assistant (Luvrok/jarvis), off unless a host turns it on
     inputs.jarvis.nixosModules.default
   ];
@@ -36,7 +36,7 @@
       implementation = "broker";
     };
 
-    pipewire = (import ./pipewire.nix { inherit pkgs; });
+    pipewire = (import ../pipewire.nix { inherit pkgs; });
     fstrim = {
       enable = true;
       interval = "weekly";

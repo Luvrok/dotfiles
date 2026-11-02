@@ -14,20 +14,19 @@ let
 in
 {
   imports = [
-    ../../nixos/config/barnard.nix
     ./xray.nix
     # docs index for pi, vectors from llama-swap
-    ../../nixos/services/docs-mcp
+    ../../modules/nixos/docs-mcp
     # the obsidian vault, its own index next to it
-    ../../nixos/services/notes-mcp
+    ../../modules/nixos/notes-mcp
     # the wayland sessions
-    ../../nixos/services/sway
-    ../../nixos/services/hyprland
+    ../../modules/nixos/sway
+    ../../modules/nixos/hyprland
     # kodi, the movies and series of /media/outer-1 played in mpv, and
     # their downloads: radarr, sonarr, qbittorrent, subtitles (Luvrok/kodi)
     inputs.kodi.nixosModules.default
     # api keys of opencode's free tiers
-    ../../nixos/services/opencode-keys.nix
+    ../../modules/nixos/opencode-keys.nix
   ];
 
   # the voice assistant (Luvrok/jarvis): its models in llama-swap's
@@ -39,6 +38,10 @@ in
     # the notes' own docs-mcp-server (nixos/services/notes-mcp)
     tools.notesMcp = "http://127.0.0.1:6281/mcp";
   };
+
+  # the gpu driver and the font size of the desktop (modules/nixos/desktop)
+  videoDrivers = [ "amdgpu" ];
+  fontSize = 11;
 
   services.kodi = {
     enable = true;

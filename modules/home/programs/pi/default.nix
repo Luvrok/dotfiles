@@ -38,7 +38,7 @@ in
     # one link per skill
     ".pi/agent/skills/qwen-generate".source = mkOutOfStoreSymlink "${repo}/skills/qwen-generate";
     # read-only, pi doesn't write it
-    ".pi/agent/AGENTS.md".source = ../../../pi/AGENTS.md;
+    ".pi/agent/AGENTS.md".source = ../../../../pi/AGENTS.md;
     ".pi/agent/skills/notes".source = mkOutOfStoreSymlink "${repo}/skills/notes";
   };
 }

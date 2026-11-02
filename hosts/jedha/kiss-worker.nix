@@ -1,6 +1,6 @@
 { config, ... }:
 {
-  imports = [ ../../modules/kiss-worker.nix ];
+  imports = [ ../../modules/nixos/kiss-worker.nix ];
 
   sops.secrets."kiss-worker/env" = { };
 

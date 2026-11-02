@@ -39,7 +39,7 @@ let
   };
 in
 {
-  imports = [ ../../modules/doh ];
+  imports = [ ../../modules/nixos/doh ];
 
   networking = {
     hostName = "${username}";
