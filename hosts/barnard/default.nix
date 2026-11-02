@@ -49,6 +49,8 @@ in
     roblox = {
       enable = true;
       proxy = lib.mkIf config.services.xray.enable "http://127.0.0.1:10808";
+      # roblox-player and roblox-studio go through xray's mixed inbound
+      netns.enable = config.services.xray.enable;
     };
   };
 
