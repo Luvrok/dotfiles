@@ -1,26 +1,15 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 let
-  pinentryRofiThemed = pkgs.symlinkJoin {
-    name = "pinentry-rofi-themed";
-    buildInputs = [ pkgs.makeWrapper ];
-    paths = [ pkgs.pinentry-rofi ];
-    postBuild = ''
-      wrapProgram $out/bin/pinentry-rofi \
-        --add-flags "-- -theme ${config.home.homeDirectory}/.config/rofi/keyring.rasi"
-        ln -sf $out/bin/pinentry-rofi $out/bin/pinentry
-    '';
-  };
-
   # hyprland's quickshell asks while it runs (hypr-pinentry, from
-  # modules/nixos/hyprland), rofi otherwise. a full path, gpg-agent's PATH
-  # may not have it
+  # modules/nixos/hyprland), the terminal otherwise. a full path, gpg-agent's
+  # PATH may not have it
   pinentry = pkgs.writeShellScriptBin "pinentry" ''
     hypr=/run/current-system/sw/bin/hypr-pinentry
     if [ -x "$hypr" ] && "$hypr" --check; then
       exec "$hypr" "$@"
     fi
-    exec ${pinentryRofiThemed}/bin/pinentry-rofi "$@"
+    exec ${pkgs.pinentry-curses}/bin/pinentry-curses "$@"
   '';
 in
 {

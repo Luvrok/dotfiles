@@ -144,11 +144,6 @@ in
         default = [ "gtk" ];
         "org.freedesktop.impl.portal.FileChooser" = [ "termfilechooser" ];
       };
-      config.sway = {
-        default = [ "gtk" ];
-        "org.freedesktop.impl.portal.ScreenCast" = [ "wlr" ];
-        "org.freedesktop.impl.portal.Screenshot" = [ "wlr" ];
-      };
       config.hyprland = {
         default = [
           "hyprland"

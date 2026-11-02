@@ -1,7 +1,6 @@
 {
   pkgs,
   username,
-  fontSize,
   ...
 }:
 
@@ -54,17 +53,6 @@
     recursive = true;
     executable = true;
   };
-
-  home.file.".config/rofi" = {
-    source = ./programs/rofi/config;
-    recursive = true;
-  };
-
-  home.file.".config/rofi/font.rasi".source =
-    if fontSize < 14 then
-      ./programs/rofi/font/font-dpi-low.rasi
-    else
-      ./programs/rofi/font/font-dpi-high.rasi;
 
   home.file.".config/.asoundrc".text = ''
     defaults.pcm.card 1

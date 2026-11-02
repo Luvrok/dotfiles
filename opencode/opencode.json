@@ -89,12 +89,6 @@
   "lsp": true,
   "formatter": true,
   "mcp": {
-    "docs": {
-      "type": "remote",
-      "url": "http://127.0.0.1:6280/mcp",
-      "enabled": true,
-      "timeout": 120000
-    },
     "notes": {
       "type": "remote",
       "url": "http://127.0.0.1:6281/mcp",
@@ -114,7 +108,6 @@
   },
   "permission": {
     "*": "allow",
-    "docs_fetch_url": "deny",
     "notes_fetch_url": "deny",
     "websearch": "deny",
     "webfetch": "allow",

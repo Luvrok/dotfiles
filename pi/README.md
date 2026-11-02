@@ -27,7 +27,7 @@ ln -s $d/extensions/pi-permission-system/config.json ~/.pi/agent/extensions/pi-p
 ln -s $d/skills/* ~/.pi/agent/skills/
 ```
 
-- The `docs` entry in `mcp.json` and `skills/docs` need the docs-mcp container (`modules/nixos/docs-mcp`). Remove both on Debian.
+- The `notes` entry in `mcp.json` needs the notes-mcp container (`modules/nixos/notes-mcp`). Remove it on Debian.
 - `skills/qwen-generate` needs `qwen-batch` and the models in `/var/lib/models`.
 - `web-search.json` sends web requests through xray on `127.0.0.1:10808`. Drop `proxy` and `ssrf` if it isn't running.
 

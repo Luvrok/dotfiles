@@ -3,7 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 
-// gruvbox, the same as modules/home/programs/rofi/config/colors.rasi and the eww bar
+// gruvbox, the same colors as the gtk and qt themes (modules/nixos/gtk, qt)
 Singleton {
     // menus
     readonly property color bg: "#e6171717"

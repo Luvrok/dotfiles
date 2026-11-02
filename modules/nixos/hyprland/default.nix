@@ -1,7 +1,5 @@
-# hyprland: the twin of the sway session on hyprland's own layouts and
-# dispatchers, with animations. the bar, the wallpaper and the menus that do
-# what the rofi scripts do are quickshell. sddm lists it next to sway, it's
-# the default session. barnard only, hosts/barnard imports this
+# hyprland: the desktop session. the bar, the wallpaper, the notifications
+# and the menus are quickshell. barnard only, hosts/barnard imports this
 {
   config,
   lib,
@@ -50,7 +48,7 @@
       text = builtins.readFile ./quickshell/scripts/askpass;
     })
     # rofi -dmenu for scripts, the librewolf tab switcher's host uses it
-    # while quickshell runs (modules/home/programs/librewolf)
+    # (modules/home/programs/librewolf)
     (writeShellApplication {
       name = "hypr-dmenu";
       runtimeInputs = [
@@ -77,7 +75,7 @@
       text = builtins.readFile ./quickshell/scripts/pinentry;
     })
 
-    # started from hyprland.lua, the same tools as in sway
+    # started from hyprland.lua
     swayidle
     sway-audio-idle-inhibit
     gammastep
@@ -110,7 +108,7 @@
   # the emoji menu reads /run/current-system/sw/share/unicode/emoji
   environment.pathsToLink = [ "/share/unicode" ];
 
-  # hyprland.lua starts and stops it, like sway-session.target in the sway module
+  # hyprland.lua starts and stops it
   systemd.user.targets.hyprland-session = {
     description = "hyprland compositor session";
     documentation = [ "man:systemd.special(7)" ];
@@ -119,24 +117,12 @@
     after = [ "graphical-session-pre.target" ];
   };
 
-  # quickshell is the notification server here (quickshell/Notifs.qml). dunst
-  # (modules/home/services/dunst.nix) starts on the first notification over d-bus,
-  # so it stays off while a hyprland runs. sway still gets it
-  systemd.user.units."dunst.service" = {
-    overrideStrategy = "asDropin";
-    text = ''
-      [Service]
-      ExecCondition=${pkgs.writeShellScript "dunst-not-in-hyprland" ''
-        lock=$XDG_RUNTIME_DIR/hypr/''${HYPRLAND_INSTANCE_SIGNATURE:-none}/hyprland.lock
-        read -r pid 2>/dev/null <"$lock" && kill -0 "$pid" 2>/dev/null && exit 1
-        exit 0
-      ''}
-    '';
-  };
-
-  # gtk on wayland reads theme, icons, font and cursor from dconf, like in
-  # the sway module (locked like there). it's there already when sway is on
-  programs.dconf.profiles.user.databases = lib.mkIf (!config.programs.sway.enable) [
+  # gtk on wayland takes theme, icons, font and cursor from dconf through the
+  # settings portal and skips settings.ini, so the same as modules/nixos/gtk's
+  # settings.ini goes here. locked: a value in the user db (home-manager's old
+  # gtk module left gtk-theme=gruvbox-dark there, a theme that's gone) would
+  # win otherwise
+  programs.dconf.profiles.user.databases = [
     {
       lockAll = true;
       settings."org/gnome/desktop/interface" = {

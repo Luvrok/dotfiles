@@ -15,9 +15,7 @@ let
     caCert = "/etc/dnscrypt-proxy/local-doh-ca.crt";
   };
 
-  rofiTabs = pkgs.callPackage ./rofi-tabs-switcher.nix {
-    theme = "~/.config/rofi/rofi-librewolf-menu.rasi";
-  };
+  rofiTabs = pkgs.callPackage ./rofi-tabs-switcher.nix { };
 
   # unloads the pinned tabs the session restored: firefox gives them a
   # browser right away, so sidebery showed them as loaded (unload-pinned/)

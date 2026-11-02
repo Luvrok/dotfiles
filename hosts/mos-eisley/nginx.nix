@@ -9,7 +9,6 @@ let
     "koito.vxrnt.ru" = 4110;
     "betanin.vxrnt.ru" = 9393;
     "metube.vxrnt.ru" = 8081;
-    "docs.vxrnt.ru" = 6280;
     "rss.vxrnt.ru" = 8180;
   };
 
@@ -50,7 +49,6 @@ in
   };
 
   sops.secrets.metube_htpasswd.owner = "nginx";
-  sops.secrets.docs_mcp_htpasswd.owner = "nginx";
 
   services.nginx = {
     enable = true;
@@ -75,7 +73,6 @@ in
         lt.vxrnt.ru            web;
         betanin.vxrnt.ru       web;
         metube.vxrnt.ru        web;
-        docs.vxrnt.ru          web;
         obsidian.vxrnt.ru      web;
         rss.vxrnt.ru           web;
         default                xray;
@@ -153,24 +150,6 @@ in
             '';
           };
         };
-
-      "docs.vxrnt.ru" = mkHost "docs.vxrnt.ru" 6280 // {
-        basicAuthFile = config.sops.secrets.docs_mcp_htpasswd.path;
-        locations = {
-          # only the mcp endpoint, everything else is closed
-          "/".return = "404";
-          "= /mcp" = {
-            proxyPass = "http://127.0.0.1:6280";
-            extraConfig = ''
-              # mcp answers as an sse stream, don't buffer it
-              proxy_buffering off;
-              proxy_cache off;
-              proxy_read_timeout 3600s;
-              client_max_body_size 1m;
-            '';
-          };
-        };
-      };
     };
   };
 }

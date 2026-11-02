@@ -15,12 +15,9 @@ in
 {
   imports = [
     ./xray.nix
-    # docs index for pi, vectors from llama-swap
-    ../../modules/nixos/docs-mcp
-    # the obsidian vault, its own index next to it
+    # the obsidian vault's index for pi, vectors from llama-swap
     ../../modules/nixos/notes-mcp
-    # the wayland sessions
-    ../../modules/nixos/sway
+    # the wayland session
     ../../modules/nixos/hyprland
     # kodi, the movies and series of /media/outer-1 played in mpv, and
     # their downloads: radarr, sonarr, qbittorrent, subtitles (Luvrok/kodi)
@@ -35,7 +32,7 @@ in
     enable = true;
     # the hub's lfs cdn and docker hub need xray's mixed inbound
     proxy = lib.mkIf config.services.xray.enable "http://127.0.0.1:10808";
-    # the notes' own docs-mcp-server (modules/nixos/notes-mcp)
+    # the notes' docs-mcp-server (modules/nixos/notes-mcp)
     tools.notesMcp = "http://127.0.0.1:6281/mcp";
   };
 

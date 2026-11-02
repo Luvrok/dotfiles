@@ -3,8 +3,8 @@ import Quickshell
 import Quickshell.Io
 import qs.menus
 
-// the hyprland shell: wallpaper and bar on every monitor, and menus for what
-// the rofi scripts do in i3 and sway. hyprland.lua starts it and calls
+// the hyprland shell: wallpaper and bar on every monitor, and the menus.
+// hyprland.lua starts it and calls
 //   qs -c hyprland ipc call menu open <name>
 //   qs -c hyprland ipc call bar toggle
 //   qs -c hyprland ipc call record stop

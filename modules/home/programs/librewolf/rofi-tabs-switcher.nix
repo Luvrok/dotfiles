@@ -1,5 +1,5 @@
 { lib, stdenv, fetchFromGitHub, runCommand, writeText, writeShellScriptBin, makeWrapper
-, rofi, python3, zip, theme ? null }:
+, python3, zip, theme ? null }:
 
 let
   version = "1.1";
@@ -11,14 +11,9 @@ let
     hash  = "sha256-XNa6aUR0olMvUHwDqyVFdfjZcAW1yYbD95UX0pMOyvI=";
   };
 
-  # the helper's rofi: the quickshell menu while hyprland's quickshell runs
-  # (hypr-dmenu, modules/nixos/hyprland), rofi in sway
+  # the helper's rofi: the quickshell menu (hypr-dmenu, modules/nixos/hyprland)
   rofiShim = writeShellScriptBin "rofi" ''
-    dmenu=/run/current-system/sw/bin/hypr-dmenu
-    if [ -x "$dmenu" ] && "$dmenu" --check; then
-      exec "$dmenu" "$@"
-    fi
-    exec ${rofi}/bin/rofi "$@"
+    exec /run/current-system/sw/bin/hypr-dmenu "$@"
   '';
 
   native_helper = stdenv.mkDerivation {

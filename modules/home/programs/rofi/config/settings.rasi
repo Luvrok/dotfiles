@@ -1,8 +1,0 @@
-scrollbar {
-    width:        4px;
-    handle-width: 4px;
-}
-
-window {
-    width: 65ch;
-}

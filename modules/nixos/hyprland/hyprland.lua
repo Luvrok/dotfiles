@@ -1,8 +1,5 @@
--- hyprland: the twin of modules/nixos/sway/config. same tags, binds,
--- scratchpads and look, done with hyprland's own layouts and dispatchers.
--- with animations. the bar, the wallpaper and
--- the menus (the rofi scripts in sway) are quickshell, its config is
--- `qs -c hyprland`
+-- hyprland: dwm-like tags, scratchpads, with animations. the bar, the
+-- wallpaper and the menus are quickshell, its config is `qs -c hyprland`
 
 local mod = "SUPER"
 
@@ -718,9 +715,6 @@ hl.on("hyprland.start", function()
     hl.exec_cmd([[swayidle -w timeout 300 "hyprctl dispatch \"hl.dsp.dpms({ action = 'disable' })\"" resume "hyprctl dispatch \"hl.dsp.dpms({ action = 'enable' })\"" lock "qs -c hyprland ipc call lock now" before-sleep "qs -c hyprland ipc call lock now"]])
     hl.exec_cmd("sway-audio-idle-inhibit")
     hl.exec_cmd("gammastep -m wayland -l 59.9343:30.3351 -t 5000:4000")
-    -- quickshell is the notification server, it takes over once a dunst
-    -- from another session lets go. default.nix keeps a new one from starting
-    hl.exec_cmd("systemctl --user stop dunst.service")
     hl.exec_cmd("qs -c hyprland")
 end)
 

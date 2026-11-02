@@ -132,7 +132,6 @@
   sops.defaultSopsFormat = "yaml";
   sops.age.keyFile = "/var/lib/sops-nix/key.txt";
   sops.age.generateKey = true;
-  sops.secrets.docs_mcp_auth.owner = username;
 
   system.stateVersion = "26.05";
 }

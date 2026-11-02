@@ -131,10 +131,8 @@
       qpwgraph
       v4l-utils
 
-      # --- x11 tools, the rofi scripts run them through xwayland ---
+      # --- ocr (the tools menu), x11 bits ---
       (tesseract.override { enableLanguages = [ "eng" "rus" ]; })
-      xclip
-      xdotool
       xdpyinfo
       xcursorthemes
 

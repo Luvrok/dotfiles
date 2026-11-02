@@ -6,7 +6,6 @@
     ./neovim
     ./kitty.nix
     ./zsh
-    ./rofi
     ./yazi
     ./git.nix
     ./gpg.nix

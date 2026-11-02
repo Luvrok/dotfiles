@@ -4,8 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Notifications
 
-// the notification server, instead of dunst (it stays for i3 and sway, its
-// unit doesn't start under hyprland). one popup at a time, the newest, the
+// the notification server. one popup at a time, the newest, the
 // rest wait in the notifications menu until they're dismissed or their app
 // takes them back. a progress (the value hint: volume, brightness), a low
 // one with a stack tag (volume: mute) and a transient one only pop up. one

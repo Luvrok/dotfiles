@@ -45,11 +45,10 @@ vim.wo.relativenumber = true
 vim.opt.hlsearch = false
 vim.opt.incsearch = false
 
--- sway scripts have no shebang (writeShellApplication adds it), without this
+-- quickshell scripts have no shebang (writeShellApplication adds it), without this
 -- they open as conf: no bash highlighting, no bashls, no shellcheck
 vim.filetype.add({
 	pattern = {
-		[".*/dotfiles/modules/nixos/sway/scripts/.*"] = "bash",
 		[".*/dotfiles/modules/nixos/hyprland/quickshell/scripts/.*"] = "bash",
 	},
 })
