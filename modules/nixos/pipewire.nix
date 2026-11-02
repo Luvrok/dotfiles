@@ -135,4 +135,30 @@
       }
     ];
   };
+
+  # names for the menus (quickshell's audio menu, pavucontrol): the
+  # speakers are on the monitor, "Speaker" of the usb card is the
+  # motherboard's back output. the usb card's front jack takes that one away
+  # while headphones are in it
+  wireplumber.extraConfig."20-sink-names" = {
+    "monitor.alsa.rules" = [
+      {
+        matches = [
+          {
+            "media.class" = "Audio/Sink";
+            "node.description" = "~Navi 31 HDMI.*";
+          }
+        ];
+        actions.update-props."node.description" = "Колонки (монитор)";
+      }
+      {
+        matches = [ { "node.name" = "alsa_output.usb-Generic_USB_Audio-00.HiFi__Headphones__sink"; } ];
+        actions.update-props."node.description" = "Наушники";
+      }
+      {
+        matches = [ { "node.name" = "alsa_output.usb-Generic_USB_Audio-00.HiFi__Speaker__sink"; } ];
+        actions.update-props."node.description" = "Задний выход (материнка)";
+      }
+    ];
+  };
 }
