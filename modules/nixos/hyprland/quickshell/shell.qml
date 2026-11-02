@@ -281,6 +281,8 @@ ShellRoot {
         Audio {
             screen: shell.menuScreen
             onDone: shell.close("audio")
+            // p: the player
+            onGoTo: name => shell.swap(name)
         }
     }
     LazyLoader {
