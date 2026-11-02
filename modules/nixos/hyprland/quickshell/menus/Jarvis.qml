@@ -35,7 +35,10 @@ Menu {
     // the llms the characters can think with, and the picked one
     property var llms: []
     property string llm: ""
-    // main, input, voice or model
+    // the speech to text models, and the picked one
+    property var stts: []
+    property string stt: ""
+    // main, input, voice, model or speech
     property string page: "main"
     property string flash: ""
     // the cloned voices' model: "big" (1.7b) or "small" (0.6b, quicker),
@@ -113,6 +116,12 @@ Menu {
             if (page === "model")
                 listLLMs(true);
             break;
+        case "stts":
+            stts = m.list ?? [];
+            stt = m.selected;
+            if (page === "speech")
+                listSTTs(true);
+            break;
         case "new_chat":
             asked = "";
             answer = "";
@@ -143,12 +152,20 @@ Menu {
         show(llms.map(l => l.name), keep && current >= 0 ? current : active[0]);
     }
 
+    function listSTTs(keep) {
+        active = [Math.max(0, stts.findIndex(s => s.id === stt))];
+        lines = Math.max(1, Math.min(stts.length, 10));
+        show(stts.map(s => s.name), keep && current >= 0 ? current : active[0]);
+    }
+
     function openPage(name) {
         page = name;
         if (name === "input")
             listSources();
         else if (name === "model")
             listLLMs();
+        else if (name === "speech")
+            listSTTs();
         else
             listCharacters();
     }
@@ -183,7 +200,7 @@ Menu {
     activity: working ? jarvis : ""
     lines: 0
     menuWidth: ch(46)
-    hints: page === "main" ? [["space", jarvis === "paused" ? "resume" : "pause"], ["c", "copy"], ["i", "input"], ["v", "voice"], ...(llms.length > 1 ? [["m", "model"]] : []), ["r", "again"], ["n", "new chat"], ["u", "unload"], ["esc", "close"]] : [["j/k", "move"], ["enter", "pick"], ...(page === "voice" ? [["p", "preview"], ...(hasSmall ? [["s", clones === "small" ? "clones 1.7b" : "clones 0.6b"]] : [])] : []), ["h", "back"], ["esc", "close"]]
+    hints: page === "main" ? [["space", jarvis === "paused" ? "resume" : "pause"], ["c", "copy"], ["i", "input"], ["v", "voice"], ...(llms.length > 1 ? [["m", "model"]] : []), ...(stts.length > 1 ? [["t", "speech"]] : []), ["r", "again"], ["n", "new chat"], ["u", "unload"], ["esc", "close"]] : [["j/k", "move"], ["enter", "pick"], ...(page === "voice" ? [["p", "preview"], ...(hasSmall ? [["s", clones === "small" ? "clones 1.7b" : "clones 0.6b"]] : [])] : []), ["h", "back"], ["esc", "close"]]
     body: page === "main" ? talk : null
 
     onAccepted: index => {
@@ -201,6 +218,11 @@ Menu {
             send({
                 type: "set_llm",
                 id: llms[index].id
+            });
+        else if (page === "speech" && stts[index])
+            send({
+                type: "set_stt",
+                id: stts[index].id
             });
         home();
     }
@@ -241,6 +263,8 @@ Menu {
             openPage("voice");
         else if (key(e, "m") && llms.length > 1)
             openPage("model");
+        else if (key(e, "t") && stts.length > 1)
+            openPage("speech");
         else if (key(e, "r"))
             send({
                 type: "listen"
