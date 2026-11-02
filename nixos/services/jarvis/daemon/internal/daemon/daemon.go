@@ -630,6 +630,18 @@ func (d *Daemon) setSource(id string) {
 	d.broadcast(d.sourcesMsg())
 }
 
+// newChat: the conversation starts over, nothing of it is left. the menu
+// clears its exchange too
+func (d *Daemon) newChat() {
+	d.mu.Lock()
+	d.history = nil
+	d.lastAt = time.Time{}
+	d.last.question, d.last.text, d.last.lang = "", "", ""
+	d.mu.Unlock()
+	log.Printf("new chat")
+	d.broadcast(map[string]any{"type": "new_chat"})
+}
+
 // voiceModel: the llama-swap model a character speaks with. the cloned
 // ones go to the small model while that's picked
 func (d *Daemon) voiceModel(ch *config.Character) string {

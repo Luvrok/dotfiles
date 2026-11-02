@@ -142,10 +142,11 @@ func (d *Daemon) warm(ch string) {
 	}
 }
 
-// unload: everything of jarvis out of vram now, the request stops too.
-// the next question loads it again
+// unload: everything of jarvis out of vram now, the request stops too
+// and the conversation starts over. the next question loads it again
 func (d *Daemon) unload() {
 	d.stop()
+	d.newChat()
 	base := strings.TrimRight(d.cfg.LLM.URL, "/")
 	client := &http.Client{Timeout: 30 * time.Second}
 	for _, m := range d.ownModels() {

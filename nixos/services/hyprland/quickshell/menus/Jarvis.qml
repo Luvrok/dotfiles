@@ -13,7 +13,8 @@ import qs.widgets
 // the big square is the mic, a click on it pauses. space pauses or
 // resumes, c copies the answer, i picks the input, v the character (p
 // plays its greeting, s puts the cloned voices on the quick 0.6b model or
-// back on the 1.7b), r listens again, u frees the vram. esc stops the
+// back on the 1.7b), r listens again, n starts a new chat (the
+// conversation so far is forgotten), u frees the vram and forgets too. esc stops the
 // voice and closes. no daemon: "jarvis is off"
 Menu {
     id: menu
@@ -103,6 +104,10 @@ Menu {
             if (page === "voice")
                 listCharacters(true);
             break;
+        case "new_chat":
+            asked = "";
+            answer = "";
+            break;
         case "error":
             errorText = m.message;
             break;
@@ -161,7 +166,7 @@ Menu {
     activity: working ? jarvis : ""
     lines: 0
     menuWidth: ch(46)
-    hints: page === "main" ? [["space", jarvis === "paused" ? "resume" : "pause"], ["c", "copy"], ["i", "input"], ["v", "voice"], ["r", "again"], ["u", "unload"], ["esc", "close"]] : [["j/k", "move"], ["enter", "pick"], ...(page === "voice" ? [["p", "preview"], ...(hasSmall ? [["s", clones === "small" ? "clones 1.7b" : "clones 0.6b"]] : [])] : []), ["h", "back"], ["esc", "close"]]
+    hints: page === "main" ? [["space", jarvis === "paused" ? "resume" : "pause"], ["c", "copy"], ["i", "input"], ["v", "voice"], ["r", "again"], ["n", "new chat"], ["u", "unload"], ["esc", "close"]] : [["j/k", "move"], ["enter", "pick"], ...(page === "voice" ? [["p", "preview"], ...(hasSmall ? [["s", clones === "small" ? "clones 1.7b" : "clones 0.6b"]] : [])] : []), ["h", "back"], ["esc", "close"]]
     body: page === "main" ? talk : null
 
     onAccepted: index => {
@@ -216,7 +221,13 @@ Menu {
             send({
                 type: "listen"
             });
-        else if (key(e, "u")) {
+        else if (key(e, "n")) {
+            send({
+                type: "new_chat"
+            });
+            flash = "new chat";
+            flashEnd.restart();
+        } else if (key(e, "u")) {
             // the vram is free, nothing left to do here
             send({
                 type: "unload"

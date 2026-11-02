@@ -121,6 +121,8 @@ func (d *Daemon) command(c *client, cmd command) {
 		d.mu.Lock()
 		c.cli = true
 		d.mu.Unlock()
+	case "new_chat":
+		d.newChat()
 	case "unload":
 		go d.unload()
 	case "set_clones":

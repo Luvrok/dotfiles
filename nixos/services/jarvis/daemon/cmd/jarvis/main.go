@@ -26,7 +26,9 @@ const usage = `usage: jarvis <command>
   pause                   close the mic, wake word too
   resume                  open it again
   stop                    stop listening or speaking
-  unload                  free the vram: the llm and the voices go
+  new                     a new chat: the conversation so far is forgotten
+  unload                  free the vram: the llm and the voices go, and
+                          the conversation too
   clones [small|big]      the model of the cloned voices (jarvis, glados,
                           hal 9000, mayuri): 0.6b quicker, 1.7b closer
   last                    print the last answer
@@ -64,6 +66,8 @@ func main() {
 		}))
 	case "check":
 		os.Exit(check())
+	case "new":
+		os.Exit(send(map[string]any{"type": "new_chat"}, nil))
 	case "clones":
 		os.Exit(clones(os.Args[2:]))
 	case "-h", "--help", "help":
