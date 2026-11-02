@@ -189,18 +189,33 @@ func isEmoji(r rune) bool {
 	return unicode.Is(unicode.So, r) && r > 0x2000
 }
 
-// Lang: ru when the text is mostly cyrillic, else en
+// Lang: the answer's language by its letters: ru, ja (any kana), zh, ko,
+// else en. the tts reads it with that language
 func Lang(s string) string {
-	var cyr, lat int
+	var cyr, lat, kana, han, hangul int
 	for _, r := range s {
 		switch {
 		case unicode.Is(unicode.Cyrillic, r):
 			cyr++
+		case unicode.In(r, unicode.Hiragana, unicode.Katakana):
+			kana++
+		case unicode.Is(unicode.Han, r):
+			han++
+		case unicode.Is(unicode.Hangul, r):
+			hangul++
 		case r < 0x80 && unicode.IsLetter(r):
 			lat++
 		}
 	}
-	if cyr > lat {
+	cjk := kana + han + hangul
+	switch {
+	case cjk > lat && cjk > cyr && kana > 0:
+		return "ja"
+	case cjk > lat && cjk > cyr && hangul >= han:
+		return "ko"
+	case cjk > lat && cjk > cyr:
+		return "zh"
+	case cyr > lat:
 		return "ru"
 	}
 	return "en"

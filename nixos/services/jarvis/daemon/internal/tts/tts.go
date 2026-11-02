@@ -28,7 +28,7 @@ func New(url string) *Client {
 }
 
 // the server wants the language's name
-var langNames = map[string]string{"en": "English", "ru": "Russian"}
+var langNames = map[string]string{"en": "English", "ru": "Russian", "ja": "Japanese", "zh": "Chinese", "ko": "Korean"}
 
 // Voice: the voice field. a custom-voice speaker as is, a cloned one is
 // the server's voice library profile of the character (clone:<id>), made

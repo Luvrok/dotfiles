@@ -204,6 +204,18 @@ func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, 
 		return min(4, (float64(len(buf))/float64(rate)-burst)/d)
 	}
 
+	// plan: how much has to be in before playing on, with left seconds
+	// still to come. the speed is taken 15% lower than seen: it wobbles
+	// around real time, and a voice right at 1x needs a head start too
+	plan := func(r, left float64) float64 {
+		r *= 0.85
+		if r >= 1 || left <= 0 {
+			return 0.25
+		}
+		// plus one of the server's half-second steps and a bit
+		return max(0.25, left*(1-r)*1.2+0.7)
+	}
+
 	// the head start: a quarter second, more for a slow generator. with r
 	// seconds of audio made per second, all of it plays without a gap once
 	// expect*(1-r) is in
@@ -223,9 +235,8 @@ func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, 
 		// no speed known yet: wait until it can be told
 		known := r > 0 || e
 		need := 0.25
-		if r > 0 && r < 1 && expect > 0 {
-			// plus one of the server's half-second steps and a bit
-			need = max(need, expect.Seconds()*(1-r)*1.3+0.7)
+		if r > 0 && expect > 0 {
+			need = plan(r, expect.Seconds())
 		}
 		if e || (known && have >= need) || (k > 0 && since > 20*time.Second) {
 			if expect > 0 {
@@ -258,7 +269,18 @@ func (a *Audio) PlayStream(ctx context.Context, src <-chan []float32, rate int, 
 				stalled = true
 				stalls++
 			}
-			if stalled && (ended || len(buf)-pos >= rate*4/5) {
+			// a gap: wait until the rest can play through, by the speed
+			// seen so far, so there's one pause and not a string of them
+			if stalled && !ended {
+				left := expect.Seconds() - float64(pos)/float64(rate)
+				r := float64(len(buf)) / float64(rate) / max(0.1, time.Since(first).Seconds())
+				if left < 1 {
+					left = 1
+				}
+				if float64(len(buf)-pos)/float64(rate) >= max(0.8, plan(r, left)) {
+					stalled = false
+				}
+			} else if stalled {
 				stalled = false
 			}
 			n := min(int(frames), len(buf)-pos)

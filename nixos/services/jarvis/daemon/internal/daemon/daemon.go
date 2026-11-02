@@ -71,6 +71,8 @@ type Daemon struct {
 	loaded []string
 	// seconds of audio each voice model makes per second, from its last answers
 	speed map[string]float64
+	// seconds of speech per character of text, by the answer's language
+	perChar map[string]float64
 	// the cloned voices on cfg.TTS.SmallModel
 	small bool
 
@@ -98,6 +100,7 @@ func New(cfg *config.Config) (*Daemon, error) {
 		state:      Idle,
 		clients:    map[*client]bool{},
 		speed:      map[string]float64{},
+		perChar:    map[string]float64{},
 	}
 
 	st := config.LoadState()
@@ -498,24 +501,45 @@ func (d *Daemon) speak(ctx context.Context, ch *config.Character, text, lang str
 	d.setState(Speaking)
 	src := make(chan []float32, 1)
 	src <- first
+	// all of the voice, counted, for its seconds per character
+	samples := len(first)
 	go func() {
 		defer close(src)
 		for chunk := range stream.C {
+			samples += len(chunk)
 			src <- chunk
 		}
 	}()
 	d.mu.Lock()
 	known := d.speed[model]
+	perChar := d.perChar[lang]
 	d.mu.Unlock()
-	speed, err := d.audio.PlayStream(ctx, src, stream.Rate, speechLength(text), known, func(v float64) { d.level(v, "tts") })
-	// the voice's speed for next time, smoothed: the first answer after a
-	// load is the slowest
+	chars := float64(len([]rune(text)))
+	if perChar <= 0 {
+		// a first guess, ~14 characters a second; japanese and the like say
+		// more per character, they get their own measure after one answer
+		perChar = 1.0 / 14
+	}
+	expect := time.Duration(chars * perChar * float64(time.Second))
+	speed, err := d.audio.PlayStream(ctx, src, stream.Rate, expect, known, func(v float64) { d.level(v, "tts") })
+	// the voice's speed for next time, the lower of the last two: a wobble
+	// down costs a gap, a wobble up only a moment of waiting
 	if speed > 0 {
 		d.mu.Lock()
 		if known > 0 {
-			speed = (known + speed) / 2
+			speed = min(known, speed)
 		}
 		d.speed[model] = speed
+		d.mu.Unlock()
+	}
+	// how long its characters took to say, for the next head start
+	if err == nil && stream.Err() == nil && chars > 20 {
+		d.mu.Lock()
+		got := float64(samples) / float64(stream.Rate) / chars
+		if old := d.perChar[lang]; old > 0 {
+			got = (old + got) / 2
+		}
+		d.perChar[lang] = got
 		d.mu.Unlock()
 	}
 	d.level(0, "tts")
@@ -527,12 +551,6 @@ func (d *Daemon) speak(ctx context.Context, ch *config.Character, text, lang str
 	} else if err := stream.Err(); err != nil {
 		d.fail("tts", err)
 	}
-}
-
-// speechLength: about how long the text takes to say, for the head start
-// of a slow stream. ~14 characters a second in both languages
-func speechLength(text string) time.Duration {
-	return time.Duration(float64(len([]rune(text))) / 14 * float64(time.Second))
 }
 
 // preview: a short greeting from a character, no switch, no history
@@ -569,7 +587,7 @@ func (d *Daemon) preview(id string) {
 }
 
 var langRules = map[string]string{
-	"auto": "Reply in the same language as the user's last message: Russian or English. Never mix languages in one reply.",
+	"auto": "Reply in the same language as the user's last message, usually Russian or English, unless the user asked you to answer in another language. Never mix languages in one reply unless asked to.",
 	"en":   "Always reply in English, whatever language the user speaks.",
 	"ru":   "Always reply in Russian, whatever language the user speaks.",
 }

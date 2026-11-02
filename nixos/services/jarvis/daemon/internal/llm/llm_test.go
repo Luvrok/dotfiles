@@ -17,7 +17,17 @@ func TestSanitize(t *testing.T) {
 }
 
 func TestLang(t *testing.T) {
-	if Lang("Тридцать шесть, сэр.") != "ru" || Lang("It's Kurisu!") != "en" || Lang("Это GPU, сэр") != "ru" {
-		t.Fatal("wrong language")
+	for in, want := range map[string]string{
+		"Тридцать шесть, сэр.":    "ru",
+		"It's Kurisu!":            "en",
+		"Это GPU, сэр":            "ru",
+		"お元気ですか、サー。":              "ja",
+		"昔々、ある村に Momotaro がいました。": "ja",
+		"你好，先生。":                  "zh",
+		"안녕하세요":                   "ko",
+	} {
+		if got := Lang(in); got != want {
+			t.Errorf("Lang(%q) = %s, want %s", in, got, want)
+		}
 	}
 }
