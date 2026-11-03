@@ -59,6 +59,10 @@ in
     "opencode/skills/notes".source = ./skills/notes;
     "opencode/skills/obsidian".source = ./skills/obsidian;
     "opencode/skills/docs".source = ./skills/docs;
+    "opencode/skills/deep-research".source = ./skills/deep-research;
+    "opencode/skills/debugging".source = ./skills/debugging;
+    "opencode/skills/verify".source = ./skills/verify;
+    "opencode/skills/plan".source = ./skills/plan;
     "opencode/AGENTS.md".source = ./AGENTS.md;
     "opencode/commands".source = ./commands;
     # a notification when a permission rule says "ask"
