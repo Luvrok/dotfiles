@@ -1,11 +1,15 @@
--- the open buffers at the top, like editor tabs. no backgrounds, the
--- current one is orange. starts right of neo-tree (offsets), above the
--- tree goes the project's path, neo-tree's own root line is hidden.
+-- the open buffers at the top, one box each: a dark box with a gap of the
+-- terminal's own background between them, the current one lighter with
+-- an orange name. starts right of neo-tree (offsets), above the tree goes
+-- the project's path, neo-tree's own root line is hidden.
 -- shown while a file or neo-tree is open, hidden on the dashboard
 local colors = {
 	accent = "#d65d0e",
 	fg = "#ebdbb2",
 	dim = "#928374",
+	-- the boxes, lualine's greys
+	box = "#202020",
+	box_selected = "#282828",
 }
 
 return {
@@ -59,8 +63,15 @@ return {
 		update()
 	end,
 	opts = function()
+		-- bg NONE is the gap and the empty rest of the bar, a box has its own
 		local hl = function(fg, extra)
 			return vim.tbl_extend("force", { fg = fg, bg = "NONE" }, extra or {})
+		end
+		local box = function(fg, extra)
+			return vim.tbl_extend("force", { fg = fg, bg = colors.box }, extra or {})
+		end
+		local selected = function(fg, extra)
+			return vim.tbl_extend("force", { fg = fg, bg = colors.box_selected }, extra or {})
 		end
 		return {
 			options = {
@@ -72,7 +83,8 @@ return {
 				show_close_icon = false,
 				show_tab_indicators = true,
 				modified_icon = "●",
-				separator_style = { "", "" },
+				-- a space before each box is the gap, bg NONE (separator below)
+				separator_style = { " ", "" },
 				indicator = { style = "none" },
 				diagnostics = false,
 				-- bufferline shows itself from 2 buffers, here from 1 (below)
@@ -106,22 +118,22 @@ return {
 			},
 			highlights = {
 				fill = hl(colors.dim),
-				background = hl(colors.dim),
-				buffer_visible = hl(colors.dim),
-				buffer_selected = hl(colors.accent, { bold = true, italic = false }),
-				modified = hl(colors.dim),
-				modified_visible = hl(colors.dim),
-				modified_selected = hl(colors.accent),
-				duplicate = hl(colors.dim, { italic = false }),
-				duplicate_visible = hl(colors.dim, { italic = false }),
-				duplicate_selected = hl(colors.fg, { italic = false }),
-				tab = hl(colors.dim),
-				tab_selected = hl(colors.accent),
+				background = box(colors.dim),
+				buffer_visible = box(colors.dim),
+				buffer_selected = selected(colors.accent, { bold = true, italic = false }),
+				modified = box(colors.dim),
+				modified_visible = box(colors.dim),
+				modified_selected = selected(colors.accent),
+				duplicate = box(colors.dim, { italic = false }),
+				duplicate_visible = box(colors.dim, { italic = false }),
+				duplicate_selected = selected(colors.fg, { italic = false }),
+				tab = box(colors.dim),
+				tab_selected = selected(colors.accent),
 				tab_separator = hl(colors.dim),
 				tab_separator_selected = hl(colors.dim),
-				pick = hl(colors.accent, { bold = true, italic = false }),
-				pick_visible = hl(colors.accent, { bold = true, italic = false }),
-				pick_selected = hl(colors.accent, { bold = true, italic = false }),
+				pick = box(colors.accent, { bold = true, italic = false }),
+				pick_visible = box(colors.accent, { bold = true, italic = false }),
+				pick_selected = selected(colors.accent, { bold = true, italic = false }),
 				offset_separator = hl(colors.dim),
 				separator = hl(colors.dim),
 				separator_visible = hl(colors.dim),
