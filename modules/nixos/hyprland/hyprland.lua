@@ -55,6 +55,14 @@ hl.config({
         allow_session_lock_restore = true,
     },
 
+    render = {
+        -- a fullscreen window must not switch the monitor to hdr (it
+        -- re-inits the link: black for a moment, then dim), nor tell it the
+        -- content type (the picture mode switch can blank it too)
+        cm_auto_hdr = 0,
+        send_content_type = false,
+    },
+
     -- config errors at the bottom, like the notifications. hyprland's own
     -- notifications (lua errors, monitor modes, hyprctl notify) can't move,
     -- they're drawn at the top right
@@ -313,6 +321,36 @@ local function fakefs_exit(w)
     end
     if cursor then
         hl.dispatch(hl.dsp.cursor.move({ x = cursor.x, y = cursor.y }))
+    end
+end
+
+-- a move to another monitor ends the window's fullscreen in hyprland, the
+-- state lives with the workspace. so it's saved before and put back after:
+-- a fake one is fitted to the new monitor (fakefs_exit puts the window
+-- where it was on the monitor it's on then), a real one is set again. done
+-- in the same call, the update_rules timer of fakefs_sync runs after it and
+-- sees a window that is still fullscreen
+local function fs_save(w)
+    if not w then
+        return nil
+    end
+    return { fake = fakefs[w.address] ~= nil, internal = w.fullscreen, client = w.fullscreen_client }
+end
+
+local function fs_restore(w, st)
+    if not w or not st then
+        return
+    end
+    if st.fake then
+        local m = w.monitor
+        if not fakefs[w.address] or not m then
+            return
+        end
+        hl.dispatch(hl.dsp.window.resize({ x = m.width / m.scale, y = m.height / m.scale, window = w }))
+        hl.dispatch(hl.dsp.window.move({ x = m.x, y = m.y, window = w }))
+        fs_state(w, 0, 2)
+    elseif st.internal ~= 0 then
+        fs_state(w, st.internal, st.client)
     end
 end
 
@@ -644,8 +682,16 @@ hl.bind(mod .. " + s", hl.dsp.window.pin())
 -- monitor. +1/-1 wrap like dwm, l/r stop at the screen edge
 hl.bind(mod .. " + comma", hl.dsp.focus({ monitor = "-1" }))
 hl.bind(mod .. " + period", hl.dsp.focus({ monitor = "+1" }))
-hl.bind(mod .. " + SHIFT + comma", hl.dsp.window.move({ monitor = "-1" }))
-hl.bind(mod .. " + SHIFT + period", hl.dsp.window.move({ monitor = "+1" }))
+local function movemon(dir)
+    return function()
+        local w = hl.get_active_window()
+        local st = fs_save(w)
+        hl.dispatch(hl.dsp.window.move({ monitor = dir }))
+        fs_restore(w, st)
+    end
+end
+hl.bind(mod .. " + SHIFT + comma", movemon("-1"))
+hl.bind(mod .. " + SHIFT + period", movemon("+1"))
 
 -- tagmonstay: the window stays the focused one of the tag it lands on, like
 -- dwm. focusing it marks it as that tag's last window, then focus and the
@@ -665,12 +711,15 @@ local function tagmonstay(dir)
             hl.dispatch(hl.dsp.window.move({ monitor = target.name, follow = false }))
             return
         end
+        local st = fs_save(w)
         if w.workspace and w.workspace.windows == 1 then
             -- the last window of its tag: a silent move and a focus don't
             -- stick then, so move it like $mod+shift does
             hl.dispatch(hl.dsp.window.move({ monitor = target.name }))
+            fs_restore(w, st)
         else
             hl.dispatch(hl.dsp.window.move({ monitor = target.name, follow = false }))
+            fs_restore(w, st)
             hl.dispatch(hl.dsp.focus({ window = w }))
         end
         hl.dispatch(hl.dsp.focus({ monitor = mon.name }))
