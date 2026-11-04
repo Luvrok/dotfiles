@@ -29,14 +29,35 @@ vim.lsp.config("nixd", {
 	},
 })
 
+-- the install prefix of a binary from PATH, following the symlink nixos puts
+-- in /run/current-system/sw/bin. the qml modules and hyprland's lua stubs are
+-- found from it, no nix paths in this config: it works wherever the binaries
+-- are, and skips what isn't installed
+local function prefix(exe)
+	local path = vim.fn.exepath(exe)
+	if path == "" then
+		return nil
+	end
+	return vim.fs.dirname(vim.fs.dirname(vim.uv.fs_realpath(path) or path))
+end
+
+local hyprland = prefix("Hyprland")
+local luaLibrary = { vim.env.VIMRUNTIME }
+if hyprland then
+	local stub = hyprland .. "/share/hypr/stubs/hl.meta.lua"
+	if vim.uv.fs_stat(stub) then
+		table.insert(luaLibrary, stub)
+	end
+end
+
 vim.lsp.config("lua_ls", {
 	settings = {
 		Lua = {
 			runtime = { version = "LuaJIT" },
-			diagnostics = { globals = { "vim" } },
+			diagnostics = { globals = { "vim", "hl" } },
 			workspace = {
 				checkThirdParty = false,
-				library = { vim.env.VIMRUNTIME },
+				library = luaLibrary,
 			},
 			telemetry = { enable = false },
 			completion = { callSnippet = "Replace" },
@@ -82,11 +103,14 @@ vim.lsp.config("tinymist", {
 })
 
 -- the qml modules of qt and quickshell (import QtQuick, import Quickshell),
--- the paths come from nix (lua/nix.lua, written by the neovim home module)
-local ok, nix = pcall(require, "nix")
+-- from the same install prefixes, nothing comes from nix here
 local qmlls = { "qmlls" }
-for _, path in ipairs(ok and nix.qmlImportPaths or {}) do
-	vim.list_extend(qmlls, { "-I", path })
+for _, exe in ipairs({ "qmlls", "qs" }) do
+	local root = prefix(exe)
+	local path = root and root .. "/lib/qt-6/qml"
+	if path and vim.uv.fs_stat(path) then
+		vim.list_extend(qmlls, { "-I", path })
+	end
 end
 vim.lsp.config("qmlls", { cmd = qmlls })
 

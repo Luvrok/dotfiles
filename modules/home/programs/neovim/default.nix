@@ -1,4 +1,8 @@
-{ pkgs, ... }:
+# the whole config is the ./nvim dir, lazy-lock.json included: a copy of it
+# works on another machine. nothing here is generated from nix: the paths of
+# the qml modules and hyprland's lua stubs are found from the binaries at
+# startup (nvim/lua/lsp.lua)
+{ ... }:
 
 {
   programs.neovim = {
@@ -12,14 +16,4 @@
     source = ./nvim;
     recursive = true;
   };
-
-  # store paths the lua config needs: qmlls' import paths (lua/lsp.lua)
-  home.file.".config/nvim/lua/nix.lua".text = ''
-    return {
-      qmlImportPaths = {
-        "${pkgs.kdePackages.qtdeclarative}/lib/qt-6/qml",
-        "${pkgs.quickshell}/lib/qt-6/qml",
-      },
-    }
-  '';
 }
