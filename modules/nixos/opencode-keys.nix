@@ -8,6 +8,8 @@
 #   cerebras    cloud.cerebras.ai
 #   mistral     console.mistral.ai
 #   zai         z.ai/manage-apikey
+#   context7    context7.com/dashboard, not a provider: the key of the context7 mcp
+#               server, modules/home/programs/opencode sends it as a header
 # github-copilot has no key, it logs in with /connect in opencode
 {
   config,
