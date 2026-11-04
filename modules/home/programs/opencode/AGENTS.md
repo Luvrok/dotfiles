@@ -13,7 +13,7 @@
 ## Tools
 
 - Web search: the `searxng_*` tools, by the rules below.
-- Library docs: the `docs` skill first, web search after.
+- Library docs: the `docs` skill first (the local index, then the `context7_*` tools), web search after.
 - The user's Obsidian notes: the `notes` skill to find and answer from them, the `obsidian` skill to write or change them.
 - Thorough research with a cited report: the `deep-research` skill, only when the user asks for it.
 - Something is broken and the cause is not obvious: the `debugging` skill before any fix.
