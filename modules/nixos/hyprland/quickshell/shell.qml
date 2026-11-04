@@ -46,6 +46,9 @@ ShellRoot {
 
     // on the focused monitor, or on the one a bar was clicked on
     function open(name, screen) {
+        // a menu of something the host has off doesn't open
+        if (name === "jarvis" && !Features.jarvis)
+            return;
         const same = menu === name;
         menu = "";
         if (same)
@@ -388,6 +391,14 @@ ShellRoot {
         Windows {
             screen: shell.menuScreen
             onDone: shell.close("windows")
+        }
+    }
+    // jarvis (Luvrok/jarvis), it says "jarvis is off" without its daemon
+    LazyLoader {
+        active: shell.menu === "jarvis" && Features.jarvis
+        Jarvis {
+            screen: shell.menuScreen
+            onDone: shell.close("jarvis")
         }
     }
     LazyLoader {

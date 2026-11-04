@@ -43,7 +43,33 @@ in
         ${config.programs.hyprland.package}/bin/Hyprland --verify-config -c ${./hyprland.lua} --i-am-really-stupid
       cp ${./hyprland.lua} $out
     '';
-    environment.etc."xdg/quickshell/hyprland".source = ./quickshell;
+    # the quickshell config, with what the host has on (Features.qml) written
+    # in. jarvis off: its menu, bar icon and key stay in the code and do
+    # nothing, and its line is gone from the keys menu
+    environment.etc."xdg/quickshell/hyprland".source =
+      pkgs.runCommand "quickshell-hyprland" { } ''
+        cp -r ${./quickshell} $out
+        chmod -R u+w $out
+        cat > $out/Features.qml <<'EOF'
+        pragma Singleton
+
+        import QtQuick
+
+        QtObject {
+            readonly property bool jarvis: ${lib.boolToString config.services.jarvis.enable}
+        }
+        EOF
+        ${lib.optionalString (!config.services.jarvis.enable) ''
+          sed -i '/^ *mod+ctrl+j  *jarvis$/d' $out/keys.conf
+        ''}
+      '';
+    # jarvis' menu and bar icon (Luvrok/jarvis): its build checks them (no
+    # rounded shapes) while services.jarvis is enabled
+    services.jarvis.ui.qmlFiles = [
+      ./quickshell/menus/Jarvis.qml
+      ./quickshell/widgets/MicTile.qml
+      ./quickshell/widgets/JarvisBar.qml
+    ];
     # the lock screen's password (quickshell/Lock.qml, PamContext "quickshell")
     security.pam.services.quickshell = { };
 
