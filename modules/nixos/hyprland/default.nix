@@ -26,6 +26,13 @@ in
       portalPackage = pkgs-hypr.xdg-desktop-portal-hyprland;
     };
 
+    # the compositor loads the gpu driver from /run/opengl-driver, and its
+    # libgbm and the driver have to be one mesa: both from the snapshot
+    hardware.graphics = {
+      package = pkgs-hypr.mesa;
+      package32 = pkgs-hypr.pkgsi686Linux.mesa;
+    };
+
     # both look in XDG_CONFIG_DIRS (/etc/xdg) after ~/.config: hyprland for
     # hypr/hyprland.lua, quickshell for quickshell/<name> (qs -c hyprland).
     # hyprland checks its config while the system builds, so an update that
@@ -37,13 +44,6 @@ in
       cp ${./hyprland.lua} $out
     '';
     environment.etc."xdg/quickshell/hyprland".source = ./quickshell;
-    # jarvis' menu and bar icon (Luvrok/jarvis): its build checks them (no
-    # rounded shapes) while services.jarvis is enabled. off on barnard for now
-    services.jarvis.ui.qmlFiles = [
-      ./quickshell/menus/Jarvis.qml
-      ./quickshell/widgets/MicTile.qml
-      ./quickshell/widgets/JarvisBar.qml
-    ];
     # the lock screen's password (quickshell/Lock.qml, PamContext "quickshell")
     security.pam.services.quickshell = { };
 
