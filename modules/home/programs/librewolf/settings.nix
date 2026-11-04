@@ -104,12 +104,12 @@ let
     "browser.safebrowsing.provider.google4.dataSharingURL" = "";
   };
 
-  # DRM is off. For Netflix or Spotify set the first two to true
-  # and reset media.gmp-manager.url in about:config.
   media = {
-    "media.eme.enabled" = false;
-    "media.gmp-provider.enabled" = false;
-    "media.gmp-manager.url" = "data:text/plain,";
+    "media.eme.enabled" = true;
+    "media.gmp-provider.enabled" = true;
+    "media.gmp-widevinecdm.enabled" = true;
+    "media.gmp-manager.url" =
+      "https://aus5.mozilla.org/update/3/GMP/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml";
     "media.gmp-gmpopenh264.enabled" = false;
     "media.webrtc.hw.h264.enabled" = true;
   };
