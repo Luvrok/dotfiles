@@ -9,7 +9,7 @@ The searches go through a self-hosted SearXNG that search engines ban on bursts.
 
 ## Steps
 
-1. **Scope.** Restate the question in one or two lines. Split it into 3 to 6 sub-questions that together answer it. If the question is vague (no time frame, no goal, no region), ask the user once before searching. The user lives in the US: prices, laws and availability are for the US unless said otherwise.
+1. **Scope.** Restate the question in one or two lines. Split it into 3 to 6 sub-questions that together answer it. If the question is vague (no time frame, no goal, no region), ask the user once before searching.
 2. **Plan.** Show the sub-questions and the first query for each. Wait for the user's go only when the research is big (more than 6 sub-questions or the user asked to check the plan). Otherwise go on.
 3. **Local sources first.** The `docs` skill for libraries and the `notes` skill for the user's own notes, before the web.
 4. **Search.** One query per sub-question: key terms, not a sentence. Prefer pages that cover many things at once (official docs, changelogs, Wikipedia lists, comparison and benchmark pages). A budget of 10 searches in all. Open and read the 1 or 2 best results of each search (webfetch), do not judge by snippets.
