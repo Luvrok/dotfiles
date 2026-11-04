@@ -4,6 +4,7 @@
   "small_model": "opencode/deepseek-v4.1-flash-free",
   "enabled_providers": [
     "opencode",
+    "opencode-go",
     "llama-swap"
   ],
   "autoupdate": false,
