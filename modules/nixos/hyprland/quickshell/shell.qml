@@ -390,14 +390,6 @@ ShellRoot {
             onDone: shell.close("windows")
         }
     }
-    // jarvis (Luvrok/jarvis), it says "jarvis is off" without its daemon
-    LazyLoader {
-        active: shell.menu === "jarvis"
-        Jarvis {
-            screen: shell.menuScreen
-            onDone: shell.close("jarvis")
-        }
-    }
     LazyLoader {
         active: shell.menu === "keys"
         Keys {

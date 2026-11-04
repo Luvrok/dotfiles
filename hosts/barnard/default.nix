@@ -16,8 +16,11 @@ in
   imports = [ ./xray.nix ];
 
   # the voice assistant (Luvrok/jarvis), off for now: the module is mkIf
-  # enable, so nothing of it runs, no unit, no models. the menu in quickshell
-  # stays and says "jarvis is off". the settings stay for when it's back
+  # enable, so nothing of it runs, no unit, no models. its quickshell menu
+  # and bar icon are gone too: commit 7eb562d is the last one that has them
+  # (the menu starts the daemon on r, the bar stops it when idle), and the
+  # unit's wantedBy needs lib.mkForce [ ] again when it comes back. the
+  # settings stay for then
   services.jarvis = {
     enable = false;
     # the hub's lfs cdn and docker hub need xray's mixed inbound
@@ -29,8 +32,7 @@ in
       jarvis-qwen-9b = "Qwen3.5 9B";
       jarvis-qwen-4b = "Qwen3.5 4B";
     };
-    # nothing listens for a wake phrase: jarvis listens when r is pressed
-    # in its menu, and only then
+    # nothing listens for a wake phrase
     wakeWord.enable = false;
   };
 
