@@ -6,14 +6,16 @@ import qs.widgets
 
 // jarvis, the voice assistant (Luvrok/jarvis): the daemon listens,
 // the llm answers as the character, the tts speaks it. this menu talks to
-// the daemon over its socket while it's open and starts listening when it
-// opens. once the question is heard it slides away, the bar's mic
+// the daemon over its socket while it's open. it doesn't listen when it
+// opens (the daemon's listen also warms the llm and the voice into vram):
+// r starts it. the wake word still opens the menu and listens, that's the
+// daemon's own. once the question is heard it slides away, the bar's mic
 // (widgets/JarvisBar.qml) shows the rest and the answer comes as a
 // notification, so the desktop is free while jarvis thinks and speaks.
 // the big square is the mic, a click on it pauses. space pauses or
 // resumes, c copies the answer, i picks the input, v the character (p
 // plays its greeting, s puts the cloned voices on the quick 0.6b model or
-// back on the 1.7b), r listens again, n starts a new chat (the
+// back on the 1.7b), r listens, n starts a new chat (the
 // conversation so far is forgotten), u frees the vram and forgets too. esc stops the
 // voice and closes. no daemon: "jarvis is off"
 Menu {
@@ -200,7 +202,7 @@ Menu {
     activity: working ? jarvis : ""
     lines: 0
     menuWidth: ch(46)
-    hints: page === "main" ? [["space", jarvis === "paused" ? "resume" : "pause"], ["c", "copy"], ["i", "input"], ["v", "voice"], ...(llms.length > 1 ? [["m", "model"]] : []), ...(stts.length > 1 ? [["t", "speech"]] : []), ["r", "again"], ["n", "new chat"], ["u", "unload"], ["esc", "close"]] : [["j/k", "move"], ["enter", "pick"], ...(page === "voice" ? [["p", "preview"], ...(hasSmall ? [["s", clones === "small" ? "clones 1.7b" : "clones 0.6b"]] : [])] : []), ["h", "back"], ["esc", "close"]]
+    hints: page === "main" ? [["space", jarvis === "paused" ? "resume" : "pause"], ["c", "copy"], ["i", "input"], ["v", "voice"], ...(llms.length > 1 ? [["m", "model"]] : []), ...(stts.length > 1 ? [["t", "speech"]] : []), ["r", "listen"], ["n", "new chat"], ["u", "unload"], ["esc", "close"]] : [["j/k", "move"], ["enter", "pick"], ...(page === "voice" ? [["p", "preview"], ...(hasSmall ? [["s", clones === "small" ? "clones 1.7b" : "clones 0.6b"]] : [])] : []), ["h", "back"], ["esc", "close"]]
     body: page === "main" ? talk : null
 
     onAccepted: index => {
@@ -297,12 +299,9 @@ Menu {
         }
         onConnectedChanged: {
             if (connected) {
-                // the last answer to look at, then listen right away
+                // the last answer to look at, no listening until r
                 menu.send({
                     type: "last_answer"
-                });
-                menu.send({
-                    type: "listen"
                 });
             } else
                 menu.jarvis = "off";
