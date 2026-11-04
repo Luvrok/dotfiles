@@ -120,13 +120,17 @@ in
     # the emoji menu reads /run/current-system/sw/share/unicode/emoji
     environment.pathsToLink = [ "/share/unicode" ];
 
-    # hyprland.lua starts and stops it
+    # hyprland.lua starts and stops it. hyprland ships the same unit now
+    # (share/systemd/user), but nixpkgs doesn't install systemd.packages for
+    # it, so this one is the installed one: keep it equal to the package's,
+    # PropagatesStopTo included
     systemd.user.targets.hyprland-session = {
       description = "hyprland compositor session";
       documentation = [ "man:systemd.special(7)" ];
       bindsTo = [ "graphical-session.target" ];
       wants = [ "graphical-session-pre.target" ];
       after = [ "graphical-session-pre.target" ];
+      unitConfig.PropagatesStopTo = [ "graphical-session.target" ];
     };
 
     # gtk on wayland takes theme, icons, font and cursor from dconf through the
