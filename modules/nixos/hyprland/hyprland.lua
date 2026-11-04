@@ -324,8 +324,10 @@ local function fakefs_exit(w)
     end
 end
 
--- a move to another monitor ends the window's fullscreen in hyprland, the
--- state lives with the workspace. so it's saved before and put back after:
+-- a silent move (follow = false) ends the window's fullscreen in hyprland:
+-- the state lives with the workspace. the non-silent move puts the internal
+-- mode back itself, but not the client one, and a fake fullscreen is not
+-- fullscreen at all, so the state is saved before and put back after:
 -- a fake one is fitted to the new monitor (fakefs_exit puts the window
 -- where it was on the monitor it's on then), a real one is set again. done
 -- in the same call, the update_rules timer of fakefs_sync runs after it and
