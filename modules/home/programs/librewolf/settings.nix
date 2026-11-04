@@ -104,6 +104,10 @@ let
     "browser.safebrowsing.provider.google4.dataSharingURL" = "";
   };
 
+  # DRM is on: soundcloud and the like ask for widevine, and with it off the
+  # page says "installing components" for good. widevine is downloaded from
+  # mozilla's gmp url once (a closed binary). openh264 stays off: ffmpeg
+  # decodes h264 here, it is only for webrtc calls
   media = {
     "media.eme.enabled" = true;
     "media.gmp-provider.enabled" = true;
