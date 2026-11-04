@@ -109,6 +109,15 @@ Text {
         }
     }
 
+    // the daemon only runs while it's used: idle for two minutes and it's
+    // stopped (the next r in the menu starts it again). its models stay up
+    // in llama-swap for their own ttl, the last answer is forgotten
+    Timer {
+        interval: 120000
+        running: mic.state_ === "idle"
+        onTriggered: Quickshell.execDetached(["systemctl", "--user", "stop", "jarvis"])
+    }
+
     // no daemon yet, or it restarted: look for its socket now and then,
     // connect once it's there. no socket, no attempt, no error in the log
     Timer {

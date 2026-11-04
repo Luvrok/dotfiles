@@ -28,7 +28,15 @@ in
       jarvis-qwen-9b = "Qwen3.5 9B";
       jarvis-qwen-4b = "Qwen3.5 4B";
     };
+    # nothing listens for a wake phrase: jarvis listens when r is pressed
+    # in its menu, and only then
+    wakeWord.enable = false;
   };
+
+  # and the daemon isn't started at login either (it opens the mic as it
+  # starts). the menu's r starts it, the bar stops it after a while idle
+  # (modules/nixos/hyprland/quickshell)
+  systemd.user.services.jarvis.wantedBy = lib.mkForce [ ];
 
   sops.defaultSopsFile = ../../secrets/barnard.yaml;
   sops.defaultSopsFormat = "yaml";
