@@ -7,8 +7,9 @@ import Quickshell.Services.Notifications
 // the notification popup: one at a time, the newest (Notifs.current), at
 // the bottom in the middle of the monitor that had focus, drawn like the
 // menus. it goes after 5 s (3 s low, the app's own time if it sets one,
-// else critical ones stay), the line at the bottom shows what's left and
-// stops while the pointer is on it. left click: the default action, right
+// else critical ones stay), the line at the bottom shows what's left. the
+// pointer on it doesn't stop it, the pointer is often hidden and forgotten
+// there, and the menu has them all. left click: the default action, right
 // click: away (it stays in the menu), middle: dismissed. one per monitor,
 // always mapped: a layer that unmaps while a menu holds its focus grab
 // clears the grab and closes the menu. so it slides up from the bottom
@@ -115,7 +116,6 @@ PanelWindow {
         property: "left"
         from: 1
         to: 0
-        paused: running && mouse.containsMouse
         onFinished: Notifs.drop(popup.n)
     }
 
