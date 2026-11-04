@@ -647,7 +647,39 @@ hl.bind(mod .. " + SHIFT + l", resize(0, -72))
 hl.bind(mod .. " + i", hl.dsp.layout("addmaster"))
 hl.bind(mod .. " + d", hl.dsp.layout("removemaster"))
 
-hl.bind(mod .. " + SHIFT + c", hl.dsp.window.close())
+-- close is only a request. kodi's quit stops its services and downloads
+-- first and sometimes hangs there, so a kodi window that's still up after 5 s
+-- gets SIGTERM (its own clean quit) and after 5 more SIGKILL
+local function still_up(address)
+    for _, o in ipairs(hl.get_windows()) do
+        if o.address == address then
+            return true
+        end
+    end
+    return false
+end
+hl.bind(mod .. " + SHIFT + c", function()
+    local w = hl.get_active_window()
+    if not w then
+        return
+    end
+    hl.dispatch(hl.dsp.window.close({ window = w }))
+    if (w.class or ""):lower() ~= "kodi" then
+        return
+    end
+    local address = w.address
+    hl.timer(function()
+        if not still_up(address) then
+            return
+        end
+        pcall(hl.dispatch, hl.dsp.window.signal({ window = w, signal = 15 }))
+        hl.timer(function()
+            if still_up(address) then
+                hl.dispatch(hl.dsp.window.kill({ window = w }))
+            end
+        end, { timeout = 5000, type = "oneshot" })
+    end, { timeout = 5000, type = "oneshot" })
+end)
 -- previous tag of this monitor
 hl.bind(mod .. " + Tab", hl.dsp.focus({ workspace = "previous_per_monitor" }))
 -- $mod + wheel: the next or previous tag with windows on this monitor, wraps
