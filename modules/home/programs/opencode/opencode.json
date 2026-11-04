@@ -179,7 +179,7 @@
       "rm * -r*": "deny",
       "rm * -R*": "deny",
       "rm * -f*": "deny",
-      "rmdir *": "ask",
+      "rmdir *": "allow",
       "find * -delete*": "ask",
       "find * -exec*": "ask",
       "find * -ok*": "ask",
@@ -210,6 +210,13 @@
       "systemctl status *": "allow",
       "systemctl list-*": "allow",
       "systemctl is-*": "allow",
+      "systemctl show *": "allow",
+      "systemctl cat *": "allow",
+      "systemctl --user status *": "allow",
+      "systemctl --user list-*": "allow",
+      "systemctl --user is-*": "allow",
+      "systemctl --user show *": "allow",
+      "systemctl --user cat *": "allow",
       "kill *": "ask",
       "pkill *": "ask",
       "killall *": "ask",
@@ -232,6 +239,7 @@
       "git clean*": "ask",
       "git checkout -- *": "ask",
       "git restore*": "ask",
+      "git restore --staged*": "allow",
       "git rebase*": "ask",
       "git branch -D*": "ask",
       "git stash drop*": "ask",
@@ -241,6 +249,7 @@
       "git * --textconv*": "ask",
       "* *.env": "ask",
       "* *.env.*": "ask",
+      "* *.env.example": "allow",
       "rg * --pre*": "ask"
     }
   }
