@@ -7,9 +7,10 @@ local colors = {
 	accent = "#d65d0e",
 	fg = "#ebdbb2",
 	dim = "#928374",
-	-- the boxes, lualine's greys
-	box = "#202020",
-	box_selected = "#282828",
+	-- the boxes: light enough to show on the editor's background, or a tab
+	-- that isn't the current one has no box at all
+	box = "#2b2b2b",
+	box_selected = "#3c3836",
 }
 
 return {
@@ -61,6 +62,34 @@ return {
 			callback = vim.schedule_wrap(update),
 		})
 		update()
+
+		-- a blank line under the bar: a winbar of one space in every file
+		-- window (not floats, not the tree, the dashboard or terminals).
+		-- transparent like the rest, WinBar links to StatusLine otherwise
+		local spacer = " "
+		local function pad(win)
+			if not vim.api.nvim_win_is_valid(win) or vim.api.nvim_win_get_config(win).relative ~= "" then
+				return
+			end
+			if vim.bo[vim.api.nvim_win_get_buf(win)].buftype == "" then
+				vim.wo[win].winbar = spacer
+			elseif vim.wo[win].winbar == spacer then
+				vim.wo[win].winbar = ""
+			end
+		end
+		local function clear_hl()
+			vim.api.nvim_set_hl(0, "WinBar", { bg = "NONE" })
+			vim.api.nvim_set_hl(0, "WinBarNC", { bg = "NONE" })
+		end
+		clear_hl()
+		local group = vim.api.nvim_create_augroup("user-winbar-spacer", { clear = true })
+		vim.api.nvim_create_autocmd("ColorScheme", { group = group, callback = clear_hl })
+		vim.api.nvim_create_autocmd({ "WinNew", "WinEnter", "BufWinEnter" }, {
+			group = group,
+			callback = function()
+				pad(vim.api.nvim_get_current_win())
+			end,
+		})
 	end,
 	opts = function()
 		-- bg NONE is the gap and the empty rest of the bar, a box has its own
