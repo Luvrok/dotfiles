@@ -4,6 +4,7 @@
   config,
   lib,
   pkgs,
+  pkgs-hypr,
   ...
 }:
 
@@ -16,23 +17,25 @@ in
   config = lib.mkIf cfg.enable {
     services.displayManager.defaultSession = "hyprland";
 
+    # from nixpkgs-hypr, the snapshot this desktop is tested on (flake.nix):
+    # a nixpkgs update must not move the compositor, the shell or the portal
+    # out from under the config
     programs.hyprland = {
       enable = true;
-      package = pkgs.hyprland;
-      portalPackage = pkgs.xdg-desktop-portal-hyprland;
+      package = pkgs-hypr.hyprland;
+      portalPackage = pkgs-hypr.xdg-desktop-portal-hyprland;
     };
 
     # both look in XDG_CONFIG_DIRS (/etc/xdg) after ~/.config: hyprland for
     # hypr/hyprland.lua, quickshell for quickshell/<name> (qs -c hyprland).
     # hyprland checks its config while the system builds, so an update that
     # changes the lua api fails nixos-rebuild, not the next login
-    environment.etc."xdg/hypr/hyprland.lua".source =
-      pkgs.runCommand "hyprland.lua" { } ''
-        mkdir run
-        XDG_RUNTIME_DIR=$PWD/run HOME=$PWD \
-          ${config.programs.hyprland.package}/bin/Hyprland --verify-config -c ${./hyprland.lua} --i-am-really-stupid
-        cp ${./hyprland.lua} $out
-      '';
+    environment.etc."xdg/hypr/hyprland.lua".source = pkgs.runCommand "hyprland.lua" { } ''
+      mkdir run
+      XDG_RUNTIME_DIR=$PWD/run HOME=$PWD \
+        ${config.programs.hyprland.package}/bin/Hyprland --verify-config -c ${./hyprland.lua} --i-am-really-stupid
+      cp ${./hyprland.lua} $out
+    '';
     environment.etc."xdg/quickshell/hyprland".source = ./quickshell;
     # jarvis' menu and bar icon (Luvrok/jarvis): its build checks them, no
     # rounded shapes
@@ -48,7 +51,8 @@ in
     environment.etc."proxychains-xray.conf".source = ./proxychains.conf;
 
     environment.systemPackages = with pkgs; [
-      quickshell
+      # the shell too: its qml api changes with the compositor's, same pin
+      pkgs-hypr.quickshell
       # askpass for sudo -A and ssh, the quickshell menu answers it
       (writeShellApplication {
         name = "hypr-askpass";

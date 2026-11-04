@@ -271,6 +271,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-hypr": {
+      "locked": {
+        "lastModified": 1793341285,
+        "narHash": "sha256-Y1CiZ4SoBUjLQyQM/pY+rS2dXD3CHLPstF0lmOc73D4=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "1c89083e451e891152365b799595cf7790a43325",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "1c89083e451e891152365b799595cf7790a43325",
+        "type": "github"
+      }
+    },
     "nixpkgs-kodi": {
       "locked": {
         "lastModified": 1792502884,
@@ -300,22 +316,6 @@
       "original": {
         "owner": "nix-community",
         "repo": "nixpkgs.lib",
-        "type": "github"
-      }
-    },
-    "nixpkgs-pinned": {
-      "locked": {
-        "lastModified": 1793294725,
-        "narHash": "sha256-loLMnbbS4KhmG2ln9EY6f0YMNCA273Yx02oWYQ9IMeE=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "6f06d204d8f2d8761d9da78778745974a3216381",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-26.05",
-        "repo": "nixpkgs",
         "type": "github"
       }
     },
@@ -391,7 +391,7 @@
         "kodi": "kodi",
         "lazygit": "lazygit",
         "nixpkgs": "nixpkgs_3",
-        "nixpkgs-pinned": "nixpkgs-pinned",
+        "nixpkgs-hypr": "nixpkgs-hypr",
         "sops-nix": "sops-nix",
         "textfoxy": "textfoxy",
         "voidsddm": "voidsddm",

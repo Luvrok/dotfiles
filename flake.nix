@@ -2,8 +2,16 @@
   description = "Luvrok's nixos configuration";
 
   inputs = {
-    nixpkgs-pinned.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+
+    # the desktop's own snapshot. hyprland and quickshell are pre-1.0 and
+    # move fast: a nixpkgs update must not move them. this is the rev the
+    # desktop was tested on, not a random commit. a rev never moves, so a
+    # plain `nix flake update` leaves it alone: to bump it, put the rev of a
+    # newer nixpkgs here, rebuild, test the session, and roll back to the
+    # previous generation if it's worse
+    nixpkgs-hypr.url = "github:nixos/nixpkgs/1c89083e451e891152365b799595cf7790a43325";
+
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -35,7 +43,7 @@
     {
       self,
       nixpkgs,
-      nixpkgs-pinned,
+      nixpkgs-hypr,
       home-manager,
       disko,
       sops-nix,
@@ -53,6 +61,14 @@
         };
       };
 
+      # the compositor and the shell, from their own snapshot (see the input)
+      pkgs-hypr = import nixpkgs-hypr {
+        inherit system;
+        config = {
+          allowUnfree = true;
+        };
+      };
+
       make_hm =
         username:
         { config, ... }:
@@ -67,7 +83,6 @@
             extraSpecialArgs = {
               inherit username inputs system;
               inherit (config) videoDrivers fontSize;
-              pkgs-pinned = import nixpkgs-pinned { inherit system; };
             };
           };
         };
@@ -77,13 +92,7 @@
         inherit pkgs;
         specialArgs = {
           username = "barnard";
-          pkgs-pinned = import nixpkgs-pinned {
-            inherit system;
-            config = {
-              allowUnfree = true;
-            };
-          };
-          inherit inputs system;
+          inherit inputs system pkgs-hypr;
         };
         modules = [
           ./modules/nixos
@@ -117,13 +126,7 @@
         inherit pkgs;
         specialArgs = {
           username = "dash";
-          pkgs-pinned = import nixpkgs-pinned {
-            inherit system;
-            config = {
-              allowUnfree = true;
-            };
-          };
-          inherit inputs system;
+          inherit inputs system pkgs-hypr;
         };
         modules = [
           ./modules/nixos

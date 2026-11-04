@@ -1,12 +1,12 @@
 {
   pkgs,
-  pkgs-pinned,
   ...
 }:
 
 {
-  environment.systemPackages =
-    (with pkgs; [
+  environment.systemPackages = (
+    with pkgs;
+    [
       # --- base ---
       bash
       bat
@@ -134,7 +134,12 @@
       v4l-utils
 
       # --- ocr (the tools menu), x11 bits ---
-      (tesseract.override { enableLanguages = [ "eng" "rus" ]; })
+      (tesseract.override {
+        enableLanguages = [
+          "eng"
+          "rus"
+        ];
+      })
       xdpyinfo
       xcursorthemes
 
@@ -181,7 +186,6 @@
       # --- management ---
       home-manager
       nh
-    ])
-    ++ (with pkgs-pinned; [
-    ]);
+    ]
+  );
 }
