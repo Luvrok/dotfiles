@@ -15,10 +15,11 @@ in
 {
   imports = [ ./xray.nix ];
 
-  # the voice assistant (Luvrok/jarvis): its models in llama-swap's
-  # config.yaml, its menu in quickshell (hyprland's default.nix checks it)
+  # the voice assistant (Luvrok/jarvis), off for now: the module is mkIf
+  # enable, so nothing of it runs, no unit, no models. the menu in quickshell
+  # stays and says "jarvis is off". the settings stay for when it's back
   services.jarvis = {
-    enable = true;
+    enable = false;
     # the hub's lfs cdn and docker hub need xray's mixed inbound
     proxy = lib.mkIf config.services.xray.enable "http://127.0.0.1:10808";
     # the llms in llama-swap's config.yaml, picked in the menu. the web
@@ -32,11 +33,6 @@ in
     # in its menu, and only then
     wakeWord.enable = false;
   };
-
-  # and the daemon isn't started at login either (it opens the mic as it
-  # starts). the menu's r starts it, the bar stops it after a while idle
-  # (modules/nixos/hyprland/quickshell)
-  systemd.user.services.jarvis.wantedBy = lib.mkForce [ ];
 
   sops.defaultSopsFile = ../../secrets/barnard.yaml;
   sops.defaultSopsFormat = "yaml";

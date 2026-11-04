@@ -37,8 +37,8 @@ in
       cp ${./hyprland.lua} $out
     '';
     environment.etc."xdg/quickshell/hyprland".source = ./quickshell;
-    # jarvis' menu and bar icon (Luvrok/jarvis): its build checks them, no
-    # rounded shapes
+    # jarvis' menu and bar icon (Luvrok/jarvis): its build checks them (no
+    # rounded shapes) while services.jarvis is enabled. off on barnard for now
     services.jarvis.ui.qmlFiles = [
       ./quickshell/menus/Jarvis.qml
       ./quickshell/widgets/MicTile.qml
