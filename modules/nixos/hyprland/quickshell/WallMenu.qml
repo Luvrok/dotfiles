@@ -75,16 +75,16 @@ PanelWindow {
         settle.restart();
     }
 
+    // picking keeps the menu open: only esc (or a click outside) closes it,
+    // so a few wallpapers can be tried in one go
     function take() {
         if (count > 0)
             Wall.set(Wall.files[current]);
-        done();
     }
 
     function takeGrid() {
         if (count > 0 && gridView.currentIndex >= 0)
             Wall.set(Wall.files[gridView.currentIndex]);
-        done();
     }
 
     // expand into the grid, on the current wallpaper. the model only fills
@@ -115,10 +115,28 @@ PanelWindow {
         confirming = false;
     }
 
+    // fade the active view out, run the queued action, fade back in. a jump
+    // in the strip and a delete hide behind it, so nothing snaps
+    property int fadeAction: 0 // 0 none, 1 jump, 2 delete
+    property int jumpTarget: 0
+    property string deletePath: ""
+
+    function crossfade(action) {
+        if (fadeAction !== 0)
+            return;
+        fadeAction = action;
+        if (grid)
+            gridView.opacity = 0;
+        else
+            strip.opacity = 0;
+        fadeSwitch.restart();
+    }
+
     function doDelete() {
         const p = selected();
         confirming = false;
-        Wall.remove(p);
+        deletePath = p;
+        crossfade(2);
     }
 
     // g to the first (newest), G (shift+g) to the last (oldest), in either view
@@ -126,14 +144,14 @@ PanelWindow {
         if (count === 0)
             return;
         if (grid) {
-            gridView.currentIndex = 0;
-            gridView.positionViewAtIndex(0, GridView.Contain);
-        } else {
+            if (gridView.currentIndex === 0)
+                return;
+            jumpTarget = 0;
+            crossfade(1);
+        } else if (current !== 0 || moving || shift !== 0) {
             slide.stop();
-            current = 0;
-            shift = 0;
-            moving = false;
-            queued = 0;
+            jumpTarget = 0;
+            crossfade(1);
         }
     }
 
@@ -141,14 +159,14 @@ PanelWindow {
         if (count === 0)
             return;
         if (grid) {
-            gridView.currentIndex = count - 1;
-            gridView.positionViewAtIndex(count - 1, GridView.Contain);
-        } else {
+            if (gridView.currentIndex === count - 1)
+                return;
+            jumpTarget = count - 1;
+            crossfade(1);
+        } else if (current !== count - 1 || moving || shift !== 0) {
             slide.stop();
-            current = count - 1;
-            shift = 0;
-            moving = false;
-            queued = 0;
+            jumpTarget = count - 1;
+            crossfade(1);
         }
     }
 
@@ -257,22 +275,25 @@ PanelWindow {
     Rectangle {
         id: frame
         x: (parent.width - width) / 2
-        width: root.grid ? root.gridW : root.stripWidth + 24
+        // +2 so the content inside the 1px border is exactly columns wide
+        width: root.grid ? root.gridW + 2 : root.stripWidth + 24
         height: root.grid ? Math.ceil(gridBox.implicitHeight) + 2 : Math.ceil(column.implicitHeight) + 2
         color: Theme.bg
         border.width: 1
         border.color: Theme.border
+        // clip so the growing frame does not let the grid spill over its border
+        clip: true
         // the strip and the grid hand off with a smooth resize
         Behavior on width {
             NumberAnimation {
-                duration: 220
-                easing.type: Easing.OutCubic
+                duration: 240
+                easing.type: Easing.InOutCubic
             }
         }
         Behavior on height {
             NumberAnimation {
-                duration: 220
-                easing.type: Easing.OutCubic
+                duration: 240
+                easing.type: Easing.InOutCubic
             }
         }
 
@@ -305,6 +326,11 @@ PanelWindow {
                     width: root.stripWidth
                     height: root.cellHeight
                     clip: true
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 120
+                        }
+                    }
 
                     Repeater {
                         model: 7
@@ -436,6 +462,11 @@ PanelWindow {
                 cellWidth: root.cellW
                 cellHeight: root.cellH
                 boundsBehavior: Flickable.StopAtBounds
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 120
+                    }
+                }
 
                 delegate: Item {
                     id: tile
@@ -522,7 +553,6 @@ PanelWindow {
                         onClicked: {
                             if (tile.index >= 0)
                                 Wall.set(tile.name);
-                            root.done();
                         }
                     }
                 }
@@ -584,6 +614,33 @@ PanelWindow {
                 return;
             gridView.currentIndex = root.indexOf(Wall.current);
             gridView.positionViewAtIndex(gridView.currentIndex, GridView.Contain);
+        }
+    }
+
+    // the fade-out of a jump or a delete is over: act, then fade back in
+    Timer {
+        id: fadeSwitch
+        interval: 120
+        onTriggered: {
+            if (root.fadeAction === 1) {
+                if (root.grid) {
+                    gridView.currentIndex = root.jumpTarget;
+                    gridView.positionViewAtIndex(root.jumpTarget, GridView.Contain);
+                } else {
+                    root.slide.stop();
+                    root.current = root.jumpTarget;
+                    root.shift = 0;
+                    root.moving = false;
+                    root.queued = 0;
+                }
+            } else if (root.fadeAction === 2) {
+                Wall.remove(root.deletePath);
+            }
+            root.fadeAction = 0;
+            if (root.grid)
+                gridView.opacity = 1;
+            else
+                strip.opacity = 1;
         }
     }
 }
