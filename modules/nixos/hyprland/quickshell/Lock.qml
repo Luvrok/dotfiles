@@ -13,6 +13,9 @@ Scope {
     id: root
 
     property bool locked: false
+    // the wallpaper behind an opaque lock surface is wasted work, see
+    // Wall.qml
+    onLockedChanged: Wall.locked = locked
     // what pam said last: wrong password, a message
     property string message: ""
     property bool checking: false

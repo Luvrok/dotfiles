@@ -112,6 +112,27 @@ in
         ];
         text = builtins.readFile ./quickshell/scripts/pinentry;
       })
+      # the live wallpapers (quickshell/Wall.qml, WallMenu.qml): the picker's
+      # previews and, per monitor, whether a window covers the wallpaper
+      (writeShellApplication {
+        name = "wall-state";
+        runtimeInputs = [
+          jq
+          config.programs.hyprland.package
+        ];
+        text = builtins.readFile ./quickshell/scripts/wall-state;
+      })
+      (writeShellApplication {
+        name = "wall-thumb";
+        runtimeInputs = [
+          ffmpeg-headless
+          coreutils
+        ];
+        text = builtins.readFile ./quickshell/scripts/wall-thumb;
+      })
+      # plays the video on the background layer, Wallpaper.qml runs one per
+      # output and kills it while the screen is covered
+      mpvpaper
 
       # started from hyprland.lua
       swayidle

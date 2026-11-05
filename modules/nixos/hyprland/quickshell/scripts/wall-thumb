@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# one still for the picker's preview, cached with the other previews and
+# remade only when the video is newer
+#   wall-thumb <video> <out.jpg>
+set -euo pipefail
+
+src=${1:-}
+out=${2:-}
+if [[ ! -f ${src} || -z ${out} ]]; then
+  exit 0
+fi
+if [[ -s ${out} && ${out} -nt ${src} ]]; then
+  exit 0
+fi
+
+mkdir -p "$(dirname "${out}")"
+# a second in is a frame of the video, not the black first one
+ffmpeg -nostdin -loglevel error -y -ss 1 -i "${src}" -frames:v 1 -vf 'scale=480:-2' -q:v 4 -f image2 "${out}.tmp" 2>/dev/null \
+  || ffmpeg -nostdin -loglevel error -y -i "${src}" -frames:v 1 -vf 'scale=480:-2' -q:v 4 -f image2 "${out}.tmp" 2>/dev/null \
+  || true
+if [[ -s ${out}.tmp ]]; then
+  mv -f "${out}.tmp" "${out}"
+else
+  rm -f "${out}.tmp"
+  exit 1
+fi

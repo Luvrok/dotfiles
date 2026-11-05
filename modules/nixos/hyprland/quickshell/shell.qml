@@ -215,6 +215,13 @@ ShellRoot {
     }
 
     LazyLoader {
+        active: shell.menu === "wall"
+        WallMenu {
+            screen: shell.menuScreen
+            onDone: shell.close("wall")
+        }
+    }
+    LazyLoader {
         active: shell.menu === "run"
         Run {
             screen: shell.menuScreen

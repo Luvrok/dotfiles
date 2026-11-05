@@ -31,6 +31,11 @@ hl.config({
         rounding = 0,
         shadow = { enabled = false },
         blur = { enabled = false },
+        -- kitty's background is 0.98 opaque (modules/home/programs/kitty),
+        -- the whole window fades when it loses the focus: 0.98 * 0.97 is the
+        -- 95% the unfocused one should look like. fullscreen windows keep
+        -- their own opacity (decoration.fullscreen_opacity)
+        inactive_opacity = 0.97,
         -- scratchpads and the quickshell menus dim what's under them
         dim_special = 0.25,
         dim_around = 0.25,
@@ -115,11 +120,13 @@ hl.animation({ leaf = "fadeSwitch", enabled = false })
 hl.animation({ leaf = "border", enabled = false })
 hl.animation({ leaf = "borderangle", enabled = false })
 
--- the bar and the wallpaper just appear. the quickshell menus sit under the
--- bar on the right, they slide in from the right edge and fade, like a tag
+-- the bar and the video wallpaper just appear. the quickshell menus sit under
+-- the bar on the right, they slide in from the right edge and fade, like a tag
 -- switch drifts
-hl.layer_rule({ match = { namespace = "^(bar|wallpaper|shot)$" }, no_anim = true })
+hl.layer_rule({ match = { namespace = "^(bar|mpvpaper|shot)$" }, no_anim = true })
 hl.layer_rule({ match = { namespace = "^menu$" }, animation = "slide right", dim_around = true })
+-- the wallpaper picker (WallMenu.qml), centered under the top edge
+hl.layer_rule({ match = { namespace = "^wall-menu$" }, no_anim = true })
 -- the notification popup stays mapped and slides itself (NotifyPopup.qml):
 -- a layer that unmaps while a menu holds its focus grab clears the grab,
 -- the menu closed whenever a popup ran out
@@ -558,6 +565,8 @@ end)
 
 -- windows
 hl.bind(mod .. " + SHIFT + b", qs("bar toggle"))
+-- the live wallpaper picker, see WallMenu.qml
+hl.bind(mod .. " + SHIFT + m", qs("menu open wall"))
 -- fake fullscreen, see the windows section. $mod+shift+y: real
 -- fullscreen for games (direct scanout, the windows behind fade out while
 -- it grows). a fake one comes back once the real one ends
