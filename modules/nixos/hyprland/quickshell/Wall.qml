@@ -50,10 +50,24 @@ Singleton {
     property string thumbPath: ""
     property string thumbOut: ""
 
+    // a visible card asks for its still first (unshift); the rest of the
+    // folder waits behind it, so a scroll never sits in a 40 video queue
     function wantThumb(path) {
-        if (path === "" || made[path] === true || queue.indexOf(path) !== -1)
+        if (path === "" || made[path] === true)
             return;
-        queue = queue.concat([path]);
+        const at = queue.indexOf(path);
+        if (at !== -1)
+            queue = queue.slice(0, at).concat(queue.slice(at + 1));
+        queue = [path].concat(queue);
+        pump();
+    }
+
+    // the whole folder, in the background, one at a time: the picker opens
+    // with them ready
+    function prefetch() {
+        for (const f of files)
+            if (made[f] !== true && queue.indexOf(f) === -1)
+                queue = queue.concat([f]);
         pump();
     }
 
@@ -141,6 +155,7 @@ Singleton {
                 root.listed = true;
                 root.loaded = true;
                 root.pick();
+                root.prefetch();
             }
         }
     }

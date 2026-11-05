@@ -37,9 +37,17 @@ PanelWindow {
         return i < 0 ? 0 : i;
     }
 
+    // the last key pressed while a step runs is taken after it, so a quick
+    // scroll does not lose the ones in between
+    property int queued: 0
+
     function step(d) {
-        if (moving || count === 0)
+        if (count === 0)
             return;
+        if (moving) {
+            queued = d;
+            return;
+        }
         moving = true;
         dir = d;
         slide.from = 0;
@@ -69,6 +77,7 @@ PanelWindow {
         target: Wall
         function onFilesChanged() {
             root.current = root.indexOf(Wall.current);
+            Wall.prefetch();
         }
     }
 
@@ -250,17 +259,22 @@ PanelWindow {
         id: slide
         target: root
         property: "shift"
-        duration: 140
+        duration: 260
         easing.type: Easing.OutCubic
     }
 
     Timer {
         id: settle
-        interval: 180
+        interval: 300
         onTriggered: {
             root.current = Wall.wrap(root.current + root.dir, root.count);
             root.shift = 0;
             root.moving = false;
+            if (root.queued !== 0) {
+                const d = root.queued;
+                root.queued = 0;
+                root.step(d);
+            }
         }
     }
 }
