@@ -2,14 +2,14 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
-import Quickshell.Hyprland
 import qs
 import qs.widgets
 
 // the live wallpaper picker: Menu.qml's frame, head and hints, with a strip
 // of 5 previews instead of the rows. the middle one is the pick, the strip
 // loops (the last file is left of the first), j/k or h/l walk it, enter puts
-// the pick on screen, esc closes. the stills come from wall-thumb
+// the pick on screen, tab swaps it for the grid of all of them, esc closes.
+// the stills come from wall-thumb
 PanelWindow {
     id: root
 
@@ -49,10 +49,26 @@ PanelWindow {
     property bool moving: false
     // the strip, or every video as a grid of tiles
     property bool grid: false
-    // the views crossfade: the strip fades out while the frame resizes, the
-    // grid fades in behind it, so nothing vanishes and comes back
+    // the views are pages: tab slides the one on screen up out of the frame
+    // and the other drops in from above it
     property real stripAlpha: 1
     property real gridAlpha: 0
+    // how far above its place a page starts and how far it leaves
+    readonly property real drop: 64
+    // a behavior sits on the object that owns the property, so these two are
+    // here and not on the pages
+    Behavior on stripAlpha {
+        NumberAnimation {
+            duration: 190
+            easing.type: Easing.OutCubic
+        }
+    }
+    Behavior on gridAlpha {
+        NumberAnimation {
+            duration: 190
+            easing.type: Easing.OutCubic
+        }
+    }
     // d asks to delete the selected video, the next key confirms or keeps
     property bool confirming: false
 
@@ -107,8 +123,8 @@ PanelWindow {
         gridSettle.start();
     }
 
-    // back to the strip: the grid fades out, the strip fades in as the frame
-    // shrinks
+    // back to the strip: the grid leaves upwards, the strip drops in as the
+    // frame shrinks
     function closeGrid() {
         grid = false;
         gridAlpha = 0;
@@ -211,30 +227,36 @@ PanelWindow {
     }
 
     color: "transparent"
-    implicitHeight: frame.height
+    // the whole screen, not just the frame's strip: the pointer has to stay
+    // on this surface. with input:follow_mouse a pointer outside it (over the
+    // window under the menu, say) focuses that window and the keys leave, and
+    // the focus grab that would hold them is dropped by hyprland the moment a
+    // pick remaps mpvpaper's surface under the pointer. a full screen surface
+    // has no such hole, and a click outside the frame is ours to see
     anchors.top: true
     anchors.left: true
     anchors.right: true
-    margins.top: 34
+    anchors.bottom: true
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "wall-menu"
     // all keys go here while it is open
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
-    // a click anywhere else closes it
-    HyprlandFocusGrab {
-        active: true
-        windows: [root]
-        onCleared: root.done()
+    // a click anywhere else closes it, like the grab the other menus use
+    MouseArea {
+        anchors.fill: parent
+        onClicked: e => {
+            const p = mapToItem(frame, e.x, e.y);
+            if (p.x < 0 || p.y < 0 || p.x >= frame.width || p.y >= frame.height)
+                root.done();
+        }
     }
 
     // the keys stay here until esc or a click outside. hyprland hands them
-    // to a window now and then anyway: a pick restarts mpvpaper, its
-    // background surface maps again and the keys land on the window under
-    // the menu (the same happens in Menu.qml after a bluetooth scan). when
-    // they leave quickshell, drop exclusive and take it back: hyprland
-    // focuses a layer that turns exclusive
+    // to a window now and then anyway (the same happens in Menu.qml after a
+    // bluetooth scan). when they leave quickshell, drop exclusive and take it
+    // back: hyprland focuses a layer that turns exclusive
     Connections {
         target: Qt.application
 
@@ -339,6 +361,7 @@ PanelWindow {
         property real boxH: root.grid ? Math.ceil(gridBox.implicitHeight) + 2 : Math.ceil(column.implicitHeight) + 2
 
         x: Math.round((parent.width - width) / 2)
+        y: 34
         // +2 so the content inside the 1px border is exactly columns wide
         width: Math.round(boxW)
         height: Math.round(boxH)
@@ -361,18 +384,15 @@ PanelWindow {
             }
         }
 
+        // the strip: a page like the grid, it leaves by sliding up out of the
+        // frame and fades, and comes back the same way the grid arrives
         Column {
             id: column
             visible: !root.grid || root.stripAlpha > 0.001
             opacity: root.stripAlpha
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: 130
-                    easing.type: Easing.OutQuad
-                }
-            }
+            // a page further up the further it fades: at 0 it is out of the top
+            y: 1 - (1 - root.stripAlpha) * root.drop
             x: 1
-            y: 1
             width: root.stripW - 2
             topPadding: 8
             bottomPadding: 7
@@ -517,14 +537,10 @@ PanelWindow {
             id: gridBox
             visible: root.grid || root.gridAlpha > 0.001
             opacity: root.gridAlpha
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: 180
-                    easing.type: Easing.InOutQuad
-                }
-            }
+            // the other page: it drops in from above the frame while the strip
+            // slides up and out
+            y: 1 - (1 - root.gridAlpha) * root.drop
             x: 1
-            y: 1
             width: root.gridW
             topPadding: 8
             bottomPadding: 7
