@@ -112,8 +112,11 @@ Singleton {
         const old = saved !== "" && saved.indexOf("/") === -1 ? `${liveDir}/${saved}` : saved;
         if (old !== "" && files.indexOf(old) !== -1)
             current = old;
-        else
+        else {
             current = files.indexOf(fallback) !== -1 ? fallback : (files.length > 0 ? files[0] : "");
+            if (old !== "")
+                console.warn(`wall: saved "${old}" not in ${files.length} files, using "${base(current)}"`);
+        }
     }
 
     function set(name) {

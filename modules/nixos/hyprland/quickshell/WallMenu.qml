@@ -25,12 +25,17 @@ PanelWindow {
     // that: they touch, no holes between them
     readonly property real pitch: cell * 0.72
     readonly property real stripWidth: cell * 3.8
-    // the expanded grid's tile and panel size
+    // the expanded grid: a fixed column count fills the width exactly (no
+    // leftover gap on the right), and the height fits the rows, scrolling
+    // once they are more than a screen
     readonly property real tile: 200
     readonly property real tileH: tile * 9 / 16
     readonly property real tileGap: 10
-    readonly property real gridW: Math.min((screen?.width ?? 2560) - 80, 1400)
-    readonly property real gridH: Math.min((screen?.height ?? 1440) - 120, 820)
+    readonly property real cellW: tile + tileGap
+    readonly property real cellH: tileH + 20 + tileGap
+    readonly property int columns: Math.max(3, Math.min(8, Math.floor(Math.min((screen?.width ?? 2560) - 80, 1400) / cellW)))
+    readonly property real gridW: columns * cellW
+    readonly property real gridContentH: Math.min(Math.ceil(count / columns) * cellH, Math.min((screen?.height ?? 1440) - 120, 820))
 
     property int current: 0
     // the strip's offset while a step runs, then folded into current
@@ -116,6 +121,37 @@ PanelWindow {
         Wall.remove(p);
     }
 
+    // g to the first (newest), G (shift+g) to the last (oldest), in either view
+    function goHome() {
+        if (count === 0)
+            return;
+        if (grid) {
+            gridView.currentIndex = 0;
+            gridView.positionViewAtIndex(0, GridView.Contain);
+        } else {
+            slide.stop();
+            current = 0;
+            shift = 0;
+            moving = false;
+            queued = 0;
+        }
+    }
+
+    function goEnd() {
+        if (count === 0)
+            return;
+        if (grid) {
+            gridView.currentIndex = count - 1;
+            gridView.positionViewAtIndex(count - 1, GridView.Contain);
+        } else {
+            slide.stop();
+            current = count - 1;
+            shift = 0;
+            moving = false;
+            queued = 0;
+        }
+    }
+
     Component.onCompleted: {
         current = indexOf(Wall.current);
         // a video downloaded since the shell started is in the list too
@@ -179,7 +215,11 @@ PanelWindow {
                     gridView.moveCurrentIndexRight();
                 else if (Kb.key(e, "h") || e.key === Qt.Key_Left)
                     gridView.moveCurrentIndexLeft();
+                else if (Kb.key(e, "g") && !(e.modifiers & Qt.ShiftModifier))
+                    root.goHome();
                 else if (Kb.key(e, "g"))
+                    root.goEnd();
+                else if (e.key === Qt.Key_Tab)
                     root.grid = false;
                 else if (Kb.key(e, "d"))
                     root.askDelete();
@@ -196,7 +236,11 @@ PanelWindow {
                 root.step(1);
             else if (Kb.key(e, "k") || Kb.key(e, "h") || e.key === Qt.Key_Left || e.key === Qt.Key_Up)
                 root.step(-1);
+            else if (Kb.key(e, "g") && !(e.modifiers & Qt.ShiftModifier))
+                root.goHome();
             else if (Kb.key(e, "g"))
+                root.goEnd();
+            else if (e.key === Qt.Key_Tab)
                 root.openGrid();
             else if (Kb.key(e, "d"))
                 root.askDelete();
@@ -214,10 +258,23 @@ PanelWindow {
         id: frame
         x: (parent.width - width) / 2
         width: root.grid ? root.gridW : root.stripWidth + 24
-        height: root.grid ? root.gridH : Math.ceil(column.implicitHeight) + 2
+        height: root.grid ? Math.ceil(gridBox.implicitHeight) + 2 : Math.ceil(column.implicitHeight) + 2
         color: Theme.bg
         border.width: 1
         border.color: Theme.border
+        // the strip and the grid hand off with a smooth resize
+        Behavior on width {
+            NumberAnimation {
+                duration: 220
+                easing.type: Easing.OutCubic
+            }
+        }
+        Behavior on height {
+            NumberAnimation {
+                duration: 220
+                easing.type: Easing.OutCubic
+            }
+        }
 
         Column {
             id: column
@@ -335,20 +392,27 @@ PanelWindow {
                 ] : [
                     ["j/k, \u2191\u2193", "move"],
                     ["h/l", "move"],
+                    ["g/G", "start/end"],
                     ["enter", "set"],
                     ["d", "delete"],
-                    ["g", "grid"],
+                    ["tab", "grid"],
                     ["esc", "close"]
                 ]
             }
         }
 
-        // the whole folder as tiles, toggled with g: picking is direct, no
+        // the whole folder as tiles, toggled with tab: picking is direct, no
         // need to scroll the strip one by one. the newest are first (wall-list
         // sorts), and anything from the last week is marked "new"
         Column {
             id: gridBox
             visible: root.grid
+            opacity: root.grid ? 1 : 0
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 150
+                }
+            }
             x: 1
             y: 1
             width: parent.width - 2
@@ -366,11 +430,11 @@ PanelWindow {
             GridView {
                 id: gridView
                 width: parent.width
-                height: root.gridH - 8 - 7 - 24 - 20
+                height: root.gridContentH
                 clip: true
                 model: root.grid ? Wall.files : 0
-                cellWidth: root.tile + root.tileGap
-                cellHeight: root.tileH + 20 + root.tileGap
+                cellWidth: root.cellW
+                cellHeight: root.cellH
                 boundsBehavior: Flickable.StopAtBounds
 
                 delegate: Item {
@@ -387,7 +451,7 @@ PanelWindow {
 
                     // the still
                     Rectangle {
-                        x: (parent.width - root.tileGap - root.tile) / 2
+                        x: root.tileGap / 2
                         width: root.tile
                         height: root.tileH
                         color: Theme.line
@@ -432,8 +496,8 @@ PanelWindow {
                     // the file name under the still
                     Text {
                         y: root.tileH + 4
-                        width: parent.width - root.tileGap
-                        x: (parent.width - root.tileGap - width) / 2
+                        x: root.tileGap / 2
+                        width: root.tile
                         text: tile.name !== "" ? Wall.base(tile.name) : ""
                         elide: Text.ElideMiddle
                         horizontalAlignment: Text.AlignHCenter
@@ -474,9 +538,10 @@ PanelWindow {
                 ] : [
                     ["j/k, \u2191\u2193", "move"],
                     ["h/l", "move"],
+                    ["g/G", "start/end"],
                     ["enter", "set"],
                     ["d", "delete"],
-                    ["g", "strip"],
+                    ["tab", "strip"],
                     ["esc", "close"]
                 ]
             }
