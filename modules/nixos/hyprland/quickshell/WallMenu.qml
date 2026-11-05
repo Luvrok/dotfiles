@@ -36,6 +36,11 @@ PanelWindow {
     readonly property int columns: Math.max(3, Math.min(8, Math.floor(Math.min((screen?.width ?? 2560) - 80, 1400) / cellW)))
     readonly property real gridW: columns * cellW
     readonly property real gridContentH: Math.min(Math.ceil(count / columns) * cellH, Math.min((screen?.height ?? 1440) - 120, 820))
+    // the strip's frame width, the grid's is gridW + 2. the views are laid
+    // out at these, not at the frame's own width: the frame is the one that
+    // animates, and a hint line that wraps as it grows would move the target
+    // with it (and re-flow the tiles every frame)
+    readonly property real stripW: stripWidth + 24
 
     property int current: 0
     // the strip's offset while a step runs, then folded into current
@@ -44,6 +49,10 @@ PanelWindow {
     property bool moving: false
     // the strip, or every video as a grid of tiles
     property bool grid: false
+    // the views crossfade: the strip fades out while the frame resizes, the
+    // grid fades in behind it, so nothing vanishes and comes back
+    property real stripAlpha: 1
+    property real gridAlpha: 0
     // d asks to delete the selected video, the next key confirms or keeps
     property bool confirming: false
 
@@ -92,8 +101,18 @@ PanelWindow {
     // tiles are built
     function openGrid() {
         grid = true;
+        stripAlpha = 0;
+        gridAlpha = 1;
         Wall.prefetch();
         gridSettle.start();
+    }
+
+    // back to the strip: the grid fades out, the strip fades in as the frame
+    // shrinks
+    function closeGrid() {
+        grid = false;
+        gridAlpha = 0;
+        stripAlpha = 1;
     }
 
     // the file the cursor is on, in the strip or the grid
@@ -174,6 +193,10 @@ PanelWindow {
         current = indexOf(Wall.current);
         // a video downloaded since the shell started is in the list too
         Wall.reload();
+        takeKeys();
+    }
+
+    function takeKeys() {
         keyCatcher.forceActiveFocus();
     }
 
@@ -204,6 +227,42 @@ PanelWindow {
         active: true
         windows: [root]
         onCleared: root.done()
+    }
+
+    // the keys stay here until esc or a click outside. hyprland hands them
+    // to a window now and then anyway: a pick restarts mpvpaper, its
+    // background surface maps again and the keys land on the window under
+    // the menu (the same happens in Menu.qml after a bluetooth scan). when
+    // they leave quickshell, drop exclusive and take it back: hyprland
+    // focuses a layer that turns exclusive
+    Connections {
+        target: Qt.application
+
+        function onStateChanged() {
+            if (Qt.application.state !== Qt.ApplicationActive)
+                reclaim.restart();
+        }
+    }
+
+    Timer {
+        id: reclaim
+        interval: 100
+        onTriggered: {
+            if (Qt.application.state === Qt.ApplicationActive)
+                return;
+            root.WlrLayershell.keyboardFocus = WlrKeyboardFocus.OnDemand;
+            retake.start();
+        }
+    }
+
+    // a frame later, two commits
+    Timer {
+        id: retake
+        interval: 50
+        onTriggered: {
+            root.WlrLayershell.keyboardFocus = WlrKeyboardFocus.Exclusive;
+            root.takeKeys();
+        }
     }
 
     FontMetrics {
@@ -238,7 +297,7 @@ PanelWindow {
                 else if (Kb.key(e, "g"))
                     root.goEnd();
                 else if (e.key === Qt.Key_Tab)
-                    root.grid = false;
+                    root.closeGrid();
                 else if (Kb.key(e, "d"))
                     root.askDelete();
                 else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter)
@@ -274,35 +333,47 @@ PanelWindow {
 
     Rectangle {
         id: frame
-        x: (parent.width - width) / 2
+        // the size animates on its own properties and lands on whole pixels:
+        // a 1px border on a fractional edge shimmers while the box grows
+        property real boxW: root.grid ? root.gridW + 2 : root.stripW
+        property real boxH: root.grid ? Math.ceil(gridBox.implicitHeight) + 2 : Math.ceil(column.implicitHeight) + 2
+
+        x: Math.round((parent.width - width) / 2)
         // +2 so the content inside the 1px border is exactly columns wide
-        width: root.grid ? root.gridW + 2 : root.stripWidth + 24
-        height: root.grid ? Math.ceil(gridBox.implicitHeight) + 2 : Math.ceil(column.implicitHeight) + 2
+        width: Math.round(boxW)
+        height: Math.round(boxH)
         color: Theme.bg
         border.width: 1
         border.color: Theme.border
         // clip so the growing frame does not let the grid spill over its border
         clip: true
         // the strip and the grid hand off with a smooth resize
-        Behavior on width {
+        Behavior on boxW {
             NumberAnimation {
-                duration: 240
+                duration: 260
                 easing.type: Easing.InOutCubic
             }
         }
-        Behavior on height {
+        Behavior on boxH {
             NumberAnimation {
-                duration: 240
+                duration: 260
                 easing.type: Easing.InOutCubic
             }
         }
 
         Column {
             id: column
-            visible: !root.grid
+            visible: !root.grid || root.stripAlpha > 0.001
+            opacity: root.stripAlpha
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 130
+                    easing.type: Easing.OutQuad
+                }
+            }
             x: 1
             y: 1
-            width: parent.width - 2
+            width: root.stripW - 2
             topPadding: 8
             bottomPadding: 7
 
@@ -367,6 +438,18 @@ PanelWindow {
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
                                 source: slot.thumbFile !== "" ? `file://${slot.thumbFile}?v=${slot.gen}` : ""
+                                // the stills are made one at a time, so a card
+                                // fades in the first time instead of popping.
+                                // a reload keeps it up, no blink
+                                property bool shown: false
+                                opacity: shown ? 1 : 0
+                                Behavior on opacity {
+                                    NumberAnimation {
+                                        duration: 170
+                                        easing.type: Easing.OutQuad
+                                    }
+                                }
+                                onStatusChanged: if (status === Image.Ready) shown = true
                             }
 
                             Rectangle {
@@ -432,16 +515,17 @@ PanelWindow {
         // sorts), and anything from the last week is marked "new"
         Column {
             id: gridBox
-            visible: root.grid
-            opacity: root.grid ? 1 : 0
+            visible: root.grid || root.gridAlpha > 0.001
+            opacity: root.gridAlpha
             Behavior on opacity {
                 NumberAnimation {
-                    duration: 150
+                    duration: 180
+                    easing.type: Easing.InOutQuad
                 }
             }
             x: 1
             y: 1
-            width: parent.width - 2
+            width: root.gridW
             topPadding: 8
             bottomPadding: 7
 
@@ -458,7 +542,8 @@ PanelWindow {
                 width: parent.width
                 height: root.gridContentH
                 clip: true
-                model: root.grid ? Wall.files : 0
+                // the tiles stay while the grid fades out, then the model empties
+                model: gridBox.visible ? Wall.files : 0
                 cellWidth: root.cellW
                 cellHeight: root.cellH
                 boundsBehavior: Flickable.StopAtBounds
@@ -492,6 +577,15 @@ PanelWindow {
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
                             source: tile.thumbFile !== "" ? `file://${tile.thumbFile}?v=${tile.gen}` : ""
+                            property bool shown: false
+                            opacity: shown ? 1 : 0
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: 170
+                                    easing.type: Easing.OutQuad
+                                }
+                            }
+                            onStatusChanged: if (status === Image.Ready) shown = true
                         }
 
                         // the selected tile gets a border
