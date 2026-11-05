@@ -24,13 +24,12 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require("vim-options")
+
 require("lazy").setup("plugins", {
 	-- no plugin here needs luarocks
 	rocks = { enabled = false },
 	-- the config is a store link, it changes only with a switch
 	change_detection = { enabled = false },
-	-- the config dir is home-manager's, the versions go next to the plugins
-	lockfile = vim.fn.stdpath("data") .. "/lazy-lock.json",
 	install = { colorscheme = { "gruvbox" } },
 })
 require("lsp")

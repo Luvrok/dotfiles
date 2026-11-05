@@ -46,6 +46,9 @@ ShellRoot {
 
     // on the focused monitor, or on the one a bar was clicked on
     function open(name, screen) {
+        // a menu of something the host has off doesn't open
+        if (name === "jarvis" && !Features.jarvis)
+            return;
         const same = menu === name;
         menu = "";
         if (same)
@@ -83,6 +86,9 @@ ShellRoot {
             Wallpaper {
                 screen: perScreen.modelData
             }
+            Screensaver {
+                screen: perScreen.modelData
+            }
             Bar {
                 screen: perScreen.modelData
                 visible: shell.barShown
@@ -111,6 +117,21 @@ ShellRoot {
         model: Quickshell.screens
 
         NotifyPopup {}
+    }
+
+    // the idle screensaver, swayidle runs it (hyprland.lua): the live
+    // wallpaper on top of the windows, any input ends it
+    IpcHandler {
+        target: "screensaver"
+        function start(): void {
+            Wall.screensaver = true;
+        }
+        function stop(): void {
+            Wall.screensaver = false;
+        }
+        function toggle(): void {
+            Wall.screensaver = !Wall.screensaver;
+        }
     }
 
     // the lock screen: `lock now`
@@ -211,6 +232,13 @@ ShellRoot {
         }
     }
 
+    LazyLoader {
+        active: shell.menu === "wall"
+        WallMenu {
+            screen: shell.menuScreen
+            onDone: shell.close("wall")
+        }
+    }
     LazyLoader {
         active: shell.menu === "run"
         Run {
@@ -392,7 +420,7 @@ ShellRoot {
     }
     // jarvis (Luvrok/jarvis), it says "jarvis is off" without its daemon
     LazyLoader {
-        active: shell.menu === "jarvis"
+        active: shell.menu === "jarvis" && Features.jarvis
         Jarvis {
             screen: shell.menuScreen
             onDone: shell.close("jarvis")

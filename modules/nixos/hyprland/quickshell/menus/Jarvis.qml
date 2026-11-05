@@ -6,14 +6,17 @@ import qs.widgets
 
 // jarvis, the voice assistant (Luvrok/jarvis): the daemon listens,
 // the llm answers as the character, the tts speaks it. this menu talks to
-// the daemon over its socket while it's open and starts listening when it
-// opens. once the question is heard it slides away, the bar's mic
+// the daemon over its socket while it's open. nothing runs until r: the
+// daemon isn't started at login (it opens the mic and loads the speech
+// model as it starts), r starts it and listens once it's up (its listen
+// also warms the llm and the voice into vram). the bar stops it after a
+// while idle. once the question is heard it slides away, the bar's mic
 // (widgets/JarvisBar.qml) shows the rest and the answer comes as a
 // notification, so the desktop is free while jarvis thinks and speaks.
 // the big square is the mic, a click on it pauses. space pauses or
 // resumes, c copies the answer, i picks the input, v the character (p
 // plays its greeting, s puts the cloned voices on the quick 0.6b model or
-// back on the 1.7b), r listens again, n starts a new chat (the
+// back on the 1.7b), r listens, n starts a new chat (the
 // conversation so far is forgotten), u frees the vram and forgets too. esc stops the
 // voice and closes. no daemon: "jarvis is off"
 Menu {
@@ -45,6 +48,10 @@ Menu {
     // the small one only when it's downloaded
     property string clones: "big"
     property bool hasSmall: false
+    // r pressed while there's no daemon: it's being started, the listen
+    // follows once the socket is there
+    property bool starting: false
+    property int tries: 0
 
     readonly property var persona: characters.find(c => c.id === character) ?? null
     readonly property bool working: ["transcribing", "thinking", "searching", "voicing"].includes(jarvis)
@@ -185,6 +192,23 @@ Menu {
         flashEnd.restart();
     }
 
+    // r: listen, starting the daemon first when it isn't up
+    function listen() {
+        if (sock.connected) {
+            send({
+                type: "listen"
+            });
+            return;
+        }
+        if (starting)
+            return;
+        starting = true;
+        tries = 0;
+        errorText = "";
+        Quickshell.execDetached(["systemctl", "--user", "start", "jarvis"]);
+        startWait.start();
+    }
+
     function togglePause() {
         send({
             type: jarvis === "paused" ? "resume" : "pause"
@@ -200,7 +224,7 @@ Menu {
     activity: working ? jarvis : ""
     lines: 0
     menuWidth: ch(46)
-    hints: page === "main" ? [["space", jarvis === "paused" ? "resume" : "pause"], ["c", "copy"], ["i", "input"], ["v", "voice"], ...(llms.length > 1 ? [["m", "model"]] : []), ...(stts.length > 1 ? [["t", "speech"]] : []), ["r", "again"], ["n", "new chat"], ["u", "unload"], ["esc", "close"]] : [["j/k", "move"], ["enter", "pick"], ...(page === "voice" ? [["p", "preview"], ...(hasSmall ? [["s", clones === "small" ? "clones 1.7b" : "clones 0.6b"]] : [])] : []), ["h", "back"], ["esc", "close"]]
+    hints: page === "main" ? [["space", jarvis === "paused" ? "resume" : "pause"], ["c", "copy"], ["i", "input"], ["v", "voice"], ...(llms.length > 1 ? [["m", "model"]] : []), ...(stts.length > 1 ? [["t", "speech"]] : []), ["r", "listen"], ["n", "new chat"], ["u", "unload"], ["esc", "close"]] : [["j/k", "move"], ["enter", "pick"], ...(page === "voice" ? [["p", "preview"], ...(hasSmall ? [["s", clones === "small" ? "clones 1.7b" : "clones 0.6b"]] : [])] : []), ["h", "back"], ["esc", "close"]]
     body: page === "main" ? talk : null
 
     onAccepted: index => {
@@ -266,9 +290,7 @@ Menu {
         else if (key(e, "t") && stts.length > 1)
             openPage("speech");
         else if (key(e, "r"))
-            send({
-                type: "listen"
-            });
+            listen();
         else if (key(e, "n")) {
             send({
                 type: "new_chat"
@@ -297,17 +319,47 @@ Menu {
         }
         onConnectedChanged: {
             if (connected) {
-                // the last answer to look at, then listen right away
+                // the last answer to look at, no listening until r
                 menu.send({
                     type: "last_answer"
                 });
-                menu.send({
-                    type: "listen"
-                });
+                if (menu.starting) {
+                    menu.starting = false;
+                    startWait.stop();
+                    menu.listen();
+                }
             } else
                 menu.jarvis = "off";
         }
         onError: menu.jarvis = "off"
+    }
+
+    // the daemon was just started: look for its socket, connect once it's
+    // there, give up after 20 s
+    Timer {
+        id: startWait
+        interval: 500
+        repeat: true
+        onTriggered: {
+            if (menu.tries++ >= 40) {
+                stop();
+                menu.starting = false;
+                menu.errorText = "the daemon didn't come up: systemctl --user status jarvis";
+                return;
+            }
+            probe.running = true;
+        }
+    }
+
+    Process {
+        id: probe
+        command: ["test", "-S", menu.sockPath]
+        onExited: code => {
+            if (code === 0 && !sock.connected) {
+                sock.connected = false;
+                sock.connected = true;
+            }
+        }
     }
 
     // a moment to see "transcribing", then the layer rule slides it out
@@ -398,7 +450,7 @@ Menu {
                 FadeText {
                     visible: menu.errorText !== "" || menu.jarvis === "off"
                     width: parent.width - parent.label - 8
-                    text: menu.jarvis === "off" ? "no daemon on the socket: systemctl --user status jarvis" : menu.errorText
+                    text: menu.jarvis === "off" ? (menu.starting ? "starting" : "not running, r starts it") : menu.errorText
                     color: Theme.urgent
                     font: menu.rowFont
                 }

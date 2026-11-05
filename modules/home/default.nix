@@ -54,8 +54,5 @@
     executable = true;
   };
 
-  home.file.".config/.asoundrc".text = ''
-    defaults.pcm.card 1
-    defaults.ctl.card 1
-  '';
+  home.file.".config/.asoundrc".source = ./local/asoundrc;
 }

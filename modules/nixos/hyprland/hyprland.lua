@@ -31,6 +31,11 @@ hl.config({
         rounding = 0,
         shadow = { enabled = false },
         blur = { enabled = false },
+        -- kitty's background is 0.98 opaque (modules/home/programs/kitty),
+        -- the whole window fades when it loses the focus: 0.98 * 0.97 is the
+        -- 95% the unfocused one should look like. fullscreen windows keep
+        -- their own opacity (decoration.fullscreen_opacity)
+        inactive_opacity = 0.97,
         -- scratchpads and the quickshell menus dim what's under them
         dim_special = 0.25,
         dim_around = 0.25,
@@ -53,6 +58,14 @@ hl.config({
         force_default_wallpaper = 0,
         -- a quickshell that dies while locked can lock again when it's back
         allow_session_lock_restore = true,
+    },
+
+    render = {
+        -- a fullscreen window must not switch the monitor to hdr (it
+        -- re-inits the link: black for a moment, then dim), nor tell it the
+        -- content type (the picture mode switch can blank it too)
+        cm_auto_hdr = 0,
+        send_content_type = false,
     },
 
     -- config errors at the bottom, like the notifications. hyprland's own
@@ -107,11 +120,13 @@ hl.animation({ leaf = "fadeSwitch", enabled = false })
 hl.animation({ leaf = "border", enabled = false })
 hl.animation({ leaf = "borderangle", enabled = false })
 
--- the bar and the wallpaper just appear. the quickshell menus sit under the
--- bar on the right, they slide in from the right edge and fade, like a tag
+-- the bar and the video wallpaper just appear. the quickshell menus sit under
+-- the bar on the right, they slide in from the right edge and fade, like a tag
 -- switch drifts
-hl.layer_rule({ match = { namespace = "^(bar|wallpaper|shot)$" }, no_anim = true })
+hl.layer_rule({ match = { namespace = "^(bar|mpvpaper|shot|screensaver)$" }, no_anim = true })
 hl.layer_rule({ match = { namespace = "^menu$" }, animation = "slide right", dim_around = true })
+-- the wallpaper picker (WallMenu.qml), centered under the top edge
+hl.layer_rule({ match = { namespace = "^wall-menu$" }, no_anim = true })
 -- the notification popup stays mapped and slides itself (NotifyPopup.qml):
 -- a layer that unmaps while a menu holds its focus grab clears the grab,
 -- the menu closed whenever a popup ran out
@@ -316,6 +331,38 @@ local function fakefs_exit(w)
     end
 end
 
+-- a silent move (follow = false) ends the window's fullscreen in hyprland:
+-- the state lives with the workspace. the non-silent move puts the internal
+-- mode back itself, but not the client one, and a fake fullscreen is not
+-- fullscreen at all, so the state is saved before and put back after:
+-- a fake one is fitted to the new monitor (fakefs_exit puts the window
+-- where it was on the monitor it's on then), a real one is set again. done
+-- in the same call, the update_rules timer of fakefs_sync runs after it and
+-- sees a window that is still fullscreen
+local function fs_save(w)
+    if not w then
+        return nil
+    end
+    return { fake = fakefs[w.address] ~= nil, internal = w.fullscreen, client = w.fullscreen_client }
+end
+
+local function fs_restore(w, st)
+    if not w or not st then
+        return
+    end
+    if st.fake then
+        local m = w.monitor
+        if not fakefs[w.address] or not m then
+            return
+        end
+        hl.dispatch(hl.dsp.window.resize({ x = m.width / m.scale, y = m.height / m.scale, window = w }))
+        hl.dispatch(hl.dsp.window.move({ x = m.x, y = m.y, window = w }))
+        fs_state(w, 0, 2)
+    elseif st.internal ~= 0 then
+        fs_state(w, st.internal, st.client)
+    end
+end
+
 local function wants_real(w)
     if w.content_type == "game" then
         return true
@@ -434,7 +481,7 @@ hl.bind(mod .. " + a", qs("menu open tools"))
 hl.bind(mod .. " + x", qs("menu open windows"))
 -- the keys of hyprland, librewolf and nvim (quickshell/keys.conf)
 hl.bind(mod .. " + slash", qs("menu open keys"))
--- jarvis, the voice assistant: it listens as soon as the menu opens
+-- jarvis, the voice assistant: the menu doesn't listen until r
 hl.bind(mod .. " + CTRL + j", qs("menu open jarvis"))
 hl.bind(mod .. " + SHIFT + n", qs("notifications close"))
 hl.bind(mod .. " + o", hl.dsp.exec_cmd("kitty --class movies -e yazi /media/outer-1"))
@@ -518,6 +565,8 @@ end)
 
 -- windows
 hl.bind(mod .. " + SHIFT + b", qs("bar toggle"))
+-- the live wallpaper picker, see WallMenu.qml
+hl.bind(mod .. " + SHIFT + m", qs("menu open wall"))
 -- fake fullscreen, see the windows section. $mod+shift+y: real
 -- fullscreen for games (direct scanout, the windows behind fade out while
 -- it grows). a fake one comes back once the real one ends
@@ -644,8 +693,16 @@ hl.bind(mod .. " + s", hl.dsp.window.pin())
 -- monitor. +1/-1 wrap like dwm, l/r stop at the screen edge
 hl.bind(mod .. " + comma", hl.dsp.focus({ monitor = "-1" }))
 hl.bind(mod .. " + period", hl.dsp.focus({ monitor = "+1" }))
-hl.bind(mod .. " + SHIFT + comma", hl.dsp.window.move({ monitor = "-1" }))
-hl.bind(mod .. " + SHIFT + period", hl.dsp.window.move({ monitor = "+1" }))
+local function movemon(dir)
+    return function()
+        local w = hl.get_active_window()
+        local st = fs_save(w)
+        hl.dispatch(hl.dsp.window.move({ monitor = dir }))
+        fs_restore(w, st)
+    end
+end
+hl.bind(mod .. " + SHIFT + comma", movemon("-1"))
+hl.bind(mod .. " + SHIFT + period", movemon("+1"))
 
 -- tagmonstay: the window stays the focused one of the tag it lands on, like
 -- dwm. focusing it marks it as that tag's last window, then focus and the
@@ -665,12 +722,15 @@ local function tagmonstay(dir)
             hl.dispatch(hl.dsp.window.move({ monitor = target.name, follow = false }))
             return
         end
+        local st = fs_save(w)
         if w.workspace and w.workspace.windows == 1 then
             -- the last window of its tag: a silent move and a focus don't
             -- stick then, so move it like $mod+shift does
             hl.dispatch(hl.dsp.window.move({ monitor = target.name }))
+            fs_restore(w, st)
         else
             hl.dispatch(hl.dsp.window.move({ monitor = target.name, follow = false }))
+            fs_restore(w, st)
             hl.dispatch(hl.dsp.focus({ window = w }))
         end
         hl.dispatch(hl.dsp.focus({ monitor = mon.name }))
@@ -710,11 +770,18 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("systemctl --user start hyprland-session.target")
     hl.exec_cmd("xrdb -merge ~/.Xresources")
     hl.exec_cmd("wl-paste --watch cliphist -max-items 200 store")
-    -- the lock screen is quickshell's (Lock.qml): loginctl lock-session (the
-    -- power menu) and suspend lock it
-    hl.exec_cmd([[swayidle -w timeout 300 "hyprctl dispatch \"hl.dsp.dpms({ action = 'disable' })\"" resume "hyprctl dispatch \"hl.dsp.dpms({ action = 'enable' })\"" lock "qs -c hyprland ipc call lock now" before-sleep "qs -c hyprland ipc call lock now"]])
+    -- the idle screensaver is the live wallpaper on top of the windows
+    -- (Screensaver.qml) at 5 min, the monitor goes off at 10. any input ends
+    -- the screensaver and brings the screen back. the lock screen is
+    -- quickshell's (Lock.qml): loginctl lock-session (the power menu) and
+    -- suspend lock it
+    hl.exec_cmd([[swayidle -w timeout 300 "qs -c hyprland ipc call screensaver start" timeout 600 "hyprctl dispatch \"hl.dsp.dpms({ action = 'disable' })\"" resume "qs -c hyprland ipc call screensaver stop; hyprctl dispatch \"hl.dsp.dpms({ action = 'enable' })\"" lock "qs -c hyprland ipc call lock now" before-sleep "qs -c hyprland ipc call lock now"]])
     hl.exec_cmd("sway-audio-idle-inhibit")
-    hl.exec_cmd("gammastep -m wayland -l 59.9343:30.3351 -t 5000:4000")
+    -- not gammastep: it re-applies the gamma ramp on every output every 5 s
+    -- (SLEEP_DURATION in its main loop), and with two monitors those commits
+    -- were dropping frames and lagging the compositor. wlsunset only touches
+    -- the gamma around sunrise and sunset. night 4000K, day 5000K
+    hl.exec_cmd("wlsunset -l 59.9343 -L 30.3351 -t 4000 -T 5000")
     hl.exec_cmd("qs -c hyprland")
 end)
 

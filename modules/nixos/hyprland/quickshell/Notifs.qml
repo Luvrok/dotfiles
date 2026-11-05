@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Services.Notifications
 
 // the notification server. one popup at a time, the newest, the
@@ -84,6 +85,21 @@ Singleton {
             popupScreen = Hypr.focusedScreen()?.name ?? "";
         current = n;
         popped(same || up);
+    }
+
+    // the focus on another monitor moves the popup there, whatever state it
+    // is in: the popups compare popupScreen, the old one slides away and the
+    // new one shows the same notification
+    Connections {
+        target: Hyprland
+
+        function onRawEvent(event) {
+            if (event.name !== "focusedmon" || root.current === null)
+                return;
+            const name = event.data.split(",")[0];
+            if (name !== "")
+                root.popupScreen = name;
+        }
     }
 
     // the popup is done with it: time's up or clicked away

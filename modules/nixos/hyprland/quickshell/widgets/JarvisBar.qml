@@ -32,7 +32,7 @@ Text {
         sock.flush();
     }
 
-    visible: state_ !== "" && (state_ !== "idle" || loaded.length > 0)
+    visible: Features.jarvis && state_ !== "" && (state_ !== "idle" || loaded.length > 0)
     text: state_ === "paused" ? "\u{f036d}" : "\u{f036c}"
     color: state_ === "error" ? Theme.urgent : live || working ? Theme.selBg : Theme.dim
     font.family: Theme.barFont
@@ -109,11 +109,20 @@ Text {
         }
     }
 
+    // the daemon only runs while it's used: idle for two minutes and it's
+    // stopped (the next r in the menu starts it again). its models stay up
+    // in llama-swap for their own ttl, the last answer is forgotten
+    Timer {
+        interval: 120000
+        running: Features.jarvis && mic.state_ === "idle"
+        onTriggered: Quickshell.execDetached(["systemctl", "--user", "stop", "jarvis"])
+    }
+
     // no daemon yet, or it restarted: look for its socket now and then,
     // connect once it's there. no socket, no attempt, no error in the log
     Timer {
         interval: 5000
-        running: !sock.connected
+        running: Features.jarvis && !sock.connected
         repeat: true
         triggeredOnStart: true
         onTriggered: probe.running = true

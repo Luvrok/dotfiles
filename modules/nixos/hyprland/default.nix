@@ -4,6 +4,7 @@
   config,
   lib,
   pkgs,
+  pkgs-hypr,
   ...
 }:
 
@@ -16,26 +17,54 @@ in
   config = lib.mkIf cfg.enable {
     services.displayManager.defaultSession = "hyprland";
 
+    # from nixpkgs-hypr, the snapshot this desktop is tested on (flake.nix):
+    # a nixpkgs update must not move the compositor, the shell or the portal
+    # out from under the config
     programs.hyprland = {
       enable = true;
-      package = pkgs.hyprland;
-      portalPackage = pkgs.xdg-desktop-portal-hyprland;
+      package = pkgs-hypr.hyprland;
+      portalPackage = pkgs-hypr.xdg-desktop-portal-hyprland;
+    };
+
+    # the compositor loads the gpu driver from /run/opengl-driver, and its
+    # libgbm and the driver have to be one mesa: both from the snapshot
+    hardware.graphics = {
+      package = pkgs-hypr.mesa;
+      package32 = pkgs-hypr.pkgsi686Linux.mesa;
     };
 
     # both look in XDG_CONFIG_DIRS (/etc/xdg) after ~/.config: hyprland for
     # hypr/hyprland.lua, quickshell for quickshell/<name> (qs -c hyprland).
     # hyprland checks its config while the system builds, so an update that
     # changes the lua api fails nixos-rebuild, not the next login
-    environment.etc."xdg/hypr/hyprland.lua".source =
-      pkgs.runCommand "hyprland.lua" { } ''
-        mkdir run
-        XDG_RUNTIME_DIR=$PWD/run HOME=$PWD \
-          ${config.programs.hyprland.package}/bin/Hyprland --verify-config -c ${./hyprland.lua} --i-am-really-stupid
-        cp ${./hyprland.lua} $out
+    environment.etc."xdg/hypr/hyprland.lua".source = pkgs.runCommand "hyprland.lua" { } ''
+      mkdir run
+      XDG_RUNTIME_DIR=$PWD/run HOME=$PWD \
+        ${config.programs.hyprland.package}/bin/Hyprland --verify-config -c ${./hyprland.lua} --i-am-really-stupid
+      cp ${./hyprland.lua} $out
+    '';
+    # the quickshell config, with what the host has on (Features.qml) written
+    # in. jarvis off: its menu, bar icon and key stay in the code and do
+    # nothing, and its line is gone from the keys menu
+    environment.etc."xdg/quickshell/hyprland".source =
+      pkgs.runCommand "quickshell-hyprland" { } ''
+        cp -r ${./quickshell} $out
+        chmod -R u+w $out
+        cat > $out/Features.qml <<'EOF'
+        pragma Singleton
+
+        import QtQuick
+
+        QtObject {
+            readonly property bool jarvis: ${lib.boolToString config.services.jarvis.enable}
+        }
+        EOF
+        ${lib.optionalString (!config.services.jarvis.enable) ''
+          sed -i '/^ *mod+ctrl+j  *jarvis$/d' $out/keys.conf
+        ''}
       '';
-    environment.etc."xdg/quickshell/hyprland".source = ./quickshell;
-    # jarvis' menu and bar icon (Luvrok/jarvis): its build checks them, no
-    # rounded shapes
+    # jarvis' menu and bar icon (Luvrok/jarvis): its build checks them (no
+    # rounded shapes) while services.jarvis is enabled
     services.jarvis.ui.qmlFiles = [
       ./quickshell/menus/Jarvis.qml
       ./quickshell/widgets/MicTile.qml
@@ -48,7 +77,8 @@ in
     environment.etc."proxychains-xray.conf".source = ./proxychains.conf;
 
     environment.systemPackages = with pkgs; [
-      quickshell
+      # the shell too: its qml api changes with the compositor's, same pin
+      pkgs-hypr.quickshell
       # askpass for sudo -A and ssh, the quickshell menu answers it
       (writeShellApplication {
         name = "hypr-askpass";
@@ -82,11 +112,44 @@ in
         ];
         text = builtins.readFile ./quickshell/scripts/pinentry;
       })
+      # the live wallpapers (quickshell/Wall.qml, WallMenu.qml): the picker's
+      # previews and, per monitor, whether a window covers the wallpaper
+      (writeShellApplication {
+        name = "wall-state";
+        runtimeInputs = [
+          jq
+          config.programs.hyprland.package
+        ];
+        text = builtins.readFile ./quickshell/scripts/wall-state;
+      })
+      (writeShellApplication {
+        name = "wall-thumb";
+        runtimeInputs = [
+          ffmpeg-headless
+          coreutils
+        ];
+        text = builtins.readFile ./quickshell/scripts/wall-thumb;
+      })
+      # pause/play the video in mpvpaper's mpv without killing it
+      (writers.writePython3Bin "wall-ipc" { } (builtins.readFile ./quickshell/scripts/wall-ipc))
+      # the videos the picker offers: the live folder and steam's wallpaper
+      # engine workshop
+      (writeShellApplication {
+        name = "wall-list";
+        runtimeInputs = [
+          findutils
+          coreutils
+        ];
+        text = builtins.readFile ./quickshell/scripts/wall-list;
+      })
+      # plays the video on the background layer, Wallpaper.qml runs one per
+      # output and pauses it while the screen is covered
+      mpvpaper
 
       # started from hyprland.lua
       swayidle
       sway-audio-idle-inhibit
-      gammastep
+      wlsunset
       wl-clipboard
       cliphist
       grim
@@ -116,13 +179,17 @@ in
     # the emoji menu reads /run/current-system/sw/share/unicode/emoji
     environment.pathsToLink = [ "/share/unicode" ];
 
-    # hyprland.lua starts and stops it
+    # hyprland.lua starts and stops it. hyprland ships the same unit now
+    # (share/systemd/user), but nixpkgs doesn't install systemd.packages for
+    # it, so this one is the installed one: keep it equal to the package's,
+    # PropagatesStopTo included
     systemd.user.targets.hyprland-session = {
       description = "hyprland compositor session";
       documentation = [ "man:systemd.special(7)" ];
       bindsTo = [ "graphical-session.target" ];
       wants = [ "graphical-session-pre.target" ];
       after = [ "graphical-session-pre.target" ];
+      unitConfig.PropagatesStopTo = [ "graphical-session.target" ];
     };
 
     # gtk on wayland takes theme, icons, font and cursor from dconf through the

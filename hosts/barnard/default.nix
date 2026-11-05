@@ -15,10 +15,15 @@ in
 {
   imports = [ ./xray.nix ];
 
-  # the voice assistant (Luvrok/jarvis): its models in llama-swap's
-  # config.yaml, its menu in quickshell (hyprland's default.nix checks it)
+  # the voice assistant (Luvrok/jarvis), off for now: the module is mkIf
+  # enable, so nothing of it runs, no unit, no models. its quickshell menu,
+  # bar icon and key are hidden while it's off (modules/nixos/hyprland writes
+  # quickshell's Features.qml from this switch). the settings stay for when
+  # it's back. the menu starts the daemon on r and the bar stops it when
+  # idle, so then the unit must not start at login either:
+  # systemd.user.services.jarvis.wantedBy = lib.mkForce [ ]
   services.jarvis = {
-    enable = true;
+    enable = false;
     # the hub's lfs cdn and docker hub need xray's mixed inbound
     proxy = lib.mkIf config.services.xray.enable "http://127.0.0.1:10808";
     # the llms in llama-swap's config.yaml, picked in the menu. the web
@@ -28,6 +33,9 @@ in
       jarvis-qwen-9b = "Qwen3.5 9B";
       jarvis-qwen-4b = "Qwen3.5 4B";
     };
+    # nothing listens for a wake phrase: jarvis listens when r is pressed
+    # in its menu, and only then
+    wakeWord.enable = false;
   };
 
   sops.defaultSopsFile = ../../secrets/barnard.yaml;
@@ -45,9 +53,10 @@ in
     opencode-keys.enable = true;
     # wine for games, in its own prefix (wine-games, winetricks-games)
     wine-gaming.enable = true;
-    # sober, vinegar and the tools of studio. flathub goes through xray
+    # sober, vinegar and the tools of studio. flathub goes through xray.
+    # off for now, the settings stay for when it's back
     roblox = {
-      enable = true;
+      enable = false;
       proxy = lib.mkIf config.services.xray.enable "http://127.0.0.1:10808";
       # roblox-player and roblox-studio go through xray's mixed inbound
       netns.enable = config.services.xray.enable;

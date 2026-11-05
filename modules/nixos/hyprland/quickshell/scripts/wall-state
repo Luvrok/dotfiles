@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# per monitor, whether the wallpaper behind the windows is visible:
+#   {"DP-1": true, "DP-2": false}
+# hidden by a monocle tag whose window is not kitty (kitty is see-through),
+# by a real fullscreen window (fullscreen 2 or 3) and by an open scratchpad
+# that is not kitty. Wall.qml kills mpvpaper on false and starts it on true
+set -euo pipefail
+
+mons=$(hyprctl -j monitors)
+workspaces=$(hyprctl -j workspaces)
+clients=$(hyprctl -j clients)
+
+jq -cn \
+  --argjson m "${mons}" \
+  --argjson w "${workspaces}" \
+  --argjson c "${clients}" '
+    [ $m[]
+      | . as $mon
+      # a special workspace has no id, only its name when it is open
+      | (($mon.specialWorkspace.name // "") != "") as $special
+      # a scratchpad sits over the tag, its window is the visible one
+      | (if $special then $mon.specialWorkspace else $mon.activeWorkspace end) as $aw
+      | ([ $w[] | select(.name == $aw.name) ] | .[0] // {}) as $ws
+      | ([ $c[] | select(.address == ($ws.lastwindow // "")) ] | .[0] // {}) as $win
+      | ($win.class // "kitty") as $class
+      | (($ws.tiledLayout // "master") == "monocle" and $class != "kitty")
+        or (($win.fullscreen // 0) >= 2)
+        or ($special and $class != "kitty")
+      | {key: $mon.name, value: (not)}
+    ] | from_entries
+  '

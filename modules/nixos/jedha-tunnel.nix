@@ -1,5 +1,40 @@
 { pkgs, ... }:
 
+let
+  # the route wait must not be a preStart: it kept the unit "activating"
+  # until wifi was up (28 s) and, wanted by multi-user.target, held the
+  # boot. here the unit is active at once and ssh comes up when the route
+  # does. ip is needed for the wait, ssh for the tunnel
+  tunnel = pkgs.writeShellApplication {
+    name = "jedha-tunnel";
+    runtimeInputs = [
+      pkgs.iproute2
+      pkgs.openssh
+    ];
+    text = ''
+      # not needed at boot: wait for a route to jedha (wifi comes up late,
+      # wait-online is off), quietly, instead of failing every 10 s
+      until ip route get 192.168.0.217 >/dev/null 2>&1; do
+        sleep 2
+      done
+      exec ssh \
+        -i /home/tunneluser/.ssh/id_ed25519 \
+        -p 22 jedha@192.168.0.217 \
+        -L 18384:127.0.0.1:8384 \
+        -L 8129:127.0.0.1:8129 \
+        -L 8130:127.0.0.1:8130 \
+        -L 4544:127.0.0.1:4544 \
+        -L 4545:127.0.0.1:4545 \
+        -L 4533:127.0.0.1:4533 \
+        -L 4110:127.0.0.1:4110 \
+        -L 5390:127.0.0.1:5390 \
+        -N \
+        -o ServerAliveInterval=30 \
+        -o ServerAliveCountMax=3 \
+        -o ExitOnForwardFailure=yes
+    '';
+  };
+in
 {
   users.users.tunneluser = {
     isNormalUser = true;
@@ -88,13 +123,6 @@
     description = "Persistent SSH tunnel to Jedha";
     wantedBy = [ "multi-user.target" ];
 
-    # not needed at boot: wait for a route to jedha (wifi comes up late,
-    # wait-online is off), quietly, instead of failing every 10 s
-    path = [ pkgs.iproute2 ];
-    preStart = ''
-      until ip route get 192.168.0.217 >/dev/null 2>&1; do sleep 2; done
-    '';
-
     serviceConfig = {
       User = "tunneluser";
       Type = "simple";
@@ -103,23 +131,7 @@
       Restart = "on-failure";
       RestartSec = 10;
 
-      ExecStart = ''
-        ${pkgs.openssh}/bin/ssh \
-          -i /home/tunneluser/.ssh/id_ed25519 \
-          -p 22 jedha@192.168.0.217 \
-          -L 18384:127.0.0.1:8384 \
-          -L 8129:127.0.0.1:8129 \
-          -L 8130:127.0.0.1:8130 \
-          -L 4544:127.0.0.1:4544 \
-          -L 4545:127.0.0.1:4545 \
-          -L 4533:127.0.0.1:4533 \
-          -L 4110:127.0.0.1:4110 \
-          -L 5390:127.0.0.1:5390 \
-          -N \
-          -o ServerAliveInterval=30 \
-          -o ServerAliveCountMax=3 \
-          -o ExitOnForwardFailure=yes
-      '';
+      ExecStart = "${tunnel}/bin/jedha-tunnel";
     };
   };
 }

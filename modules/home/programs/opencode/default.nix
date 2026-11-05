@@ -37,15 +37,22 @@ let
   # keys from modules/nixos/opencode-keys.nix. opencode reads the files
   # itself, they are not in its env, so the agent's commands don't get them
   keys = lib.filterAttrs (n: _: lib.hasPrefix "opencode/" n) (osConfig.sops.secrets or { });
+  # context7 is an mcp server, not a provider: its key goes in a header below
   providers = lib.mapAttrs' (
     n: s: lib.nameValuePair (lib.removePrefix "opencode/" n) { options.apiKey = "{file:${s.path}}"; }
-  ) keys;
+  ) (lib.filterAttrs (n: _: n != "opencode/context7") keys);
+  # context7 without a key works too, on the free limit
+  mcpHeaders = lib.optionalAttrs (keys ? "opencode/context7") {
+    context7.headers.CONTEXT7_API_KEY = "{file:${keys."opencode/context7".path}}";
+  };
 
   # jq, not toJSON: nix sorts the keys, the permission rules are last-match-wins.
   # the keys go next to the providers opencode.json has (llama-swap), a
   # provider in both gets both
   settings = pkgs.runCommand "opencode.json" { nativeBuildInputs = [ pkgs.jq ]; } ''
-    jq --argjson p ${lib.escapeShellArg (builtins.toJSON providers)} '.provider = ((.provider // {}) * $p) | del(._comment)' \
+    jq --argjson p ${lib.escapeShellArg (builtins.toJSON providers)} \
+      --argjson m ${lib.escapeShellArg (builtins.toJSON mcpHeaders)} \
+      '.provider = ((.provider // {}) * $p) | .mcp = ((.mcp // {}) * $m) | del(._comment)' \
       ${./opencode.json} > $out
   '';
 in
@@ -59,7 +66,13 @@ in
     "opencode/skills/notes".source = ./skills/notes;
     "opencode/skills/obsidian".source = ./skills/obsidian;
     "opencode/skills/docs".source = ./skills/docs;
+    "opencode/skills/deep-research".source = ./skills/deep-research;
+    "opencode/skills/debugging".source = ./skills/debugging;
+    "opencode/skills/verify".source = ./skills/verify;
+    "opencode/skills/plan".source = ./skills/plan;
     "opencode/AGENTS.md".source = ./AGENTS.md;
     "opencode/commands".source = ./commands;
+    # a notification when a permission rule says "ask"
+    "opencode/plugins/notify.js".source = ./notify.js;
   };
 }
