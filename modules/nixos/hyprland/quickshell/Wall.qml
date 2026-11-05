@@ -12,13 +12,16 @@ import Quickshell.Hyprland
 Singleton {
     id: root
 
-    readonly property string dir: `${Quickshell.env("HOME")}/HOME/wizzard/wallpaper/live`
-    readonly property string fallback: "koi-fish-pixel.3840x2160.mp4"
+    readonly property string liveDir: `${Quickshell.env("HOME")}/HOME/wizzard/wallpaper/live`
+    // steam's wallpaper engine: the videos are one level inside each
+    // workshop id of app 431960
+    readonly property string workshopDir: `${Quickshell.env("HOME")}/.steam/steam/steamapps/workshop/content/431960`
+    readonly property string steamDir: `${Quickshell.env("HOME")}/.local/share/Steam/steamapps/workshop/content/431960`
+    readonly property string fallback: `${liveDir}/koi-fish-pixel.3840x2160.mp4`
     readonly property string statePath: `${Quickshell.env("HOME")}/.local/state/quickshell/wallpaper`
     readonly property string cacheDir: `${Quickshell.env("HOME")}/.cache/quickshell/wall`
-    readonly property var extensions: [".mp4", ".webm", ".mkv", ".mov"]
 
-    // the videos in the folder, the one on screen, and per monitor whether
+    // the videos (full paths), the one on screen, and per monitor whether
     // the screen behind the windows is visible at all
     property var files: []
     property string current: ""
@@ -29,15 +32,23 @@ Singleton {
     property bool locked: false
     property bool screensaver: false
 
-    readonly property string file: current === "" ? "" : `${dir}/${current}`
+    readonly property string file: current
 
     function wrap(i, n) {
         return n === 0 ? 0 : ((i % n) + n) % n;
     }
 
-    // the still WallMenu shows for a file
-    function thumb(name) {
-        return `${cacheDir}/${name}.jpg`;
+    function base(path) {
+        return path.slice(path.lastIndexOf("/") + 1);
+    }
+
+    // the still WallMenu shows for a file, one per path. the cache name is
+    // a hash: the same basename in two workshop ids must not share a picture
+    function thumb(path) {
+        let h = 5381;
+        for (let i = 0; i < path.length; i++)
+            h = ((h * 33) ^ path.charCodeAt(i)) >>> 0;
+        return `${cacheDir}/${h.toString(16)}.jpg`;
     }
 
     // on screen unless locked or a window covers the monitor: wall-state
@@ -51,8 +62,10 @@ Singleton {
         // last chooses; a pick made in this session is not overridden
         if (!listed || !stateRead || current !== "")
             return;
-        if (saved !== "" && files.indexOf(saved) !== -1)
-            current = saved;
+        // the old state kept a bare name from the live folder
+        const old = saved !== "" && saved.indexOf("/") === -1 ? `${liveDir}/${saved}` : saved;
+        if (old !== "" && files.indexOf(old) !== -1)
+            current = old;
         else
             current = files.indexOf(fallback) !== -1 ? fallback : (files.length > 0 ? files[0] : "");
     }
@@ -75,21 +88,32 @@ Singleton {
             state.running = true;
     }
 
+    // the folder is read again when the picker opens: a video downloaded a
+    // minute ago is there without a restart
+    function reload() {
+        listing.running = false;
+        again.restart();
+    }
+
     property string saved: ""
     property bool listed: false
     property bool stateRead: false
     // an event came while wall-state ran: run it once more for the result
     property bool dirty: false
 
-    // the folder is read at start; a new file is picked up by reopening the
-    // menu, no rebuild
+    Timer {
+        id: again
+        interval: 60
+        onTriggered: listing.running = true
+    }
+
     Process {
         id: listing
         running: true
-        command: ["sh", "-c", 'ls -1 "$1"', "sh", root.dir]
+        command: ["wall-list", root.liveDir, root.workshopDir, root.steamDir]
         stdout: StdioCollector {
             onStreamFinished: {
-                root.files = text.split("\n").filter(f => f !== "" && root.extensions.some(e => f.toLowerCase().endsWith(e))).sort();
+                root.files = text.split("\n").filter(f => f !== "");
                 root.listed = true;
                 root.loaded = true;
                 root.pick();

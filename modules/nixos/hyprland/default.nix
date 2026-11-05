@@ -132,6 +132,16 @@ in
       })
       # pause/play the video in mpvpaper's mpv without killing it
       (writers.writePython3Bin "wall-ipc" { } (builtins.readFile ./quickshell/scripts/wall-ipc))
+      # the videos the picker offers: the live folder and steam's wallpaper
+      # engine workshop
+      (writeShellApplication {
+        name = "wall-list";
+        runtimeInputs = [
+          findutils
+          coreutils
+        ];
+        text = builtins.readFile ./quickshell/scripts/wall-list;
+      })
       # plays the video on the background layer, Wallpaper.qml runs one per
       # output and pauses it while the screen is covered
       mpvpaper
