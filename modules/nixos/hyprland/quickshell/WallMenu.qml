@@ -407,20 +407,24 @@ PanelWindow {
                             border.color: Theme.border
                         }
 
-                        Text {
+                        Rectangle {
                             visible: Wall.isNew(tile.name)
                             anchors.right: parent.right
                             anchors.rightMargin: 4
                             anchors.top: parent.top
                             anchors.topMargin: 4
-                            text: "new"
-                            color: Theme.bg
-                            font.pointSize: 8
-                            font.bold: true
-                            padding: 3
-                            background: Rectangle {
-                                color: Theme.selBg
-                                radius: 3
+                            width: newLabel.implicitWidth + 6
+                            height: newLabel.implicitHeight + 4
+                            color: Theme.selBg
+                            radius: 3
+
+                            Text {
+                                id: newLabel
+                                anchors.centerIn: parent
+                                text: "new"
+                                color: Theme.bg
+                                font.pointSize: 8
+                                font.bold: true
                             }
                         }
                     }
