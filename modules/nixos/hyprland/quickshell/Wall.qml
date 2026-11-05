@@ -22,8 +22,10 @@ Singleton {
     readonly property string cacheDir: `${Quickshell.env("HOME")}/.cache/quickshell/wall`
 
     // the videos (full paths), the one on screen, and per monitor whether
-    // the screen behind the windows is visible at all
+    // the screen behind the windows is visible at all. files is newest
+    // first, mtime is each file's mtime in seconds
     property var files: []
+    property var mtime: ({})
     property string current: ""
     property var visible: ({})
     property bool loaded: false
@@ -40,6 +42,12 @@ Singleton {
 
     function base(path) {
         return path.slice(path.lastIndexOf("/") + 1);
+    }
+
+    // added within the last week: the picker marks it "new"
+    function isNew(path) {
+        const t = mtime[path];
+        return t ? (Date.now() / 1000 - t) < 604800 : false;
     }
 
     // the picker's stills: one ffmpeg at a time, in the order asked. seven
@@ -151,7 +159,20 @@ Singleton {
         command: ["wall-list", root.liveDir, root.workshopDir, root.steamDir]
         stdout: StdioCollector {
             onStreamFinished: {
-                root.files = text.split("\n").filter(f => f !== "");
+                const files = [];
+                const mtime = {};
+                for (const line of text.split("\n")) {
+                    if (line === "")
+                        continue;
+                    const t = line.indexOf("\t");
+                    if (t < 0)
+                        continue;
+                    const path = line.slice(t + 1);
+                    files.push(path);
+                    mtime[path] = Number(line.slice(0, t));
+                }
+                root.files = files;
+                root.mtime = mtime;
                 root.listed = true;
                 root.loaded = true;
                 root.pick();

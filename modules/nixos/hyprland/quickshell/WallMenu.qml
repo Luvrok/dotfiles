@@ -25,27 +25,37 @@ PanelWindow {
     // that: they touch, no holes between them
     readonly property real pitch: cell * 0.72
     readonly property real stripWidth: cell * 3.8
+    // the expanded grid's tile and panel size
+    readonly property real tile: 200
+    readonly property real tileH: tile * 9 / 16
+    readonly property real tileGap: 10
+    readonly property real gridW: Math.min((screen?.width ?? 2560) - 80, 1400)
+    readonly property real gridH: Math.min((screen?.height ?? 1440) - 120, 820)
 
     property int current: 0
     // the strip's offset while a step runs, then folded into current
     property real shift: 0
     property int dir: 1
     property bool moving: false
+    // the strip, or every video as a grid of tiles
+    property bool grid: false
 
     function indexOf(name) {
         const i = Wall.files.indexOf(name);
         return i < 0 ? 0 : i;
     }
 
-    // the last key pressed while a step runs is taken after it, so a quick
-    // scroll does not lose the ones in between
+    // rapid input while a step runs is accumulated, not dropped: a held key
+    // or a spun wheel keeps the strip moving instead of losing steps. it
+    // drains one cell per settle and is capped so a long hold can't build an
+    // endless backlog
     property int queued: 0
 
     function step(d) {
         if (count === 0)
             return;
         if (moving) {
-            queued = d;
+            queued = Math.max(-6, Math.min(6, queued + d));
             return;
         }
         moving = true;
@@ -62,6 +72,21 @@ PanelWindow {
         if (count > 0)
             Wall.set(Wall.files[current]);
         done();
+    }
+
+    function takeGrid() {
+        if (count > 0 && gridView.currentIndex >= 0)
+            Wall.set(Wall.files[gridView.currentIndex]);
+        done();
+    }
+
+    // expand into the grid, on the current wallpaper. the model only fills
+    // when the grid is open, so the current index is set a frame after the
+    // tiles are built
+    function openGrid() {
+        grid = true;
+        Wall.prefetch();
+        gridSettle.start();
     }
 
     Component.onCompleted: {
@@ -110,10 +135,32 @@ PanelWindow {
         id: keyCatcher
         focus: true
         Keys.onPressed: e => {
+            if (root.grid) {
+                if (Kb.key(e, "j") || e.key === Qt.Key_Down)
+                    gridView.moveCurrentIndexDown();
+                else if (Kb.key(e, "k") || e.key === Qt.Key_Up)
+                    gridView.moveCurrentIndexUp();
+                else if (Kb.key(e, "l") || e.key === Qt.Key_Right)
+                    gridView.moveCurrentIndexRight();
+                else if (Kb.key(e, "h") || e.key === Qt.Key_Left)
+                    gridView.moveCurrentIndexLeft();
+                else if (Kb.key(e, "g"))
+                    root.grid = false;
+                else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter)
+                    root.takeGrid();
+                else if (e.key === Qt.Key_Escape || Kb.key(e, "q"))
+                    root.done();
+                else
+                    return;
+                e.accepted = true;
+                return;
+            }
             if (Kb.key(e, "j") || Kb.key(e, "l") || e.key === Qt.Key_Right || e.key === Qt.Key_Down)
                 root.step(1);
             else if (Kb.key(e, "k") || Kb.key(e, "h") || e.key === Qt.Key_Left || e.key === Qt.Key_Up)
                 root.step(-1);
+            else if (Kb.key(e, "g"))
+                root.openGrid();
             else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter)
                 root.take();
             else if (e.key === Qt.Key_Escape || Kb.key(e, "q"))
@@ -127,14 +174,15 @@ PanelWindow {
     Rectangle {
         id: frame
         x: (parent.width - width) / 2
-        width: root.stripWidth + 24
-        height: Math.ceil(column.implicitHeight) + 2
+        width: root.grid ? root.gridW : root.stripWidth + 24
+        height: root.grid ? root.gridH : Math.ceil(column.implicitHeight) + 2
         color: Theme.bg
         border.width: 1
         border.color: Theme.border
 
         Column {
             id: column
+            visible: !root.grid
             x: 1
             y: 1
             width: parent.width - 2
@@ -246,6 +294,138 @@ PanelWindow {
                     ["j/k, \u2191\u2193", "move"],
                     ["h/l", "move"],
                     ["enter", "set"],
+                    ["g", "grid"],
+                    ["esc", "close"]
+                ]
+            }
+        }
+
+        // the whole folder as tiles, toggled with g: picking is direct, no
+        // need to scroll the strip one by one. the newest are first (wall-list
+        // sorts), and anything from the last week is marked "new"
+        Column {
+            id: gridBox
+            visible: root.grid
+            x: 1
+            y: 1
+            width: parent.width - 2
+            topPadding: 8
+            bottomPadding: 7
+
+            MenuHead {
+                width: parent.width
+                icon: "\u{f03e}"
+                title: "wallpaper"
+                status: `${root.count}`
+                font: metrics.font
+            }
+
+            GridView {
+                id: gridView
+                width: parent.width
+                height: root.gridH - 8 - 7 - 24 - 20
+                clip: true
+                model: root.grid ? Wall.files : 0
+                cellWidth: root.tile + root.tileGap
+                cellHeight: root.tileH + 20 + root.tileGap
+                boundsBehavior: Flickable.StopAtBounds
+
+                delegate: Item {
+                    id: tile
+                    required property string modelData
+                    required property int index
+
+                    readonly property string name: modelData
+                    readonly property string thumbFile: name !== "" ? Wall.thumb(name) : ""
+                    property int gen: 0
+
+                    width: gridView.cellWidth
+                    height: gridView.cellHeight
+
+                    // the still
+                    Rectangle {
+                        x: (parent.width - root.tileGap - root.tile) / 2
+                        width: root.tile
+                        height: root.tileH
+                        color: Theme.line
+
+                        Image {
+                            anchors.fill: parent
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: true
+                            source: tile.thumbFile !== "" ? `file://${tile.thumbFile}?v=${tile.gen}` : ""
+                        }
+
+                        // the selected tile gets a border
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "transparent"
+                            border.width: gridView.currentIndex === tile.index ? 2 : 0
+                            border.color: Theme.border
+                        }
+
+                        Text {
+                            visible: Wall.isNew(tile.name)
+                            anchors.right: parent.right
+                            anchors.rightMargin: 4
+                            anchors.top: parent.top
+                            anchors.topMargin: 4
+                            text: "new"
+                            color: Theme.bg
+                            font.pointSize: 8
+                            font.bold: true
+                            padding: 3
+                            background: Rectangle {
+                                color: Theme.selBg
+                                radius: 3
+                            }
+                        }
+                    }
+
+                    // the file name under the still
+                    Text {
+                        y: root.tileH + 4
+                        width: parent.width - root.tileGap
+                        x: (parent.width - root.tileGap - width) / 2
+                        text: tile.name !== "" ? Wall.base(tile.name) : ""
+                        elide: Text.ElideMiddle
+                        horizontalAlignment: Text.AlignHCenter
+                        color: gridView.currentIndex === tile.index ? Theme.sel : Theme.dim
+                        font: metrics.font
+                    }
+
+                    onNameChanged: if (name !== "") Wall.wantThumb(name)
+
+                    Component.onCompleted: if (name !== "") Wall.wantThumb(name)
+
+                    Connections {
+                        target: Wall
+                        function onThumbReady(path) {
+                            if (path === tile.name)
+                                tile.gen++;
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            if (tile.index >= 0)
+                                Wall.set(tile.name);
+                            root.done();
+                        }
+                    }
+                }
+            }
+
+            KeyHints {
+                x: 12
+                width: parent.width - 24
+                topPadding: 6
+                hints: [
+                    ["j/k, \u2191\u2193", "move"],
+                    ["h/l", "move"],
+                    ["enter", "set"],
+                    ["g", "strip"],
                     ["esc", "close"]
                 ]
             }
@@ -271,10 +451,23 @@ PanelWindow {
             root.shift = 0;
             root.moving = false;
             if (root.queued !== 0) {
-                const d = root.queued;
-                root.queued = 0;
+                const d = root.queued > 0 ? 1 : -1;
+                root.queued -= d;
                 root.step(d);
             }
+        }
+    }
+
+    // the grid's tiles are built on the frame after openGrid, so the cursor
+    // lands on the current wallpaper then
+    Timer {
+        id: gridSettle
+        interval: 0
+        onTriggered: {
+            if (!root.grid)
+                return;
+            gridView.currentIndex = root.indexOf(Wall.current);
+            gridView.positionViewAtIndex(gridView.currentIndex, GridView.Contain);
         }
     }
 }

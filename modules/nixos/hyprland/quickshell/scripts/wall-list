@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-# the videos the wallpaper picker offers: the live folder and steam's
-# wallpaper engine workshop (app 431960), where they sit one level inside
-# each workshop id. the dirs are deduplicated: steam links one to the other
+# the videos the wallpaper picker offers, newest first, one per line as
+# "<mtime>\t<path>": the live folder and steam's wallpaper engine workshop
+# (app 431960), where they sit one level inside each workshop id. the dirs
+# are deduplicated: steam links one to the other
 #   wall-list <dir>...
 set -euo pipefail
 
 declare -A seen=()
+{
 for dir in "$@"; do
   [[ -d ${dir} ]] || continue
   real=$(realpath -e "${dir}")
@@ -13,5 +15,6 @@ for dir in "$@"; do
   seen[${real}]=1
   find "${real}" -maxdepth 2 -type f \
     \( -iname '*.mp4' -o -iname '*.webm' -o -iname '*.mkv' -o -iname '*.mov' \) \
-    -print | sort
+    -printf '%T@\t%p\n'
 done
+} | sort -rn
