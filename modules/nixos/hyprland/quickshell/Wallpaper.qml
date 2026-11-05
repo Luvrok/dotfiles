@@ -20,6 +20,6 @@ PanelWindow {
         source: "file://" + Quickshell.env("HOME") + "/HOME/wizzard/wallpaper/art/nature/Church_Heart_of_the_Andes.jpg"
         fillMode: Image.PreserveAspectCrop
         sourceSize: Qt.size(width, height)
-        asynchronous: true
+        asynchronous: false
     }
 }
