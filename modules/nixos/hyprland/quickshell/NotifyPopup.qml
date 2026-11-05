@@ -70,6 +70,9 @@ PanelWindow {
             kept = 0;
             fresh = true;
             shown = true;
+            // it moved here from the other monitor: its time starts again,
+            // a critical one has none and stays
+            restart();
         } else {
             countdown.stop();
             kept = frame.height;

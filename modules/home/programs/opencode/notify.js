@@ -65,14 +65,10 @@ export default {
       entry.child.kill();
       if (entry.nid !== null) {
         execFile(
-          "gdbus",
-          [
-            "call", "--session",
-            "--dest", "org.freedesktop.Notifications",
-            "--object-path", "/org/freedesktop/Notifications",
-            "--method", "org.freedesktop.Notifications.CloseNotification",
-            entry.nid,
-          ],
+          "notify-send",
+          // critical, but with a time: without it the popup stays until
+          // it is clicked, the ask is what the quickshell popup shows
+          ["-u", "critical", "-t", "10000", "-a", "opencode", "opencode asks", what || "permission"],
           () => {},
         );
       }
