@@ -149,7 +149,7 @@ in
       # started from hyprland.lua
       swayidle
       sway-audio-idle-inhibit
-      gammastep
+      wlsunset
       wl-clipboard
       cliphist
       grim

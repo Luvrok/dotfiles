@@ -777,7 +777,11 @@ hl.on("hyprland.start", function()
     -- suspend lock it
     hl.exec_cmd([[swayidle -w timeout 300 "qs -c hyprland ipc call screensaver start" timeout 600 "hyprctl dispatch \"hl.dsp.dpms({ action = 'disable' })\"" resume "qs -c hyprland ipc call screensaver stop; hyprctl dispatch \"hl.dsp.dpms({ action = 'enable' })\"" lock "qs -c hyprland ipc call lock now" before-sleep "qs -c hyprland ipc call lock now"]])
     hl.exec_cmd("sway-audio-idle-inhibit")
-    hl.exec_cmd("gammastep -m wayland -l 59.9343:30.3351 -t 5000:4000")
+    -- not gammastep: it re-applies the gamma ramp on every output every 5 s
+    -- (SLEEP_DURATION in its main loop), and with two monitors those commits
+    -- were dropping frames and lagging the compositor. wlsunset only touches
+    -- the gamma around sunrise and sunset. night 4000K, day 5000K
+    hl.exec_cmd("wlsunset -l 59.9343 -L 30.3351 -t 4000 -T 5000")
     hl.exec_cmd("qs -c hyprland")
 end)
 
