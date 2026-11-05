@@ -21,9 +21,10 @@ PanelWindow {
     readonly property int mid: 3
     readonly property real cell: Math.min(240, (screen?.width ?? 2560) / 8)
     readonly property real cellHeight: cell * 9 / 16
-    // the cards overlap a little: five in a row, no holes between them
-    readonly property real step: cell * 0.86
-    readonly property real stripWidth: cell * 4.4
+    // a card that is not the pick is 0.72 of it, and the step is exactly
+    // that: they touch, no holes between them
+    readonly property real pitch: cell * 0.72
+    readonly property real stripWidth: cell * 3.8
 
     property int current: 0
     // the strip's offset while a step runs, then folded into current
@@ -42,8 +43,11 @@ PanelWindow {
         moving = true;
         dir = d;
         slide.from = 0;
-        slide.to = -d * step;
+        slide.to = -d * pitch;
         slide.start();
+        // a timer, not the animation's finished: a dropped frame must not
+        // leave the strip stuck mid-step
+        settle.restart();
     }
 
     function take() {
@@ -160,19 +164,17 @@ PanelWindow {
                             readonly property int fileIndex: root.count === 0 ? -1 : Wall.wrap(root.current + offset, root.count)
                             readonly property string name: fileIndex >= 0 ? Wall.files[fileIndex] : ""
                             readonly property string thumbFile: fileIndex >= 0 ? Wall.thumb(name) : ""
-                            readonly property real dx: offset * root.step + root.shift
+                            readonly property real dx: offset * root.pitch + root.shift
                             readonly property real distance: Math.abs(dx)
                             property int gen: 0
-                            property bool pending: false
 
                             width: root.cell
                             height: root.cellHeight
                             x: strip.width / 2 + dx - width / 2
                             y: 0
-                            // the pick is full size, a cell away is smaller,
-                            // two cells away smaller still
-                            scale: Math.max(0.55, 1 - 0.24 * Math.min(2.6, distance / root.cell))
-                            opacity: Math.max(0.5, 1 - 0.14 * Math.min(2.6, distance / root.cell))
+                            // the pick is full size, the rest 0.72 of it
+                            scale: 1 - 0.28 * Math.min(1, distance / root.pitch)
+                            opacity: 1 - 0.12 * Math.min(1, distance / root.pitch)
                             z: -Math.round(distance)
 
                             Rectangle {
@@ -185,7 +187,7 @@ PanelWindow {
                                 anchors.fill: parent
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
-                                source: slot.thumbFile !== "" && slot.gen > 0 ? `file://${slot.thumbFile}?v=${slot.gen}` : ""
+                                source: slot.thumbFile !== "" ? `file://${slot.thumbFile}?v=${slot.gen}` : ""
                             }
 
                             Rectangle {
@@ -195,35 +197,23 @@ PanelWindow {
                                 border.color: Theme.border
                             }
 
-                            // a still for the preview. one process per slot: if
-                            // a step comes while the last still is still being
-                            // made, the new file is queued behind it
-                            function wantThumb() {
-                                if (thumbFile === "")
-                                    return;
-                                if (thumb.running)
-                                    pending = true;
-                                else
-                                    thumb.running = true;
-                            }
+                            // the still comes from Wall's one-at-a-time queue,
+                            // and reloads when it is made
+                            onNameChanged: if (name !== "") Wall.wantThumb(name)
 
-                            Process {
-                                id: thumb
-                                running: false
-                                command: ["wall-thumb", fileIndex >= 0 ? name : "", thumbFile]
-                                onExited: code => {
-                                    if (code === 0)
+                            Component.onCompleted: if (name !== "") Wall.wantThumb(name)
+
+                            Connections {
+                                target: Wall
+                                function onThumbReady(path) {
+                                    if (path === slot.name)
                                         slot.gen++;
-                                    if (slot.pending) {
-                                        slot.pending = false;
-                                        thumb.running = true;
-                                    }
                                 }
                             }
 
-                            onThumbFileChanged: wantThumb()
-
-                            Component.onCompleted: wantThumb()
+                            WheelHandler {
+                                onWheel: e => root.step(e.angleDelta.y > 0 ? -1 : 1)
+                            }
 
                             MouseArea {
                                 anchors.fill: parent
@@ -232,11 +222,6 @@ PanelWindow {
                                         root.take();
                                     else if (slot.fileIndex >= 0)
                                         root.current = slot.fileIndex;
-                                }
-                                // wheel: down is next, up is previous
-                                onWheel: e => {
-                                    root.step(e.angleDelta.y > 0 ? -1 : 1);
-                                    e.accepted = true;
                                 }
                             }
                         }
@@ -265,9 +250,14 @@ PanelWindow {
         id: slide
         target: root
         property: "shift"
-        duration: 170
+        duration: 140
         easing.type: Easing.OutCubic
-        onFinished: {
+    }
+
+    Timer {
+        id: settle
+        interval: 180
+        onTriggered: {
             root.current = Wall.wrap(root.current + root.dir, root.count);
             root.shift = 0;
             root.moving = false;

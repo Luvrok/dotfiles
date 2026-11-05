@@ -42,6 +42,30 @@ Singleton {
         return path.slice(path.lastIndexOf("/") + 1);
     }
 
+    // the picker's stills: one ffmpeg at a time, in the order asked. seven
+    // at once on 4k videos made the slide stutter
+    signal thumbReady(string path)
+    property var queue: []
+    property var made: ({})
+    property string thumbPath: ""
+    property string thumbOut: ""
+
+    function wantThumb(path) {
+        if (path === "" || made[path] === true || queue.indexOf(path) !== -1)
+            return;
+        queue = queue.concat([path]);
+        pump();
+    }
+
+    function pump() {
+        if (thumbs.running || queue.length === 0)
+            return;
+        thumbPath = queue[0];
+        queue = queue.slice(1);
+        thumbOut = thumb(thumbPath);
+        thumbs.running = true;
+    }
+
     // the still WallMenu shows for a file, one per path. the cache name is
     // a hash: the same basename in two workshop ids must not share a picture
     function thumb(path) {
@@ -131,6 +155,18 @@ Singleton {
                 root.stateRead = true;
                 root.pick();
             }
+        }
+    }
+
+    Process {
+        id: thumbs
+        running: false
+        command: ["wall-thumb", root.thumbPath, root.thumbOut]
+        onExited: code => {
+            if (code === 0)
+                root.made[root.thumbPath] = true;
+            root.thumbReady(root.thumbPath);
+            root.pump();
         }
     }
 
