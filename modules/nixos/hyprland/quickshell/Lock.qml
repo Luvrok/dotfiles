@@ -14,8 +14,12 @@ Scope {
 
     property bool locked: false
     // the wallpaper behind an opaque lock surface is wasted work, see
-    // Wall.qml
-    onLockedChanged: Wall.locked = locked
+    // Wall.qml. unlocking must not bring the idle screensaver back
+    onLockedChanged: {
+        Wall.locked = locked;
+        if (locked)
+            Wall.screensaver = false;
+    }
     // what pam said last: wrong password, a message
     property string message: ""
     property bool checking: false

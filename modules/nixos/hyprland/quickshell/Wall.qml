@@ -24,8 +24,10 @@ Singleton {
     property string current: ""
     property var visible: ({})
     property bool loaded: false
-    // the lock screen is opaque, the wallpaper behind it is wasted work
+    // the lock screen is opaque and the screensaver covers the screen: the
+    // wallpaper behind them is paused
     property bool locked: false
+    property bool screensaver: false
 
     readonly property string file: current === "" ? "" : `${dir}/${current}`
 
@@ -41,7 +43,7 @@ Singleton {
     // on screen unless locked or a window covers the monitor: wall-state
     // says the latter, see quickshell/scripts/wall-state
     function play(monitor) {
-        return !locked && (visible[monitor] ?? true);
+        return !locked && !screensaver && (visible[monitor] ?? true);
     }
 
     function pick() {

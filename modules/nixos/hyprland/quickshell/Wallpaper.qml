@@ -3,59 +3,89 @@ import Quickshell
 import Quickshell.Io
 
 // the live wallpaper: mpvpaper on the background layer, one process per
-// output. Wall.qml says whether it shows; a covered screen gets the process
-// killed, not paused, so the decoder's memory goes back. no image under it:
-// it sits on the same layer and would cover the video
+// output. while a window covers the screen it is not killed, it is paused:
+// the last frame stays and the decoder does nothing. only another video
+// restarts it. the shared file and the policy are in Wall.qml
 Scope {
     id: root
 
     required property ShellScreen screen
 
-    // the process runs, or the compositor's background_color shows
+    readonly property string sock: `${Quickshell.env("XDG_RUNTIME_DIR")}/wall-${screen.name}.sock`
+    // there is a video to show, and it should be playing
+    readonly property bool there: Wall.loaded && Wall.file !== ""
+    readonly property bool want: there && Wall.play(screen.name)
+
     property bool on: false
-    readonly property bool want: Wall.loaded && Wall.file !== "" && Wall.play(screen.name)
 
-    onWantChanged: {
-        if (want) {
-            grace.stop();
-            on = true;
-        } else {
-            grace.restart();
-        }
+    function start() {
+        if (on || !there)
+            return;
+        on = true;
+        // started playing, the pause follows once mpv's socket is there
+        sync();
     }
 
-    Component.onCompleted: if (want) on = true
-
-    // a stop waits a moment: walking the tags must not start and kill mpv
-    // for every one of them
-    Timer {
-        id: grace
-        interval: 2000
-        onTriggered: if (!root.want) root.on = false
+    function stop() {
+        on = false;
+        tune.stop();
     }
 
-    // mpvpaper takes the file when it starts: the menu's pick restarts it
+    // tell mpv to pause or play. the socket appears a moment after
+    // mpvpaper starts, so this retries for a few seconds
+    function sync() {
+        if (!on)
+            return;
+        tune.tries = 0;
+        tune.restart();
+    }
+
+    onThereChanged: there ? start() : stop()
+    onWantChanged: if (on) sync()
+    Component.onCompleted: if (there) start()
+
+    // another pick: mpvpaper takes its file at start, so it restarts
     Connections {
         target: Wall
 
         function onCurrentChanged() {
             if (!root.on)
                 return;
-            root.on = false;
-            restart.restart();
+            root.stop();
+            again.restart();
         }
     }
 
     Timer {
-        id: restart
+        id: again
         interval: 300
+        onTriggered: root.start()
+    }
+
+    Timer {
+        id: tune
+        property int tries: 0
+        interval: 250
+        repeat: true
         onTriggered: {
-            // the old mpv might still be on its way out
-            if (paper.running) {
-                restart.restart();
+            if (!root.on) {
+                stop();
                 return;
             }
-            root.on = root.want;
+            if (ipc.running)
+                return;
+            ipc.running = true;
+        }
+    }
+
+    Process {
+        id: ipc
+        running: false
+        command: ["wall-ipc", root.sock, "set pause", root.want ? "no" : "yes"]
+        onExited: code => {
+            // 24 tries is about 6 s, then the socket is not coming
+            if (code === 0 || ++tune.tries >= 24)
+                tune.stop();
         }
     }
 
@@ -63,13 +93,12 @@ Scope {
         id: paper
         running: root.on
         command: [
-            "mpvpaper",
-            "-o", "no-config loop no-audio no-resume-playback panscan=1 hwdec=auto-safe quiet",
-            root.screen.name,
-            Wall.file
+            "sh", "-c",
+            'rm -f "$1"; exec mpvpaper -o "no-config loop no-audio no-resume-playback panscan=1 hwdec=auto-safe quiet input-ipc-server=$1" "$2" "$3"',
+            "sh", root.sock, root.screen.name, Wall.file
         ]
-        // mpvpaper died on its own: back off, the next event or the poll
-        // in Wall.qml tries again
+        // mpvpaper died on its own: back off, then the next event or the
+        // poll in Wall.qml tries again
         onExited: code => {
             if (!root.on || code === 0)
                 return;
@@ -81,6 +110,6 @@ Scope {
     Timer {
         id: retry
         interval: 3000
-        onTriggered: root.on = root.want
+        onTriggered: root.start()
     }
 }

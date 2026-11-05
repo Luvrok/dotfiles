@@ -86,6 +86,9 @@ ShellRoot {
             Wallpaper {
                 screen: perScreen.modelData
             }
+            Screensaver {
+                screen: perScreen.modelData
+            }
             Bar {
                 screen: perScreen.modelData
                 visible: shell.barShown
@@ -114,6 +117,21 @@ ShellRoot {
         model: Quickshell.screens
 
         NotifyPopup {}
+    }
+
+    // the idle screensaver, swayidle runs it (hyprland.lua): the live
+    // wallpaper on top of the windows, any input ends it
+    IpcHandler {
+        target: "screensaver"
+        function start(): void {
+            Wall.screensaver = true;
+        }
+        function stop(): void {
+            Wall.screensaver = false;
+        }
+        function toggle(): void {
+            Wall.screensaver = !Wall.screensaver;
+        }
     }
 
     // the lock screen: `lock now`

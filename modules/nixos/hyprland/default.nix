@@ -130,8 +130,10 @@ in
         ];
         text = builtins.readFile ./quickshell/scripts/wall-thumb;
       })
+      # pause/play the video in mpvpaper's mpv without killing it
+      (writers.writePython3Bin "wall-ipc" { } (builtins.readFile ./quickshell/scripts/wall-ipc))
       # plays the video on the background layer, Wallpaper.qml runs one per
-      # output and kills it while the screen is covered
+      # output and pauses it while the screen is covered
       mpvpaper
 
       # started from hyprland.lua
