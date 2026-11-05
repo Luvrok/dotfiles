@@ -8,8 +8,9 @@ import qs.widgets
 // the live wallpaper picker: Menu.qml's frame, head and hints, with a strip
 // of 5 previews instead of the rows. the middle one is the pick, the strip
 // loops (the last file is left of the first), j/k or h/l walk it, enter puts
-// the pick on screen, tab swaps it for the grid of all of them, esc closes.
-// the stills come from wall-thumb
+// the pick on screen, tab swaps it for the grid of all of them, s stops the
+// wallpaper and brings it back (mpvpaper is killed, the vram goes), esc
+// closes. the stills come from wall-thumb
 PanelWindow {
     id: root
 
@@ -101,15 +102,20 @@ PanelWindow {
     }
 
     // picking keeps the menu open: only esc (or a click outside) closes it,
-    // so a few wallpapers can be tried in one go
+    // so a few wallpapers can be tried in one go. a pick shows the video even
+    // if s stopped the wallpaper, that is what enter is for
     function take() {
-        if (count > 0)
+        if (count > 0) {
+            Wall.off = false;
             Wall.set(Wall.files[current]);
+        }
     }
 
     function takeGrid() {
-        if (count > 0 && gridView.currentIndex >= 0)
+        if (count > 0 && gridView.currentIndex >= 0) {
+            Wall.off = false;
             Wall.set(Wall.files[gridView.currentIndex]);
+        }
     }
 
     // expand into the grid, on the current wallpaper. the model only fills
@@ -129,6 +135,13 @@ PanelWindow {
         grid = false;
         gridAlpha = 0;
         stripAlpha = 1;
+    }
+
+    // s stops the wallpaper and s again brings it back: mpvpaper is killed,
+    // not paused, so the video's vram goes while a local model wants it. the
+    // pick stays, the next start plays the same file
+    function toggleOff() {
+        Wall.off = !Wall.off;
     }
 
     // the file the cursor is on, in the strip or the grid
@@ -320,6 +333,8 @@ PanelWindow {
                     root.goEnd();
                 else if (e.key === Qt.Key_Tab)
                     root.closeGrid();
+                else if (Kb.key(e, "s"))
+                    root.toggleOff();
                 else if (Kb.key(e, "d"))
                     root.askDelete();
                 else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter)
@@ -341,6 +356,8 @@ PanelWindow {
                 root.goEnd();
             else if (e.key === Qt.Key_Tab)
                 root.openGrid();
+            else if (Kb.key(e, "s"))
+                root.toggleOff();
             else if (Kb.key(e, "d"))
                 root.askDelete();
             else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter)
@@ -401,7 +418,7 @@ PanelWindow {
                 width: parent.width
                 icon: "\u{f03e}"
                 title: "wallpaper"
-                status: root.confirming ? `delete ${Wall.base(root.selected())}?` : (root.count === 0 ? "" : Wall.base(Wall.files[root.current] ?? ""))
+                status: root.confirming ? `delete ${Wall.base(root.selected())}?` : (root.count === 0 ? "" : (Wall.off ? "off · " : "") + Wall.base(Wall.files[root.current] ?? ""))
                 font: metrics.font
             }
 
@@ -523,6 +540,7 @@ PanelWindow {
                     ["h/l", "move"],
                     ["g/G", "start/end"],
                     ["enter", "set"],
+                    ["s", Wall.off ? "on" : "off"],
                     ["d", "delete"],
                     ["tab", "grid"],
                     ["esc", "close"]
@@ -549,7 +567,7 @@ PanelWindow {
                 width: parent.width
                 icon: "\u{f03e}"
                 title: "wallpaper"
-                status: root.confirming ? `delete ${Wall.base(root.selected())}?` : `${root.count}`
+                status: root.confirming ? `delete ${Wall.base(root.selected())}?` : (Wall.off ? "off · " : "") + `${root.count}`
                 font: metrics.font
             }
 
@@ -680,6 +698,7 @@ PanelWindow {
                     ["h/l", "move"],
                     ["g/G", "start/end"],
                     ["enter", "set"],
+                    ["s", Wall.off ? "on" : "off"],
                     ["d", "delete"],
                     ["tab", "strip"],
                     ["esc", "close"]

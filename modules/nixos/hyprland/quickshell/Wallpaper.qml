@@ -12,8 +12,9 @@ Scope {
     required property ShellScreen screen
 
     readonly property string sock: `${Quickshell.env("XDG_RUNTIME_DIR")}/wall-${screen.name}.sock`
-    // there is a video to show, and it should be playing
-    readonly property bool there: Wall.loaded && Wall.file !== ""
+    // there is a video to show, and the picker has not stopped the wallpaper:
+    // off kills mpvpaper (a covered monitor only pauses it, keep the process)
+    readonly property bool there: Wall.loaded && Wall.file !== "" && !Wall.off
     readonly property bool want: there && Wall.play(screen.name)
 
     property bool on: false
