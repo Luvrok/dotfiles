@@ -39,6 +39,8 @@ PanelWindow {
     property bool moving: false
     // the strip, or every video as a grid of tiles
     property bool grid: false
+    // d asks to delete the selected video, the next key confirms or keeps
+    property bool confirming: false
 
     function indexOf(name) {
         const i = Wall.files.indexOf(name);
@@ -89,6 +91,31 @@ PanelWindow {
         gridSettle.start();
     }
 
+    // the file the cursor is on, in the strip or the grid
+    function selected() {
+        if (count === 0)
+            return "";
+        if (grid)
+            return gridView.currentIndex >= 0 ? Wall.files[gridView.currentIndex] : "";
+        return Wall.files[current];
+    }
+
+    function askDelete() {
+        if (selected() === "")
+            return;
+        confirming = true;
+    }
+
+    function cancelDelete() {
+        confirming = false;
+    }
+
+    function doDelete() {
+        const p = selected();
+        confirming = false;
+        Wall.remove(p);
+    }
+
     Component.onCompleted: {
         current = indexOf(Wall.current);
         // a video downloaded since the shell started is in the list too
@@ -135,6 +162,14 @@ PanelWindow {
         id: keyCatcher
         focus: true
         Keys.onPressed: e => {
+            if (root.confirming) {
+                if (Kb.key(e, "y") || Kb.key(e, "d") || e.key === Qt.Key_Return || e.key === Qt.Key_Enter)
+                    root.doDelete();
+                else
+                    root.cancelDelete();
+                e.accepted = true;
+                return;
+            }
             if (root.grid) {
                 if (Kb.key(e, "j") || e.key === Qt.Key_Down)
                     gridView.moveCurrentIndexDown();
@@ -146,6 +181,8 @@ PanelWindow {
                     gridView.moveCurrentIndexLeft();
                 else if (Kb.key(e, "g"))
                     root.grid = false;
+                else if (Kb.key(e, "d"))
+                    root.askDelete();
                 else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter)
                     root.takeGrid();
                 else if (e.key === Qt.Key_Escape || Kb.key(e, "q"))
@@ -161,6 +198,8 @@ PanelWindow {
                 root.step(-1);
             else if (Kb.key(e, "g"))
                 root.openGrid();
+            else if (Kb.key(e, "d"))
+                root.askDelete();
             else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter)
                 root.take();
             else if (e.key === Qt.Key_Escape || Kb.key(e, "q"))
@@ -193,7 +232,7 @@ PanelWindow {
                 width: parent.width
                 icon: "\u{f03e}"
                 title: "wallpaper"
-                status: root.count === 0 ? "" : Wall.base(Wall.files[root.current] ?? "")
+                status: root.confirming ? `delete ${Wall.base(root.selected())}?` : (root.count === 0 ? "" : Wall.base(Wall.files[root.current] ?? ""))
                 font: metrics.font
             }
 
@@ -290,10 +329,14 @@ PanelWindow {
                 x: 12
                 width: parent.width - 24
                 topPadding: 6
-                hints: [
+                hints: root.confirming ? [
+                    ["y/d", "delete"],
+                    ["esc", "keep"]
+                ] : [
                     ["j/k, \u2191\u2193", "move"],
                     ["h/l", "move"],
                     ["enter", "set"],
+                    ["d", "delete"],
                     ["g", "grid"],
                     ["esc", "close"]
                 ]
@@ -316,7 +359,7 @@ PanelWindow {
                 width: parent.width
                 icon: "\u{f03e}"
                 title: "wallpaper"
-                status: `${root.count}`
+                status: root.confirming ? `delete ${Wall.base(root.selected())}?` : `${root.count}`
                 font: metrics.font
             }
 
@@ -421,10 +464,14 @@ PanelWindow {
                 x: 12
                 width: parent.width - 24
                 topPadding: 6
-                hints: [
+                hints: root.confirming ? [
+                    ["y/d", "delete"],
+                    ["esc", "keep"]
+                ] : [
                     ["j/k, \u2191\u2193", "move"],
                     ["h/l", "move"],
                     ["enter", "set"],
+                    ["d", "delete"],
                     ["g", "strip"],
                     ["esc", "close"]
                 ]

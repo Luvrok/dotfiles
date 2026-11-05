@@ -120,11 +120,33 @@ Singleton {
         if (name === "" || name === current)
             return;
         current = name;
+        save(name);
+    }
+
+    // write the pick to the state file, so it survives a restart
+    function save(name) {
         Quickshell.execDetached([
             "sh", "-c",
             'mkdir -p "$(dirname "$2")" && printf "%s\\n" "$1" > "$2.tmp" && mv "$2.tmp" "$2"',
             "sh", name, statePath
         ]);
+    }
+
+    // the picker's delete: remove the file and its still, drop it from the
+    // list. if it is the one on screen, fall back to another video first, so
+    // the picker re-indexes to a file that is still there
+    function remove(path) {
+        if (path === "")
+            return;
+        Quickshell.execDetached(["rm", "-f", path]);
+        Quickshell.execDetached(["rm", "-f", thumb(path)]);
+        const rest = files.filter(f => f !== path);
+        if (current === path) {
+            current = rest.indexOf(fallback) !== -1 ? fallback : (rest.length > 0 ? rest[0] : "");
+            if (current !== "")
+                save(current);
+        }
+        files = rest;
     }
 
     function check() {
