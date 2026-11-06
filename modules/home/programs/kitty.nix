@@ -16,9 +16,8 @@
       confirm_os_window_close = 0;
 
       background = "#171717";
-      # a little see-through for the video wallpaper, the text stays opaque.
-      # hyprland fades the whole window a bit more when it loses the focus
-      # (hyprland.lua, decoration.inactive_opacity)
+      # the only see-through window: a little for the wallpaper, the text
+      # stays opaque. hyprland leaves every other window opaque
       background_opacity = "0.98";
 
       enable_audio_bell = "no";

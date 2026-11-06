@@ -31,11 +31,9 @@ hl.config({
         rounding = 0,
         shadow = { enabled = false },
         blur = { enabled = false },
-        -- kitty's background is 0.98 opaque (modules/home/programs/kitty),
-        -- the whole window fades when it loses the focus: 0.98 * 0.97 is the
-        -- 95% the unfocused one should look like. fullscreen windows keep
-        -- their own opacity (decoration.fullscreen_opacity)
-        inactive_opacity = 0.97,
+        -- only kitty is see-through: its own background_opacity is 0.98
+        -- (modules/home/programs/kitty). every other window stays opaque,
+        -- focused or not
         -- scratchpads and the quickshell menus dim what's under them
         dim_special = 0.25,
         dim_around = 0.25,
@@ -113,9 +111,8 @@ hl.animation({ leaf = "fadeLayersIn", enabled = true, speed = 2.5, bezier = "ino
 hl.animation({ leaf = "fadeLayersOut", enabled = true, speed = 1.5, bezier = "linear" })
 hl.animation({ leaf = "fadePopupsIn", enabled = true, speed = 0.8, bezier = "inout" })
 hl.animation({ leaf = "fadePopupsOut", enabled = true, speed = 0.6, bezier = "linear" })
--- fades active/inactive opacity (decoration.inactive_opacity), so a window
--- dims instead of snapping when it loses the focus. it also fades the monocle
--- hide, which used to switch at once like sway's tabs
+-- fades the monocle hide, which used to switch at once like sway's tabs.
+-- window opacity does not change here: only kitty is see-through
 hl.animation({ leaf = "fadeSwitch", enabled = true, speed = 2.5, bezier = "inout" })
 -- border color changes at once
 hl.animation({ leaf = "border", enabled = false })
