@@ -67,6 +67,11 @@ in
   videoDrivers = [ "amdgpu" ];
   fontSize = 11;
 
+  # the strips at 120 Hz track the memory clock changes during scanout.
+  # 0x20000 disables subvp and the firmware assisted mclk switch (FAMS),
+  # the clocks themselves stay dynamic
+  boot.kernelParams = [ "amdgpu.dcdebugmask=0x20000" ];
+
   services.kodi = {
     enable = true;
     user = username;

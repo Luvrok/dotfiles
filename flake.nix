@@ -116,7 +116,9 @@
           (
             { pkgs, ... }:
             {
-              boot.kernelPackages = pkgs.linuxPackages_latest;
+              # 7.3 corrupts the DCN32 scanout in single frames
+              # (a637a140ab86), 7.2 is the last good release
+              boot.kernelPackages = pkgs.linuxPackages_7_2;
             }
           )
         ];
