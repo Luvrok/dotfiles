@@ -15,6 +15,7 @@
   "nvim-lspconfig": { "branch": "master", "commit": "d8d2fda7aae57030452ce8cd6e770b1eb704514e" },
   "nvim-treesitter": { "branch": "main", "commit": "0195cd62fa89950f34c0e0d648ea7897ab85d4d3" },
   "nvim-treesitter-textobjects": { "branch": "main", "commit": "5c7b0263797dfd1bd6202f2b219f3b53a80b2187" },
+  "opencode.nvim": { "branch": "main", "commit": "4851ae503585dc5142ad66a98e8952a74e1f7b3a" },
   "plenary.nvim": { "branch": "master", "commit": "74b06c6c75e4eeb3108ec01852001636d85a932b" },
   "project.nvim": { "branch": "main", "commit": "0f2a364a8550550f0ac038813512dae9c4daa35f" },
   "smear-cursor.nvim": { "branch": "main", "commit": "f6cb57c342268177f719acc3968b9d8de3ecc969" },
