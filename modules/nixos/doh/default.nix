@@ -23,10 +23,13 @@ in
         require_dnssec = true; # only resolvers with DNSSEC
 
         # Several providers: queries go to the fastest working ones, a blocked one is skipped
+        # cloudflare and adguard return 127.0.0.1 for api.themoviedb.org here,
+        # and dnscrypt's cache then serves that answer for up to a day.
+        # these three were checked against the api host: all return real ips
         server_names = [
           "quad9-doh-ip4-port443-nofilter-pri"
-          "cloudflare"
-          "adguard-dns-unfiltered-doh"
+          "quad9-doh-ip4-port443-nofilter-ecs-pri"
+          "dnsforge.de-nofilter"
         ];
         # Google isn't marked as no-log and would be filtered out otherwise
         require_nolog = false;
