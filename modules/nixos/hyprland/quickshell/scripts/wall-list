@@ -25,11 +25,27 @@ for dir in "$@"; do
     find "${real}" \
       \( -name .git -o -name .thumbnails -o -name .stfolder -o -name live \) -prune -o \
       -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) \
-      -printf '%T@\t%p\n'
+      -printf '%T@\t%s\t%p\n'
   else
     find "${real}" -maxdepth 2 -type f \
       \( -iname '*.mp4' -o -iname '*.webm' -o -iname '*.mkv' -o -iname '*.mov' \) \
       -printf '%T@\t%p\n'
   fi
 done
-} | sort -rn
+} | sort -rn | {
+  if [[ ${kind} == photos ]]; then
+    # the same picture copied into two folders (antiquity and art/nature)
+    # has one name and one size; offer the newest copy only
+    awk -F'\t' '
+      {
+        n = split($3, p, "/");
+        key = $2 SUBSEP p[n];
+        if (key in seen)
+          next;
+        seen[key] = 1;
+        print $1 "\t" $3;
+      }'
+  else
+    cat
+  fi
+}

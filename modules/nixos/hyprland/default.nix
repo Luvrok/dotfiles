@@ -143,6 +143,7 @@ in
         runtimeInputs = [
           findutils
           coreutils
+          gawk
         ];
         text = builtins.readFile ./quickshell/scripts/wall-list;
       })
