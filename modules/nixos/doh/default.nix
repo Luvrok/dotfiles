@@ -25,10 +25,10 @@ in
         # Several providers: queries go to the fastest working ones, a blocked one is skipped
         # cloudflare and adguard return 127.0.0.1 for api.themoviedb.org here,
         # and dnscrypt's cache then serves that answer for up to a day.
-        # these three were checked against the api host: all return real ips
+        # quad9's ecs endpoint (9.9.9.12) does the same even without ecs, so
+        # it is not here. these two were checked against the api host
         server_names = [
           "quad9-doh-ip4-port443-nofilter-pri"
-          "quad9-doh-ip4-port443-nofilter-ecs-pri"
           "dnsforge.de-nofilter"
         ];
         # Google isn't marked as no-log and would be filtered out otherwise
