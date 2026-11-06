@@ -113,9 +113,10 @@ hl.animation({ leaf = "fadeLayersIn", enabled = true, speed = 2.5, bezier = "ino
 hl.animation({ leaf = "fadeLayersOut", enabled = true, speed = 1.5, bezier = "linear" })
 hl.animation({ leaf = "fadePopupsIn", enabled = true, speed = 0.8, bezier = "inout" })
 hl.animation({ leaf = "fadePopupsOut", enabled = true, speed = 0.6, bezier = "linear" })
--- monocle hides the windows behind the focused one with this fade, switch
--- at once like sway's tabs. it also fades active/inactive opacity, unused here
-hl.animation({ leaf = "fadeSwitch", enabled = false })
+-- fades active/inactive opacity (decoration.inactive_opacity), so a window
+-- dims instead of snapping when it loses the focus. it also fades the monocle
+-- hide, which used to switch at once like sway's tabs
+hl.animation({ leaf = "fadeSwitch", enabled = true, speed = 2.5, bezier = "inout" })
 -- border color changes at once
 hl.animation({ leaf = "border", enabled = false })
 hl.animation({ leaf = "borderangle", enabled = false })

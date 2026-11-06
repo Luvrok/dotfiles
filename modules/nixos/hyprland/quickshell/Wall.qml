@@ -22,8 +22,10 @@ Singleton {
     readonly property string cacheDir: `${Quickshell.env("HOME")}/.cache/quickshell/wall`
 
     // the videos (full paths), the one on screen, and per monitor whether
-    // the screen behind the windows is visible at all
+    // the screen behind the windows is visible at all. files is newest
+    // first, mtime is each file's mtime in seconds
     property var files: []
+    property var mtime: ({})
     property string current: ""
     property var visible: ({})
     property bool loaded: false
@@ -31,6 +33,9 @@ Singleton {
     // wallpaper behind them is paused
     property bool locked: false
     property bool screensaver: false
+    // the picker's s key: mpvpaper is killed, not paused, so its vram and
+    // the decoder go while a local model wants them. the pick stays
+    property bool off: false
 
     readonly property string file: current
 
@@ -40,6 +45,12 @@ Singleton {
 
     function base(path) {
         return path.slice(path.lastIndexOf("/") + 1);
+    }
+
+    // added within the last week: the picker marks it "new"
+    function isNew(path) {
+        const t = mtime[path];
+        return t ? (Date.now() / 1000 - t) < 604800 : false;
     }
 
     // the picker's stills: one ffmpeg at a time, in the order asked. seven
@@ -89,10 +100,10 @@ Singleton {
         return `${cacheDir}/${h.toString(16)}.jpg`;
     }
 
-    // on screen unless locked or a window covers the monitor: wall-state
-    // says the latter, see quickshell/scripts/wall-state
+    // on screen unless stopped from the picker, locked or a window covers the
+    // monitor: wall-state says the latter, see quickshell/scripts/wall-state
     function play(monitor) {
-        return !locked && !screensaver && (visible[monitor] ?? true);
+        return !off && !locked && !screensaver && (visible[monitor] ?? true);
     }
 
     function pick() {
@@ -104,19 +115,44 @@ Singleton {
         const old = saved !== "" && saved.indexOf("/") === -1 ? `${liveDir}/${saved}` : saved;
         if (old !== "" && files.indexOf(old) !== -1)
             current = old;
-        else
+        else {
             current = files.indexOf(fallback) !== -1 ? fallback : (files.length > 0 ? files[0] : "");
+            if (old !== "")
+                console.warn(`wall: saved "${old}" not in ${files.length} files, using "${base(current)}"`);
+        }
     }
 
     function set(name) {
         if (name === "" || name === current)
             return;
         current = name;
+        save(name);
+    }
+
+    // write the pick to the state file, so it survives a restart
+    function save(name) {
         Quickshell.execDetached([
             "sh", "-c",
             'mkdir -p "$(dirname "$2")" && printf "%s\\n" "$1" > "$2.tmp" && mv "$2.tmp" "$2"',
             "sh", name, statePath
         ]);
+    }
+
+    // the picker's delete: remove the file and its still, drop it from the
+    // list. if it is the one on screen, fall back to another video first, so
+    // the picker re-indexes to a file that is still there
+    function remove(path) {
+        if (path === "")
+            return;
+        Quickshell.execDetached(["rm", "-f", path]);
+        Quickshell.execDetached(["rm", "-f", thumb(path)]);
+        const rest = files.filter(f => f !== path);
+        if (current === path) {
+            current = rest.indexOf(fallback) !== -1 ? fallback : (rest.length > 0 ? rest[0] : "");
+            if (current !== "")
+                save(current);
+        }
+        files = rest;
     }
 
     function check() {
@@ -151,7 +187,20 @@ Singleton {
         command: ["wall-list", root.liveDir, root.workshopDir, root.steamDir]
         stdout: StdioCollector {
             onStreamFinished: {
-                root.files = text.split("\n").filter(f => f !== "");
+                const files = [];
+                const mtime = {};
+                for (const line of text.split("\n")) {
+                    if (line === "")
+                        continue;
+                    const t = line.indexOf("\t");
+                    if (t < 0)
+                        continue;
+                    const path = line.slice(t + 1);
+                    files.push(path);
+                    mtime[path] = Number(line.slice(0, t));
+                }
+                root.files = files;
+                root.mtime = mtime;
                 root.listed = true;
                 root.loaded = true;
                 root.pick();
