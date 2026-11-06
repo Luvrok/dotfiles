@@ -12,27 +12,36 @@ let
   # downloaded binary doesn't run on nixos
   proxy = "http://127.0.0.1:10808";
   noProxy = "localhost,127.0.0.1,::1";
-  opencode = pkgs.symlinkJoin {
-    name = "opencode-wrapped";
-    paths = [ pkgs.opencode ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram $out/bin/opencode \
-        ${lib.concatMapStringsSep " " (v: "--set ${v} ${proxy}") [
-          "http_proxy"
-          "https_proxy"
-          "HTTP_PROXY"
-          "HTTPS_PROXY"
-          "ALL_PROXY"
-          "all_proxy"
-        ]} \
-        --set no_proxy ${noProxy} \
-        --set NO_PROXY ${noProxy} \
-        --set NODE_USE_ENV_PROXY 1 \
-        --set OPENCODE_DISABLE_LSP_DOWNLOAD true \
-        --prefix PATH : ${lib.makeBinPath [ pkgs.mcp-searxng ]}
-    '';
-  };
+  proxyFlags = lib.concatMapStringsSep " " (v: "--set ${v} ${proxy}") [
+    "http_proxy"
+    "https_proxy"
+    "HTTP_PROXY"
+    "HTTPS_PROXY"
+    "ALL_PROXY"
+    "all_proxy"
+  ];
+  wrap =
+    binary: package:
+    pkgs.symlinkJoin {
+      name = "${binary}-wrapped";
+      paths = [ package ];
+      nativeBuildInputs = [ pkgs.makeWrapper ];
+      postBuild = ''
+        wrapProgram $out/bin/${binary} \
+          ${proxyFlags} \
+          --set no_proxy ${noProxy} \
+          --set NO_PROXY ${noProxy} \
+          --set NODE_USE_ENV_PROXY 1 \
+          --set OPENCODE_DISABLE_LSP_DOWNLOAD true \
+          --prefix PATH : ${lib.makeBinPath [ pkgs.mcp-searxng ]}
+      '';
+    };
+  opencode = wrap "opencode" pkgs.opencode;
+  # the desktop bundles its own copy of the cli and runs that, not the one in
+  # PATH: the child inherits the env of the app, so the proxy and PATH go on
+  # the app. the config, the skills, the sessions and the mcp servers are the
+  # same files as the tui's, only cli.json (themes, keybinds) stays terminal
+  opencode-desktop = wrap "opencode-desktop" pkgs.opencode-desktop;
 
   # keys from modules/nixos/opencode-keys.nix. opencode reads the files
   # itself, they are not in its env, so the agent's commands don't get them
@@ -57,7 +66,11 @@ let
   '';
 in
 {
-  home.packages = [ opencode ];
+  # the app only where there is a session to show it in
+  home.packages = [
+    opencode
+  ]
+  ++ lib.optional (osConfig.dotfiles.hyprland.enable or false) opencode-desktop;
 
   # store files: opencode keeps its state in ~/.local/state/opencode, the
   # config stays read-only, so the agent can't rewrite its own policy
