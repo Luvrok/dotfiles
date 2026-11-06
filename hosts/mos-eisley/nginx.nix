@@ -1,6 +1,10 @@
-{ config, ... }:
+{ config, lib, ... }:
 
 let
+  # metube needs basic auth. the htpasswd lives outside the repo until sops
+  # has an age key on mos-eisley (it is created on the host by hand)
+  enableMetube = true;
+
   services = {
     "navidrome.vxrnt.ru" = 4533;
     "kavita.vxrnt.ru" = 4545;
@@ -8,8 +12,10 @@ let
     "anki.vxrnt.ru" = 8130;
     "koito.vxrnt.ru" = 4110;
     "betanin.vxrnt.ru" = 9393;
-    "metube.vxrnt.ru" = 8081;
     "rss.vxrnt.ru" = 8180;
+  }
+  // lib.optionalAttrs enableMetube {
+    "metube.vxrnt.ru" = 8081;
   };
 
   mkHost = host: port: {
@@ -48,7 +54,14 @@ in
     defaults.email = "an0ni442@yandex.ru";
   };
 
-  sops.secrets.metube_htpasswd.owner = "nginx";
+  # TODO: sops. once mos-eisley has an age key, read this from
+  # sops.secrets.metube_htpasswd instead of /var/lib/metube-htpasswd
+
+  system.activationScripts.vxrntSite = ''
+    mkdir -p /var/www/vxrnt.ru
+    cp -f ${./www}/index.html /var/www/vxrnt.ru/index.html
+    chmod 0644 /var/www/vxrnt.ru/index.html
+  '';
 
   services.nginx = {
     enable = true;
@@ -131,11 +144,12 @@ in
         };
     }
     // builtins.mapAttrs mkHost services
-    // {
+    // lib.optionalAttrs (config.services.nginx.enable && enableMetube) {
       "metube.vxrnt.ru" = mkHost "metube.vxrnt.ru" 8081 // {
-        basicAuthFile = config.sops.secrets.metube_htpasswd.path;
+        basicAuthFile = "/var/lib/metube-htpasswd";
       };
-
+    }
+    // {
       # couchdb for obsidian-livesync, auth and cors are on couchdb's side
       "obsidian.vxrnt.ru" =
         let
