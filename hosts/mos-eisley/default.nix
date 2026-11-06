@@ -1,4 +1,9 @@
-{ pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   imports = [
@@ -9,6 +14,17 @@
   ];
 
   dotfiles.small-disk.enable = true;
+
+  # the virtual disk is virtio; disko puts the device into grub.devices
+  boot.loader.grub.enable = true;
+
+  # 1 GB of ram
+  swapDevices = [
+    {
+      device = "/swapfile";
+      size = 2048;
+    }
+  ];
 
   sops.defaultSopsFile = ../../secrets/mos-eisley.yaml;
 
@@ -37,22 +53,12 @@
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGifq/+thCOHb5sXkWRQl9RXtddSAemKErUkdngEa7sJ dash@dash"
   ];
 
-  users.users.kessel = {
-    isNormalUser = true;
-    extraGroups = [ "wheel" ];
-    initialPassword = "nopassword";
-    openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKfVMnRoTEwUBqxcm6tzRTiFGZVafQ6dHr95HDM//Wk+ barnard"
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGifq/+thCOHb5sXkWRQl9RXtddSAemKErUkdngEa7sJ dash@dash"
-    ];
-  };
-
   environment.etc."nixos".source = ./.;
   system.activationScripts.copyConfig.text = ''
     rm -rf /root/nixos-config
     mkdir -p /root
     cp -rT ${./../..} /root/nixos-config
-    chown -R root:root /root/nixos-config
+    chown -R 0:0 /root/nixos-config
   '';
 
   services.xray = {
@@ -60,7 +66,7 @@
     settingsFile = ./xray.json;
   };
 
-  systemd.services.xray = {
+  systemd.services.xray = lib.mkIf config.services.xray.enable {
     serviceConfig = {
       RuntimeDirectory = "xray";
       RuntimeDirectoryMode = "0750";

@@ -29,10 +29,10 @@
 
     networks."10-eth" = {
       matchConfig.Name = "ens3";
-      address = [ "192.168.0.5/32" ];
+      address = [ "5.8.11.25/26" ];
       routes = [
         {
-          Gateway = "192.168.0.1";
+          Gateway = "5.8.11.1";
           GatewayOnLink = true;
         }
       ];
