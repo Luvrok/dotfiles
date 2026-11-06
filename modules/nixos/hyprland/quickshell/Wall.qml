@@ -5,10 +5,11 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 
-// the live wallpapers: the folder they are dropped into, the one on screen,
-// and whether it shows on a monitor. WallMenu.qml picks one, Wallpaper.qml
-// runs mpvpaper per output. the pick is kept in the state file below, the
-// default is the fallback
+// the wallpapers: the video folder and the still ones, the pick of each, and
+// which kind is on screen. WallMenu.qml picks one, Wallpaper.qml runs
+// mpvpaper per output for a video, Photo.qml draws a still on the
+// background layer. the picks are kept in the state files below, the default
+// video is the fallback. s in the picker switches the two kinds
 Singleton {
     id: root
 
@@ -17,23 +18,34 @@ Singleton {
     // workshop id of app 431960
     readonly property string workshopDir: `${Quickshell.env("HOME")}/.steam/steam/steamapps/workshop/content/431960`
     readonly property string steamDir: `${Quickshell.env("HOME")}/.local/share/Steam/steamapps/workshop/content/431960`
+    // the still wallpapers: the folders next to live, their pictures are
+    // found at any depth. live itself is skipped by wall-list
+    readonly property string photoDir: `${Quickshell.env("HOME")}/HOME/wizzard/wallpaper`
     readonly property string fallback: `${liveDir}/koi-fish-pixel.3840x2160.mp4`
     readonly property string statePath: `${Quickshell.env("HOME")}/.local/state/quickshell/wallpaper`
+    readonly property string photoStatePath: `${Quickshell.env("HOME")}/.local/state/quickshell/wallpaper-photo`
+    readonly property string modePath: `${Quickshell.env("HOME")}/.local/state/quickshell/wallpaper-mode`
     readonly property string cacheDir: `${Quickshell.env("HOME")}/.cache/quickshell/wall`
 
-    // the videos (full paths), the one on screen, and per monitor whether
-    // the screen behind the windows is visible at all. files is newest
-    // first, mtime is each file's mtime in seconds
-    property var files: []
+    // the lists (full paths), video or photo by mode, and per monitor
+    // whether the screen behind the windows is visible at all. the lists are
+    // newest first, mtime is each file's mtime in seconds
+    property var videoFiles: []
+    property var photoFiles: []
     property var mtime: ({})
-    property string current: ""
+    property string videoCurrent: ""
+    property string photoCurrent: ""
     property var visible: ({})
     property bool loaded: false
-    // the picker's s key: mpvpaper is killed, not paused, so its vram and
-    // the decoder go while a local model wants them. the pick stays
-    property bool off: false
+    // "video" or "photo": photo is the quiet one, no mpvpaper and its
+    // decoder. s in the picker toggles it, the state file keeps it
+    property string mode: "video"
 
-    readonly property string file: current
+    readonly property bool photos: mode === "photo"
+    readonly property var files: photos ? photoFiles : videoFiles
+    readonly property string current: photos ? photoCurrent : videoCurrent
+    // Wallpaper.qml takes this: it only plays in video mode
+    readonly property string videoFile: videoCurrent
 
     function wrap(i, n) {
         return n === 0 ? 0 : ((i % n) + n) % n;
@@ -58,7 +70,7 @@ Singleton {
     property string thumbOut: ""
 
     // a visible card asks for its still first (unshift); the rest of the
-    // folder waits behind it, so a scroll never sits in a 40 video queue
+    // folder waits behind it, so a scroll never sits in a 40 file queue
     function wantThumb(path) {
         if (path === "" || made[path] === true)
             return;
@@ -96,90 +108,168 @@ Singleton {
         return `${cacheDir}/${h.toString(16)}.jpg`;
     }
 
-    // the wallpaper stays on screen unless stopped from the picker or a
-    // window covers the monitor: wall-state says the latter, see
-    // quickshell/scripts/wall-state
+    // the video stays on screen unless a window covers the monitor: wall-state
+    // says so, see quickshell/scripts/wall-state. a photo is cheap and stays
     function play(monitor) {
-        return !off && (visible[monitor] ?? true);
+        return !photos && (visible[monitor] ?? true);
     }
 
-    function pick() {
+    function pickVideo() {
         // the folder and the saved pick are read at start, whichever comes
         // last chooses; a pick made in this session is not overridden
-        if (!listed || !stateRead || current !== "")
+        if (!listed || !stateRead || videoCurrent !== "")
             return;
         // the old state kept a bare name from the live folder
         const old = saved !== "" && saved.indexOf("/") === -1 ? `${liveDir}/${saved}` : saved;
-        if (old !== "" && files.indexOf(old) !== -1)
-            current = old;
+        if (old !== "" && videoFiles.indexOf(old) !== -1)
+            videoCurrent = old;
         else {
-            current = files.indexOf(fallback) !== -1 ? fallback : (files.length > 0 ? files[0] : "");
+            videoCurrent = videoFiles.indexOf(fallback) !== -1 ? fallback : (videoFiles.length > 0 ? videoFiles[0] : "");
             if (old !== "")
-                console.warn(`wall: saved "${old}" not in ${files.length} files, using "${base(current)}"`);
+                console.warn(`wall: saved "${old}" not in ${videoFiles.length} videos, using "${base(videoCurrent)}"`);
+        }
+    }
+
+    function pickPhoto() {
+        if (!photoListed || !photoStateRead || photoCurrent !== "")
+            return;
+        if (photoSaved !== "" && photoFiles.indexOf(photoSaved) !== -1)
+            photoCurrent = photoSaved;
+        else {
+            photoCurrent = photoFiles.length > 0 ? photoFiles[0] : "";
+            if (photoSaved !== "")
+                console.warn(`wall: saved "${photoSaved}" not in ${photoFiles.length} photos, using "${base(photoCurrent)}"`);
         }
     }
 
     function set(name) {
-        if (name === "" || name === current)
+        if (name === "")
             return;
-        current = name;
-        save(name);
+        if (photos) {
+            if (name === photoCurrent)
+                return;
+            photoCurrent = name;
+            savePhoto(name);
+        } else {
+            if (name === videoCurrent)
+                return;
+            videoCurrent = name;
+            save(name);
+        }
     }
 
-    // write the pick to the state file, so it survives a restart
-    function save(name) {
+    // write a pick to its state file, so it survives a restart
+    function writeState(path, value) {
         Quickshell.execDetached([
             "sh", "-c",
             'mkdir -p "$(dirname "$2")" && printf "%s\\n" "$1" > "$2.tmp" && mv "$2.tmp" "$2"',
-            "sh", name, statePath
+            "sh", value, path
         ]);
     }
 
+    function save(name) {
+        writeState(statePath, name);
+    }
+
+    function savePhoto(name) {
+        writeState(photoStatePath, name);
+    }
+
+    function saveMode() {
+        writeState(modePath, mode);
+    }
+
+    // s in the picker: video to photo and back. a photo needs no mpvpaper, so
+    // the video's process, vram and decoder go (the pick stays)
+    function toggleMode() {
+        if (mode === "video" && photoFiles.length === 0)
+            return;
+        mode = mode === "video" ? "photo" : "video";
+        modeRead = true;
+        saveMode();
+        if (mode === "photo")
+            pickPhoto();
+        else
+            pickVideo();
+        prefetch();
+    }
+
     // the picker's delete: remove the file and its still, drop it from the
-    // list. if it is the one on screen, fall back to another video first, so
+    // list. if it is the one on screen, fall back to another file first, so
     // the picker re-indexes to a file that is still there
     function remove(path) {
         if (path === "")
             return;
         Quickshell.execDetached(["rm", "-f", path]);
         Quickshell.execDetached(["rm", "-f", thumb(path)]);
-        const rest = files.filter(f => f !== path);
-        if (current === path) {
-            current = rest.indexOf(fallback) !== -1 ? fallback : (rest.length > 0 ? rest[0] : "");
-            if (current !== "")
-                save(current);
+        if (photos) {
+            const rest = photoFiles.filter(f => f !== path);
+            photoFiles = rest;
+            if (photoCurrent === path) {
+                photoCurrent = rest.length > 0 ? rest[0] : "";
+                if (photoCurrent !== "")
+                    savePhoto(photoCurrent);
+            }
+            if (rest.length === 0) {
+                // no stills left: the video comes back rather than a black screen
+                mode = "video";
+                saveMode();
+                pickVideo();
+            }
+        } else {
+            const rest = videoFiles.filter(f => f !== path);
+            videoFiles = rest;
+            if (videoCurrent === path) {
+                videoCurrent = rest.indexOf(fallback) !== -1 ? fallback : (rest.length > 0 ? rest[0] : "");
+                if (videoCurrent !== "")
+                    save(videoCurrent);
+            }
         }
-        files = rest;
     }
 
     function check() {
+        if (photos)
+            return;
         if (state.running)
             dirty = true;
         else
             state.running = true;
     }
 
-    // the folder is read again when the picker opens: a video downloaded a
+    // the folders are read again when the picker opens: a file downloaded a
     // minute ago is there without a restart
     function reload() {
-        listing.running = false;
+        videoListing.running = false;
+        photoListing.running = false;
         again.restart();
     }
 
     property string saved: ""
+    property string photoSaved: ""
     property bool listed: false
+    property bool photoListed: false
     property bool stateRead: false
+    property bool photoStateRead: false
+    property bool modeRead: false
     // an event came while wall-state ran: run it once more for the result
     property bool dirty: false
+
+    onModeChanged: {
+        if (mode === "video")
+            check();
+    }
 
     Timer {
         id: again
         interval: 60
-        onTriggered: listing.running = true
+        onTriggered: {
+            videoListing.running = true;
+            photoListing.running = true;
+        }
     }
 
     Process {
-        id: listing
+        id: videoListing
         running: true
         command: ["wall-list", root.liveDir, root.workshopDir, root.steamDir]
         stdout: StdioCollector {
@@ -196,12 +286,59 @@ Singleton {
                     files.push(path);
                     mtime[path] = Number(line.slice(0, t));
                 }
-                root.files = files;
-                root.mtime = mtime;
+                root.videoFiles = files;
+                // a new object, so the picker's "new" badges see the change
+                const merged = {};
+                for (const k in root.mtime)
+                    merged[k] = root.mtime[k];
+                for (const k in mtime)
+                    merged[k] = mtime[k];
+                root.mtime = merged;
                 root.listed = true;
                 root.loaded = true;
-                root.pick();
-                root.prefetch();
+                root.pickVideo();
+                if (!root.photos)
+                    root.prefetch();
+            }
+        }
+    }
+
+    Process {
+        id: photoListing
+        running: true
+        command: ["wall-list", "--photos", root.photoDir]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const files = [];
+                const mtime = {};
+                for (const line of text.split("\n")) {
+                    if (line === "")
+                        continue;
+                    const t = line.indexOf("\t");
+                    if (t < 0)
+                        continue;
+                    const path = line.slice(t + 1);
+                    files.push(path);
+                    mtime[path] = Number(line.slice(0, t));
+                }
+                root.photoFiles = files;
+                const merged = {};
+                for (const k in root.mtime)
+                    merged[k] = root.mtime[k];
+                for (const k in mtime)
+                    merged[k] = mtime[k];
+                root.mtime = merged;
+                root.photoListed = true;
+                // a saved photo mode with no photos falls back to the video
+                if (root.photos && files.length === 0) {
+                    root.mode = "video";
+                    root.saveMode();
+                    root.pickVideo();
+                } else {
+                    root.pickPhoto();
+                }
+                if (root.photos)
+                    root.prefetch();
             }
         }
     }
@@ -214,7 +351,37 @@ Singleton {
             onStreamFinished: {
                 root.saved = text.trim();
                 root.stateRead = true;
-                root.pick();
+                root.pickVideo();
+            }
+        }
+    }
+
+    Process {
+        id: photoSavedFile
+        running: true
+        command: ["sh", "-c", 'cat "$1" 2>/dev/null', "sh", photoStatePath]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.photoSaved = text.trim();
+                root.photoStateRead = true;
+                root.pickPhoto();
+            }
+        }
+    }
+
+    Process {
+        id: modeFile
+        running: true
+        command: ["sh", "-c", 'cat "$1" 2>/dev/null', "sh", modePath]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (root.modeRead)
+                    return;
+                const m = text.trim();
+                root.mode = m === "photo" ? "photo" : "video";
+                root.modeRead = true;
+                root.pickVideo();
+                root.pickPhoto();
             }
         }
     }
@@ -232,7 +399,7 @@ Singleton {
     }
 
     // per monitor: is the wallpaper visible, from hyprland's workspaces and
-    // clients
+    // clients. only the video needs it, a photo has no process to pause
     Process {
         id: state
         running: true

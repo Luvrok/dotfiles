@@ -121,7 +121,7 @@ hl.animation({ leaf = "borderangle", enabled = false })
 -- the bar and the video wallpaper just appear. the quickshell menus sit under
 -- the bar on the right, they slide in from the right edge and fade, like a tag
 -- switch drifts
-hl.layer_rule({ match = { namespace = "^(bar|mpvpaper|shot)$" }, no_anim = true })
+hl.layer_rule({ match = { namespace = "^(bar|mpvpaper|photo|shot)$" }, no_anim = true })
 hl.layer_rule({ match = { namespace = "^menu$" }, animation = "slide right", dim_around = true })
 -- the wallpaper picker (WallMenu.qml), centered under the top edge
 hl.layer_rule({ match = { namespace = "^wall-menu$" }, no_anim = true })

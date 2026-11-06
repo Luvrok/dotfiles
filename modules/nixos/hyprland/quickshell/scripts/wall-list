@@ -1,10 +1,18 @@
 #!/usr/bin/env bash
-# the videos the wallpaper picker offers, newest first, one per line as
-# "<mtime>\t<path>": the live folder and steam's wallpaper engine workshop
-# (app 431960), where they sit one level inside each workshop id. the dirs
-# are deduplicated: steam links one to the other
-#   wall-list <dir>...
+# the files the wallpaper picker offers, newest first, one per line as
+# "<mtime>\t<path>". by default the videos: the live folder and steam's
+# wallpaper engine workshop (app 431960), where they sit one level inside
+# each workshop id. --photos is the stills next to live, at any depth, with
+# no live and no hidden sync or thumbnail folders. the dirs are
+# deduplicated: steam links one to the other
+#   wall-list [--photos] <dir>...
 set -euo pipefail
+
+kind=video
+if [[ ${1:-} == --photos ]]; then
+  kind=photos
+  shift
+fi
 
 declare -A seen=()
 {
@@ -13,8 +21,15 @@ for dir in "$@"; do
   real=$(realpath -e "${dir}")
   [[ -n ${seen[${real}]:-} ]] && continue
   seen[${real}]=1
-  find "${real}" -maxdepth 2 -type f \
-    \( -iname '*.mp4' -o -iname '*.webm' -o -iname '*.mkv' -o -iname '*.mov' \) \
-    -printf '%T@\t%p\n'
+  if [[ ${kind} == photos ]]; then
+    find "${real}" \
+      \( -name .git -o -name .thumbnails -o -name .stfolder -o -name live \) -prune -o \
+      -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) \
+      -printf '%T@\t%p\n'
+  else
+    find "${real}" -maxdepth 2 -type f \
+      \( -iname '*.mp4' -o -iname '*.webm' -o -iname '*.mkv' -o -iname '*.mov' \) \
+      -printf '%T@\t%p\n'
+  fi
 done
 } | sort -rn

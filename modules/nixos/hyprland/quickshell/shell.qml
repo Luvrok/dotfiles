@@ -86,6 +86,9 @@ ShellRoot {
             Wallpaper {
                 screen: perScreen.modelData
             }
+            Photo {
+                screen: perScreen.modelData
+            }
             Bar {
                 screen: perScreen.modelData
                 visible: shell.barShown

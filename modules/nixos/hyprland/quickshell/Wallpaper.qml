@@ -5,16 +5,18 @@ import Quickshell.Io
 // the live wallpaper: mpvpaper on the background layer, one process per
 // output. while a window covers the screen it is not killed, it is paused:
 // the last frame stays and the decoder does nothing. only another video
-// restarts it. the shared file and the policy are in Wall.qml
+// restarts it. the shared file and the policy are in Wall.qml. in photo mode
+// there is no process at all; the video stops a moment after the still has
+// faded in, so the switch does not flash
 Scope {
     id: root
 
     required property ShellScreen screen
 
     readonly property string sock: `${Quickshell.env("XDG_RUNTIME_DIR")}/wall-${screen.name}.sock`
-    // there is a video to show, and the picker has not stopped the wallpaper:
-    // off kills mpvpaper (a covered monitor only pauses it, keep the process)
-    readonly property bool there: Wall.loaded && Wall.file !== "" && !Wall.off
+    // there is a video to show and the picker is in video mode. modeRead first:
+    // a saved photo mode must not flash a frame of the video at login
+    readonly property bool there: Wall.loaded && Wall.modeRead && Wall.videoFile !== "" && !Wall.photos
     readonly property bool want: there && Wall.play(screen.name)
 
     property bool on: false
@@ -41,7 +43,15 @@ Scope {
         tune.restart();
     }
 
-    onThereChanged: there ? start() : stop()
+    onThereChanged: {
+        handoff.stop();
+        if (there)
+            start();
+        else if (Wall.photos)
+            handoff.restart(); // let the still cover the last video frame
+        else
+            stop();
+    }
     onWantChanged: if (on) sync()
     Component.onCompleted: if (there) start()
 
@@ -49,7 +59,7 @@ Scope {
     Connections {
         target: Wall
 
-        function onCurrentChanged() {
+        function onVideoFileChanged() {
             if (!root.on)
                 return;
             root.stop();
@@ -61,6 +71,13 @@ Scope {
         id: again
         interval: 300
         onTriggered: root.start()
+    }
+
+    // the still (Photo.qml) fades in over the video, then the process goes
+    Timer {
+        id: handoff
+        interval: 260
+        onTriggered: root.stop()
     }
 
     Timer {
@@ -96,7 +113,7 @@ Scope {
         command: [
             "sh", "-c",
             'rm -f "$1"; exec mpvpaper -o "no-config loop no-audio no-resume-playback panscan=1 hwdec=auto-safe quiet input-ipc-server=$1" "$2" "$3"',
-            "sh", root.sock, root.screen.name, Wall.file
+            "sh", root.sock, root.screen.name, Wall.videoFile
         ]
         // mpvpaper died on its own: back off, then the next event or the
         // poll in Wall.qml tries again

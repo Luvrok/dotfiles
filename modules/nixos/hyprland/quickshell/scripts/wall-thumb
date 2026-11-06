@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # one still for the picker's preview, cached with the other previews and
-# remade only when the video is newer
-#   wall-thumb <video> <out.jpg>
+# remade only when the source is newer. a video is sampled a second in (not
+# the black first frame); a picture is its own only frame, so no seek
+#   wall-thumb <file> <out.jpg>
 set -euo pipefail
 
 src=${1:-}
@@ -14,8 +15,13 @@ if [[ -s ${out} && ${out} -nt ${src} ]]; then
 fi
 
 mkdir -p "$(dirname "${out}")"
-# a second in is a frame of the video, not the black first one
-ffmpeg -nostdin -loglevel error -y -ss 1 -i "${src}" -frames:v 1 -vf 'scale=480:-2' -q:v 4 -f image2 "${out}.tmp" 2>/dev/null \
+seek=(-ss 1)
+case ${src,,} in
+  *.jpg|*.jpeg|*.png|*.webp|*.avif|*.bmp)
+    seek=()
+    ;;
+esac
+ffmpeg -nostdin -loglevel error -y "${seek[@]}" -i "${src}" -frames:v 1 -vf 'scale=480:-2' -q:v 4 -f image2 "${out}.tmp" 2>/dev/null \
   || ffmpeg -nostdin -loglevel error -y -i "${src}" -frames:v 1 -vf 'scale=480:-2' -q:v 4 -f image2 "${out}.tmp" 2>/dev/null \
   || true
 if [[ -s ${out}.tmp ]]; then

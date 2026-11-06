@@ -5,12 +5,12 @@ import Quickshell.Wayland
 import qs
 import qs.widgets
 
-// the live wallpaper picker: Menu.qml's frame, head and hints, with a strip
-// of 5 previews instead of the rows. the middle one is the pick, the strip
-// loops (the last file is left of the first), j/k or h/l walk it, enter puts
-// the pick on screen, tab swaps it for the grid of all of them, s stops the
-// wallpaper and brings it back (mpvpaper is killed, the vram goes), esc
-// closes. the stills come from wall-thumb
+// the wallpaper picker: Menu.qml's frame, head and hints, with a strip of 5
+// previews instead of the rows. the middle one is the pick, the strip loops
+// (the last file is left of the first), j/k or h/l walk it, enter puts the
+// pick on screen, tab swaps it for the grid of all of them, s switches
+// between the videos and the stills (the video's mpvpaper goes, the still
+// needs no process), esc closes. the stills come from wall-thumb
 PanelWindow {
     id: root
 
@@ -102,20 +102,15 @@ PanelWindow {
     }
 
     // picking keeps the menu open: only esc (or a click outside) closes it,
-    // so a few wallpapers can be tried in one go. a pick shows the video even
-    // if s stopped the wallpaper, that is what enter is for
+    // so a few wallpapers can be tried in one go
     function take() {
-        if (count > 0) {
-            Wall.off = false;
+        if (count > 0)
             Wall.set(Wall.files[current]);
-        }
     }
 
     function takeGrid() {
-        if (count > 0 && gridView.currentIndex >= 0) {
-            Wall.off = false;
+        if (count > 0 && gridView.currentIndex >= 0)
             Wall.set(Wall.files[gridView.currentIndex]);
-        }
     }
 
     // expand into the grid, on the current wallpaper. the model only fills
@@ -137,11 +132,11 @@ PanelWindow {
         stripAlpha = 1;
     }
 
-    // s stops the wallpaper and s again brings it back: mpvpaper is killed,
-    // not paused, so the video's vram goes while a local model wants it. the
-    // pick stays, the next start plays the same file
-    function toggleOff() {
-        Wall.off = !Wall.off;
+    // s switches to the stills and back: a still needs no mpvpaper, so the
+    // video's process, vram and decoder go. both picks stay, the same video
+    // plays when it comes back
+    function toggleMode() {
+        Wall.toggleMode();
     }
 
     // the file the cursor is on, in the strip or the grid
@@ -230,12 +225,16 @@ PanelWindow {
     }
 
     // the list came back (the reload above): the same file may sit at
-    // another index after the new names sorted in
+    // another index after the new names sorted in. the pick changes too when
+    // s swaps the videos for the stills
     Connections {
         target: Wall
         function onFilesChanged() {
             root.current = root.indexOf(Wall.current);
             Wall.prefetch();
+        }
+        function onCurrentChanged() {
+            root.current = root.indexOf(Wall.current);
         }
     }
 
@@ -334,7 +333,7 @@ PanelWindow {
                 else if (e.key === Qt.Key_Tab)
                     root.closeGrid();
                 else if (Kb.key(e, "s"))
-                    root.toggleOff();
+                    root.toggleMode();
                 else if (Kb.key(e, "d"))
                     root.askDelete();
                 else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter)
@@ -357,7 +356,7 @@ PanelWindow {
             else if (e.key === Qt.Key_Tab)
                 root.openGrid();
             else if (Kb.key(e, "s"))
-                root.toggleOff();
+                root.toggleMode();
             else if (Kb.key(e, "d"))
                 root.askDelete();
             else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter)
@@ -418,7 +417,7 @@ PanelWindow {
                 width: parent.width
                 icon: "\u{f03e}"
                 title: "wallpaper"
-                status: root.confirming ? `delete ${Wall.base(root.selected())}?` : (root.count === 0 ? "" : (Wall.off ? "off · " : "") + Wall.base(Wall.files[root.current] ?? ""))
+                status: root.confirming ? `delete ${Wall.base(root.selected())}?` : (root.count === 0 ? "" : (Wall.photos ? "photo · " : "") + Wall.base(Wall.files[root.current] ?? ""))
                 font: metrics.font
             }
 
@@ -540,7 +539,7 @@ PanelWindow {
                     ["h/l", "move"],
                     ["g/G", "start/end"],
                     ["enter", "set"],
-                    ["s", Wall.off ? "on" : "off"],
+                    ["s", Wall.photos ? "video" : "photo"],
                     ["d", "delete"],
                     ["tab", "grid"],
                     ["esc", "close"]
@@ -567,7 +566,7 @@ PanelWindow {
                 width: parent.width
                 icon: "\u{f03e}"
                 title: "wallpaper"
-                status: root.confirming ? `delete ${Wall.base(root.selected())}?` : (Wall.off ? "off · " : "") + `${root.count}`
+                status: root.confirming ? `delete ${Wall.base(root.selected())}?` : (Wall.photos ? "photo · " : "") + `${root.count}`
                 font: metrics.font
             }
 
@@ -698,7 +697,7 @@ PanelWindow {
                     ["h/l", "move"],
                     ["g/G", "start/end"],
                     ["enter", "set"],
-                    ["s", Wall.off ? "on" : "off"],
+                    ["s", Wall.photos ? "video" : "photo"],
                     ["d", "delete"],
                     ["tab", "strip"],
                     ["esc", "close"]
