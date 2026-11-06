@@ -56,7 +56,7 @@ hl.config({
         disable_hyprland_logo = true,
         disable_splash_rendering = true,
         force_default_wallpaper = 0,
-        -- a quickshell that dies while locked can lock again when it's back
+        -- hyprlock restores the lock after the locker dies and comes back
         allow_session_lock_restore = true,
     },
 
@@ -124,7 +124,7 @@ hl.animation({ leaf = "borderangle", enabled = false })
 -- the bar and the video wallpaper just appear. the quickshell menus sit under
 -- the bar on the right, they slide in from the right edge and fade, like a tag
 -- switch drifts
-hl.layer_rule({ match = { namespace = "^(bar|mpvpaper|shot|screensaver)$" }, no_anim = true })
+hl.layer_rule({ match = { namespace = "^(bar|mpvpaper|shot)$" }, no_anim = true })
 hl.layer_rule({ match = { namespace = "^menu$" }, animation = "slide right", dim_around = true })
 -- the wallpaper picker (WallMenu.qml), centered under the top edge
 hl.layer_rule({ match = { namespace = "^wall-menu$" }, no_anim = true })
@@ -771,13 +771,12 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("systemctl --user start hyprland-session.target")
     hl.exec_cmd("xrdb -merge ~/.Xresources")
     hl.exec_cmd("wl-paste --watch cliphist -max-items 200 store")
-    -- the idle screensaver is the live wallpaper on top of the windows
-    -- (Screensaver.qml) at 5 min, the monitor goes off at 10. any input ends
-    -- the screensaver and brings the screen back. the lock screen is
-    -- quickshell's (Lock.qml): loginctl lock-session (the power menu) and
-    -- suspend lock it
-    hl.exec_cmd([[swayidle -w timeout 300 "qs -c hyprland ipc call screensaver start" timeout 600 "hyprctl dispatch \"hl.dsp.dpms({ action = 'disable' })\"" resume "qs -c hyprland ipc call screensaver stop; hyprctl dispatch \"hl.dsp.dpms({ action = 'enable' })\"" lock "qs -c hyprland ipc call lock now" before-sleep "qs -c hyprland ipc call lock now"]])
-    hl.exec_cmd("sway-audio-idle-inhibit")
+    -- the idle timer (hypridle.conf): after 10 min of no input the session
+    -- locks with hyprlock and the screens go off, any input brings them back
+    -- to the lock screen. a playing video holds the timer: hypridle serves
+    -- org.freedesktop.ScreenSaver, the api browsers and mpv use, and reads
+    -- logind's idle inhibitors
+    hl.exec_cmd("hypridle")
     -- not gammastep: it re-applies the gamma ramp on every output every 5 s
     -- (SLEEP_DURATION in its main loop), and with two monitors those commits
     -- were dropping frames and lagging the compositor. wlsunset only touches

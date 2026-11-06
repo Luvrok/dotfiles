@@ -29,10 +29,6 @@ Singleton {
     property string current: ""
     property var visible: ({})
     property bool loaded: false
-    // the lock screen is opaque and the screensaver covers the screen: the
-    // wallpaper behind them is paused
-    property bool locked: false
-    property bool screensaver: false
     // the picker's s key: mpvpaper is killed, not paused, so its vram and
     // the decoder go while a local model wants them. the pick stays
     property bool off: false
@@ -100,10 +96,11 @@ Singleton {
         return `${cacheDir}/${h.toString(16)}.jpg`;
     }
 
-    // on screen unless stopped from the picker, locked or a window covers the
-    // monitor: wall-state says the latter, see quickshell/scripts/wall-state
+    // the wallpaper stays on screen unless stopped from the picker or a
+    // window covers the monitor: wall-state says the latter, see
+    // quickshell/scripts/wall-state
     function play(monitor) {
-        return !off && !locked && !screensaver && (visible[monitor] ?? true);
+        return !off && (visible[monitor] ?? true);
     }
 
     function pick() {

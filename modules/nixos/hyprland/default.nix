@@ -46,23 +46,26 @@ in
     # the quickshell config, with what the host has on (Features.qml) written
     # in. jarvis off: its menu, bar icon and key stay in the code and do
     # nothing, and its line is gone from the keys menu
-    environment.etc."xdg/quickshell/hyprland".source =
-      pkgs.runCommand "quickshell-hyprland" { } ''
-        cp -r ${./quickshell} $out
-        chmod -R u+w $out
-        cat > $out/Features.qml <<'EOF'
-        pragma Singleton
+    environment.etc."xdg/quickshell/hyprland".source = pkgs.runCommand "quickshell-hyprland" { } ''
+      cp -r ${./quickshell} $out
+      chmod -R u+w $out
+      cat > $out/Features.qml <<'EOF'
+      pragma Singleton
 
-        import QtQuick
+      import QtQuick
 
-        QtObject {
-            readonly property bool jarvis: ${lib.boolToString config.services.jarvis.enable}
-        }
-        EOF
-        ${lib.optionalString (!config.services.jarvis.enable) ''
-          sed -i '/^ *mod+ctrl+j  *jarvis$/d' $out/keys.conf
-        ''}
-      '';
+      QtObject {
+          readonly property bool jarvis: ${lib.boolToString config.services.jarvis.enable}
+      }
+      EOF
+      ${lib.optionalString (!config.services.jarvis.enable) ''
+        sed -i '/^ *mod+ctrl+j  *jarvis$/d' $out/keys.conf
+      ''}
+    '';
+    # the lock screen and the idle timer, started from hyprland.lua. both read
+    # /etc/xdg/hypr (XDG_CONFIG_DIRS), like hyprland.lua above
+    environment.etc."xdg/hypr/hyprlock.conf".source = ./hyprlock.conf;
+    environment.etc."xdg/hypr/hypridle.conf".source = ./hypridle.conf;
     # jarvis' menu and bar icon (Luvrok/jarvis): its build checks them (no
     # rounded shapes) while services.jarvis is enabled
     services.jarvis.ui.qmlFiles = [
@@ -70,8 +73,9 @@ in
       ./quickshell/widgets/MicTile.qml
       ./quickshell/widgets/JarvisBar.qml
     ];
-    # the lock screen's password (quickshell/Lock.qml, PamContext "quickshell")
-    security.pam.services.quickshell = { };
+    # the lock screen's password (hyprlock, hyprlock.conf): hyprland's own
+    # session lock, the compositor restores it if the locker dies
+    security.pam.services.hyprlock = { };
 
     # the run menu's xray mode (tab): an app through xray
     environment.etc."proxychains-xray.conf".source = ./proxychains.conf;
@@ -146,9 +150,11 @@ in
       # output and pauses it while the screen is covered
       mpvpaper
 
-      # started from hyprland.lua
-      swayidle
-      sway-audio-idle-inhibit
+      # started from hyprland.lua: the idle timer and the lock screen. they
+      # come from the same snapshot as the compositor, their wayland
+      # protocols move with it
+      pkgs-hypr.hypridle
+      pkgs-hypr.hyprlock
       wlsunset
       wl-clipboard
       cliphist
