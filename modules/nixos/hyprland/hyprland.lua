@@ -192,8 +192,17 @@ hl.window_rule({ match = { title = "^Picture-in-Picture$" }, float = true, size 
 hl.window_rule({ match = { title = ".*termfilechooser.*" }, float = true, size = { 1000, 700 }, center = true })
 hl.window_rule({ match = { class = "^dragon-drop$" }, float = true, center = true })
 hl.window_rule({ match = { class = "^ffplay$", title = "^android-webcam$" }, float = true })
--- kodi (Luvrok/kodi) has no border, like a fullscreen window
-hl.window_rule({ match = { class = "^[Kk]odi$" }, border_size = 0 })
+-- kodi (Luvrok/kodi) is the tv's app: always the whole monitor, floating
+-- at monitor size with no border (kodi's own fullscreen request is
+-- suppressed, and a tiled one gives it gaps first: two resizes at open,
+-- the skin reloads on each and the startup flashes)
+hl.window_rule({
+    match = { class = "^[Kk]odi$" },
+    float = true,
+    size = "monitor_w monitor_h",
+    move = "0 0",
+    border_size = 0,
+})
 
 -- apps ask to be maximized (kitty after a nixpkgs update): a maximized window
 -- covers the tag like monocle with gaps, the master goes under it, and a
