@@ -43,6 +43,9 @@ ShellRoot {
     // the player keeps track of which one started last from the start, not
     // from when its menu first opens
     readonly property var players: Media.players
+    // the audio menu's remembered sends: always on, so the streams that
+    // live for a moment (a screenshot's click, a soundboard) get them too
+    readonly property var audioSends: AudioSends
 
     // on the focused monitor, or on the one a bar was clicked on
     function open(name, screen) {

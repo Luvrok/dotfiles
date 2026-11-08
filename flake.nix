@@ -67,6 +67,16 @@
         config = {
           allowUnfree = true;
         };
+        overlays = [
+          # quickshell 0.3.2 drops the level of a mono source: its peak
+          # stream is stereo, the node's channels are one, and it treats
+          # that as an error. the mic's bar in the audio menu works with it
+          (final: prev: {
+            quickshell = prev.quickshell.overrideAttrs (old: {
+              patches = (old.patches or [ ]) ++ [ ./modules/nixos/hyprland/quickshell-peak-mono.patch ];
+            });
+          })
+        ];
       };
 
       make_hm =

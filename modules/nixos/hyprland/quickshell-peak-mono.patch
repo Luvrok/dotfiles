@@ -1,0 +1,20 @@
+--- a/src/services/pipewire/peak.cpp
++++ b/src/services/pipewire/peak.cpp
+@@ -292,12 +292,11 @@
+ 				}
+ 			}
+ 
+-			if (volumes.length() != channelCount) {
+-				qCCritical(logPeak) << this->node
+-				                    << "is missing channels present in capture stream. Node channels:"
+-				                    << nchannels << "Stream channels:" << this->monitor->mChannels;
+-				return;
+-			}
++			// a mono source is upmixed to the stream's channels and the
++			// node's list does not match it. the level still counts, only
++			// the inverse scaling by volume is off
++			if (volumes.length() != channelCount)
++				volumes.clear();
+ 		}
+ 	}
+ 
