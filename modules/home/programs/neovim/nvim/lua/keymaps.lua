@@ -69,3 +69,111 @@ map("n", "<leader>d", vim.diagnostic.setloclist, { desc = "Diagnostics of the bu
 map("n", "<leader>ih", function()
 	vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
 end, { desc = "Toggle inlay hints" })
+
+-- run, build, check and test in a floating terminal
+local function term(cmd)
+	require("toggleterm").exec(cmd, 1, 15, nil, "float")
+end
+
+local function file()
+	return vim.fn.shellescape(vim.fn.expand("%:p"))
+end
+
+local function stem()
+	return vim.fn.shellescape(vim.fn.expand("%:t:r"))
+end
+
+local runners = {
+	python = function()
+		return "python3 " .. file()
+	end,
+	sh = function()
+		return "bash " .. file()
+	end,
+	bash = function()
+		return "bash " .. file()
+	end,
+	zsh = function()
+		return "zsh " .. file()
+	end,
+	javascript = function()
+		return "node " .. file()
+	end,
+	typescript = function()
+		return "node " .. file()
+	end,
+	go = function()
+		return "go run " .. file()
+	end,
+	rust = function()
+		return "cargo run"
+	end,
+	c = function()
+		return "gcc " .. file() .. " -o /tmp/" .. stem() .. " && /tmp/" .. stem()
+	end,
+	cpp = function()
+		return "g++ " .. file() .. " -o /tmp/" .. stem() .. " && /tmp/" .. stem()
+	end,
+}
+
+local builds = {
+	python = "python3 -m compileall -q .",
+	go = "go build ./...",
+	rust = "cargo build",
+	c = "make",
+	cpp = "make",
+}
+
+local checks = {
+	python = "ruff check .",
+	go = "go vet ./...",
+	rust = "cargo check",
+	lua = "stylua --check .",
+	nix = "nix-instantiate --parse .",
+}
+
+local tests = {
+	python = "pytest -q",
+	go = "go test ./...",
+	rust = "cargo test",
+}
+
+local function task(tbl, name)
+	local cmd = tbl[vim.bo.filetype]
+	if not cmd then
+		vim.notify("No " .. name .. " command for " .. vim.bo.filetype, vim.log.levels.WARN)
+		return
+	end
+	term(cmd)
+end
+
+map("n", "<leader>xr", function()
+	local run = runners[vim.bo.filetype]
+	if not run then
+		vim.notify("No runner for " .. vim.bo.filetype, vim.log.levels.WARN)
+		return
+	end
+	term(run())
+end, { desc = "Run file" })
+
+map("n", "<leader>xb", function()
+	task(builds, "build")
+end, { desc = "Build project" })
+
+map("n", "<leader>xc", function()
+	task(checks, "check")
+end, { desc = "Lint project" })
+
+map("n", "<leader>xt", function()
+	task(tests, "test")
+end, { desc = "Test project" })
+
+-- close the completion popup on click, then let the click through
+for _, lhs in ipairs({ "<LeftMouse>", "<RightMouse>" }) do
+	map("i", lhs, function()
+		pcall(function()
+			require("blink.cmp").hide()
+		end)
+		return lhs
+	end, { expr = true, desc = "Close completion and click" })
+end

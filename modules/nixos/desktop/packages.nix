@@ -35,6 +35,7 @@
       lazygit
       typst
       python3
+      uv
 
       # --- go ---
       delve
@@ -49,11 +50,13 @@
       beautysh
       nixfmt
       prettierd
+      ruff
       sql-formatter
       stylua
       typstyle
 
       # --- lsp ---
+      basedpyright
       bash-language-server
       shellcheck # bashls lints with it
       lua-language-server

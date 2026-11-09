@@ -11,6 +11,7 @@ return {
 			lua = { "stylua" },
 			nix = { "nixfmt" },
 			sql = { "sql_formatter" },
+			python = { "ruff_fix", "ruff_format" },
 			typst = { "typstyle" },
 			qml = { "qmlformat" },
 

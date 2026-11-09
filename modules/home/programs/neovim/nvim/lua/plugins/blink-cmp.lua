@@ -31,7 +31,7 @@ return {
 
 		completion = {
 			list = {
-				selection = { preselect = true, auto_insert = false },
+				selection = { preselect = false, auto_insert = false },
 			},
 			-- no menu while typing: the first item shows inline and
 			-- <C-n>/<C-p> cycle it. <C-space> toggles the menu
@@ -40,7 +40,7 @@ return {
 				show_with_menu = true,
 				show_without_menu = true,
 				show_with_selection = true,
-				show_without_selection = false,
+				show_without_selection = true,
 			},
 			documentation = {
 				auto_show = true,
@@ -48,7 +48,8 @@ return {
 				treesitter_highlighting = true,
 			},
 			menu = {
-				auto_show = false,
+				auto_show = true,
+				auto_show_delay_ms = 150,
 				draw = {
 					treesitter = { "lsp" },
 					columns = {
@@ -59,7 +60,21 @@ return {
 			},
 		},
 
-		signature = { enabled = true },
+		signature = {
+			enabled = true,
+			trigger = {
+				enabled = true,
+				show_on_trigger_character = true,
+				show_on_insert_on_trigger_character = true,
+			},
+			window = {
+				border = "rounded",
+				max_width = 80,
+				max_height = 10,
+				show_documentation = true,
+				treesitter_highlighting = true,
+			},
+		},
 
 		sources = {
 			default = { "lsp", "path", "buffer" },

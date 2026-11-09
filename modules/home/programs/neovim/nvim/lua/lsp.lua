@@ -87,6 +87,28 @@ vim.lsp.config("gopls", {
 	},
 })
 
+vim.lsp.config("basedpyright", {
+	settings = {
+		basedpyright = {
+			analysis = {
+				typeCheckingMode = "standard",
+				autoSearchPaths = true,
+				useLibraryCodeForTypes = true,
+				diagnosticMode = "openFilesOnly",
+				inlayHints = { callArgumentNames = true },
+			},
+		},
+	},
+})
+
+vim.lsp.config("ruff", {
+	init_options = {
+		settings = {
+			lineLength = 88,
+		},
+	},
+})
+
 vim.lsp.config("bashls", {
 	settings = {
 		-- $vars in single quotes are on purpose in the jq and awk scripts
@@ -121,6 +143,8 @@ end
 
 vim.lsp.enable({
 	"nixd",
+	"basedpyright",
+	"ruff",
 	"lua_ls",
 	"gopls",
 	"bashls",
@@ -142,6 +166,9 @@ vim.lsp.inlay_hint.enable()
 
 vim.diagnostic.config({
 	severity_sort = true,
+	virtual_text = { spacing = 2, prefix = "●" },
+	underline = true,
+	update_in_insert = false,
 	float = {
 		border = "rounded",
 		source = "if_many",
