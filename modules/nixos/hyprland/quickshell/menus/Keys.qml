@@ -171,7 +171,7 @@ Menu {
     lines: 0
     bodyUnder: true
     menuWidth: columns * colW + columns - 1 + 2
-    hints: input ? [["enter", "list"], ["q", "back"], ["esc", "close"]] : [["h/l", "page"], ["/", "search"], ...(text !== "" ? [["q", "clear"]] : []), ["esc", "close"]]
+    hints: input ? [["enter", "list"], ["tab", "list"], ["esc", "close"]] : [["h/l", "page"], ["/", "search"], ...(text !== "" ? [["q", "clear"]] : []), ["esc", "close"]]
 
     keys: e => {
         const k = e.key;

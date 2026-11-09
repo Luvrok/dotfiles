@@ -28,6 +28,10 @@ PanelWindow {
     // the search text field has the focus (not the list). only meaningful
     // when input && searchable: tab flips it on and off
     property bool searchFocused: false
+    // openSearch opened the text line itself: the menu has no prompt of its
+    // own (input was false), so closeSearch folds it away and the list gets
+    // its keys back
+    property bool searchOpened: false
     // a searchable menu starts on its search field, not on its list
     property bool startInSearch: false
     property bool password: false
@@ -116,6 +120,8 @@ PanelWindow {
         filter();
         if (searchable)
             searchFocused = startInSearch;
+        if (!input)
+            searchOpened = false;
         if (startOnFirst || selected !== undefined)
             jump(Math.max(0, Math.min(selected ?? 0, shown.length - 1)), 1);
         list.positionViewAtIndex(Math.max(0, list.currentIndex), ListView.Contain);
@@ -179,8 +185,13 @@ PanelWindow {
         done();
     }
 
-    // enter the search field: focus the text line
+    // enter the search field: focus the text line. a searchable menu that
+    // opens on its list has no field yet (input is false), so it opens one
     function openSearch() {
+        if (!input) {
+            input = true;
+            searchOpened = true;
+        }
         searchFocused = true;
         field.input.forceActiveFocus();
     }
@@ -191,6 +202,10 @@ PanelWindow {
             field.input.text = "";
         filter();
         searchFocused = false;
+        if (searchOpened) {
+            input = false;
+            searchOpened = false;
+        }
         takeKeys();
     }
 
