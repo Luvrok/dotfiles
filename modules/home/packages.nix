@@ -20,5 +20,7 @@
 
     poppler-utils
     dragon-drop
+    # youtube (and other sites) in mpv, the mpv-pip extension too
+    yt-dlp
   ];
 }

@@ -1,0 +1,30 @@
+{
+  "manifest_version": 2,
+  "name": "mpv pip",
+  "version": "1.0",
+  "description": "Open the current tab in an mpv picture-in-picture window.",
+
+  "commands": {
+    "play-in-mpv": {
+      "suggested_key": {
+        "default": "Ctrl+Alt+P",
+        "linux": "Ctrl+Alt+P"
+      },
+      "description": "Play this tab in mpv PiP"
+    }
+  },
+
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "permissions": ["nativeMessaging", "tabs"],
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "@mpv.pip",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  }
+}

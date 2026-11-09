@@ -16,6 +16,8 @@ let
   };
 
   rofiTabs = pkgs.callPackage ./rofi-tabs-switcher.nix { };
+  # the same mpv the user runs, scripts and all
+  mpvPip = pkgs.callPackage ./mpv-pip.nix { mpv = config.programs.mpv.finalPackage; };
 
   # unloads the pinned tabs the session restored: firefox gives them a
   # browser right away, so sidebery showed them as loaded (unload-pinned/)
@@ -134,6 +136,10 @@ let
         install_url = "file://${unloadPinned}/unload-pinned.xpi";
         installation_mode = "force_installed";
       };
+      "@mpv.pip" = {
+        install_url = "file://${mpvPip.xpi}/mpv-pip.xpi";
+        installation_mode = "force_installed";
+      };
     }
     // builtins.listToAttrs [
       (extension "foxyproxy-standard" "foxyproxy@eric.h.jung")
@@ -155,7 +161,10 @@ let
     ];
   };
 
-  nativeMessagingHosts = [ rofiTabs.plugin ];
+  nativeMessagingHosts = [
+    rofiTabs.plugin
+    mpvPip.plugin
+  ];
 in
 {
   imports = [

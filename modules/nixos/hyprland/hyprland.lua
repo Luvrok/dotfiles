@@ -189,6 +189,16 @@ hl.window_rule({ match = { class = "^v2rayN$" }, workspace = "9 silent" })
 -- not pinned, so it can go fullscreen. $mod+shift+p sends it to the other
 -- monitor fullscreen and back
 hl.window_rule({ match = { title = "^Picture-in-Picture$" }, float = true, size = { 720, 400 } })
+-- mpv picture-in-picture (the librewolf mpv-pip extension, ctrl+alt+p):
+-- small in the bottom-right corner 10 px from the edges, no focus steal
+hl.window_rule({
+    match = { class = "^mpv-pip$" },
+    float = true,
+    size = { 720, 405 },
+    move = { "monitor_w - window_w - 10", "monitor_h - window_h - 10" },
+    no_initial_focus = true,
+    border_size = 0,
+})
 hl.window_rule({ match = { title = ".*termfilechooser.*" }, float = true, size = { 1000, 700 }, center = true })
 hl.window_rule({ match = { class = "^dragon-drop$" }, float = true, center = true })
 hl.window_rule({ match = { class = "^ffplay$", title = "^android-webcam$" }, float = true })
