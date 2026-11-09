@@ -15,7 +15,7 @@ let
 
   xpi = runCommand "mpv-pip-xpi" { nativeBuildInputs = [ zip ]; } ''
     mkdir ext
-    cp ${src}/manifest.json ${src}/background.js ext/
+    cp ${src}/manifest.json ${src}/background.js ${src}/content.js ext/
     find ext -exec touch -d @315532800 {} +
     mkdir -p $out
     (cd ext && zip -q -X -r -9 $out/mpv-pip.xpi .)
@@ -31,6 +31,7 @@ let
 
     installPhase = ''
       install -Dm755 ${./mpv-pip-host}/mpv-pip.py $out/libexec/mpv-pip.py
+      install -Dm644 ${./mpv-pip-host}/mpv-pip.lua $out/libexec/mpv-pip.lua
       patchShebangs $out/libexec/mpv-pip.py
       makeWrapper $out/libexec/mpv-pip.py $out/bin/mpv-pip-host \
         --prefix PATH : ${

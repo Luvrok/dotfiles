@@ -17,7 +17,19 @@
   "background": {
     "scripts": ["background.js"]
   },
-  "permissions": ["nativeMessaging", "tabs"],
+  "permissions": ["nativeMessaging", "tabs", "activeTab"],
+
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.youtube.com/*",
+        "*://youtu.be/*",
+        "*://*.youtube-nocookie.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
 
   "browser_specific_settings": {
     "gecko": {
