@@ -151,6 +151,7 @@ let
       (extension "video-downloadhelper" "{b9db16a4-6edc-47ec-a1f4-b86292ed211d}")
       (extension "vimium-ff" "{d7742d87-e61d-4b78-b8a1-b469842139fa}")
       (extension "gruvboxtheme" "{fd4fdeb0-5a65-4978-81c5-3488d4d56426}")
+      (extension "easy-container-shortcuts" "firefox.container-shortcuts@strategery.io")
     ];
   };
 
