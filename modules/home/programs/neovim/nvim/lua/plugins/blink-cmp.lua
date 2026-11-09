@@ -37,7 +37,7 @@ return {
 			-- <C-n>/<C-p> cycle it. <C-space> toggles the menu
 			ghost_text = {
 				enabled = true,
-				show_with_menu = true,
+				show_with_menu = false,
 				show_without_menu = true,
 				show_with_selection = true,
 				show_without_selection = true,
@@ -48,8 +48,7 @@ return {
 				treesitter_highlighting = true,
 			},
 			menu = {
-				auto_show = true,
-				auto_show_delay_ms = 150,
+				auto_show = false,
 				draw = {
 					treesitter = { "lsp" },
 					columns = {
