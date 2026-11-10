@@ -70,6 +70,21 @@ map("n", "<leader>ih", function()
 	vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
 end, { desc = "Toggle inlay hints" })
 
+-- js/ts: ts_ls source actions and the eslint fix command from lspconfig
+map("n", "<leader>xo", function()
+	vim.lsp.buf.code_action({
+		context = { only = { "source.organizeImports" }, diagnostics = {} },
+		apply = true,
+	})
+end, { desc = "Organize imports" })
+map("n", "<leader>xe", function()
+	if vim.fn.exists(":LspEslintFixAll") == 2 then
+		vim.cmd("LspEslintFixAll")
+	else
+		vim.notify("eslint is not attached", vim.log.levels.WARN)
+	end
+end, { desc = "Fix all eslint problems" })
+
 -- run, build, check and test in a floating terminal
 local function term(cmd)
 	require("toggleterm").exec(cmd, 1, 15, nil, "float")
@@ -120,6 +135,8 @@ local builds = {
 	python = "python3 -m compileall -q .",
 	go = "go build ./...",
 	rust = "cargo build",
+	javascript = "npm run build",
+	typescript = "npm run build",
 	c = "make",
 	cpp = "make",
 }
@@ -128,6 +145,8 @@ local checks = {
 	python = "ruff check .",
 	go = "go vet ./...",
 	rust = "cargo check",
+	javascript = "npm run lint",
+	typescript = "npm run lint",
 	lua = "stylua --check .",
 	nix = "nix-instantiate --parse .",
 }
@@ -136,6 +155,8 @@ local tests = {
 	python = "pytest -q",
 	go = "go test ./...",
 	rust = "cargo test",
+	javascript = "npm test",
+	typescript = "npm test",
 }
 
 local function task(tbl, name)

@@ -136,6 +136,42 @@ for _, exe in ipairs({ "qmlls", "qs" }) do
 end
 vim.lsp.config("qmlls", { cmd = qmlls })
 
+-- javascript / typescript: ts_ls is the server, eslint lints, prettierd
+-- formats (conform). both look for the project's own node_modules first, the
+-- nix binaries are the fallback
+vim.lsp.config("ts_ls", {
+	settings = {
+		typescript = {
+			inlayHints = {
+				parameterNames = { enabled = "literals" },
+				parameterTypes = { enabled = true },
+				variableTypes = { enabled = true },
+				propertyDeclarationTypes = { enabled = true },
+				functionLikeReturnTypes = { enabled = true },
+				enumMemberValues = { enabled = true },
+			},
+		},
+		javascript = {
+			inlayHints = {
+				parameterNames = { enabled = "literals" },
+				parameterTypes = { enabled = true },
+				variableTypes = { enabled = true },
+				propertyDeclarationTypes = { enabled = true },
+				functionLikeReturnTypes = { enabled = true },
+				enumMemberValues = { enabled = true },
+			},
+		},
+	},
+})
+
+vim.lsp.config("eslint", {
+	settings = {
+		-- flat config is the default from eslint 9, eslintrc still works
+		-- through the project's own config file
+		workingDirectory = { mode = "location" },
+	},
+})
+
 -- prettierd formats these, keep the servers out of it
 for _, name in ipairs({ "html", "cssls", "jsonls" }) do
 	vim.lsp.config(name, { init_options = { provideFormatter = false } })
@@ -154,6 +190,7 @@ vim.lsp.enable({
 	"sqls",
 	"tinymist",
 	"ts_ls",
+	"eslint",
 	"html",
 	"cssls",
 	"jsonls",
