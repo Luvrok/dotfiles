@@ -15,14 +15,6 @@ in
 {
   imports = [ ./xray.nix ];
 
-  # 16 threads and 30 gb. max-jobs = auto starts every package at once and
-  # gives each 16 rustc, so a switch full of rust apps runs out of memory and
-  # the oom killer takes the build down. two builds of 6 threads is 12 rustc
-  nix.settings = {
-    max-jobs = 2;
-    cores = 6;
-  };
-
   # the voice assistant (Luvrok/jarvis), off for now: the module is mkIf
   # enable, so nothing of it runs, no unit, no models. its quickshell menu,
   # bar icon and key are hidden while it's off (modules/nixos/hyprland writes
