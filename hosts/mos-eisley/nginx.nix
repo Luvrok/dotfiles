@@ -1,57 +1,36 @@
-{ config, lib, ... }:
+{ lib, ... }:
 
 let
-  # metube needs basic auth. the htpasswd lives outside the repo until sops
-  # has an age key on mos-eisley (it is created on the host by hand)
-  enableMetube = true;
+  # one Let's Encrypt certificate per host. the vhosts themselves are in
+  # nginx/http.conf, so this list has to stay in sync with it
+  domains = [
+    "anki.vxrnt.ru"
+    "betanin.vxrnt.ru"
+    "kavita.vxrnt.ru"
+    "koito.vxrnt.ru"
+    "lt.vxrnt.ru"
+    "metube.vxrnt.ru"
+    "navidrome.vxrnt.ru"
+    "obsidian.vxrnt.ru"
+    "qbt.vxrnt.ru"
+    "rss.vxrnt.ru"
+    "vxrnt.ru"
+  ];
 
-  services = {
-    "navidrome.vxrnt.ru" = 4533;
-    "kavita.vxrnt.ru" = 4545;
-    "qbt.vxrnt.ru" = 8129;
-    "anki.vxrnt.ru" = 8130;
-    "koito.vxrnt.ru" = 4110;
-    "betanin.vxrnt.ru" = 9393;
-    "rss.vxrnt.ru" = 8180;
-  }
-  // lib.optionalAttrs enableMetube {
-    "metube.vxrnt.ru" = 8081;
-  };
-
-  mkHost = host: port: {
-    enableACME = true;
-    forceSSL = true;
-    listen = [
-      {
-        addr = "127.0.0.1";
-        port = 8443;
-        ssl = true;
-      }
-      {
-        addr = "0.0.0.0";
-        port = 80;
-        ssl = false;
-      }
-      {
-        addr = "[::]";
-        port = 80;
-        ssl = false;
-      }
-    ];
-    locations."/" = {
-      proxyPass = "http://127.0.0.1:${toString port}";
-      proxyWebsockets = true;
-      extraConfig = ''
-        client_max_body_size 0;
-        proxy_read_timeout 3600s;
-      '';
-    };
-  };
+  certServices = map (domain: "acme-${domain}.service") domains;
 in
 {
   security.acme = {
     acceptTerms = true;
     defaults.email = "an0ni442@yandex.ru";
+
+    certs = lib.genAttrs domains (domain: {
+      group = "nginx";
+      reloadServices = [ "nginx.service" ];
+      # the same public directory the vhosts in http.conf answer challenges from
+      webroot = "/var/lib/acme/acme-challenge";
+      extraDomainNames = lib.optional (domain == "vxrnt.ru") "www.vxrnt.ru";
+    });
   };
 
   # TODO: sops. once mos-eisley has an age key, read this from
@@ -72,98 +51,20 @@ in
     appendHttpConfig = ''
       absolute_redirect off;
       add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+      include ${./nginx/http.conf};
     '';
 
     streamConfig = ''
-      map $ssl_preread_server_name $upstream {
-        vxrnt.ru               web;
-        www.vxrnt.ru           web;
-        navidrome.vxrnt.ru     web;
-        kavita.vxrnt.ru        web;
-        qbt.vxrnt.ru           web;
-        anki.vxrnt.ru          web;
-        koito.vxrnt.ru         web;
-        lt.vxrnt.ru            web;
-        betanin.vxrnt.ru       web;
-        metube.vxrnt.ru        web;
-        obsidian.vxrnt.ru      web;
-        rss.vxrnt.ru           web;
-        default                xray;
-      }
-
-      upstream web  { server 127.0.0.1:8443; }
-      upstream xray { server 127.0.0.1:10443; }
-
-      server {
-        listen 0.0.0.0:443;
-        listen [::]:443;
-        ssl_preread on;
-        proxy_pass $upstream;
-      }
+      include ${./nginx/stream.conf};
     '';
+  };
 
-    virtualHosts = {
-      "vxrnt.ru" = {
-        serverAliases = [ "www.vxrnt.ru" ];
-        root = "/var/www/vxrnt.ru";
-        enableACME = true;
-        forceSSL = true;
-        listen = [
-          {
-            addr = "127.0.0.1";
-            port = 8443;
-            ssl = true;
-          }
-          {
-            addr = "0.0.0.0";
-            port = 80;
-            ssl = false;
-          }
-        ];
-      };
-
-      "lt.vxrnt.ru" =
-        let
-          base = mkHost "lt.vxrnt.ru" 5389;
-        in
-        base
-        // {
-          locations = base.locations // {
-            "= /sync".proxyPass = "http://127.0.0.1:8291";
-            "= /rules".proxyPass = "http://127.0.0.1:8291";
-            "= /subtitle-translator".return = "301 /subtitle-translator/";
-            "/subtitle-translator/" = {
-              proxyPass = "http://127.0.0.1:5390";
-              extraConfig = ''
-                client_max_body_size 20m;
-                proxy_read_timeout 3600s;
-                proxy_send_timeout 3600s;
-              '';
-            };
-          };
-        };
-    }
-    // builtins.mapAttrs mkHost services
-    // lib.optionalAttrs (config.services.nginx.enable && enableMetube) {
-      "metube.vxrnt.ru" = mkHost "metube.vxrnt.ru" 8081 // {
-        basicAuthFile = "/var/lib/metube-htpasswd";
-      };
-    }
-    // {
-      # couchdb for obsidian-livesync, auth and cors are on couchdb's side
-      "obsidian.vxrnt.ru" =
-        let
-          base = mkHost "obsidian.vxrnt.ru" 5984;
-        in
-        base
-        // {
-          locations."/" = base.locations."/" // {
-            extraConfig = base.locations."/".extraConfig + ''
-              # fetch stalls with buffering on
-              proxy_buffering off;
-            '';
-          };
-        };
-    };
+  # with the vhosts in a plain file the module cannot see them, so nginx has
+  # to be ordered after the certificate services by hand
+  systemd.services.nginx = {
+    wants = certServices;
+    after = certServices;
+    before = map (domain: "acme-order-renew-${domain}.service") domains;
   };
 }
