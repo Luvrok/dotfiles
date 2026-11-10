@@ -44,7 +44,8 @@
         write: yes
         resume: ask
         detail: yes
-        duplicate_verbose_prompt: yes
+        # one prompt per album, not per duplicate track
+        duplicate_verbose_prompt: no
         quiet_fallback: skip
         log: /var/lib/beets/import.log
 
@@ -129,7 +130,11 @@
     };
     script = ''
       beet subsonicplaylist
-      beet remove -d -f 'subsonic_playlist:;delete;'
+      # an empty or fully stale playlist is not an error: beet remove exits 1
+      # when the query matches nothing
+      if [ -n "$(beet ls -f '$id' 'subsonic_playlist:;delete;')" ]; then
+        beet remove -d -f 'subsonic_playlist:;delete;'
+      fi
     '';
   };
 
