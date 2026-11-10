@@ -1,8 +1,17 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   betaninHook = pkgs.writeShellScript "qbittorrent-betanin-hook" ''
-    [ "$1" = music ] || exit 0
+    # the category is usually empty: decide by where the torrent landed
+    case "$2" in
+      /var/lib/media/inbox/*) ;;
+      *) [ "$1" = music ] || exit 0 ;;
+    esac
     exec ${lib.getExe pkgs.curl} -fsS -X POST \
       -H @${config.sops.templates."qbittorrent-betanin-header".path} \
       --data-urlencode "both=$2" \
@@ -39,7 +48,8 @@ in
       };
       AutoRun = {
         enabled = true;
-        program = "${betaninHook} %L %F";
+        # quoted: qBittorrent splits the command line on whitespace otherwise
+        program = ''"${betaninHook}" %L "%F"'';
       };
       Preferences.WebUI = {
         Password_PBKDF2 = "AdlI4JvcoZzFByY6dwJAEw==:D1k5ETcTQH8KByb9mTz065YBBV4uMmMyoc5tKoWjXv18cZ/hEJh6JZuMWTMibtbAe+ses/v0Qbl6t3nLLUHiRg==";
