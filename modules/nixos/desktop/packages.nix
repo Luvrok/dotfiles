@@ -59,6 +59,7 @@
       basedpyright
       bash-language-server
       shellcheck # bashls lints with it
+      emmet-language-server # jsx/tsx and html/css abbreviations
       lua-language-server
       marksman
       nixd

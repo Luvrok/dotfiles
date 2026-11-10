@@ -189,6 +189,10 @@ map("n", "<leader>xt", function()
 	task(tests, "test")
 end, { desc = "Test project" })
 
+map("n", "<leader>xd", function()
+	term("npm run dev")
+end, { desc = "Dev server" })
+
 -- close the completion popup on click, then let the click through
 for _, lhs in ipairs({ "<LeftMouse>", "<RightMouse>" }) do
 	map("i", lhs, function()

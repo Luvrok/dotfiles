@@ -138,27 +138,33 @@ vim.lsp.config("qmlls", { cmd = qmlls })
 
 -- javascript / typescript: ts_ls is the server, eslint lints, prettierd
 -- formats (conform). both look for the project's own node_modules first, the
--- nix binaries are the fallback
+-- nix binaries are the fallback. react/vite: ts_ls reads tsconfig/jsconfig,
+-- emmet expands jsx and css abbreviations
+local jsInlayHints = {
+	parameterNames = { enabled = "literals" },
+	parameterTypes = { enabled = true },
+	variableTypes = { enabled = true },
+	propertyDeclarationTypes = { enabled = true },
+	functionLikeReturnTypes = { enabled = true },
+	enumMemberValues = { enabled = true },
+}
+
 vim.lsp.config("ts_ls", {
 	settings = {
 		typescript = {
-			inlayHints = {
-				parameterNames = { enabled = "literals" },
-				parameterTypes = { enabled = true },
-				variableTypes = { enabled = true },
-				propertyDeclarationTypes = { enabled = true },
-				functionLikeReturnTypes = { enabled = true },
-				enumMemberValues = { enabled = true },
+			inlayHints = jsInlayHints,
+			preferences = {
+				jsxAttributeCompletionStyle = "auto",
+				includePackageJsonAutoImports = "auto",
+				includeCompletionsForModuleExports = true,
 			},
 		},
 		javascript = {
-			inlayHints = {
-				parameterNames = { enabled = "literals" },
-				parameterTypes = { enabled = true },
-				variableTypes = { enabled = true },
-				propertyDeclarationTypes = { enabled = true },
-				functionLikeReturnTypes = { enabled = true },
-				enumMemberValues = { enabled = true },
+			inlayHints = jsInlayHints,
+			preferences = {
+				jsxAttributeCompletionStyle = "auto",
+				includePackageJsonAutoImports = "auto",
+				includeCompletionsForModuleExports = true,
 			},
 		},
 	},
@@ -191,6 +197,7 @@ vim.lsp.enable({
 	"tinymist",
 	"ts_ls",
 	"eslint",
+	"emmet_language_server",
 	"html",
 	"cssls",
 	"jsonls",
