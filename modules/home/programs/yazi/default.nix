@@ -19,6 +19,13 @@ let
     rev = "71b14a3d624572f4884354c2e218296e9ece07cc";
     hash = "sha256-uQO0C00yOFPWq8KEO/kEZM6tFZRc9SiXfgN7kzlwDeA=";
   };
+  # newer than the nixpkgs pin, the old one has no `set` option yet
+  full-border = pkgs.fetchFromGitHub {
+    owner = "yazi-rs";
+    repo = "plugins";
+    rev = "1ef5fe02a6122f8f3bb47a41056aab3f4b8598bf";
+    hash = "sha256-Nz6AvWAiwdmH2HJ2vA3rMfbDDHSkXG20Ml6vc5yrjRM=";
+  };
 in
 {
   programs.yazi = {
@@ -31,7 +38,7 @@ in
     ];
 
     plugins = {
-      inherit (pkgs.yaziPlugins) full-border;
+      full-border = "${full-border}/full-border.yazi";
       inherit (pkgs.yaziPlugins) smart-enter;
       inherit (pkgs.yaziPlugins) jump-to-char;
       inherit (pkgs.yaziPlugins) smart-filter;

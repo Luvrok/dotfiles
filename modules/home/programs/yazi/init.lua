@@ -23,7 +23,7 @@ require("bunny"):setup({
 })
 
 require("full-border"):setup({
-	type = ui.Border.PLAIN,
+	set = "plain",
 })
 
 require("yatline"):setup({
