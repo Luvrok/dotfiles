@@ -174,6 +174,10 @@
       gridcraft
       pdfcraft
       deckcraft
+      soundcraft
+      effectcraft
+      figcraft
+      filmcraft
 
       # --- games ---
       prismlauncher

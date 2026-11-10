@@ -90,4 +90,28 @@ in
     version = "0.17.0";
     hash = "sha256-oD0vCRpUHDKxT09n3olynShpjcKT8fmmIvVBnWQ9pZc=";
   };
+
+  soundcraft = craftApp {
+    pname = "soundcraft";
+    version = "0.19.0";
+    hash = "sha256-qt7XTk8TLAM6zBIjx3anTlmnUdyQiEG0wxVy44k5GY8=";
+  };
+
+  effectcraft = craftApp {
+    pname = "effectcraft";
+    version = "0.23.1";
+    hash = "sha256-eQVIXX6RmZoMGey6RH0N/RHBO92xMr35zKZc2LYGcfs=";
+  };
+
+  figcraft = craftApp {
+    pname = "figcraft";
+    version = "0.17.0";
+    hash = "sha256-p0nZ+AdMvS3H0EoW1HJiABolKDkfoVO9bFxOT4TI5BQ=";
+  };
+
+  filmcraft = craftApp {
+    pname = "filmcraft";
+    version = "0.19.0";
+    hash = "sha256-LwnP9pY7VbwhYBWAYK+N4iaw7I/CI6GYsQFFpY4jj+g=";
+  };
 }

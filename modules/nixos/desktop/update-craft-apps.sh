@@ -10,7 +10,7 @@ file=${1:-modules/nixos/desktop/craft-apps.nix}
 	exit 1
 }
 
-apps=(photocraft vectorcraft wordcraft gridcraft pdfcraft deckcraft)
+apps=(photocraft vectorcraft wordcraft gridcraft pdfcraft deckcraft soundcraft effectcraft figcraft filmcraft)
 
 for app in "${apps[@]}"; do
 	release=$(curl -fsSL "https://api.github.com/repos/storytold/$app/releases/latest")
