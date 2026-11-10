@@ -26,6 +26,10 @@ let
     appimageTools.wrapType2 {
       inherit pname version src;
 
+      # the app lives on after the menu's helper exits: bwrap's default
+      # --die-with-parent would take it down with that helper
+      dieWithParent = false;
+
       # egui/wgpu apps: the renderer, wayland/x11 and the clipboard come from
       # the system, not from the appimage
       extraPkgs =
