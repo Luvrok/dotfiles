@@ -20,6 +20,14 @@
     zapret-discord-youtube.url = "github:kartavkun/zapret-discord-youtube";
     lazygit.url = "github:jesseduffield/lazygit";
 
+    # apps that must move without touching the system nixpkgs: update with
+    # `nix flake update apps`. only the packages listed in the overlay below
+    # are taken from this snapshot
+    apps.url = "github:nixos/nixpkgs/nixos-unstable";
+
+    # xray gets its own snapshot: `nix flake update xray`
+    xray.url = "github:nixos/nixpkgs/nixos-unstable";
+
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -48,10 +56,24 @@
       disko,
       sops-nix,
       zapret-discord-youtube,
+      apps,
+      xray,
       ...
     }@inputs:
     let
       system = "x86_64-linux";
+
+      # snapshots for the packages that have to update on their own, see the
+      # inputs. everything else comes from the main nixpkgs
+      appsPkgs = import apps {
+        inherit system;
+        config.allowUnfree = true;
+      };
+      xrayPkgs = import xray {
+        inherit system;
+        config.allowUnfree = true;
+      };
+
       pkgs = import nixpkgs {
         inherit system;
         config = {
@@ -59,6 +81,19 @@
           allowUnfree = true;
           allowInsecure = false;
         };
+        overlays = [
+          (final: prev: {
+            inherit (appsPkgs)
+              photocraft
+              vectorcraft
+              wordcraft
+              gridcraft
+              pdfcraft
+              deckcraft
+              ;
+            inherit (xrayPkgs) xray;
+          })
+        ];
       };
 
       # the compositor and the shell, from their own snapshot (see the input)

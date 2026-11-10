@@ -168,6 +168,12 @@
       worldpainter
       typstwriter
       anki
+      photocraft
+      vectorcraft
+      wordcraft
+      gridcraft
+      pdfcraft
+      deckcraft
 
       # --- games ---
       prismlauncher

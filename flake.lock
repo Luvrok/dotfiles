@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "apps": {
+      "locked": {
+        "lastModified": 1794042290,
+        "narHash": "sha256-ziZn2PvCJE5JEEpqTdxXwJpPB+L3YqoCpTAMCzyaP3U=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "f4a03c008967841f2a0b3cb7c436fc6fc31671f6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "disko": {
       "inputs": {
         "nixpkgs": [
@@ -366,6 +382,7 @@
     },
     "root": {
       "inputs": {
+        "apps": "apps",
         "disko": "disko",
         "home-manager": "home-manager",
         "jarvis": "jarvis",
@@ -376,6 +393,7 @@
         "sops-nix": "sops-nix",
         "textfoxy": "textfoxy",
         "voidsddm": "voidsddm",
+        "xray": "xray",
         "zapret-discord-youtube": "zapret-discord-youtube"
       }
     },
@@ -481,6 +499,22 @@
       "original": {
         "owner": "Luvrok",
         "repo": "VoidSDDM",
+        "type": "github"
+      }
+    },
+    "xray": {
+      "locked": {
+        "lastModified": 1794042290,
+        "narHash": "sha256-ziZn2PvCJE5JEEpqTdxXwJpPB+L3YqoCpTAMCzyaP3U=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "f4a03c008967841f2a0b3cb7c436fc6fc31671f6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
         "type": "github"
       }
     },
