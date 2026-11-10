@@ -88,9 +88,13 @@
               vectorcraft
               wordcraft
               gridcraft
-              pdfcraft
               deckcraft
               ;
+            # this nixpkgs' cargo hook exports AWS_LC_SYS_USE_SYSTEM, so
+            # aws-lc-sys needs the system aws-lc in the build inputs
+            pdfcraft = appsPkgs.pdfcraft.overrideAttrs (old: {
+              buildInputs = (old.buildInputs or [ ]) ++ [ appsPkgs.aws-lc ];
+            });
             inherit (xrayPkgs) xray;
           })
         ];
