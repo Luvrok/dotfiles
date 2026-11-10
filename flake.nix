@@ -131,6 +131,24 @@
         };
     in
     {
+      # bump the storytold AppImages to their latest releases:
+      # nix run .#update-craft-apps
+      apps.${system}.update-craft-apps = {
+        type = "app";
+        program = "${
+          pkgs.writeShellApplication {
+            name = "update-craft-apps";
+            runtimeInputs = with pkgs; [
+              curl
+              jq
+              nix
+              perl
+            ];
+            text = builtins.readFile ./modules/nixos/desktop/update-craft-apps.sh;
+          }
+        }/bin/update-craft-apps";
+      };
+
       nixosConfigurations.barnard = nixpkgs.lib.nixosSystem {
         inherit pkgs;
         specialArgs = {

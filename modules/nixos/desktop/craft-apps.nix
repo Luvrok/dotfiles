@@ -1,6 +1,7 @@
 # the StoryTold apps as the upstream prebuilt AppImages. building them from
 # source means compiling a rust workspace and its test suite on every update;
 # the releases already ship a wrapped binary, so nix only extracts and wraps it
+# bump the versions and hashes with `nix run .#update-craft-apps`
 { pkgs }:
 
 let
