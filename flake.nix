@@ -20,11 +20,6 @@
     zapret-discord-youtube.url = "github:kartavkun/zapret-discord-youtube";
     lazygit.url = "github:jesseduffield/lazygit";
 
-    # apps that must move without touching the system nixpkgs: update with
-    # `nix flake update apps`. only the packages listed in the overlay below
-    # are taken from this snapshot
-    apps.url = "github:nixos/nixpkgs/nixos-unstable";
-
     # xray gets its own snapshot: `nix flake update xray`
     xray.url = "github:nixos/nixpkgs/nixos-unstable";
 
@@ -56,19 +51,13 @@
       disko,
       sops-nix,
       zapret-discord-youtube,
-      apps,
       xray,
       ...
     }@inputs:
     let
       system = "x86_64-linux";
 
-      # snapshots for the packages that have to update on their own, see the
-      # inputs. everything else comes from the main nixpkgs
-      appsPkgs = import apps {
-        inherit system;
-        config.allowUnfree = true;
-      };
+      # xray is the one package that needs a newer nixpkgs than the system's
       xrayPkgs = import xray {
         inherit system;
         config.allowUnfree = true;
@@ -82,33 +71,26 @@
           allowInsecure = false;
         };
         overlays = [
-          (final: prev: {
-            # desktop apps: install them, don't run their test suites. the
-            # checks compile every integration test in release mode and take
-            # tens of minutes; they don't affect the installed binaries
-            photocraft = appsPkgs.photocraft.overrideAttrs (_: {
-              doCheck = false;
-            });
-            vectorcraft = appsPkgs.vectorcraft.overrideAttrs (_: {
-              doCheck = false;
-            });
-            wordcraft = appsPkgs.wordcraft.overrideAttrs (_: {
-              doCheck = false;
-            });
-            gridcraft = appsPkgs.gridcraft.overrideAttrs (_: {
-              doCheck = false;
-            });
-            deckcraft = appsPkgs.deckcraft.overrideAttrs (_: {
-              doCheck = false;
-            });
-            # this nixpkgs' cargo hook exports AWS_LC_SYS_USE_SYSTEM, so
-            # aws-lc-sys needs the system aws-lc in the build inputs
-            pdfcraft = appsPkgs.pdfcraft.overrideAttrs (old: {
-              doCheck = false;
-              buildInputs = (old.buildInputs or [ ]) ++ [ appsPkgs.aws-lc ];
-            });
-            inherit (xrayPkgs) xray;
-          })
+          (
+            final: prev:
+            let
+              craftApps = import ./modules/nixos/desktop/craft-apps.nix { pkgs = prev; };
+            in
+            {
+              # the StoryTold apps come from their upstream AppImages, no
+              # rust build and no test suite. versions and hashes live in
+              # craft-apps.nix
+              inherit (craftApps)
+                photocraft
+                vectorcraft
+                wordcraft
+                gridcraft
+                pdfcraft
+                deckcraft
+                ;
+              inherit (xrayPkgs) xray;
+            }
+          )
         ];
       };
 
