@@ -122,6 +122,115 @@
       ],
       "enabled": true,
       "timeout": 120000
+    },
+    "vectorcraft": {
+      "type": "local",
+      "command": [
+        "vectorcraft-cli",
+        "mcp",
+        "--automation-read-root",
+        "/home/barnard/HOME/wizzard/Holocron/9-files",
+        "--automation-write-root",
+        "/home/barnard/HOME/wizzard/Holocron/9-files"
+      ],
+      "enabled": true,
+      "timeout": 120000
+    },
+    "wordcraft": {
+      "type": "local",
+      "command": [
+        "wordcraft-cli",
+        "mcp",
+        "--automation-read-root",
+        "/home/barnard/HOME/wizzard/Holocron/9-files",
+        "--automation-write-root",
+        "/home/barnard/HOME/wizzard/Holocron/9-files"
+      ],
+      "enabled": true,
+      "timeout": 120000
+    },
+    "gridcraft": {
+      "type": "local",
+      "command": [
+        "gridcraft-cli",
+        "mcp"
+      ],
+      "enabled": true,
+      "timeout": 120000
+    },
+    "pdfcraft": {
+      "type": "local",
+      "command": [
+        "pdfcraft-cli",
+        "mcp",
+        "--automation-read-root",
+        "/home/barnard/HOME/wizzard/Holocron/9-files",
+        "--automation-write-root",
+        "/home/barnard/HOME/wizzard/Holocron/9-files"
+      ],
+      "enabled": true,
+      "timeout": 120000
+    },
+    "deckcraft": {
+      "type": "local",
+      "command": [
+        "deckcraft-cli",
+        "mcp",
+        "--automation-read-root",
+        "/home/barnard/HOME/wizzard/Holocron/9-files",
+        "--automation-write-root",
+        "/home/barnard/HOME/wizzard/Holocron/9-files"
+      ],
+      "enabled": true,
+      "timeout": 120000
+    },
+    "soundcraft": {
+      "type": "local",
+      "command": [
+        "soundcraft-cli",
+        "mcp",
+        "--automation-read-root",
+        "/home/barnard/HOME/wizzard/Holocron/9-files",
+        "--automation-write-root",
+        "/home/barnard/HOME/wizzard/Holocron/9-files"
+      ],
+      "enabled": true,
+      "timeout": 120000
+    },
+    "effectcraft": {
+      "type": "local",
+      "command": [
+        "effectcraft-cli",
+        "mcp",
+        "--automation-read-root",
+        "/home/barnard/HOME/wizzard/Holocron/9-files",
+        "--automation-write-root",
+        "/home/barnard/HOME/wizzard/Holocron/9-files"
+      ],
+      "enabled": true,
+      "timeout": 120000
+    },
+    "figcraft": {
+      "type": "local",
+      "command": [
+        "figcraft-cli",
+        "mcp",
+        "--automation-read-root",
+        "/home/barnard/HOME/wizzard/Holocron/9-files",
+        "--automation-write-root",
+        "/home/barnard/HOME/wizzard/Holocron/9-files"
+      ],
+      "enabled": true,
+      "timeout": 120000
+    },
+    "filmcraft": {
+      "type": "local",
+      "command": [
+        "filmcraft-cli",
+        "mcp"
+      ],
+      "enabled": true,
+      "timeout": 120000
     }
   },
   "permission": {
