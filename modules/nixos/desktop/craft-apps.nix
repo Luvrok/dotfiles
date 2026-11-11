@@ -46,6 +46,16 @@ let
         ];
 
       extraInstallCommands = ''
+        # the appimage also ships a <app>-cli, the mcp and automation entry
+        # point. nix only wraps the gui binary, so expose the cli as well
+        if [ -x ${contents}/usr/bin/${pname}-cli ]; then
+          cat > $out/bin/${pname}-cli <<WRAPPER
+#!${pkgs.runtimeShell}
+exec ${contents}/usr/bin/${pname}-cli "\$@"
+WRAPPER
+          chmod +x $out/bin/${pname}-cli
+        fi
+
         install -Dm444 ${contents}/${desktop} $out/share/applications/${desktop}
         if [ -d ${contents}/usr/share/icons ]; then
           mkdir -p $out/share
