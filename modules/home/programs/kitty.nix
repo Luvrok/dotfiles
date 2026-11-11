@@ -42,6 +42,10 @@
       "ctrl+shift+c" = "copy_to_clipboard";
       "ctrl+v" = "paste_from_clipboard";
       "ctrl+q" = "exit";
+      "ctrl+shift+equal" = "increase_font_size";
+      "ctrl+shift+plus" = "increase_font_size";
+      "ctrl+shift+minus" = "decrease_font_size";
+      "ctrl+shift+0" = "reset_font_size";
     };
   };
 }
