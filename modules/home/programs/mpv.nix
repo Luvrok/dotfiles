@@ -8,8 +8,7 @@
     scripts = with pkgs.mpvScripts; [
       # the hyprland bar and player menu see it (quickshell's Media.qml)
       mpris
-      # c: cut a clip out of what's playing
-      videoclip
+      # c: cut a clip out of what's playing (clip.lua in mpv-config)
       # >: skip an opening or ending, it only prompts on its own
       eisa01.smartskip
       # n: sync subtitles to the audio
