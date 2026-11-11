@@ -1,6 +1,12 @@
 { pkgs, ... }:
 
+let
+  smartcut = pkgs.callPackage ./mpv/smartcut { };
+in
 {
+  # the exact cut in mpv-config's clip.lua
+  home.packages = [ smartcut ];
+
   programs.mpv = {
     enable = true;
     # the keys are in modules/nixos/desktop/overlays/mpv/input.conf, the settings in
