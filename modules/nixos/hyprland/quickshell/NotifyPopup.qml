@@ -6,8 +6,8 @@ import Quickshell.Services.Notifications
 
 // the notification popup: one at a time, the newest (Notifs.current), at
 // the bottom in the middle of the monitor that had focus, drawn like the
-// menus. it goes after 5 s (3 s low, the app's own time if it sets one,
-// else critical ones stay), the line at the bottom shows what's left. the
+// menus. it goes after 5 s (3 s low, 10 s critical, the app's own time if
+// it sets one), the line at the bottom shows what's left. the
 // pointer on it doesn't stop it, the pointer is often hidden and forgotten
 // there, and the menu has them all. left click: the default action, right
 // click: away (it stays in the menu), middle: dismissed. one per monitor,
@@ -51,7 +51,7 @@ PanelWindow {
             return 0;
         if (t > 0)
             return Math.max(2000, Math.min(15000, t < 100 ? t * 1000 : t));
-        return n.urgency === NotificationUrgency.Critical ? 0 : n.urgency === NotificationUrgency.Low ? 3000 : 5000;
+        return n.urgency === NotificationUrgency.Critical ? 10000 : n.urgency === NotificationUrgency.Low ? 3000 : 5000;
     }
 
     function restart() {
@@ -71,7 +71,7 @@ PanelWindow {
             fresh = true;
             shown = true;
             // it moved here from the other monitor: its time starts again,
-            // a critical one has none and stays
+            // a critical one has its 10 s
             restart();
         } else {
             countdown.stop();

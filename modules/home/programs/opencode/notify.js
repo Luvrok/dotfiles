@@ -17,10 +17,30 @@ export default {
     // permission id -> { child, notification id }, what is up on the screen
     const up = new Map();
 
+    // the daemon keeps a notification after its client leaves, killing
+    // notify-send doesn't close it: only CloseNotification does
+    function close(nid) {
+      execFile(
+        "gdbus",
+        [
+          "call", "--session",
+          "--dest", "org.freedesktop.Notifications",
+          "--object-path", "/org/freedesktop/Notifications",
+          "--method", "org.freedesktop.Notifications.CloseNotification",
+          String(nid),
+        ],
+        () => {},
+      );
+    }
+
     function ask(d) {
       if (!d.id || up.has(d.id)) return;
       const what = [d.action, ...(d.resources ?? [])].filter(Boolean).join(" ");
-      // -p prints the notification's id first, then the chosen action
+      // -p prints the notification's id first, then the chosen action. no
+      // -t on purpose: notify-send's wait ends with the notification's
+      // timeout, and an ask has to stay clickable until it's answered. the
+      // popup still slides away (NotifyPopup's critical time), the menu keeps
+      // the notification with its buttons
       const child = spawn(
         "notify-send",
         [
@@ -63,15 +83,7 @@ export default {
       up.delete(d.requestID);
       entry.child.removeAllListeners("close");
       entry.child.kill();
-      if (entry.nid !== null) {
-        execFile(
-          "notify-send",
-          // critical, but with a time: without it the popup stays until
-          // it is clicked, the ask is what the quickshell popup shows
-          ["-u", "critical", "-t", "10000", "-a", "opencode", "opencode asks", what || "permission"],
-          () => {},
-        );
-      }
+      if (entry.nid !== null) close(entry.nid);
     }
 
     (async () => {
@@ -80,14 +92,22 @@ export default {
         signal: stop.signal,
       })) {
         // server.connected always comes through a filtered subscription
-        if (event.type === "permission.asked") ask(event.data ?? {});
-        else if (event.type === "permission.replied") answered(event.data ?? {});
+        try {
+          if (event.type === "permission.asked") ask(event.data ?? {});
+          else if (event.type === "permission.replied") answered(event.data ?? {});
+        } catch {
+          // one bad event must not end the subscription
+        }
       }
     })().catch(() => {});
 
     return () => {
       stop.abort();
-      for (const { child } of up.values()) child.kill();
+      // opencode is going away: the asks it waits for go with it
+      for (const { child, nid } of up.values()) {
+        child.kill();
+        if (nid !== null) close(nid);
+      }
       up.clear();
     };
   },
