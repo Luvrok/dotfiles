@@ -109,6 +109,19 @@
         "SEARXNG_URL": "http://127.0.0.1:11433"
       },
       "enabled": true
+    },
+    "photocraft": {
+      "type": "local",
+      "command": [
+        "photocraft-cli",
+        "mcp",
+        "--automation-read-root",
+        "/home/barnard/HOME/wizzard/Holocron/9-files",
+        "--automation-write-root",
+        "/home/barnard/HOME/wizzard/Holocron/9-files"
+      ],
+      "enabled": true,
+      "timeout": 120000
     }
   },
   "permission": {
