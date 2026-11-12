@@ -67,61 +67,61 @@ in
 {
   photocraft = craftApp {
     pname = "photocraft";
-    version = "0.22.0";
-    hash = "sha256-zuk05sOMD/f4zX7gNpQSi+Bb4Tf8QwEYDi9xbn0qH58=";
+    version = "0.23.1";
+    hash = "sha256-BXR7PlJ+HgoMHeOZcDYc84yPyn6NPjYB7yCC+w5t0X8=";
   };
 
   vectorcraft = craftApp {
     pname = "vectorcraft";
-    version = "0.23.0";
-    hash = "sha256-ihMPRI+o3/CiedzvylYin1cCyzQRIyY0NtWHxFviqOQ=";
+    version = "0.24.1";
+    hash = "sha256-vc5+gumB+fTtC/JfpvJeb+T6sn6JZB5vlIiZ4BsTpRQ=";
   };
 
   wordcraft = craftApp {
     pname = "wordcraft";
-    version = "0.17.0";
-    hash = "sha256-YGs64zDHZ8+hkoA9uo63udKcZs3ynQyr3gg/F/Bq0Ws=";
+    version = "0.18.1";
+    hash = "sha256-u8XBWwbUQDz9WllHW9+SZKScK88fktEjMRtQqdzjyIg=";
   };
 
   gridcraft = craftApp {
     pname = "gridcraft";
-    version = "0.18.0";
-    hash = "sha256-/eL5mCrHaQJlIctvcQ7Ja02RmxY0rWixWyub9iRnAgw=";
+    version = "0.19.1";
+    hash = "sha256-WxzhCtbHotOJJJ39JZAQAUqF/OGqQsYn/EzaVxZx4iE=";
   };
 
   pdfcraft = craftApp {
     pname = "pdfcraft";
-    version = "0.20.0";
-    hash = "sha256-An5iKZuCNTYANz5sp0xEEhPvVAbnDSf38a734Fp4h40=";
+    version = "0.21.1";
+    hash = "sha256-cwJ2zamt2z1I8mxgJobRj8W8Dr42CmCi9SLXDP1CjSE=";
   };
 
   deckcraft = craftApp {
     pname = "deckcraft";
-    version = "0.17.0";
-    hash = "sha256-oD0vCRpUHDKxT09n3olynShpjcKT8fmmIvVBnWQ9pZc=";
+    version = "0.18.1";
+    hash = "sha256-aN+fBA0/bEzkqQSq3sYzlh+hmSSPChqjZvpkWXrgmGc=";
   };
 
   soundcraft = craftApp {
     pname = "soundcraft";
-    version = "0.19.0";
-    hash = "sha256-qt7XTk8TLAM6zBIjx3anTlmnUdyQiEG0wxVy44k5GY8=";
+    version = "0.20.1";
+    hash = "sha256-TbtAKkE+wqUxA7n6d9Y1bm/usIbZSXXJXmNcdLQ02vg=";
   };
 
   effectcraft = craftApp {
     pname = "effectcraft";
-    version = "0.23.1";
-    hash = "sha256-eQVIXX6RmZoMGey6RH0N/RHBO92xMr35zKZc2LYGcfs=";
+    version = "0.24.1";
+    hash = "sha256-n4oWz3QUfJ4qw7ZfpvW+lqPhDq2S3fCNVE9dOZCtZNw=";
   };
 
   figcraft = craftApp {
     pname = "figcraft";
-    version = "0.17.0";
-    hash = "sha256-p0nZ+AdMvS3H0EoW1HJiABolKDkfoVO9bFxOT4TI5BQ=";
+    version = "0.18.1";
+    hash = "sha256-lYaULdYxuWtMVSKYjp6AITkHuAIv+vvKYko/wRrnqek=";
   };
 
   filmcraft = craftApp {
     pname = "filmcraft";
-    version = "0.19.0";
-    hash = "sha256-LwnP9pY7VbwhYBWAYK+N4iaw7I/CI6GYsQFFpY4jj+g=";
+    version = "0.20.1";
+    hash = "sha256-SiWuyy6UgbZec1NSi8qeSoxTiN1V8Uhv/mRQLgi9+gI=";
   };
 }
