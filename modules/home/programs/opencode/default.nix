@@ -82,6 +82,7 @@ in
     "opencode/skills/deep-research".source = ./skills/deep-research;
     "opencode/skills/debugging".source = ./skills/debugging;
     "opencode/skills/verify".source = ./skills/verify;
+    "opencode/skills/effectcraft-motion".source = ./skills/effectcraft-motion;
     "opencode/skills/plan".source = ./skills/plan;
     "opencode/AGENTS.md".source = ./AGENTS.md;
     "opencode/commands".source = ./commands;

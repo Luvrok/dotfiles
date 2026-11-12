@@ -15,6 +15,7 @@
 - Web search: the `searxng_*` tools, by the rules below.
 - Library docs: the `docs` skill first (the local index, then the `context7_*` tools), web search after.
 - The user's Obsidian notes: the `notes` skill to find and answer from them, the `obsidian` skill to write or change them.
+- Animation in EffectCraft: the `effectcraft-motion` skill before keying anything, and the `effectcraft` MCP tools to run it.
 - Thorough research with a cited report: the `deep-research` skill, only when the user asks for it.
 - Something is broken and the cause is not obvious: the `debugging` skill before any fix.
 - Before saying something is done, fixed or working: the `verify` skill.
