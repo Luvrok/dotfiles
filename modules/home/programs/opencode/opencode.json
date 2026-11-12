@@ -290,7 +290,7 @@
       "~/.local/share/opencode/**": "allow",
       "/nix/store/**": "allow",
       "~/HOME/wizzard/Holocron/**": "allow",
-      "~/downloads/**": "allow"
+      "~/downloads/**": "ask"
     },
     "bash": {
       "*": "allow",
