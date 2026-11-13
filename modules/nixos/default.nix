@@ -8,5 +8,6 @@
     ./doh/local-doh.nix
     ./small-disk.nix
     ./kiss-worker.nix
+    ./xray-geodata.nix
   ];
 }
