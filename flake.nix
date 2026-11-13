@@ -228,6 +228,7 @@
         };
         modules = [
           disko.nixosModules.disko
+          sops-nix.nixosModules.sops
           ./modules/nixos
           ./hosts/kessel
           ./hosts/kessel/disk-config.nix

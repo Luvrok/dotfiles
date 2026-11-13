@@ -5,7 +5,16 @@
     # ./disk-config.nix
     ./hardware-configuration.nix
     ./network.nix
+    ./camouflage.nix
+    ./xray-users.nix
+    ./xray-traffic.nix
   ];
+
+  # the host key derived from /etc/ssh/ssh_host_ed25519_key is the recipient
+  # in .sops.yaml, so there is no extra key file to copy around
+  sops.defaultSopsFile = ../../secrets/kessel.yaml;
+  sops.defaultSopsFormat = "yaml";
+  sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 
   dotfiles.small-disk.enable = true;
 

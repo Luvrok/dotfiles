@@ -1,7 +1,9 @@
 keys:
   - &barnard  age18uengv7au9we7sh6j73y5u7yayucxdg5r62nk8trlgw2ycpkh58sphmrrz
   - &jedha    age1ylmhdnj5gp49p7403hjchxkyc8607snhmk8pdx76znyqk26htpeq2jma56
-  - &kessel   age1l0akldwr5q056yvhzsm9zwsdzkequrfj8qjlt2zdqr39hyywlewqyte3p7
+  # kessel: derived from /etc/ssh/ssh_host_ed25519_key (ssh-to-age), the
+  # host key that already exists on the vps, no separate key file
+  - &kessel   age1wd64fju9x2gspe5shqtu7nyl9yh5cawns0l5txtjr2lde0ztacts4aqar8
   - &mos-eisley age1e8gcp4eux9sfydkq9a8l7gm2qda7npg6e4e8yl8n9gjldk706cjsyqqt3v
 
 creation_rules:

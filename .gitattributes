@@ -1,4 +1,7 @@
 hosts/kessel/xray.json filter=git-crypt diff=git-crypt
+hosts/kessel/camouflage-domain.nix filter=git-crypt diff=git-crypt
+hosts/kessel/address.nix filter=git-crypt diff=git-crypt
+modules/nixos/desktop/private-hosts.nix filter=git-crypt diff=git-crypt
 hosts/jedha/xray.json filter=git-crypt diff=git-crypt
 hosts/barnard/xray.json filter=git-crypt diff=git-crypt
 hosts/mos-eisley/xray.json filter=git-crypt diff=git-crypt

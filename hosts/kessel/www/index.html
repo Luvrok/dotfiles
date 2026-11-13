@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Funcry — синхронизация файлов для небольших команд</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --fg: #1c1c1e;
+        --muted: #6b6b70;
+        --line: #e3e3e6;
+        --bg: #ffffff;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --fg: #e8e8ea;
+          --muted: #9a9aa2;
+          --line: #2c2c30;
+          --bg: #161618;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 0 24px;
+        font: 16px/1.6 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        color: var(--fg);
+        background: var(--bg);
+      }
+      main { max-width: 760px; margin: 0 auto; padding: 72px 0; }
+      .mark {
+        display: inline-block;
+        width: 34px;
+        height: 34px;
+        line-height: 34px;
+        text-align: center;
+        border-radius: 9px;
+        border: 1px solid var(--line);
+        font-weight: 600;
+      }
+      h1 { font-size: 34px; line-height: 1.2; margin: 28px 0 12px; letter-spacing: -0.01em; }
+      p.lead { color: var(--muted); margin: 0 0 36px; max-width: 56ch; }
+      section { border-top: 1px solid var(--line); padding-top: 22px; margin-top: 22px; }
+      h2 { font-size: 17px; margin: 0 0 6px; }
+      section p { margin: 0; color: var(--muted); }
+      footer {
+        margin-top: 56px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 14px;
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      a { color: inherit; }
+      code { font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span class="mark">F</span>
+      <h1>Синхронизация файлов для небольших команд</h1>
+      <p class="lead">
+        Funcry держит рабочую папку одинаковой на ноутбуке, домашнем компьютере
+        и сервере. Данные шифруются на устройстве, ключ остаётся у вас.
+      </p>
+
+      <section>
+        <h2>Без общего облака</h2>
+        <p>Файлы лежат на вашем сервере, мы не храним их копию.</p>
+      </section>
+      <section>
+        <h2>Шифрование до отправки</h2>
+        <p>Устройство шифрует изменения само, до того как они уйдут по сети.</p>
+      </section>
+      <section>
+        <h2>История и откат</h2>
+        <p>Каждая версия файла доступна, случайное удаление не страшно.</p>
+      </section>
+      <section>
+        <h2>Статус</h2>
+        <p>Закрытая бета, набор команд идёт по приглашениям.</p>
+      </section>
+
+      <footer>
+        <span>© 2026 Funcry</span>
+        <span>Закрытая бета</span>
+      </footer>
+    </main>
+  </body>
+</html>
