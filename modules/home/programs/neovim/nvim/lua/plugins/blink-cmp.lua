@@ -12,11 +12,21 @@ return {
 			implementation = "prefer_rust",
 		},
 
-		-- <CR> stays unmapped: enter always makes a newline
+		-- <CR> is below: it accepts in the open menu only, otherwise a newline
 		keymap = {
 			preset = "none",
 			["<Tab>"] = { "accept", "snippet_forward", "fallback" },
 			["<S-Tab>"] = { "snippet_backward", "fallback" },
+			-- the ghost text is accepted by enter in the menu, by the right
+			-- arrow anywhere, and by tab above
+			["<CR>"] = {
+				function(cmp)
+					if not cmp.is_menu_visible() then return false end
+					return cmp.accept()
+				end,
+				"fallback",
+			},
+			["<Right>"] = { "accept", "fallback" },
 			-- opens the menu, again closes it. docs open by themselves next to it
 			["<C-space>"] = { "show", "hide" },
 			["<C-e>"] = { "hide", "fallback" },
@@ -31,7 +41,9 @@ return {
 
 		completion = {
 			list = {
-				selection = { preselect = false, auto_insert = false },
+				-- preselect is what makes the ghost text acceptable at all:
+				-- without a selected item blink has nothing to accept
+				selection = { preselect = true, auto_insert = false },
 			},
 			-- no menu while typing: the first item shows inline and
 			-- <C-n>/<C-p> cycle it. <C-space> toggles the menu
