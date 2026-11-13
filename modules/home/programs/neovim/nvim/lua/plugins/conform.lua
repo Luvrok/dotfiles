@@ -13,6 +13,7 @@ return {
 			sql = { "sql_formatter" },
 			python = { "ruff_fix", "ruff_format" },
 			typst = { "typstyle" },
+			tex = { "latexindent" },
 			qml = { "qmlformat" },
 
 			html = { "prettierd" },

@@ -2,7 +2,7 @@
 local parsers = {
 	-- languages
 	"bash", "c", "cpp", "css", "dockerfile", "go", "gomod", "gosum", "gowork",
-	"html", "javascript", "json", "lua", "make", "markdown", "nix", "python",
+	"html", "javascript", "json", "latex", "lua", "make", "markdown", "nix", "python",
 	"qmljs", "rust", "scss", "sql", "toml", "tsx", "typescript", "typst", "xml",
 	"yaml", "zsh",
 	-- git

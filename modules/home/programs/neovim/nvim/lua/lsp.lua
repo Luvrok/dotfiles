@@ -124,6 +124,21 @@ vim.lsp.config("tinymist", {
 	},
 })
 
+-- latex: tectonic builds on every save (the pdf lands next to the .tex, zathura
+-- reloads it), chktex lints, latexindent formats through conform
+vim.lsp.config("texlab", {
+	settings = {
+		texlab = {
+			build = {
+				executable = "tectonic",
+				args = { "%f", "--synctex", "--keep-logs", "--keep-intermediates" },
+				onSave = true,
+			},
+			chktex = { onOpenAndSave = true },
+		},
+	},
+})
+
 -- the qml modules of qt and quickshell (import QtQuick, import Quickshell),
 -- from the same install prefixes, nothing comes from nix here
 local qmlls = { "qmlls" }
@@ -195,6 +210,7 @@ vim.lsp.enable({
 	"clangd",
 	"sqls",
 	"tinymist",
+	"texlab",
 	"ts_ls",
 	"eslint",
 	"emmet_language_server",
