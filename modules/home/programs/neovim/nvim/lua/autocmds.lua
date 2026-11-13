@@ -35,15 +35,3 @@ vim.api.nvim_create_autocmd("FileType", {
 		vim.opt_local.colorcolumn = "88"
 	end,
 })
-
--- the diagnostic under the cursor in a float, after updatetime
-vim.api.nvim_create_autocmd("CursorHold", {
-	group = group,
-	callback = function()
-		vim.diagnostic.open_float({
-			focus = false,
-			scope = "cursor",
-			close_events = { "BufLeave", "CursorMoved", "InsertEnter", "FocusLost" },
-		})
-	end,
-})

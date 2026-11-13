@@ -65,7 +65,36 @@ map("i", "<C-/>", "<Esc>gccgi", { remap = true, desc = "Toggle comment" })
 -- grr references, gri implementation, grt type, gO symbols, [d ]d diagnostics
 map("n", "gd", vim.lsp.buf.definition, { desc = "Go to definition" })
 map("n", "gD", vim.lsp.buf.declaration, { desc = "Go to declaration" })
-map("n", "<leader>d", vim.diagnostic.setloclist, { desc = "Diagnostics of the buffer" })
+
+-- the diagnostics of the cursor line in a float, nothing shows up on its own.
+-- the same key closes it, so does moving the cursor, q and esc. the whole
+-- buffer still goes to the loclist
+local function toggle_diagnostics()
+	for _, win in ipairs(vim.api.nvim_list_wins()) do
+		local buf = vim.api.nvim_win_get_buf(win)
+		if vim.b[buf].diagnostic_float then
+			vim.api.nvim_win_close(win, true)
+			return
+		end
+	end
+	local bufnr, winnr = vim.diagnostic.open_float({
+		scope = "line",
+		focus = false,
+		header = "",
+		prefix = "",
+		close_events = { "CursorMoved", "CursorMovedI", "InsertEnter", "BufLeave", "FocusLost" },
+	})
+	if not winnr then
+		return
+	end
+	vim.b[bufnr].diagnostic_float = true
+	for _, lhs in ipairs({ "q", "<Esc>" }) do
+		map("n", lhs, "<cmd>close<CR>", { buffer = bufnr })
+	end
+end
+
+map("n", "<leader>d", toggle_diagnostics, { desc = "Diagnostics of this line" })
+map("n", "<leader>D", vim.diagnostic.setloclist, { desc = "Diagnostics of the buffer" })
 map("n", "<leader>ih", function()
 	vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
 end, { desc = "Toggle inlay hints" })

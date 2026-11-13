@@ -224,9 +224,13 @@ vim.lsp.enable({
 -- inlay hints in every buffer whose server has them (gopls, lua_ls, clangd, ...)
 vim.lsp.inlay_hint.enable()
 
+-- no diagnostic text in the buffer, it pushes the code around: only the signs
+-- in the sign column, the message is one key away (keymaps.lua, <leader>d)
 vim.diagnostic.config({
 	severity_sort = true,
-	virtual_text = { spacing = 2, prefix = "●" },
+	virtual_text = false,
+	virtual_lines = false,
+	signs = true,
 	underline = true,
 	update_in_insert = false,
 	float = {
