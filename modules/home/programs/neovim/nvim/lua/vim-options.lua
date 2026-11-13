@@ -5,7 +5,8 @@ local o = vim.opt
 
 -- ui
 o.number = true
-o.relativenumber = true
+-- absolute numbers, the cursor line is highlighted and the others don't move
+o.relativenumber = false
 o.cursorline = true
 o.signcolumn = "yes"
 o.showmode = false
