@@ -34,6 +34,7 @@
       yajl
       lazygit
       typst
+      tectonic # latex engine, pulls its packages on demand
       python3
       uv
 
@@ -69,6 +70,12 @@
       vscode-langservers-extracted
       yaml-language-server
       tinymist
+      texlab
+      # latexindent and chktex only, no engine: tectonic does the building.
+      # scheme-infraonly is what makes texmf.cnf in a combine, it is not a scheme
+      (texlive.combine {
+        inherit (texlive) scheme-infraonly latexindent chktex;
+      })
       kdePackages.qtdeclarative # qmlls and qmlformat, for quickshell
 
       # --- networking ---
