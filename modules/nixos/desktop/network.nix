@@ -26,6 +26,8 @@ let
   };
 in
 {
+  imports = [ ./private-hosts.nix ];
+
   dotfiles.doh.enable = true;
   dotfiles.doh-local.enable = true;
 
@@ -42,7 +44,6 @@ in
     hosts = {
       "192.168.0.217" = [ "jedha" ];
       "5.8.11.25" = [ "mos-eisley" ];
-      "45.38.20.187" = [ "kessel" ];
     };
 
     firewall = {

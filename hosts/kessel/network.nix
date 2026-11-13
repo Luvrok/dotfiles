@@ -1,5 +1,9 @@
 { ... }:
 
+let
+  # the public address lives in a git-crypt'd file, see address.nix
+  net = import ./address.nix;
+in
 {
   # DNS: resolved -> dnscrypt-proxy -> DoH
   dotfiles.doh.enable = true;
@@ -28,10 +32,10 @@
 
     networks."10-eth" = {
       matchConfig.Name = "enp0s4";
-      address = [ "45.38.20.187/32" ];
+      address = [ "${net.address}/${toString net.prefixLength}" ];
       routes = [
         {
-          Gateway = "100.195.242.189";
+          Gateway = net.gateway;
           GatewayOnLink = true;
         }
       ];
