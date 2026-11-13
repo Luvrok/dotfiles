@@ -185,6 +185,7 @@
       effectcraft
       figcraft
       filmcraft
+      youtube-music
 
       # --- games ---
       prismlauncher
