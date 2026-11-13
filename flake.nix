@@ -10,7 +10,7 @@
     # plain `nix flake update` leaves it alone: to bump it, put the rev of a
     # newer nixpkgs here, rebuild, test the session, and roll back to the
     # previous generation if it's worse
-    nixpkgs-hypr.url = "github:nixos/nixpkgs/1c89083e451e891152365b799595cf7790a43325";
+    nixpkgs-hypr.url = "github:nixos/nixpkgs/d4f25a3e562008648d45bcf2d70bcc7422cad84e";
 
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
