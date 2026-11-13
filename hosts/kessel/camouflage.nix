@@ -39,6 +39,9 @@ in
   };
 
   sops.secrets.nginx_conf = {
+    # the nginx master runs as user nginx, not root: it is the one that
+    # parses this file on start and on reload
+    owner = "nginx";
     mode = "0400";
     restartUnits = [ "nginx.service" ];
   };
