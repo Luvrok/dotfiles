@@ -71,6 +71,12 @@ hl.config({
     -- they're drawn at the top right
     debug = {
         error_position = 1,
+        -- a workaround, not a preference: with the default full damage
+        -- tracking 0.57.2 leaves stale regions on the screen after a window
+        -- is moved back to the workspace it came from (a screenshot or a tag
+        -- switch repaints them). monitor-wide damage hides it, at the cost of
+        -- a full repaint on every change. drop this once hyprland is fixed
+        damage_tracking = 1,
     },
 
     binds = {
