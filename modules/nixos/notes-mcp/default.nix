@@ -2,8 +2,8 @@
 # docs index (../docs-mcp): its own container, port and database, the same
 # image and the same vectors from llama-swap's embed (embeddinggemma-2, on
 # the cpu). read-only search over MCP for pi (modules/home/programs/pi).
-# the vault is scraped as one library, "notes": a full scrape when the
-# scrape args change, else a refresh every 30 min that skips unchanged notes.
+# the vault is scraped as libraries: a full scrape when a library's args
+# change, else a refresh every 30 min that skips unchanged notes.
 # needs llama-swap, so a desktop host (modules/nixos/desktop)
 {
   config,
@@ -20,7 +20,6 @@ let
   vault = "/home/${username}/HOME/wizzard/Holocron";
   # the vault inside the containers
   mount = "/notes";
-  library = "notes";
   # the same as ../docs-mcp, no latest: a new release can migrate the db
   image = "ghcr.io/arabold/docs-mcp-server:3.3.0";
   llamaSwap = "http://127.0.0.1:${toString config.services.llama-swap.port}";
@@ -61,21 +60,42 @@ let
   # one between slashes, no flags after them. hidden files and folders
   # (.obsidian, .trash, .anything) docs-mcp skips by itself, includeHidden
   # is off by default
-  scrapeArgs = [
-    "file://${mount}"
+  commonArgs = [
     "--scrape-mode=fetch"
     "--max-depth=50"
     "--max-pages=100000"
     "--exclude-pattern=/\\.(?!md$)[A-Za-z0-9]{1,8}$/"
-    # the folders themselves too: they're walked by their own urls
     "--exclude-pattern=**/copilot"
     "--exclude-pattern=**/copilot/**"
-    # plugins' files
     "--exclude-pattern=**/_meta"
     "--exclude-pattern=**/_meta/**"
   ];
-  # a change here scrapes the whole vault again
-  scrapeKey = builtins.hashString "sha256" (builtins.toJSON scrapeArgs);
+
+  # docs-mcp scopes a search by library and never by path, so what has to rank
+  # on its own gets its own library: notes are the human's notes, self is
+  # memory/ (the agent's memory and journal), wiki is the wiki the agent keeps
+  argsFor = sub: extra: [ "file://${mount}${sub}" ] ++ commonArgs ++ extra;
+
+  libraries = {
+    notes = argsFor "" [
+      # memory/ has its own library, a note would compete with a memory page
+      "--exclude-pattern=**/memory"
+      "--exclude-pattern=**/memory/**"
+      # the template is not a note
+      "--exclude-pattern=**/8-templates"
+      "--exclude-pattern=**/8-templates/**"
+    ];
+    self = argsFor "/memory" [
+      "--exclude-pattern=**/wiki"
+      "--exclude-pattern=**/wiki/**"
+    ];
+    wiki = argsFor "/memory/wiki" [
+      # generated on every join, read by path, not worth re-embedding
+      "--exclude-pattern=**/index.md"
+    ];
+  };
+  # per library, so changing the wiki leaves the notes index alone
+  keys = lib.mapAttrs (_: args: builtins.hashString "sha256" (builtins.toJSON args)) libraries;
 
   cliArgs = [
     "--network=host"
@@ -103,6 +123,12 @@ let
     '';
   };
 
+  syncSteps = lib.concatStringsSep "\n" (
+    lib.mapAttrsToList (
+      name: args: "sync_one ${name} ${keys.${name}} ${lib.escapeShellArgs args}"
+    ) libraries
+  );
+
   sync = pkgs.writeShellApplication {
     name = "notes-mcp-sync";
     runtimeInputs = [
@@ -110,15 +136,25 @@ let
       pkgs.jq
     ];
     text = ''
-      state=''${STATE_DIRECTORY:-/var/lib/notes-mcp-sync}/key
+      state=''${STATE_DIRECTORY:-/var/lib/notes-mcp-sync}/keys
+      mkdir -p "$state"
       existing=$(LOG_LEVEL=ERROR notes-mcp list </dev/null | jq -r '.[].name')
-      if grep -qxF ${library} <<<"$existing" && [ "$(cat "$state" 2>/dev/null)" = ${scrapeKey} ]; then
-        echo "refreshing ${library}"
-        exec notes-mcp refresh ${library} </dev/null
-      fi
-      echo "scraping ${library}"
-      notes-mcp scrape ${library} ${lib.escapeShellArgs scrapeArgs} --replace </dev/null
-      echo ${scrapeKey} >"$state"
+
+      sync_one() {
+        name=$1
+        key=$2
+        shift 2
+        if grep -qxF "$name" <<<"$existing" && [ "$(cat "$state/$name" 2>/dev/null)" = "$key" ]; then
+          echo "refreshing $name"
+          notes-mcp refresh "$name" </dev/null
+        else
+          echo "scraping $name"
+          notes-mcp scrape "$name" "$@" --replace </dev/null
+          echo "$key" >"$state/$name"
+        fi
+      }
+
+      ${syncSteps}
     '';
   };
 in
@@ -169,7 +205,7 @@ in
     };
     systemd.timers.notes-mcp-sync = {
       wantedBy = [ "timers.target" ];
-      restartTriggers = [ scrapeKey ];
+      restartTriggers = [ (builtins.hashString "sha256" (builtins.toJSON libraries)) ];
       timerConfig = {
         OnActiveSec = "2min";
         OnUnitInactiveSec = "30min";

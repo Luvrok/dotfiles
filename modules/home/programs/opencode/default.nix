@@ -84,6 +84,8 @@ in
     "opencode/skills/verify".source = ./skills/verify;
     "opencode/skills/effectcraft-motion".source = ./skills/effectcraft-motion;
     "opencode/skills/plan".source = ./skills/plan;
+    "opencode/skills/wiki".source = ./skills/wiki;
+    "opencode/skills/memory".source = ./skills/memory;
     "opencode/AGENTS.md".source = ./AGENTS.md;
     "opencode/commands".source = ./commands;
     # a notification when a permission rule says "ask"
