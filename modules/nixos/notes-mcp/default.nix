@@ -134,6 +134,7 @@ let
     runtimeInputs = [
       notes-mcp
       pkgs.jq
+      pkgs.coreutils
     ];
     text = ''
       state=''${STATE_DIRECTORY:-/var/lib/notes-mcp-sync}/keys
