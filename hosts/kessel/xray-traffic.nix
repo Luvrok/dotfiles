@@ -10,7 +10,11 @@ let
 
   # xray keeps counters, not history: the sampler asks with reset=true, so
   # every run returns "what happened since the previous run" and appends it
-  # to a monthly tsv. missing a run loses that slice, nothing else
+  # to a monthly tsv. missing a run loses that slice, nothing else.
+  #
+  # xray leaves `value` out entirely when a counter is still zero, so it must
+  # never reach tonumber as null: that made jq exit 5 and the whole sample die
+  # for as long as any of the eight users was idle
   sampler = pkgs.writeShellApplication {
     name = "xray-traffic-sample";
     runtimeInputs = [
@@ -23,14 +27,22 @@ let
       dir=${dir}
       install -d -m 0755 "$dir"
 
-      stats=$(xray api statsquery --server=127.0.0.1:10085 -pattern 'user>>>' -reset=true 2>/dev/null) || exit 0
+      if ! stats=$(xray api statsquery --server=127.0.0.1:10085 -pattern 'user>>>' -reset=true); then
+        echo "statsquery failed, this slice is lost" >&2
+        exit 0
+      fi
       [ -n "$stats" ] || exit 0
 
       ts=$(date '+%Y-%m-%d %H:%M')
       month=$(date +%Y-%m)
 
+      # a reset already happened in xray, so a half-written sample is bytes
+      # lost for good: build the rows in a temp file and append them in one go
+      tmp=$(mktemp)
+      trap 'rm -f "$tmp"' EXIT
+
       printf '%s' "$stats" | jq -r --arg ts "$ts" '
-        [ .stat[]? | select(.name | startswith("user>>>")) | { name: .name, value: (.value | tonumber) } ]
+        [ .stat[]? | select(.name | startswith("user>>>")) | { name: .name, value: ((.value // "0") | tonumber) } ]
         | map(. + { email: (.name | split(">>>")[1]), kind: (.name | split(">>>")[3]) })
         | group_by(.email)
         | .[]
@@ -41,7 +53,10 @@ let
           }
         | select(.email != null and (.up > 0 or .down > 0))
         | "\($ts)\t\(.email)\t\(.up)\t\(.down)"
-      ' >> "$dir/$month.tsv"
+      ' > "$tmp"
+
+      [ -s "$tmp" ] || exit 0
+      cat "$tmp" >> "$dir/$month.tsv"
 
       find "$dir" -maxdepth 1 -name '*.tsv' -mtime +400 -delete
     '';
@@ -202,6 +217,8 @@ in
 {
   systemd.services.xray-traffic = {
     description = "Sample per-user traffic from the xray api";
+    wants = [ "xray.service" ];
+    after = [ "xray.service" ];
     serviceConfig = {
       Type = "oneshot";
       ExecStart = lib.getExe sampler;
