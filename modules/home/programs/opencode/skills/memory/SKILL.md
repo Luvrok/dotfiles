@@ -96,6 +96,14 @@ Last consolidated: YYYY-MM-DD. Budget: 400 lines.
 ## Long-term (memory/long/, open on demand)
 ```
 
+## Weighing personal conclusions
+
+- Two kinds of claims about the user. What they said is a rule: keep the wording and the date. What you inferred from behaviour is a hypothesis: keep the date and how many cases it rests on.
+- One session is not a pattern. One low rating is not a disliked genre, one abandoned task is not a career direction, one short answer is not a mood.
+- Write a weak claim weak: "пока не заходит", "по двум случаям", not "не любит". A whole category never gets a cross from a single case.
+- New evidence that contradicts a hypothesis: rewrite it and say in one line what changed. Never keep "likes X" and "does not like X" side by side.
+- This covers taste, preferences, mood, health, career. It does not cover rules about the vault, note format or tooling: a correction there is absolute and applies at once.
+
 ## Rules
 
 - One fact per line, <= ~120 characters. Dates as `YYYY-MM-DD`.

@@ -71,5 +71,6 @@ Propose fixes. Deleting a page needs the user's word.
 
 - Never edit `memory/wiki/index.md` by hand: it is generated.
 - `overview.md` is 15-20 lines. A new domain there when a domain appears or disappears, not per page.
-- The wiki is not a dump: a point fact ("disliked this series") lives in a note or the journal. A principle about such facts can live here.
+- A principle needs two sources or an explicit decision. One source is a note, not a page.
+- A personal conclusion never becomes a wiki principle, even a weighed one: taste and preferences stay in `memory/`, the wiki keeps how things work and why.
 - Memory about the user (identity, preferences, state) stays in `memory/MEMORY.md` and `memory/long/`, not in the wiki.
