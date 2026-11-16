@@ -154,12 +154,9 @@ in
     };
   };
 
-  # termfilechooser falls back to /etc/xdg when ~/.config has no config
-  environment.etc."xdg/xdg-desktop-portal-termfilechooser/config".text = ''
-    [filechooser]
-    cmd=${pkgs.xdg-desktop-portal-termfilechooser}/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
-    env=TERMCMD=kitty --class filechooser
-  '';
+  # termfilechooser only reads $XDG_CONFIG_HOME and its own compiled-in
+  # sysconfdir (a nix store path), never /etc/xdg: the config lives in
+  # modules/home/default.nix
 
   # read by xdg-user-dirs-update, paths are relative to home
   environment.etc."xdg/user-dirs.defaults".text = ''

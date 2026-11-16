@@ -55,4 +55,15 @@
   };
 
   home.file.".config/.asoundrc".source = ./local/asoundrc;
+
+  # the terminal file chooser portal: it only looks in $XDG_CONFIG_HOME, not
+  # /etc/xdg, so the config has to be a user file (it says "no config file
+  # found, using the default" otherwise). One picker runs at a time and the
+  # backend waits for it, so a picker that never closes blocks every file
+  # dialog in every app.
+  xdg.configFile."xdg-desktop-portal-termfilechooser/config".text = ''
+    [filechooser]
+    cmd=${pkgs.xdg-desktop-portal-termfilechooser}/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
+    env=TERMCMD=kitty --title termfilechooser --class filechooser
+  '';
 }
