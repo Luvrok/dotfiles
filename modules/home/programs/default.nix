@@ -12,6 +12,7 @@
     ./mpv.nix
     # ./zathura.nix
     ./element-desktop.nix
+    ./thunderbird
     ./pi
     ./opencode
   ];
