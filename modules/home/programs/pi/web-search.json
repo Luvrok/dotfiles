@@ -6,7 +6,7 @@
   },
   "searchRouting": {
     "providers": ["searxng", "exa", "degoog", "duckduckgo", "keenable"],
-    "fallbackOn": ["transient", "quota", "network", "invalid-response", "empty", "domain-miss"]
+    "fallbackOn": ["transient", "quota", "network", "invalid-response", "unsupported"]
   },
   "workflow": "none",
   "youtube": {

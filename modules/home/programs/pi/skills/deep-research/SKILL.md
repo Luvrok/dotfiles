@@ -9,7 +9,7 @@ Web access comes from `web_search`, `fetch_content`, `get_search_content` and `s
 
 ## Two modes
 
-- Fast, the default. Omit `provider` on `web_search`. The route falls through SearXNG, Exa, degoog, DuckDuckGo and Keenable on `transient`, `quota`, `network`, `invalid-response`, `empty` and `domain-miss`. Third-party providers see the query, so this mode is only for non-sensitive topics.
+- Fast, the default. Omit `provider` on `web_search`. The route falls through SearXNG, Exa, degoog, DuckDuckGo and Keenable on `transient`, `quota`, `network`, `invalid-response` and `unsupported` (the installed pi-web-access 0.44.0 allows these five). Third-party providers see the query, so this mode is only for non-sensitive topics.
 - Private. Pass `provider: "searxng"` on every search when the topic is sensitive. Strict, no fallback: queries stay behind the local instance and its VPN. Slower, and a SearXNG ban stops the research until it clears.
 
 One SearXNG failure in Fast mode costs one fast attempt, then the route continues. After two SearXNG failures in one session, pass `provider: "exa"` for the remaining searches instead of waiting for the local instance each time.
@@ -32,7 +32,7 @@ One SearXNG failure in Fast mode costs one fast attempt, then the route continue
 
 ## Failure handling
 
-- Empty or off-topic result in Fast mode: the route moves on by itself. In Private mode, rephrase once, then take the next sub-question.
+- Empty or off-topic result: 0.44.0 does not fall through on it. Rephrase once, or pass `provider: "exa"` explicitly, then take the next sub-question.
 - `quota` from DuckDuckGo: the provider already pauses itself for 30 minutes. Do not retry it manually.
 - `fetch_content` returns a cookie notice or paywall: try the canonical URL, a Wikipedia mirror or the project docs once before giving up.
 - A guess is marked as a guess. Nothing is stated that no source said.
