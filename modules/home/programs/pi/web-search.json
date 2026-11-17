@@ -1,9 +1,12 @@
 {
   "searxngBaseUrl": "http://127.0.0.1:11433",
-  "provider": "searxng",
   "proxy": "http://127.0.0.1:10808",
   "ssrf": {
     "trustEnvProxy": true
+  },
+  "searchRouting": {
+    "providers": ["searxng", "exa", "degoog", "duckduckgo", "keenable"],
+    "fallbackOn": ["transient", "quota", "network", "invalid-response", "empty", "domain-miss"]
   },
   "workflow": "none",
   "youtube": {

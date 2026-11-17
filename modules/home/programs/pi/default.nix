@@ -36,6 +36,7 @@ in
     ".pi/agent/skills/notes".source = ./skills/notes;
     ".pi/agent/skills/obsidian".source = ./skills/obsidian;
     ".pi/agent/skills/docs".source = ./skills/docs;
+    ".pi/agent/skills/deep-research".source = ./skills/deep-research;
     ".pi/agent/skills/qwen-generate".source = ./skills/qwen-generate;
   };
 
