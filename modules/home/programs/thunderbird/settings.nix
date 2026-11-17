@@ -44,6 +44,9 @@ let
     "extensions.autoDisableScopes" = 0;
     # the hyprland file chooser portal instead of gtk's own dialog
     "widget.use-xdg-desktop-portal.file-picker" = 1;
+    # no "is thunderbird your default mail app" prompt on every start, the
+    # mailto handler is declared in modules/nixos/xdg
+    "mail.shell.checkDefaultClient" = false;
   };
 
   # Everything goes through xray's mixed inbound (hosts/barnard/xray.json):

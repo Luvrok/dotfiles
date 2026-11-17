@@ -124,6 +124,8 @@ in
           "application/pdf" = "org.pwmt.zathura.desktop";
           # or "yazi-kitty.desktop"
           "inode/directory" = "thunar.desktop";
+          # mailto from any app and from librewolf opens thunderbird
+          "x-scheme-handler/mailto" = "thunderbird.desktop";
         };
     };
 
