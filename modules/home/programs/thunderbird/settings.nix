@@ -45,7 +45,19 @@ let
     # the hyprland file chooser portal instead of gtk's own dialog
     "widget.use-xdg-desktop-portal.file-picker" = 1;
   };
+
+  # Everything goes through xray's mixed inbound (hosts/barnard/xray.json):
+  # it sends geoip:ru direct and the rest out through the vps. socks rather
+  # than http because imap and smtp are not http, and remote dns so yahoo
+  # resolves at the exit. with xray down there is no mail at all
+  proxy = {
+    "network.proxy.type" = 1;
+    "network.proxy.socks" = "127.0.0.1";
+    "network.proxy.socks_port" = 10808;
+    "network.proxy.socks_version" = 5;
+    "network.proxy.socks_remote_dns" = true;
+  };
 in
 {
-  settings = fonts // display // privacy // ui;
+  settings = fonts // display // privacy // ui // proxy;
 }
