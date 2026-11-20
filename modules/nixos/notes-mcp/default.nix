@@ -28,6 +28,19 @@ let
   podman = lib.getExe config.virtualisation.podman.package;
 
   configFile = (pkgs.formats.json { }).generate "notes-mcp.json" {
+    # docs-mcp-server calls itself documentation search by default; this
+    # instance indexes the vault, so the MCP client must be told that.
+    server = {
+      name = "notes-mcp";
+      title = "Obsidian vault notes";
+      instructions = ''
+        This server indexes the user's Obsidian vault, not software documentation.
+        Libraries: notes (all vault notes), self (memory/MEMORY.md, memory/long, memory/journal), wiki (memory/wiki).
+        Use search_docs with library notes, self or wiki, then read_page to read a whole note.
+        The index refreshes every 30 minutes; a note written just now is read by path, not search.
+        Tool descriptions mention documentation because of the underlying engine; here the pages are notes.
+      '';
+    };
     app = {
       telemetryEnabled = false;
       inherit embeddingModel;
