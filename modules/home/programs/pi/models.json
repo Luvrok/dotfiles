@@ -38,6 +38,33 @@
           }
         },
         {
+          "id": "qwen-coding",
+          "name": "Qwen3.8 27B coding",
+          "input": ["text"],
+          "contextWindow": 65536,
+          "maxTokens": 32768,
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "minimal": null,
+            "high": "xhigh"
+          },
+          "compat": {
+            "chatTemplateKwargs": {
+              "enable_thinking": { "$var": "thinking.enabled" },
+              "reasoning_effort": { "$var": "thinking.effort", "omitWhenOff": true },
+              "preserve_thinking": false
+            }
+          },
+          "samplingParamsByThinkingLevel": {
+            "off": {
+              "temperature": 0.7,
+              "top_p": 0.8,
+              "presence_penalty": 1.5,
+              "thinking_budget_tokens": 0
+            }
+          }
+        },
+        {
           "id": "qwen-uncensored",
           "name": "Qwen3.8 27B uncensored",
           "input": ["text"],
@@ -118,8 +145,60 @@
           }
         },
         {
+          "id": "inkling-coding",
+          "name": "Inkling 2 Mini coding",
+          "input": ["text"],
+          "contextWindow": 65536,
+          "maxTokens": 32768,
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": "minimal",
+            "low": "low",
+            "medium": "medium",
+            "high": "high"
+          },
+          "compat": {
+            "chatTemplateKwargs": {
+              "reasoning_effort": { "$var": "thinking.effort" }
+            }
+          },
+          "samplingParams": {
+            "temperature": 1.0,
+            "top_p": 1.0,
+            "top_k": 0,
+            "min_p": 0.0
+          }
+        },
+        {
           "id": "inkling-uncensored",
           "name": "Inkling 2 Mini uncensored",
+          "input": ["text"],
+          "contextWindow": 65536,
+          "maxTokens": 32768,
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": "minimal",
+            "low": "low",
+            "medium": "medium",
+            "high": "high"
+          },
+          "compat": {
+            "chatTemplateKwargs": {
+              "reasoning_effort": { "$var": "thinking.effort" }
+            }
+          },
+          "samplingParams": {
+            "temperature": 1.0,
+            "top_p": 1.0,
+            "top_k": 0,
+            "min_p": 0.0
+          }
+        },
+        {
+          "id": "inkling-uncensored-coding",
+          "name": "Inkling 2 Mini uncensored coding",
           "input": ["text"],
           "contextWindow": 65536,
           "maxTokens": 32768,

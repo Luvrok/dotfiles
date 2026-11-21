@@ -24,10 +24,13 @@
   "lastChangelogVersion": "1.4.0",
   "enabledModels": [
     "llama-swap/qwen",
+    "llama-swap/qwen-coding",
     "llama-swap/qwen-uncensored",
     "llama-swap/qwen-uncensored-vision",
     "llama-swap/inkling",
+    "llama-swap/inkling-coding",
     "llama-swap/inkling-uncensored",
+    "llama-swap/inkling-uncensored-coding",
     "llama-swap/gemma-26b",
     "llama-swap/gemma-12b",
     "llama-swap/gpt-oss"
