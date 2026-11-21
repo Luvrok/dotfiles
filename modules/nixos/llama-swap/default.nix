@@ -20,6 +20,12 @@ let
   llama-server-rocm = pkgs.writeShellScriptBin "llama-server-rocm" ''
     exec ${if nvidia then llama-cpp else pkgs.llama-cpp-rocm}/bin/llama-server "$@"
   '';
+  # nixpkgs' llama.cpp predates inkling2, and the loop-scale fix is newer than
+  # the 0.7.0 tag. it also builds with vulkan, so the igpu stays hidden below
+  llama-cpp-inkling = pkgs.callPackage ./llama-cpp-inkling.nix { };
+  llama-server-inkling = pkgs.writeShellScriptBin "llama-server-inkling" ''
+    exec ${llama-cpp-inkling}/bin/llama-server "$@"
+  '';
   # no gpu variant of it in nixpkgs: this one builds here, small
   sd-cpp = pkgs.stable-diffusion-cpp.override { vulkanSupport = true; };
 
@@ -52,6 +58,7 @@ in
     path = [
       llama-cpp
       llama-server-rocm
+      llama-server-inkling
       sd-cpp
     ];
 
