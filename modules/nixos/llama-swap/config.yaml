@@ -40,6 +40,19 @@ macros:
     ${inkling}
     --jinja
     --temp 1.0 --top-p 1.0 --top-k 0 --min-p 0
+  # the coding variants keep part of the weights in ram: qwen is dense, so
+  # --n-cpu-ffn, inkling is moe, so --n-cpu-moe (whole expert layers). n-cpu
+  # takes the first layers, and those sit outside the looped core (6-17), so
+  # their experts are read once per token instead of three times
+  qwen-coding-args: >
+    ${qwen-args}
+    --n-cpu-ffn 4
+  inkling-coding-args: >
+    ${inkling-args}
+    --n-cpu-moe 3
+  inkling-uc-coding-args: >
+    ${inkling-args}
+    --n-cpu-moe 4
   # --device none, since --gpu-layers 0 still runs batches on the gpu with a ~1 GB buffer
   embed-args: >
     ${llama}
@@ -106,6 +119,16 @@ models:
       --ctx-size 131072
     <<: *qwen-filters
 
+  # the stronger quant: the root of /var/lib/models is root-owned, so this
+  # file lives next to the uncensored build, where hf can write
+  "qwen-coding":
+    description: "Qwen3.8 27B UD-Q3_K_XL, 4 ffn layers on RAM, 64K. Coding."
+    cmd: |
+      ${qwen-coding-args}
+      -m ${models}/qwen3.8-27b-UC/Qwen3.8-27B-UD-Q3_K_XL.gguf
+      --ctx-size 65536
+    <<: *qwen-filters
+
   "qwen-uncensored":
     description: "Qwen3.8 27B GSQ-RCO IQ3_XXS abliterated, on GPU, 128K."
     cmd: |
@@ -134,11 +157,27 @@ models:
       --ctx-size 65536
     <<: *inkling-filters
 
+  "inkling-coding":
+    description: "Inkling 2 Mini UD-IQ4_XS, 3 expert layers on RAM, 64K."
+    cmd: |
+      ${inkling-coding-args}
+      -m ${models}/inkling-2-mini/Inkling-2-Mini-UD-IQ4_XS.gguf
+      --ctx-size 65536
+    <<: *inkling-filters
+
   "inkling-uncensored":
     description: "Inkling 2 Mini AD-IQ3_S abliterated, on GPU, 64K."
     cmd: |
       ${inkling-args}
       -m ${models}/inkling-2-mini/Inkling-2-Mini-Uncensored-AD-IQ3_S.gguf
+      --ctx-size 65536
+    <<: *inkling-filters
+
+  "inkling-uncensored-coding":
+    description: "Inkling 2 Mini AD-Q4_K abliterated, 4 expert layers on RAM, 64K."
+    cmd: |
+      ${inkling-uc-coding-args}
+      -m ${models}/inkling-2-mini/Inkling-2-Mini-Uncensored-AD-Q4_K.gguf
       --ctx-size 65536
     <<: *inkling-filters
 
@@ -351,10 +390,13 @@ routing:
           exclusive: false
           members:
             - qwen
+            - qwen-coding
             - qwen-uncensored
             - qwen-uncensored-vision
             - inkling
+            - inkling-coding
             - inkling-uncensored
+            - inkling-uncensored-coding
             - gemma-26b
             - gemma-12b
             - jarvis
