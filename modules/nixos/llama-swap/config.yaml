@@ -31,6 +31,15 @@ macros:
     -m ${models}/qwen3.8-27b-UC/Qwen3.8-27B-GSQ-RCO-IQ3_XXS-Uncensored-v1.1.gguf
     --chat-template-file ${models}/qwen3.8-27b-UC/froggeric-qwen3.8-tool-use.jinja
     --temp 0.6
+  # inkling2 has its own binary: nixpkgs' llama.cpp predates the looped arch
+  # (modules/nixos/llama-swap/llama-cpp-inkling.nix). --jinja is not optional,
+  # the template is what turns reasoning_effort into the thinking budget
+  inkling: llama-server-inkling --port ${PORT} --threads 8 -np 1
+  # the cards' sampling: temperature 1.0, no truncation
+  inkling-args: >
+    ${inkling}
+    --jinja
+    --temp 1.0 --top-p 1.0 --top-k 0 --min-p 0
   # --device none, since --gpu-layers 0 still runs batches on the gpu with a ~1 GB buffer
   embed-args: >
     ${llama}
@@ -58,6 +67,19 @@ x-jarvis-filters: &jarvis-filters
       "${MODEL_ID}":
         chat_template_kwargs:
           enable_thinking: false
+
+# inkling's template takes reasoning_effort (none, minimal, low, medium, high,
+# xhigh). "none" is the bottom of the scale, not off: the vendor says it still
+# reasons a little, and the template always writes the effort line
+x-inkling-filters: &inkling-filters
+  filters:
+    setParamsByID:
+      "${MODEL_ID}:no-think":
+        chat_template_kwargs:
+          reasoning_effort: "none"
+      "${MODEL_ID}:think":
+        chat_template_kwargs:
+          reasoning_effort: "high"
 
 x-gemma-filters: &gemma-filters
   filters:
@@ -99,6 +121,26 @@ models:
       --mmproj ${models}/qwen3.8-27b-UC/mmproj/mmproj-Qwen3.8-27B-BF16.gguf
       --ctx-size 65536
     <<: *qwen-filters
+
+  # inkling 2 mini: 26.4B moe with 3.4B active and a 24-layer core whose
+  # middle 12 layers run three times. only 4 of the 24 layers keep a full kv,
+  # so 64k of f16 kv is ~1.1 GiB and the quant still fits next to the desktop.
+  # the socket is the qwen card's: /var/lib/models/inkling-2-mini, hf download
+  "inkling":
+    description: "Inkling 2 Mini UD-IQ3_XXS, on GPU, 64K. 26B MoE, agent coding."
+    cmd: |
+      ${inkling-args}
+      -m ${models}/inkling-2-mini/Inkling-2-Mini-UD-IQ3_XXS.gguf
+      --ctx-size 65536
+    <<: *inkling-filters
+
+  "inkling-uncensored":
+    description: "Inkling 2 Mini AD-IQ3_S abliterated, on GPU, 64K."
+    cmd: |
+      ${inkling-args}
+      -m ${models}/inkling-2-mini/Inkling-2-Mini-Uncensored-AD-IQ3_S.gguf
+      --ctx-size 65536
+    <<: *inkling-filters
 
   # a 128k f16 kv cache made --fit push part of each gemma to the cpu: 56 t/s
   # for the 26b and the 12b alike (llama-bench, empty context: 129 for the
@@ -311,6 +353,8 @@ routing:
             - qwen
             - qwen-uncensored
             - qwen-uncensored-vision
+            - inkling
+            - inkling-uncensored
             - gemma-26b
             - gemma-12b
             - jarvis
