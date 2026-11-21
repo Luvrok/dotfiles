@@ -112,12 +112,14 @@ x-sd: &sd
 
 # each llm's --ctx-size is repeated as contextWindow in modules/home/programs/pi/models.json
 models:
+  # 128k plus the mtp head filled the card: after 96k of context only 13 MiB
+  # were free. 96k allocates ~0.55 GiB less kv and keeps the same speed
   "qwen":
-    description: "Qwen3.8 27B UD-IQ3_XXS, on GPU, 128K. Coding and agents."
+    description: "Qwen3.8 27B UD-IQ3_XXS, on GPU, 96K. Coding and agents."
     cmd: |
       ${qwen-args}
       -m ${models}/Qwen3.8-27B-UD-IQ3_XXS.gguf
-      --ctx-size 131072
+      --ctx-size 98304
     <<: *qwen-filters
 
   # Q3_K_XL now sits in the root, next to the other qwen quants
