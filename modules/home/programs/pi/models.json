@@ -122,7 +122,7 @@
           "id": "inkling",
           "name": "Inkling 2 Mini",
           "input": ["text"],
-          "contextWindow": 65536,
+          "contextWindow": 131072,
           "maxTokens": 32768,
           "reasoning": true,
           "thinkingLevelMap": {
@@ -148,7 +148,7 @@
           "id": "inkling-coding",
           "name": "Inkling 2 Mini coding",
           "input": ["text"],
-          "contextWindow": 65536,
+          "contextWindow": 131072,
           "maxTokens": 32768,
           "reasoning": true,
           "thinkingLevelMap": {
@@ -174,7 +174,7 @@
           "id": "inkling-uncensored",
           "name": "Inkling 2 Mini uncensored",
           "input": ["text"],
-          "contextWindow": 65536,
+          "contextWindow": 131072,
           "maxTokens": 32768,
           "reasoning": true,
           "thinkingLevelMap": {
@@ -200,7 +200,7 @@
           "id": "inkling-uncensored-coding",
           "name": "Inkling 2 Mini uncensored coding",
           "input": ["text"],
-          "contextWindow": 65536,
+          "contextWindow": 131072,
           "maxTokens": 32768,
           "reasoning": true,
           "thinkingLevelMap": {
