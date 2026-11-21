@@ -26,6 +26,8 @@
     "llama-swap/qwen",
     "llama-swap/qwen-uncensored",
     "llama-swap/qwen-uncensored-vision",
+    "llama-swap/inkling",
+    "llama-swap/inkling-uncensored",
     "llama-swap/gemma-26b",
     "llama-swap/gemma-12b",
     "llama-swap/gpt-oss"

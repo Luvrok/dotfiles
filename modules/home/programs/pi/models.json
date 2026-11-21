@@ -92,6 +92,58 @@
           }
         },
         {
+          "id": "inkling",
+          "name": "Inkling 2 Mini",
+          "input": ["text"],
+          "contextWindow": 65536,
+          "maxTokens": 32768,
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": "minimal",
+            "low": "low",
+            "medium": "medium",
+            "high": "high"
+          },
+          "compat": {
+            "chatTemplateKwargs": {
+              "reasoning_effort": { "$var": "thinking.effort" }
+            }
+          },
+          "samplingParams": {
+            "temperature": 1.0,
+            "top_p": 1.0,
+            "top_k": 0,
+            "min_p": 0.0
+          }
+        },
+        {
+          "id": "inkling-uncensored",
+          "name": "Inkling 2 Mini uncensored",
+          "input": ["text"],
+          "contextWindow": 65536,
+          "maxTokens": 32768,
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": "minimal",
+            "low": "low",
+            "medium": "medium",
+            "high": "high"
+          },
+          "compat": {
+            "chatTemplateKwargs": {
+              "reasoning_effort": { "$var": "thinking.effort" }
+            }
+          },
+          "samplingParams": {
+            "temperature": 1.0,
+            "top_p": 1.0,
+            "top_k": 0,
+            "min_p": 0.0
+          }
+        },
+        {
           "id": "gemma-26b",
           "name": "Gemma 4 26B-A4B",
           "input": ["text"],
