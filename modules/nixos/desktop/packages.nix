@@ -185,7 +185,7 @@
       effectcraft
       figcraft
       filmcraft
-      youtube-music
+      pear-desktop
 
       # --- games ---
       prismlauncher
