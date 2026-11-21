@@ -55,24 +55,23 @@ in
       import QtQuick
 
       QtObject {
-          readonly property bool jarvis: ${lib.boolToString config.services.jarvis.enable}
+          // jarvis is off while its flake input is out, its key goes too
+          readonly property bool jarvis: false
       }
       EOF
-      ${lib.optionalString (!config.services.jarvis.enable) ''
-        sed -i '/^ *mod+ctrl+j  *jarvis$/d' $out/keys.conf
-      ''}
+      sed -i '/^ *mod+ctrl+j  *jarvis$/d' $out/keys.conf
     '';
     # the lock screen and the idle timer, started from hyprland.lua. both read
     # /etc/xdg/hypr (XDG_CONFIG_DIRS), like hyprland.lua above
     environment.etc."xdg/hypr/hyprlock.conf".source = ./hyprlock.conf;
     environment.etc."xdg/hypr/hypridle.conf".source = ./hypridle.conf;
     # jarvis' menu and bar icon (Luvrok/jarvis): its build checks them (no
-    # rounded shapes) while services.jarvis is enabled
-    services.jarvis.ui.qmlFiles = [
-      ./quickshell/menus/Jarvis.qml
-      ./quickshell/widgets/MicTile.qml
-      ./quickshell/widgets/JarvisBar.qml
-    ];
+    # rounded shapes) while services.jarvis is enabled. off with the input
+    # services.jarvis.ui.qmlFiles = [
+    #   ./quickshell/menus/Jarvis.qml
+    #   ./quickshell/widgets/MicTile.qml
+    #   ./quickshell/widgets/JarvisBar.qml
+    # ];
     # the lock screen's password (hyprlock, hyprlock.conf): hyprland's own
     # session lock, the compositor restores it if the locker dies
     security.pam.services.hyprlock = { };

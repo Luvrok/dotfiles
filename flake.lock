@@ -95,27 +95,6 @@
         "type": "github"
       }
     },
-    "jarvis": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1793646679,
-        "narHash": "sha256-h8xGNykfZP9YZ3BLyaoCrcegWl0GiSaSd+lHjU9ciqY=",
-        "ref": "refs/heads/main",
-        "rev": "bd8165af38a2a72e62ef7da895fc20c70cdc5925",
-        "shallow": true,
-        "type": "git",
-        "url": "https://github.com/Luvrok/jarvis"
-      },
-      "original": {
-        "shallow": true,
-        "type": "git",
-        "url": "https://github.com/Luvrok/jarvis"
-      }
-    },
     "kodi": {
       "inputs": {
         "kodi-infotagger": "kodi-infotagger",
@@ -400,7 +379,6 @@
       "inputs": {
         "disko": "disko",
         "home-manager": "home-manager",
-        "jarvis": "jarvis",
         "kodi": "kodi",
         "lazygit": "lazygit",
         "nixpkgs": "nixpkgs_3",

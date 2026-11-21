@@ -6,6 +6,6 @@ import QtQuick
 // `qs -p` from the repo), the system build writes the real one
 // (modules/nixos/hyprland/default.nix) from the host's config
 QtObject {
-    // services.jarvis.enable: its menu, its bar icon and its key
-    readonly property bool jarvis: true
+    // jarvis: its menu, its bar icon and its key. off with the flake input
+    readonly property bool jarvis: false
 }

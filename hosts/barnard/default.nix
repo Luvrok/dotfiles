@@ -14,28 +14,28 @@ in
 {
   imports = [ ./xray.nix ];
 
-  # the voice assistant (Luvrok/jarvis), off for now: the module is mkIf
-  # enable, so nothing of it runs, no unit, no models. its quickshell menu,
-  # bar icon and key are hidden while it's off (modules/nixos/hyprland writes
-  # quickshell's Features.qml from this switch). the settings stay for when
-  # it's back. the menu starts the daemon on r and the bar stops it when
+  # the voice assistant (Luvrok/jarvis), off for now: the flake input, its
+  # module import and this block are commented out together. its quickshell
+  # menu, bar icon and key stay in the code and do nothing (modules/nixos/
+  # hyprland writes Features.qml with jarvis false). the settings stay for
+  # when it's back. the menu starts the daemon on r and the bar stops it when
   # idle, so then the unit must not start at login either:
   # systemd.user.services.jarvis.wantedBy = lib.mkForce [ ]
-  services.jarvis = {
-    enable = false;
-    # the hub's lfs cdn and docker hub need xray's mixed inbound
-    proxy = lib.mkIf config.services.xray.enable "http://127.0.0.1:10808";
-    # the llms in llama-swap's config.yaml, picked in the menu. the web
-    # search stays (the local searxng), the notes are off: jarvis only talks
-    llms = {
-      jarvis = "Gemma 4 12B";
-      jarvis-qwen-9b = "Qwen3.5 9B";
-      jarvis-qwen-4b = "Qwen3.5 4B";
-    };
-    # nothing listens for a wake phrase: jarvis listens when r is pressed
-    # in its menu, and only then
-    wakeWord.enable = false;
-  };
+  # services.jarvis = {
+  #   enable = false;
+  #   # the hub's lfs cdn and docker hub need xray's mixed inbound
+  #   proxy = lib.mkIf config.services.xray.enable "http://127.0.0.1:10808";
+  #   # the llms in llama-swap's config.yaml, picked in the menu. the web
+  #   # search stays (the local searxng), the notes are off: jarvis only talks
+  #   llms = {
+  #     jarvis = "Gemma 4 12B";
+  #     jarvis-qwen-9b = "Qwen3.5 9B";
+  #     jarvis-qwen-4b = "Qwen3.5 4B";
+  #   };
+  #   # nothing listens for a wake phrase: jarvis listens when r is pressed
+  #   # in its menu, and only then
+  #   wakeWord.enable = false;
+  # };
 
   sops.defaultSopsFile = ../../secrets/barnard.yaml;
   sops.defaultSopsFormat = "yaml";
