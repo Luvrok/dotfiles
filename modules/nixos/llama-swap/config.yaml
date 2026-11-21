@@ -34,11 +34,18 @@ macros:
   # inkling2 has its own binary: nixpkgs' llama.cpp predates the looped arch
   # (modules/nixos/llama-swap/llama-cpp-inkling.nix). --jinja is not optional,
   # the template is what turns reasoning_effort into the thinking budget
+  # inkling's compute buffer grows with -ub, not only with kv: at 64k the
+  # default 512 reserves ~6.6 GiB and --fit pushes the model to the cpu (1/49
+  # layers on the gpu). 128 keeps the base quant on the gpu; the 12 GiB builds
+  # and the coding variants need 64. kv itself is 32 KiB/token (2 GiB at 64k)
   inkling: llama-server-inkling --port ${PORT} --threads 8 -np 1
-  # the cards' sampling: temperature 1.0, no truncation
   inkling-args: >
     ${inkling}
-    --jinja
+    --jinja -fa on -ub 128
+    --temp 1.0 --top-p 1.0 --top-k 0 --min-p 0
+  inkling-uc-args: >
+    ${inkling}
+    --jinja -fa on -ub 64
     --temp 1.0 --top-p 1.0 --top-k 0 --min-p 0
   # the coding variants keep part of the weights in ram: qwen is dense, so
   # --n-cpu-ffn, inkling is moe, so --n-cpu-moe (whole expert layers). n-cpu
@@ -48,11 +55,15 @@ macros:
     ${qwen-args}
     --n-cpu-ffn 4
   inkling-coding-args: >
-    ${inkling-args}
-    --n-cpu-moe 3
-  inkling-uc-coding-args: >
-    ${inkling-args}
+    ${inkling}
+    --jinja -fa on -ub 64
+    --temp 1.0 --top-p 1.0 --top-k 0 --min-p 0
     --n-cpu-moe 4
+  inkling-uc-coding-args: >
+    ${inkling}
+    --jinja -fa on -ub 64
+    --temp 1.0 --top-p 1.0 --top-k 0 --min-p 0
+    --n-cpu-moe 6
   # --device none, since --gpu-layers 0 still runs batches on the gpu with a ~1 GB buffer
   embed-args: >
     ${llama}
@@ -168,7 +179,7 @@ models:
   "inkling-uncensored":
     description: "Inkling 2 Mini AD-IQ3_S abliterated, on GPU, 64K."
     cmd: |
-      ${inkling-args}
+      ${inkling-uc-args}
       -m ${models}/inkling-2-mini/Inkling-2-Mini-Uncensored-AD-IQ3_S.gguf
       --ctx-size 65536
     <<: *inkling-filters
