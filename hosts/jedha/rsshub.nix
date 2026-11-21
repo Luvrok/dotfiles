@@ -1,7 +1,7 @@
 { ... }:
 
 {
-  # turns telegram channels and sites without rss into feeds for miniflux,
+  # turns telegram channels and sites without rss into feeds for dispatch,
   # listens on 127.0.0.1:1200 only
   services.rsshub = {
     enable = true;

@@ -23,6 +23,10 @@
     # xray gets its own snapshot: `nix flake update xray`
     xray.url = "github:nixos/nixpkgs/nixos-unstable";
 
+    # the news collector, services.dispatch (Luvrok/newsfeed)
+    dispatch.url = "github:Luvrok/newsfeed";
+    dispatch.inputs.nixpkgs.follows = "nixpkgs";
+
     # the local ai stack moves as one: llama.cpp and the proxy that parses
     # its flags share a snapshot, so `nix flake update nixpkgs` never moves
     # them. bump with `nix flake update nixpkgs-llama-cpp`; only a bare

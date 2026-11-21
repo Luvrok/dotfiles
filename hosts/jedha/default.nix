@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 
 {
   imports = [
@@ -15,10 +15,30 @@
     ./kiss-worker.nix
     ./subtitle-translator
     ./obsidian-livesync.nix
-    ./miniflux.nix
     ./rsshub.nix
     ./polymarket.nix
+    inputs.dispatch.nixosModules.default
   ];
+
+  services.dispatch = {
+    enable = true;
+    port = 8180;
+    settings = {
+      fetch.proxy = "http://127.0.0.1:10808";
+      # RSSHub runs on 127.0.0.1:1200. Loopback requests bypass the proxy;
+      # this flag only lifts the SSRF guard for local feed URLs.
+      fetch.allow_private_networks = true;
+    };
+  };
+
+  # The old Miniflux port 8180 is already exposed through xray on mos-eisley;
+  # starting after the tunnel and RSSHub avoids a noisy first poll.
+  systemd.services.dispatch.after = [ "network-online.target" "xray.service" "rsshub.service" ];
+  systemd.services.dispatch.wants = [ "network-online.target" "xray.service" "rsshub.service" ];
+
+  # The Miniflux service is gone; the secret file is still used by polymarket
+  # for its ntfy topic. Do not delete the sops entry.
+  sops.secrets."miniflux/admin" = { };
 
   sops.defaultSopsFile = ../../secrets/barnard.yaml;
   sops.defaultSopsFormat = "yaml";
