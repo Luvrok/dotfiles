@@ -19,7 +19,7 @@ macros:
   # faster there
   chat-rocm: llama-server-rocm --port ${PORT} --threads 8 -np 1
   sd: sd-server --listen-ip 127.0.0.1 --listen-port ${PORT} --diffusion-fa
-  # only 16 of 64 layers keep kv, so 128k in q4_0 is ~2.3 GiB. ngram-mod speeds up re-typed code
+  # only 16 of 64 layers keep kv, so 96k in q4_0 is ~1.7 GiB. ngram-mod speeds up re-typed code
   qwen-args: >
     ${chat-rocm}
     -fa on --cache-type-k q4_0 --cache-type-v q4_0
@@ -34,11 +34,11 @@ macros:
   # inkling2 has its own binary: nixpkgs' llama.cpp predates the looped arch
   # (modules/nixos/llama-swap/llama-cpp-inkling.nix). --jinja is not optional,
   # the template is what turns reasoning_effort into the thinking budget
-  # inkling's compute buffer grows with -ub, and kv with the context: 128k of
-  # f16 kv is 4 GiB, q4_0 is 1.2 and keeps all 49 layers on the gpu (the loop
+  # inkling's compute buffer grows with -ub, and kv with the context: 96k of
+  # f16 kv is 3 GiB, q4_0 is 0.9 and keeps all 49 layers on the gpu (the loop
   # reads kv three times, q8_0 costs another fit trim). ub 64 holds the
-  # compute buffer at ~1.7 GiB; the default 512 asked for 6.6 at 64k and 13 at
-  # 128k, which --fit answered by moving the model to the cpu
+  # compute buffer at ~1.7 GiB; the default 512 asked for 6.6 at 64k, which
+  # --fit answered by moving the model to the cpu
   inkling: llama-server-inkling --port ${PORT} --threads 8 -np 1
   inkling-args: >
     ${inkling}
@@ -152,38 +152,38 @@ models:
     <<: *qwen-filters
 
   # inkling 2 mini: 26.4B moe with 3.4B active and a 24-layer core whose
-  # middle 12 layers run three times. 128k of q4_0 kv is 1.2 GiB (f16 would
-  # be 4). the socket is the qwen card's: /var/lib/models/inkling-2-mini
+  # middle 12 layers run three times. 96k of q4_0 kv is 0.9 GiB (f16 would
+  # be 3). the socket is the qwen card's: /var/lib/models/inkling-2-mini
   "inkling":
-    description: "Inkling 2 Mini UD-IQ3_XXS, on GPU, 128K. 26B MoE."
+    description: "Inkling 2 Mini UD-IQ3_XXS, on GPU, 96K. 26B MoE."
     cmd: |
       ${inkling-args}
       -m ${models}/inkling-2-mini/Inkling-2-Mini-UD-IQ3_XXS.gguf
-      --ctx-size 131072
+      --ctx-size 98304
     <<: *inkling-filters
 
   "inkling-coding":
-    description: "Inkling 2 Mini UD-IQ4_XS, 5 expert layers on RAM, 128K."
+    description: "Inkling 2 Mini UD-IQ4_XS, 5 expert layers on RAM, 96K."
     cmd: |
       ${inkling-coding-args}
       -m ${models}/inkling-2-mini/Inkling-2-Mini-UD-IQ4_XS.gguf
-      --ctx-size 131072
+      --ctx-size 98304
     <<: *inkling-filters
 
   "inkling-uncensored":
-    description: "Inkling 2 Mini AD-IQ3_S abliterated, on GPU, 128K."
+    description: "Inkling 2 Mini AD-IQ3_S abliterated, on GPU, 96K."
     cmd: |
       ${inkling-args}
       -m ${models}/inkling-2-mini/Inkling-2-Mini-Uncensored-AD-IQ3_S.gguf
-      --ctx-size 131072
+      --ctx-size 98304
     <<: *inkling-filters
 
   "inkling-uncensored-coding":
-    description: "Inkling 2 Mini AD-Q4_K abliterated, 8 expert layers on RAM, 128K."
+    description: "Inkling 2 Mini AD-Q4_K abliterated, 8 expert layers on RAM, 96K."
     cmd: |
       ${inkling-uc-coding-args}
       -m ${models}/inkling-2-mini/Inkling-2-Mini-Uncensored-AD-Q4_K.gguf
-      --ctx-size 131072
+      --ctx-size 98304
     <<: *inkling-filters
 
   # a 128k f16 kv cache made --fit push part of each gemma to the cpu: 56 t/s
@@ -194,7 +194,7 @@ models:
     cmd: |
       ${chat}
       -m ${models}/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf
-      --ctx-size 131072
+      --ctx-size 98304
       -fa on --cache-type-k q8_0 --cache-type-v q8_0
       --temp 1.0 --top-p 0.95 --top-k 64 --min-p 0
     <<: *gemma-filters
@@ -204,7 +204,7 @@ models:
     cmd: |
       ${chat}
       -m ${models}/gemma-4-12B-it-qat-UD-Q4_K_XL.gguf
-      --ctx-size 131072
+      --ctx-size 98304
       -fa on --cache-type-k q8_0 --cache-type-v q8_0
       --temp 1.0 --top-p 0.95 --top-k 64 --min-p 0
     <<: *gemma-filters
@@ -268,7 +268,7 @@ models:
     cmd: |
       ${chat}
       -m ${models}/gpt-oss-20b-MXFP4.gguf
-      --ctx-size 131072
+      --ctx-size 98304
       --temp 1.0 --top-p 1.0 --top-k 0 --min-p 0
 
   # turbo distill: cfg 1.0 and 8 steps, so a negative prompt does nothing
