@@ -24,6 +24,13 @@ Singleton {
     signal replyWanted
     // no popups but critical ones, the menu gets them all the same
     property bool quiet: false
+    // a menu, the password prompt or the screenshot is up: the popup slides
+    // away and new ones wait in the menu, never two things in that corner
+    property bool blocked: false
+    onBlockedChanged: {
+        if (blocked && current !== null)
+            current = null;
+    }
     // when each came or changed, by id
     property var times: ({})
     property int stamp: 0
@@ -75,6 +82,9 @@ Singleton {
 
     function raise(n, same) {
         note(n);
+        // a menu is open: it stays in the menu, no popup under or over it
+        if (blocked)
+            return;
         if (quiet && n.urgency !== NotificationUrgency.Critical) {
             if (passing(n))
                 n.expire();

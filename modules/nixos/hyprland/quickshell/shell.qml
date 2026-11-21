@@ -16,6 +16,10 @@ ShellRoot {
     id: shell
 
     property bool barShown: true
+    // anything that takes the screen's corner over: a menu, a script's
+    // dmenu, the password prompt, the screenshot. the notification popup
+    // stays down while one is up (NotifyPopup, Notifs.blocked)
+    readonly property bool overlay: menu !== "" || picking || asking || shooting
     // the open menu, it shows on the monitor that had focus
     property string menu: ""
     property ShellScreen menuScreen: null
@@ -128,6 +132,14 @@ ShellRoot {
             shell.menu = "";
             shell.open("notifications");
         }
+    }
+
+    // the popup and the menus never share the corner: while a menu (or the
+    // screenshot, the password prompt) is up, the popup is down
+    Binding {
+        target: Notifs
+        property: "blocked"
+        value: shell.overlay
     }
 
     IpcHandler {

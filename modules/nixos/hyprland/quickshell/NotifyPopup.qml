@@ -4,22 +4,24 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 import Quickshell.Services.Notifications
 
-// the notification popup: one at a time, the newest (Notifs.current), at
-// the bottom in the middle of the monitor that had focus, drawn like the
+// the notification popup: one at a time, the newest (Notifs.current), in the
+// top right corner under the bar, the menu's own corner, drawn like the
 // menus. it goes after 5 s (3 s low, 10 s critical, the app's own time if
 // it sets one), the line at the bottom shows what's left. the
 // pointer on it doesn't stop it, the pointer is often hidden and forgotten
 // there, and the menu has them all. left click: the default action, right
 // click: away (it stays in the menu), middle: dismissed. one per monitor,
 // always mapped: a layer that unmaps while a menu holds its focus grab
-// clears the grab and closes the menu. so it slides up from the bottom
-// edge itself, and lets clicks through while it's down (an empty mask)
+// clears the grab and closes the menu. so it slides down from the top edge
+// itself, and lets clicks through while it's up there (an empty mask).
+// while a menu (or the screenshot, the password prompt) is open, Notifs'
+// blocked keeps it down: the two never share the corner
 PanelWindow {
     id: popup
 
     required property ShellScreen modelData
     // it's up here
-    readonly property bool here: Notifs.current !== null && Notifs.popupScreen === modelData.name
+    readonly property bool here: !Notifs.blocked && Notifs.current !== null && Notifs.popupScreen === modelData.name
     // what it shows, kept while it slides away
     property Notification n: null
     property bool shown: false
@@ -82,10 +84,13 @@ PanelWindow {
 
     screen: modelData
     color: "transparent"
-    anchors.bottom: true
+    anchors.top: true
+    anchors.right: true
+    // under the 24px bar, the same corner and margin as the menu
+    margins.top: 34
+    margins.right: 10
     implicitWidth: Math.ceil(metrics.averageCharacterWidth * 56)
-    // 15px over the bottom edge, it slides in from below that
-    implicitHeight: frame.height + 15
+    implicitHeight: frame.height
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "notification"
@@ -143,8 +148,8 @@ PanelWindow {
         id: frame
         width: parent.width
         height: Math.max(Math.ceil(content.implicitHeight) + 2, popup.kept)
-        // up: 15px over the edge, down: under it, like hyprland's slide
-        y: popup.shown ? 0 : popup.height
+        // up: against the top edge, down: above it, like hyprland's slide
+        y: popup.shown ? 0 : -popup.height
         opacity: popup.shown ? 1 : 0
         // hyprland's layersIn and fadeLayersOut
         Behavior on y {
