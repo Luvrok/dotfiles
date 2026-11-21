@@ -44,13 +44,10 @@ macros:
     ${inkling}
     --jinja -fa on -ub 64 -ctk q4_0 -ctv q4_0
     --temp 1.0 --top-p 1.0 --top-k 0 --min-p 0
-  # the coding variants keep part of the weights in ram: qwen is dense, so
-  # --n-cpu-ffn, inkling is moe, so --n-cpu-moe (whole expert layers). n-cpu
+  # the inkling coding variants keep whole expert layers in ram; n-cpu-moe
   # takes the first layers, and those sit outside the looped core (6-17), so
-  # their experts are read once per token instead of three times
-  qwen-coding-args: >
-    ${qwen-args}
-    --n-cpu-ffn 4
+  # their experts are read once per token instead of three times. qwen-coding
+  # fits at 64k without cpu layers (14415 of 15540 MiB), so it has none
   inkling-coding-args: >
     ${inkling-args}
     --n-cpu-moe 5
@@ -123,16 +120,18 @@ models:
       --ctx-size 131072
     <<: *qwen-filters
 
-  # the stronger quant: the root of /var/lib/models is root-owned, so this
-  # file lives next to the uncensored build, where hf can write
+  # Q3_K_XL now sits in the root, next to the other qwen quants
   "qwen-coding":
-    description: "Qwen3.8 27B UD-Q3_K_XL, 4 ffn layers on RAM, 64K. Coding."
+    description: "Qwen3.8 27B UD-Q3_K_XL, on GPU, 64K. Coding."
     cmd: |
-      ${qwen-coding-args}
-      -m ${models}/qwen3.8-27b-UC/Qwen3.8-27B-UD-Q3_K_XL.gguf
+      ${qwen-args}
+      -m ${models}/Qwen3.8-27B-UD-Q3_K_XL.gguf
       --ctx-size 65536
     <<: *qwen-filters
 
+  # the card claims 196k resident on 16 GB, but with the desktop taking ~1 GiB
+  # 196k projects 15575 MiB against 15540 free and --fit moves 8 of 66 layers
+  # to the cpu; 128k keeps all 66 with ~1.7 GiB left
   "qwen-uncensored":
     description: "Qwen3.8 27B GSQ-RCO IQ3_XXS abliterated, on GPU, 128K."
     cmd: |
