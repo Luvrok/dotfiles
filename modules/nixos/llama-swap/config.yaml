@@ -131,12 +131,13 @@ models:
 
   # the card claims 196k resident on 16 GB, but with the desktop taking ~1 GiB
   # 196k projects 15575 MiB against 15540 free and --fit moves 8 of 66 layers
-  # to the cpu; 128k keeps all 66 with ~1.7 GiB left
+  # to the cpu. 128k keeps all 66 but the mtp head is loaded on the first
+  # request and leaves only ~400 MiB; 96k gives the same ~47 t/s and ~1 GiB
   "qwen-uncensored":
-    description: "Qwen3.8 27B GSQ-RCO IQ3_XXS abliterated, on GPU, 128K."
+    description: "Qwen3.8 27B GSQ-RCO IQ3_XXS abliterated, on GPU, 96K."
     cmd: |
       ${qwen-uc-args}
-      --ctx-size 131072
+      --ctx-size 98304
     <<: *qwen-filters
 
   # --fit counts the ~0.9 GB mmproj too

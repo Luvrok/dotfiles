@@ -68,7 +68,7 @@
           "id": "qwen-uncensored",
           "name": "Qwen3.8 27B uncensored",
           "input": ["text"],
-          "contextWindow": 131072,
+          "contextWindow": 98304,
           "maxTokens": 65536,
           "reasoning": true,
           "thinkingLevelMap": {
