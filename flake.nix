@@ -23,6 +23,16 @@
     # xray gets its own snapshot: `nix flake update xray`
     xray.url = "github:nixos/nixpkgs/nixos-unstable";
 
+    # the local ai stack moves as one: llama.cpp and the proxy that parses
+    # its flags share a snapshot, so `nix flake update nixpkgs` never moves
+    # them. bump with `nix flake update nixpkgs-llama-cpp`; only a bare
+    # `nix flake update` takes every input at once
+    nixpkgs-llama-cpp.url = "github:nixos/nixpkgs/nixos-unstable";
+
+    # stable-diffusion.cpp builds its own ggml, so it gets its own snapshot
+    # too: `nix flake update nixpkgs-sd`. no shared nixpkgs-ai
+    nixpkgs-sd.url = "github:nixos/nixpkgs/nixos-unstable";
+
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -47,6 +57,8 @@
       self,
       nixpkgs,
       nixpkgs-hypr,
+      nixpkgs-llama-cpp,
+      nixpkgs-sd,
       home-manager,
       disko,
       sops-nix,
@@ -59,6 +71,19 @@
 
       # xray is the one package that needs a newer nixpkgs than the system's
       xrayPkgs = import xray {
+        inherit system;
+        config.allowUnfree = true;
+      };
+
+      # llama.cpp, its rocm/vulkan builds and llama-swap from one snapshot:
+      # a flag the config passes is parsed by the same version that defines it
+      llamaPkgs = import nixpkgs-llama-cpp {
+        inherit system;
+        config.allowUnfree = true;
+      };
+
+      # stable-diffusion.cpp and nothing else
+      sdPkgs = import nixpkgs-sd {
         inherit system;
         config.allowUnfree = true;
       };
@@ -93,6 +118,12 @@
                 filmcraft
                 ;
               inherit (xrayPkgs) xray;
+              inherit (llamaPkgs)
+                llama-cpp-vulkan
+                llama-cpp-rocm
+                llama-swap
+                ;
+              stable-diffusion-cpp = sdPkgs.stable-diffusion-cpp.override { vulkanSupport = true; };
             }
           )
         ];

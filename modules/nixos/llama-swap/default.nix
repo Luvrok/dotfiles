@@ -7,10 +7,12 @@
 
 let
   cfg = config.services.llama-swap;
-  # nixpkgs' vulkan build, from cache.nixos.org, on every host. on barnard
-  # vulkan also sees the ryzen's igpu (it works from system ram) and split
-  # the models onto it: llama-bench gemma-26b tg 14 t/s on both, 129 on the
-  # rx 7800 xt alone (rocm: 85). so the igpu is hidden from it, below
+  # everything here comes from the nixpkgs-llama-cpp snapshot (flake.nix), so
+  # llama.cpp, its rocm build and llama-swap move together and never with
+  # `nix flake update nixpkgs`. on barnard vulkan also sees the ryzen's igpu
+  # (it works from system ram) and split the models onto it: llama-bench
+  # gemma-26b tg 14 t/s on both, 129 on the rx 7800 xt alone (rocm: 85). so
+  # the igpu is hidden from it, below
   nvidia = lib.elem "nvidia" config.services.xserver.videoDrivers;
   llama-cpp = pkgs.llama-cpp-vulkan;
   # qwen runs on rocm (config.yaml, chat-rocm): with its mtp drafts it gave
@@ -20,14 +22,9 @@ let
   llama-server-rocm = pkgs.writeShellScriptBin "llama-server-rocm" ''
     exec ${if nvidia then llama-cpp else pkgs.llama-cpp-rocm}/bin/llama-server "$@"
   '';
-  # nixpkgs' llama.cpp predates inkling2, and the loop-scale fix is newer than
-  # the 0.7.0 tag. it also builds with vulkan, so the igpu stays hidden below
-  llama-cpp-inkling = pkgs.callPackage ./llama-cpp-inkling.nix { };
-  llama-server-inkling = pkgs.writeShellScriptBin "llama-server-inkling" ''
-    exec ${llama-cpp-inkling}/bin/llama-server "$@"
-  '';
-  # no gpu variant of it in nixpkgs: this one builds here, small
-  sd-cpp = pkgs.stable-diffusion-cpp.override { vulkanSupport = true; };
+  # vulkan build from the nixpkgs-sd snapshot (flake.nix); no gpu variant of
+  # it in nixpkgs, hence the override there
+  sd-cpp = pkgs.stable-diffusion-cpp;
 
   # kept as yaml for the anchors and macros. checked at build time, the way
   # the upstream module checks its generated config
@@ -58,7 +55,6 @@ in
     path = [
       llama-cpp
       llama-server-rocm
-      llama-server-inkling
       sd-cpp
     ];
 

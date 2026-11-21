@@ -31,15 +31,16 @@ macros:
     -m ${models}/qwen3.8-27b-UC/Qwen3.8-27B-GSQ-RCO-IQ3_XXS-Uncensored-v1.1.gguf
     --chat-template-file ${models}/qwen3.8-27b-UC/froggeric-qwen3.8-tool-use.jinja
     --temp 0.6
-  # inkling2 has its own binary: nixpkgs' llama.cpp predates the looped arch
-  # (modules/nixos/llama-swap/llama-cpp-inkling.nix). --jinja is not optional,
-  # the template is what turns reasoning_effort into the thinking budget
+  # inkling2 is not in the pinned llama.cpp yet: the model entries below run
+  # on the shared binary and start working once nixpkgs carries the arch.
+  # --jinja is not optional, the template is what turns reasoning_effort into
+  # the thinking budget
   # inkling's compute buffer grows with -ub, and kv with the context: 96k of
   # f16 kv is 3 GiB, q4_0 is 0.9 and keeps all 49 layers on the gpu (the loop
   # reads kv three times, q8_0 costs another fit trim). ub 64 holds the
   # compute buffer at ~1.7 GiB; the default 512 asked for 6.6 at 64k, which
   # --fit answered by moving the model to the cpu
-  inkling: llama-server-inkling --port ${PORT} --threads 8 -np 1
+  inkling: ${chat}
   inkling-args: >
     ${inkling}
     --jinja -fa on -ub 64 -ctk q4_0 -ctv q4_0

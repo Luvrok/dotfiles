@@ -300,6 +300,38 @@
         "type": "github"
       }
     },
+    "nixpkgs-llama-cpp": {
+      "locked": {
+        "lastModified": 1795234589,
+        "narHash": "sha256-f/VVvxf5RsQgWVhUtefoca5ktVg0DA2bnkMOcmSnozo=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "2786a2a72088ecf32aea5b3ec52099e6a7cff78f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-sd": {
+      "locked": {
+        "lastModified": 1795234589,
+        "narHash": "sha256-f/VVvxf5RsQgWVhUtefoca5ktVg0DA2bnkMOcmSnozo=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "2786a2a72088ecf32aea5b3ec52099e6a7cff78f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs_2": {
       "locked": {
         "lastModified": 1770107345,
@@ -373,6 +405,8 @@
         "lazygit": "lazygit",
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-hypr": "nixpkgs-hypr",
+        "nixpkgs-llama-cpp": "nixpkgs-llama-cpp",
+        "nixpkgs-sd": "nixpkgs-sd",
         "sops-nix": "sops-nix",
         "textfoxy": "textfoxy",
         "voidsddm": "voidsddm",
