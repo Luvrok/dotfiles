@@ -20,6 +20,26 @@
         "type": "github"
       }
     },
+    "dispatch": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795347169,
+        "narHash": "sha256-YbvhME65rZZBDrBnFKKfm//EG7J1cvemLTQwOXyugdI=",
+        "owner": "Luvrok",
+        "repo": "newsfeed",
+        "rev": "52af4b61ec2c598061da76b53bd941d235c6bb31",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Luvrok",
+        "repo": "newsfeed",
+        "type": "github"
+      }
+    },
     "firefox-addons": {
       "inputs": {
         "nixpkgs": [
@@ -378,6 +398,7 @@
     "root": {
       "inputs": {
         "disko": "disko",
+        "dispatch": "dispatch",
         "home-manager": "home-manager",
         "kodi": "kodi",
         "lazygit": "lazygit",
