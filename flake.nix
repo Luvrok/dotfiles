@@ -280,7 +280,6 @@
         inherit pkgs;
         specialArgs = {
           username = "mos-eisley";
-          inherit inputs;
         };
         modules = [
           sops-nix.nixosModules.sops

@@ -17,7 +17,9 @@
     ./obsidian-livesync.nix
     ./rsshub.nix
     ./polymarket.nix
+    ./chair-rental-bot.nix
     inputs.dispatch.nixosModules.default
+    inputs.chair-rental-bot.nixosModules.default
   ];
 
   services.dispatch = {
@@ -33,8 +35,16 @@
 
   # The old Miniflux port 8180 is already exposed through xray on mos-eisley;
   # starting after the tunnel and RSSHub avoids a noisy first poll.
-  systemd.services.dispatch.after = [ "network-online.target" "xray.service" "rsshub.service" ];
-  systemd.services.dispatch.wants = [ "network-online.target" "xray.service" "rsshub.service" ];
+  systemd.services.dispatch.after = [
+    "network-online.target"
+    "xray.service"
+    "rsshub.service"
+  ];
+  systemd.services.dispatch.wants = [
+    "network-online.target"
+    "xray.service"
+    "rsshub.service"
+  ];
 
   # The Miniflux service is gone; the secret file is still used by polymarket
   # for its ntfy topic. Do not delete the sops entry.

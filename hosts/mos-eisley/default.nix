@@ -1,6 +1,5 @@
 {
   config,
-  inputs,
   lib,
   pkgs,
   ...
@@ -12,8 +11,6 @@
     ./hardware-configuration.nix
     ./network.nix
     ./nginx.nix
-    ./chair-rental-bot.nix
-    inputs.chair-rental-bot.nixosModules.default
   ];
 
   dotfiles.small-disk.enable = true;
@@ -61,12 +58,6 @@
   ];
 
   environment.etc."nixos".source = ./.;
-  system.activationScripts.copyConfig.text = ''
-    rm -rf /root/nixos-config
-    mkdir -p /root
-    cp -rT ${./../..} /root/nixos-config
-    chown -R 0:0 /root/nixos-config
-  '';
 
   services.xray = {
     enable = true;

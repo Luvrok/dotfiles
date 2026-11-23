@@ -1,8 +1,8 @@
-# CUTLAB chair rental bot on mos-eisley.
+# CUTLAB chair rental bot on jedha.
 #
-# the bot repository is the flake input chair-rental-bot: it carries the
-# package and the services.chair-rental-bot module (postgres, systemd unit,
-# nightly dump). this file only feeds the two secrets and turns it on.
+# it runs here, not on the ru vps: jedha reaches api.telegram.org through the
+# local xray mixed inbound, and the token, the database and the client names
+# stay on the home server. mos-eisley only serves the cutlab landing page.
 { config, ... }:
 
 {
@@ -27,5 +27,6 @@
   services.chair-rental-bot = {
     enable = true;
     environmentFile = "/run/chair-bot/bot.env";
+    proxy = "http://127.0.0.1:10808";
   };
 }
