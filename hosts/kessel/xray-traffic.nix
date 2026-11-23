@@ -71,7 +71,8 @@ let
     text = ''
       set -euo pipefail
       dir=''${XRAY_TRAFFIC_DIR:-${dir}}
-      mode=today
+      mode=user
+      window=days
       days=7
       months=6
       who=""
@@ -80,10 +81,12 @@ let
         cat <<'EOF'
       usage: xray-traffic [-d [n]] [-m [n]] [-u email]
 
-        (no option)  today, one row per user
+        (no option)  last 30 days, one row per user
         -d [n]       last n days (7 by default), one row per day
-        -m [n]       last n months (6 by default), one row per month
-        -u email     only that user, works with every mode
+        -m [n]       last n months (6 by default), one row per user
+        -u email     only that user, works with every mode, in any order
+
+      every table ends with a total row
       EOF
       }
 
@@ -98,7 +101,8 @@ let
             fi
             ;;
           -m)
-            mode=month
+            mode=user
+            window=months
             shift
             if [ $# -gt 0 ] && [[ "$1" =~ ^[0-9]+$ ]]; then
               months=$1
@@ -129,43 +133,33 @@ let
         exit 0
       fi
 
-      today=$(date +%F)
       case "$mode" in
-        today)
-          cutoff=$today
-          label=user
-          title="today"
-          ;;
         day)
           cutoff=$(date -d "-$((days - 1)) days" +%F)
           label=day
-          title="last $days days"
+          if [ "$days" -eq 1 ]; then title=today; else title="last $days days"; fi
           ;;
-        month)
-          cutoff=$(date -d "-$((months - 1)) months" +%Y-%m)
-          label=month
-          title="last $months months"
+        user)
+          label=user
+          if [ "$window" = months ]; then
+            cutoff=$(date -d "-$months months" +%F)
+            if [ "$months" -eq 1 ]; then title="last month"; else title="last $months months"; fi
+          else
+            cutoff=$(date -d "-29 days" +%F)
+            title="last 30 days"
+          fi
           ;;
       esac
       [ -n "$who" ] && title="$title, $who"
       true
 
       cat "$dir"/*.tsv |
-        awk -F'\t' -v mode="$mode" -v cutoff="$cutoff" -v today="$today" -v who="$who" '
+        awk -F'\t' -v mode="$mode" -v cutoff="$cutoff" -v who="$who" '
           {
             day = substr($1, 1, 10)
-            mon = substr($1, 1, 7)
             if (who != "" && $2 != who) next
-            if (mode == "today") {
-              if (day != today) next
-              k = $2
-            } else if (mode == "day") {
-              if (day < cutoff) next
-              k = day
-            } else {
-              if (mon < cutoff) next
-              k = mon
-            }
+            if (day < cutoff) next
+            k = (mode == "day") ? day : $2
             up[k] += $3 + 0
             down[k] += $4 + 0
             seen[k] = 1
