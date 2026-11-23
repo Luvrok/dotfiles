@@ -4,6 +4,12 @@
   # DNS: resolved -> dnscrypt-proxy -> DoH
   dotfiles.doh.enable = true;
 
+  # the ru dpi drops most of telegram's api addresses (149.154.166.110,
+  # 149.154.175.50 time out), this one answers. the bot polls it by name, so
+  # a plain hosts entry keeps the certificate check intact. if long polling
+  # starts timing out, try another api.telegram.org address here
+  networking.hosts."149.154.167.220" = [ "api.telegram.org" ];
+
   networking = {
     hostName = "mos-eisley";
     useNetworkd = true;

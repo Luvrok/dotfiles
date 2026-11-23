@@ -9,6 +9,8 @@
   sops.secrets.telegram_bot_token = { };
   sops.secrets.telegram_admin_id = { };
 
+  systemd.tmpfiles.rules = [ "d /run/chair-bot 0750 root root -" ];
+
   # systemd reads the EnvironmentFile as root, the bot user never sees it
   sops.templates."chair-bot.env" = {
     path = "/run/chair-bot/bot.env";
