@@ -32,14 +32,19 @@
   # key, and .sops.yaml lists its ssh-to-age form as the recipient
   sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 
+  # the xray config used to be a plain file in the repository, so the key of
+  # this node was in the nix store and in every copy of the repo. it lives in
+  # sops now; systemd reads it as root and hands it to xray as a credential
+  sops.secrets."xray/config" = {
+    restartUnits = [ "xray.service" ];
+  };
+
   nix.settings = {
     experimental-features = [
       "nix-command"
       "flakes"
     ];
   };
-
-  services.getty.autologinUser = "root";
 
   time.timeZone = "Europe/Moscow";
   i18n.defaultLocale = "en_GB.UTF-8";
@@ -61,7 +66,7 @@
 
   services.xray = {
     enable = true;
-    settingsFile = ./xray.json;
+    settingsFile = config.sops.secrets."xray/config".path;
   };
 
   systemd.services.xray = lib.mkIf config.services.xray.enable {
