@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795465392,
-        "narHash": "sha256-aQsW0tVnMP3aNxAL4RfXspUG3neyGrwVqiHSAkUXPcE=",
+        "lastModified": 1795468588,
+        "narHash": "sha256-H5K9yWTociiAFqG3QDKUQKDuE6YSs8HNBmYdrCAHczM=",
         "ref": "refs/heads/master",
-        "rev": "45e7ec8264be88810b5e82aa7af3362ece3aa039",
-        "revCount": 4,
+        "rev": "a28c9fc8ffae5aca7c94b44dfdaa15b06f8a06e2",
+        "revCount": 9,
         "type": "git",
         "url": "ssh://git@github.com/Luvrok/chair-rental-bot.git"
       },
