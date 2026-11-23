@@ -1,5 +1,25 @@
 {
   "nodes": {
+    "chair-rental-bot": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795464270,
+        "narHash": "sha256-epEljPLMRsaOe9mHVMXZalVW55YaFHZuwZmP/f/OrRQ=",
+        "ref": "refs/heads/master",
+        "rev": "c58ceddb6261ab1069c36871e28102b44ec29a0a",
+        "revCount": 2,
+        "type": "git",
+        "url": "ssh://git@github.com/Luvrok/chair-rental-bot.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/Luvrok/chair-rental-bot.git"
+      }
+    },
     "disko": {
       "inputs": {
         "nixpkgs": [
@@ -397,6 +417,7 @@
     },
     "root": {
       "inputs": {
+        "chair-rental-bot": "chair-rental-bot",
         "disko": "disko",
         "dispatch": "dispatch",
         "home-manager": "home-manager",

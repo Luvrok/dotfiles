@@ -1,5 +1,6 @@
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
@@ -11,6 +12,8 @@
     ./hardware-configuration.nix
     ./network.nix
     ./nginx.nix
+    ./chair-rental-bot.nix
+    inputs.chair-rental-bot.nixosModules.default
   ];
 
   dotfiles.small-disk.enable = true;
@@ -27,6 +30,10 @@
   ];
 
   sops.defaultSopsFile = ../../secrets/mos-eisley.yaml;
+
+  # no age key file on this host: the identity is derived from the ssh host
+  # key, and .sops.yaml lists its ssh-to-age form as the recipient
+  sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 
   nix.settings = {
     experimental-features = [

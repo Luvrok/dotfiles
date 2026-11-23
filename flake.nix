@@ -27,6 +27,11 @@
     dispatch.url = "github:Luvrok/newsfeed";
     dispatch.inputs.nixpkgs.follows = "nixpkgs";
 
+    # the chair rental bot, services.chair-rental-bot
+    # (Luvrok/chair-rental-bot). the repository is private, so ssh
+    chair-rental-bot.url = "git+ssh://git@github.com/Luvrok/chair-rental-bot.git";
+    chair-rental-bot.inputs.nixpkgs.follows = "nixpkgs";
+
     # the local ai stack moves as one: llama.cpp and the proxy that parses
     # its flags share a snapshot, so `nix flake update nixpkgs` never moves
     # them. bump with `nix flake update nixpkgs-llama-cpp`; only a bare
@@ -275,6 +280,7 @@
         inherit pkgs;
         specialArgs = {
           username = "mos-eisley";
+          inherit inputs;
         };
         modules = [
           sops-nix.nixosModules.sops

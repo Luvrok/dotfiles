@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CUTLAB — аренда кресла в барбершопе</title>
+    <meta
+      name="description"
+      content="CUTLAB: аренда кресла в барбершопе по часам. Свободные часы, адрес и цена в Telegram."
+    />
+    <meta property="og:title" content="CUTLAB — аренда кресла" />
+    <meta
+      property="og:description"
+      content="Свободные часы, адрес и цена в Telegram."
+    />
+    <meta property="og:type" content="website" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b0b0c;
+        --panel: #141416;
+        --text: #f2f0ea;
+        --muted: #8f8b83;
+        --accent: #d9b382;
+        --line: #26262a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(120% 80% at 50% 0%, #1a1a1d 0%, var(--bg) 62%),
+          var(--bg);
+        color: var(--text);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          "Helvetica Neue",
+          Arial,
+          sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 32px 20px;
+        text-align: center;
+      }
+
+      main {
+        width: 100%;
+        max-width: 520px;
+      }
+
+      .mark {
+        font-size: clamp(44px, 14vw, 92px);
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        line-height: 1;
+        margin: 0 0 10px;
+        text-indent: 0.14em;
+      }
+
+      .mark span {
+        color: var(--accent);
+      }
+
+      .tag {
+        margin: 0 0 36px;
+        color: var(--muted);
+        font-size: 15px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 28px 22px;
+      }
+
+      h1 {
+        font-size: 21px;
+        line-height: 1.35;
+        margin: 0 0 10px;
+        font-weight: 600;
+      }
+
+      p {
+        margin: 0 0 22px;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.55;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        padding: 15px 20px;
+        border-radius: 12px;
+        background: var(--accent);
+        color: #17130e;
+        font-size: 16px;
+        font-weight: 650;
+        text-decoration: none;
+        transition: transform 120ms ease, filter 120ms ease;
+      }
+
+      .button:hover {
+        filter: brightness(1.06);
+      }
+
+      .button:active {
+        transform: translateY(1px);
+      }
+
+      .note {
+        margin: 14px 0 0;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      footer {
+        margin-top: 34px;
+        color: #5c5953;
+        font-size: 12px;
+        letter-spacing: 0.06em;
+      }
+
+      footer a {
+        color: #5c5953;
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="mark">CUT<span>LAB</span></div>
+      <p class="tag">аренда кресла</p>
+
+      <div class="card">
+        <h1>Кресло в барбершопе по часам</h1>
+        <p>
+          Мастер открывает свои часы, вы выбираете день и время. Адрес, цена и
+          свободные слоты — в Telegram.
+        </p>
+        <a class="button" href="@BOT_URL@" rel="noopener">Записаться в Telegram</a>
+        <p class="note">Оплата на месте. Бот только бронирует.</p>
+      </div>
+
+      <footer><a href="https://vxrnt.ru">vxrnt.ru</a></footer>
+    </main>
+  </body>
+</html>

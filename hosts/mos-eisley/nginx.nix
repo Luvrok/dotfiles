@@ -6,6 +6,7 @@ let
   domains = [
     "anki.vxrnt.ru"
     "betanin.vxrnt.ru"
+    "cutlab.vxrnt.ru"
     "kavita.vxrnt.ru"
     "koito.vxrnt.ru"
     "lt.vxrnt.ru"
@@ -16,6 +17,9 @@ let
     "rss.vxrnt.ru"
     "vxrnt.ru"
   ];
+
+  # the cutlab landing: the bot link lives in the page, nginx only serves it
+  cutlabBotUrl = "https://t.me/cutlab_bot";
 
   certServices = map (domain: "acme-${domain}.service") domains;
 in
@@ -40,6 +44,13 @@ in
     mkdir -p /var/www/vxrnt.ru
     cp -f ${./www}/index.html /var/www/vxrnt.ru/index.html
     chmod 0644 /var/www/vxrnt.ru/index.html
+  '';
+
+  system.activationScripts.cutlabSite = ''
+    mkdir -p /var/www/cutlab
+    sed 's|@BOT_URL@|${cutlabBotUrl}|g' ${./cutlab/index.html} \
+      > /var/www/cutlab/index.html
+    chmod 0644 /var/www/cutlab/index.html
   '';
 
   services.nginx = {
