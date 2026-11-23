@@ -19,7 +19,7 @@ let
   ];
 
   # the cutlab landing: the bot link lives in the page, nginx only serves it
-  cutlabBotUrl = "https://t.me/chairrentalbot";
+  cutlabBotUrl = "https://t.me/cutlabot";
 
   # rendered at build time: the activation script has no sed, only the
   # coreutils it starts with

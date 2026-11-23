@@ -28,7 +28,7 @@
     enable = true;
     environmentFile = "/run/chair-bot/bot.env";
     proxy = "http://127.0.0.1:10808";
-    botUsername = "chairrentalbot";
+    botUsername = "cutlabot";
   };
 
   # the proxy is xray's mixed inbound: without it the api is unreachable
