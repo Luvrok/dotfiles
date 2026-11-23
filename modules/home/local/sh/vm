@@ -1,0 +1,375 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2054  # commas are qemu option syntax, not array separators
+# run any qcow2 image with qemu, tuned for a local desktop:
+# virtio-blk + io_uring + writeback cache, virtio-vga-gl and gtk by default.
+# no image directory, no per-machine settings: everything is a flag.
+#
+#   vm -p ~/HOME/vms/kali.qcow2
+#   vm -p /data/vm/debian.qcow2 -m 2048 -c 2
+#   vm -p kali.qcow2 -t            throwaway, changes are discarded on exit
+#   vm -p kali.qcow2 -o            persistent overlay, the base stays clean
+#   vm -p kali.qcow2 -d spice -S   headless, SPICE + ssh on 127.0.0.1:2222
+#   vm -l ~/HOME/vms               list the images there
+#
+# everything after -- goes to qemu as is; --dry-run prints the command.
+set -euo pipefail
+
+MEM=${VM_MEM:-4096}
+CPUS=${VM_CPUS:-4}
+PORT=${VM_SPICE_PORT:-5930}
+STATE_DIR=${VM_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/vm}
+
+display_mode=
+ssh_port=
+mode=direct
+overlay=
+uefi=0
+gl=1
+clipboard=1
+sound=0
+daemon=0
+cdrom=
+dry_run=0
+img=
+extra=()
+
+die() { printf 'vm: %s\n' "$*" >&2; exit 1; }
+
+usage() {
+	cat <<'EOF'
+usage: vm -p <path> [options]
+       vm <path> [options]
+       vm -l [dir]
+
+image:
+  -p, --path PATH        qcow2 image to boot
+  -l, --list [DIR]       list *.qcow2 in DIR, default: .
+
+resources:
+  -m, --mem MB           guest memory, default 4096 (VM_MEM)
+  -c, --cpus N           vcpus, default 4 (VM_CPUS)
+
+display:
+  -d, --display MODE     gtk (default on a desktop), sdl, spice, none
+      --spice-port N     SPICE port, default 5930 (VM_SPICE_PORT)
+      --no-gl            plain virtio-vga, no virgl
+      --no-clipboard     do not bridge the clipboard between host and guest
+      --sound            add an HDA sound card
+  -D, --daemon           start in the background (implies -d spice)
+
+disk:
+  -t, --temp             throwaway: a temp overlay is deleted on exit and
+                         the image is never written to
+  -o, --overlay [PATH]   persistent overlay: changes go to a separate file,
+                         the base image stays clean; created on first use,
+                         reused afterwards
+                         default: <image>.overlay.qcow2 next to the image
+      --cdrom FILE       attach an ISO and boot from it
+
+network:
+  -S, --ssh [PORT]       forward 127.0.0.1:PORT to guest port 22, default 2222
+
+firmware:
+  -u, --uefi             boot with edk2/OVMF instead of SeaBIOS
+
+other:
+      --dry-run          print the qemu command line, start nothing
+  -h, --help             this help
+  --                     everything after this goes to qemu unchanged
+
+examples:
+  vm -p kali.qcow2                boot it
+  vm -p kali.qcow2 -m 8192 -c 6   more memory and cpus
+  vm -p kali.qcow2 -t             throwaway session
+  vm -p kali.qcow2 -o             keep changes in a side file
+  vm -p kali.qcow2 -d spice -S    no window, ssh on 127.0.0.1:2222
+  vm -l ~/HOME/vms                list the images there
+
+a VM is not anonymity: the guest still leaves through the host's IP.
+-t keeps the disk clean, it does not hide traffic.
+EOF
+}
+
+list_images() {
+	local dir=$1 f size disk
+	printf '%-48s %10s %10s\n' IMAGE VIRTUAL ON-DISK
+	for f in "$dir"/*.qcow2; do
+		[ -e "$f" ] || continue
+		size=$(qemu-img info "$f" | sed -n 's/^virtual size: \([^ ]* [^ ]*\).*/\1/p')
+		disk=$(qemu-img info "$f" | sed -n 's/^disk size: \([^ ]* [^ ]*\).*/\1/p')
+		printf '%-48s %10s %10s\n' "$(basename "$f" .qcow2)" "$size" "$disk"
+	done
+}
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+	-h | --help)
+		usage
+		exit 0
+		;;
+	-l | --list)
+		if [ $# -ge 2 ]; then
+			[ -d "$2" ] || die "not a directory: $2"
+			list_images "$2"
+			shift 2
+		else
+			list_images .
+			shift
+		fi
+		exit 0
+		;;
+	-p | --path)
+		[ $# -ge 2 ] || die "$1 needs a value"
+		[ -z "$img" ] || die "image given twice"
+		img=$2
+		shift 2
+		;;
+	--path=*)
+		[ -z "$img" ] || die "image given twice"
+		img=${1#*=}
+		shift
+		;;
+	-m | --mem)
+		[ $# -ge 2 ] || die "$1 needs a value"
+		MEM=$2
+		shift 2
+		;;
+	--mem=*)
+		MEM=${1#*=}
+		shift
+		;;
+	-c | --cpus)
+		[ $# -ge 2 ] || die "$1 needs a value"
+		CPUS=$2
+		shift 2
+		;;
+	--cpus=*)
+		CPUS=${1#*=}
+		shift
+		;;
+	-d | --display)
+		[ $# -ge 2 ] || die "$1 needs a value"
+		display_mode=$2
+		shift 2
+		;;
+	--display=*)
+		display_mode=${1#*=}
+		shift
+		;;
+	--spice-port)
+		[ $# -ge 2 ] || die "$1 needs a value"
+		PORT=$2
+		shift 2
+		;;
+	--spice-port=*)
+		PORT=${1#*=}
+		shift
+		;;
+	-S | --ssh)
+		if [[ ${2:-} =~ ^[0-9]+$ ]]; then
+			ssh_port=$2
+			shift 2
+		else
+			ssh_port=2222
+			shift
+		fi
+		;;
+	-t | --temp)
+		mode=temp
+		shift
+		;;
+	-o | --overlay)
+		mode=overlay
+		if [ $# -ge 2 ] && [ "${2#-}" = "$2" ]; then
+			overlay=$2
+			shift 2
+		else
+			shift
+		fi
+		;;
+	-u | --uefi)
+		uefi=1
+		shift
+		;;
+	--cdrom)
+		[ $# -ge 2 ] || die "$1 needs a value"
+		cdrom=$2
+		shift 2
+		;;
+	--no-gl)
+		gl=0
+		shift
+		;;
+	--no-clipboard)
+		clipboard=0
+		shift
+		;;
+	--sound)
+		sound=1
+		shift
+		;;
+	-D | --daemon)
+		daemon=1
+		shift
+		;;
+	--dry-run)
+		dry_run=1
+		shift
+		;;
+	--)
+		shift
+		extra=("$@")
+		break
+		;;
+	-*)
+		die "unknown option: $1 (try --help)"
+		;;
+	*)
+		[ -z "$img" ] || die "image given twice"
+		img=$1
+		shift
+		;;
+	esac
+done
+
+[ -n "$img" ] || {
+	usage
+	exit 1
+}
+
+[ -f "$img" ] || die "no such image: $img"
+img=$(realpath -- "$img")
+
+[ -r "$img" ] || die "cannot read $img"
+fmt=$(qemu-img info "$img" | sed -n 's/^file format: //p')
+[ -n "$fmt" ] || die "not a disk image: $img"
+
+[ -r /dev/kvm ] && [ -w /dev/kvm ] || die "no access to /dev/kvm (is the kvm group on?)"
+
+name=$(basename "$img")
+name=${name%.qcow2}
+name=${name//[^A-Za-z0-9._-]/-}
+proc=${name:0:15}
+
+if [ -z "$display_mode" ]; then
+	if [ "$daemon" = 1 ]; then
+		display_mode=spice
+	elif [ -n "${WAYLAND_DISPLAY:-}" ] || [ -n "${DISPLAY:-}" ]; then
+		display_mode=gtk
+	else
+		display_mode=spice
+	fi
+fi
+[ "$display_mode" = spice ] || [ "$display_mode" = none ] || [ "$daemon" = 0 ] || die "-D needs -d spice"
+
+disk=$img
+disk_fmt=$fmt
+if [ "$mode" = overlay ]; then
+	overlay=${overlay:-$(dirname "$img")/$name.overlay.qcow2}
+	if [ "$dry_run" = 0 ]; then
+		mkdir -p "$(dirname "$overlay")"
+		if [ ! -f "$overlay" ]; then
+			qemu-img create -q -f qcow2 -F "$fmt" -b "$img" "$overlay"
+			printf 'vm: created overlay %s\n' "$overlay"
+		fi
+	fi
+	disk=$(realpath -m -- "$overlay")
+	disk_fmt=qcow2
+fi
+
+gfx=()
+case "$display_mode" in
+gtk | sdl)
+	if [ "$gl" = 1 ]; then
+		gfx+=(-device virtio-vga-gl -display "$display_mode,gl=on")
+	else
+		gfx+=(-device virtio-vga -display "$display_mode")
+	fi
+	;;
+spice)
+	gfx+=(-device virtio-vga -display none)
+	gfx+=(-spice "port=$PORT,addr=127.0.0.1,disable-ticketing=on")
+	if [ "$clipboard" = 1 ]; then
+		gfx+=(-device virtio-serial-pci)
+		gfx+=(-chardev spicevmc,id=vdagent,name=vdagent)
+		gfx+=(-device virtserialport,chardev=vdagent,name=com.redhat.spice.0)
+	fi
+	;;
+none)
+	gfx+=(-device virtio-vga -display none)
+	;;
+*)
+	die "unknown display mode: $display_mode"
+	;;
+esac
+
+snd=()
+[ "$sound" = 1 ] && snd=(-device ich9-intel-hda -device hda-duplex)
+
+net="user,id=net0"
+[ -n "$ssh_port" ] && net="$net,hostfwd=tcp:127.0.0.1:$ssh_port-:22"
+
+uefi_args=()
+if [ "$uefi" = 1 ]; then
+	share=$(dirname "$(dirname "$(realpath "$(command -v qemu-system-x86_64)")")")/share/qemu
+	code=${OVMF_CODE:-/run/libvirt/nix-ovmf/edk2-x86_64-code.fd}
+	vars=${OVMF_VARS:-/run/libvirt/nix-ovmf/edk2-i386-vars.fd}
+	[ -r "$code" ] || code=$share/edk2-x86_64-code.fd
+	[ -r "$vars" ] || vars=$share/edk2-i386-vars.fd
+	[ -r "$code" ] && [ -r "$vars" ] || die "edk2 not found, set OVMF_CODE and OVMF_VARS"
+	vstore=$STATE_DIR/$name-$(printf '%s' "$img" | md5sum | cut -c1-8).fd
+	if [ "$dry_run" = 0 ] && [ ! -f "$vstore" ]; then
+		mkdir -p "$STATE_DIR"
+		cp "$vars" "$vstore"
+	fi
+	uefi_args=(
+		-drive "if=pflash,format=raw,readonly=on,file=$code"
+		-drive "if=pflash,format=raw,file=$vstore"
+	)
+fi
+
+cd_args=()
+if [ -n "$cdrom" ]; then
+	cd_args=(-cdrom "$cdrom" -boot order=d,menu=on)
+fi
+
+daemon_args=()
+[ "$daemon" = 1 ] && daemon_args=(-daemonize)
+snapshot_args=()
+[ "$mode" = temp ] && snapshot_args=(-snapshot)
+
+cmd=(
+	qemu-system-x86_64
+	-name "$name,process=$proc"
+	-machine q35,accel=kvm
+	-cpu host
+	-smp "$CPUS",cores="$CPUS",threads=1
+	-m "$MEM"
+	-device qemu-xhci
+	-device usb-tablet
+	-device virtio-rng-pci
+	"${gfx[@]}"
+	"${snd[@]}"
+	"${uefi_args[@]}"
+	-drive "file=$disk,if=none,id=disk0,format=$disk_fmt,cache=writeback,aio=io_uring,discard=unmap,detect-zeroes=unmap"
+	-device virtio-blk-pci,drive=disk0,bootindex=1
+	"${cd_args[@]}"
+	-netdev "$net"
+	-device virtio-net-pci,netdev=net0
+	"${snapshot_args[@]}"
+	"${daemon_args[@]}"
+	"${extra[@]}"
+)
+
+if [ "$dry_run" = 1 ]; then
+	printf '%q ' "${cmd[@]}"
+	printf '\n'
+	exit 0
+fi
+
+printf 'vm: %s  %sM  %s vcpu  %s\n' "$name" "$MEM" "$CPUS" "$disk"
+[ "$mode" = temp ] && printf 'vm: temp mode, changes are discarded\n'
+[ -n "$ssh_port" ] && printf 'vm: ssh -p %s <user>@127.0.0.1\n' "$ssh_port"
+[ "$display_mode" = spice ] && printf 'vm: remote-viewer spice://127.0.0.1:%s\n' "$PORT"
+
+exec "${cmd[@]}"
