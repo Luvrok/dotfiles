@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, pkgs, ... }:
 
 let
   # one Let's Encrypt certificate per host. the vhosts themselves are in
@@ -20,6 +20,12 @@ let
 
   # the cutlab landing: the bot link lives in the page, nginx only serves it
   cutlabBotUrl = "https://t.me/cutlab_bot";
+
+  # rendered at build time: the activation script has no sed, only the
+  # coreutils it starts with
+  cutlabIndex = pkgs.writeText "cutlab-index.html" (
+    builtins.replaceStrings [ "@BOT_URL@" ] [ cutlabBotUrl ] (builtins.readFile ./cutlab/index.html)
+  );
 
   certServices = map (domain: "acme-${domain}.service") domains;
 in
@@ -48,8 +54,7 @@ in
 
   system.activationScripts.cutlabSite = ''
     mkdir -p /var/www/cutlab
-    sed 's|@BOT_URL@|${cutlabBotUrl}|g' ${./cutlab/index.html} \
-      > /var/www/cutlab/index.html
+    cp -f ${cutlabIndex} /var/www/cutlab/index.html
     chmod 0644 /var/www/cutlab/index.html
   '';
 
