@@ -123,10 +123,12 @@
 
       h1 {
         margin: 0 0 18px;
-        font-size: clamp(38px, 7vw, 64px);
+        font-size: clamp(30px, 7vw, 64px);
         font-weight: 800;
         letter-spacing: -0.03em;
-        line-height: 1.02;
+        line-height: 1.04;
+        overflow-wrap: break-word;
+        hyphens: auto;
       }
 
       .lead {
@@ -479,6 +481,10 @@
         .top nav {
           flex-wrap: wrap;
           gap: 14px;
+        }
+
+        main {
+          padding: 0 20px 72px;
         }
 
         .hero {
