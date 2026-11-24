@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CUTLAB — политика конфиденциальности</title>
+    <meta
+      name="description"
+      content="Какие данные собирает CUTLAB, зачем они нужны, кто их видит и как их удалить."
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b0b0c;
+        --panel: #141416;
+        --text: #f2f0ea;
+        --muted: #8f8b83;
+        --accent: #d9b382;
+        --line: #26262a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(120% 70% at 50% 0%, #1a1a1d 0%, var(--bg) 60%),
+          var(--bg);
+        color: var(--text);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          "Helvetica Neue",
+          Arial,
+          sans-serif;
+        line-height: 1.65;
+      }
+
+      main {
+        width: 100%;
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 48px 22px 72px;
+      }
+
+      .mark {
+        font-size: clamp(30px, 8vw, 44px);
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        line-height: 1;
+        margin: 0 0 8px;
+        text-indent: 0.14em;
+      }
+
+      .mark span {
+        color: var(--accent);
+      }
+
+      .tag {
+        margin: 0 0 30px;
+        color: var(--muted);
+        font-size: 13px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 28px 24px;
+      }
+
+      h1 {
+        font-size: 26px;
+        line-height: 1.25;
+        margin: 0 0 8px;
+      }
+
+      h2 {
+        font-size: 18px;
+        line-height: 1.3;
+        margin: 28px 0 8px;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+        font-size: 15px;
+      }
+
+      p {
+        margin: 0 0 12px;
+      }
+
+      ul {
+        margin: 0 0 12px;
+        padding-left: 20px;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      .back {
+        display: inline-block;
+        margin-top: 24px;
+        color: var(--muted);
+        font-size: 14px;
+        text-decoration: none;
+      }
+
+      .back:hover {
+        color: var(--text);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="mark">CUT<span>LAB</span></p>
+      <p class="tag">аренда кресла</p>
+
+      <div class="card">
+        <h1>Политика конфиденциальности</h1>
+        <p>
+          Редакция от 24 ноября 2026 года. Сервис CUTLAB — Telegram-бот
+          <a href="https://t.me/cutlabot">@cutlabot</a> и сайт
+          cutlab.vxrnt.ru.
+        </p>
+
+        <h2>Какие данные</h2>
+        <ul>
+          <li>Telegram: числовой id и username.</li>
+          <li>
+            Данные, которые вы вводите в боте: имя для брони, телефон, если он
+            указан в профиле.
+          </li>
+          <li>Брони: кресло, адрес, дата, время, цена и статус.</li>
+          <li>
+            Технические записи сервера: время запросов и ошибки, без содержимого
+            переписки.
+          </li>
+        </ul>
+
+        <h2>Зачем</h2>
+        <ul>
+          <li>регистрация и вход в бота;</li>
+          <li>создание, изменение и отмена брони;</li>
+          <li>уведомления и напоминания о брони;</li>
+          <li>поддержка и защита от злоупотреблений.</li>
+        </ul>
+
+        <h2>Кто видит</h2>
+        <p>
+          Мастер видит имя, username и телефон клиента своей брони.
+          Администратор видит данные всех пользователей и броней. Другие
+          пользователи не видят ваши данные. Telegram как мессенджер
+          обрабатывает сообщения по своим правилам.
+        </p>
+
+        <h2>Где хранятся</h2>
+        <p>
+          Данные хранятся в PostgreSQL на закрытом сервере CUTLAB. Доступ есть
+          только у администратора. Резервные копии хранятся 7 дней. Платёжные
+          данные не собираются: оплата проходит вне бота.
+        </p>
+
+        <h2>Срок и удаление</h2>
+        <p>
+          Данные хранятся, пока вы пользуетесь ботом. Чтобы удалить аккаунт и
+          данные, напишите администратору через
+          <a href="https://t.me/cutlabot">@cutlabot</a>. Часть истории броней
+          может сохраняться, если этого требует закон или если нужно
+          урегулировать спор.
+        </p>
+
+        <h2>Cookies и аналитика</h2>
+        <p>
+          Сайт не использует cookies, аналитику и рекламные трекеры. Бот
+          работает внутри Telegram.
+        </p>
+
+        <h2>Контакты</h2>
+        <p>
+          По вопросам данных: <a href="https://t.me/cutlabot">@cutlabot</a>.
+        </p>
+
+        <a class="back" href="/">← На главную</a>
+      </div>
+    </main>
+  </body>
+</html>
