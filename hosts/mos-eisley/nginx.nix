@@ -58,8 +58,16 @@ in
     cp -f ${./cutlab/guide.html} /var/www/cutlab/guide.html
     cp -f ${./cutlab/privacy.html} /var/www/cutlab/privacy.html
     cp -f ${./cutlab/logo.png} /var/www/cutlab/logo.png
+    cp -f ${./cutlab/favicon.ico} /var/www/cutlab/favicon.ico
+    cp -f ${./cutlab/favicon.svg} /var/www/cutlab/favicon.svg
+    cp -f ${./cutlab/favicon-32.png} /var/www/cutlab/favicon-32.png
+    cp -f ${./cutlab/favicon-16.png} /var/www/cutlab/favicon-16.png
+    cp -f ${./cutlab/apple-touch-icon.png} /var/www/cutlab/apple-touch-icon.png
     chmod 0644 /var/www/cutlab/index.html /var/www/cutlab/guide.html \
-      /var/www/cutlab/privacy.html /var/www/cutlab/logo.png
+      /var/www/cutlab/privacy.html /var/www/cutlab/logo.png \
+      /var/www/cutlab/favicon.ico /var/www/cutlab/favicon.svg \
+      /var/www/cutlab/favicon-32.png /var/www/cutlab/favicon-16.png \
+      /var/www/cutlab/apple-touch-icon.png
   '';
 
   services.nginx = {
