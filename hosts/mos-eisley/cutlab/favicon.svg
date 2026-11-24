@@ -1,13 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#D9B382"/>
-  <g transform="translate(-6,-10)">
-    <g transform="rotate(-7 212 346)">
-      <rect x="152" y="80" width="120" height="266" rx="34" fill="#0B0B0C"/>
+  <rect width="512" height="512" fill="#0B0B0C"/>
+  <circle cx="256" cy="256" r="190" fill="none" stroke="#D9B382" stroke-width="10"/>
+  <g transform="translate(256 256) scale(0.78) translate(-256 -256)">
+    <g transform="translate(-6,-10)">
+      <g transform="rotate(-7 212 346)">
+        <rect x="152" y="80" width="120" height="266" rx="34" fill="#D9B382"/>
+      </g>
+      <rect x="218" y="210" width="170" height="44" rx="22" fill="#D9B382"/>
+      <rect x="348" y="210" width="42" height="128" rx="20" fill="#D9B382"/>
+      <rect x="160" y="334" width="244" height="64" rx="30" fill="#D9B382"/>
+      <rect x="270" y="398" width="46" height="28" rx="10" fill="#D9B382"/>
+      <polygon points="228,424 356,424 384,452 200,452" fill="#D9B382" stroke="#D9B382" stroke-width="12" stroke-linejoin="round"/>
     </g>
-    <rect x="218" y="210" width="170" height="44" rx="22" fill="#0B0B0C"/>
-    <rect x="348" y="210" width="42" height="128" rx="20" fill="#0B0B0C"/>
-    <rect x="160" y="334" width="244" height="64" rx="30" fill="#0B0B0C"/>
-    <rect x="270" y="398" width="46" height="28" rx="10" fill="#0B0B0C"/>
-    <polygon points="228,424 356,424 384,452 200,452" fill="#0B0B0C" stroke="#0B0B0C" stroke-width="12" stroke-linejoin="round"/>
   </g>
 </svg>
