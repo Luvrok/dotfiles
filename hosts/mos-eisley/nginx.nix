@@ -55,8 +55,11 @@ in
   system.activationScripts.cutlabSite = ''
     mkdir -p /var/www/cutlab
     cp -f ${cutlabIndex} /var/www/cutlab/index.html
+    cp -f ${./cutlab/guide.html} /var/www/cutlab/guide.html
     cp -f ${./cutlab/privacy.html} /var/www/cutlab/privacy.html
-    chmod 0644 /var/www/cutlab/index.html /var/www/cutlab/privacy.html
+    cp -f ${./cutlab/logo.png} /var/www/cutlab/logo.png
+    chmod 0644 /var/www/cutlab/index.html /var/www/cutlab/guide.html \
+      /var/www/cutlab/privacy.html /var/www/cutlab/logo.png
   '';
 
   services.nginx = {

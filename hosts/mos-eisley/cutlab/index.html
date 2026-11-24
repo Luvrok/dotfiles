@@ -111,6 +111,7 @@
         gap: 10px;
         width: 100%;
         padding: 15px 20px;
+        border: 1px solid transparent;
         border-radius: 12px;
         background: var(--accent);
         color: #17130e;
@@ -126,6 +127,16 @@
 
       .button:active {
         transform: translateY(1px);
+      }
+
+      .button.secondary {
+        background: transparent;
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+
+      .button + .button {
+        margin-top: 10px;
       }
 
       .note {
@@ -163,11 +174,13 @@
           свободные слоты в Telegram.
         </p>
         <a class="button" href="@BOT_URL@" rel="noopener">Записаться в Telegram</a>
+        <a class="button secondary" href="guide.html">Как пользоваться</a>
         <p class="note">Оплата на месте. Бот только бронирует.</p>
       </div>
 
       <footer>
         <a href="https://vxrnt.ru">vxrnt.ru</a> ·
+        <a href="guide.html">инструкция</a> ·
         <a href="privacy.html">политика конфиденциальности</a>
       </footer>
     </main>

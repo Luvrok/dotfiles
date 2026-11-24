@@ -1,0 +1,955 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CUTLAB: как пользоваться</title>
+    <meta
+      name="description"
+      content="Простая инструкция CUTLAB: как клиенту арендовать кресло, как мастеру добавить кресло и показать его клиентам."
+    />
+    <meta property="og:title" content="CUTLAB: как пользоваться" />
+    <meta
+      property="og:description"
+      content="Клиент выбирает кресло и время. Мастер открывает расписание и получает брони в Telegram."
+    />
+    <meta property="og:type" content="website" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b0b0c;
+        --panel: #141416;
+        --panel-soft: #19191c;
+        --text: #f2f0ea;
+        --muted: #9a958c;
+        --accent: #d9b382;
+        --accent-soft: rgba(217, 179, 130, 0.12);
+        --line: #2a2a2f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(90% 55% at 50% 0%, #1c1b1e 0%, var(--bg) 60%),
+          var(--bg);
+        color: var(--text);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          "Helvetica Neue",
+          Arial,
+          sans-serif;
+        line-height: 1.65;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      .top {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 14px 28px;
+        border-bottom: 1px solid rgba(42, 42, 47, 0.8);
+        background: rgba(11, 11, 12, 0.82);
+        backdrop-filter: blur(16px);
+      }
+
+      .brand img {
+        display: block;
+        width: 210px;
+        height: auto;
+      }
+
+      .top nav {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        font-size: 14px;
+      }
+
+      .top nav a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+
+      .top nav a:hover {
+        color: var(--text);
+      }
+
+      .top .nav-cta {
+        padding: 9px 16px;
+        border: 1px solid var(--accent);
+        border-radius: 999px;
+        color: var(--accent);
+      }
+
+      main {
+        width: 100%;
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 0 24px 80px;
+      }
+
+      .hero {
+        max-width: 780px;
+        padding: 78px 0 54px;
+      }
+
+      .eyebrow {
+        margin: 0 0 14px;
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0 0 18px;
+        font-size: clamp(38px, 7vw, 64px);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.02;
+      }
+
+      .lead {
+        max-width: 650px;
+        margin: 0;
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1.7;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 30px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 14px 22px;
+        border: 1px solid var(--accent);
+        border-radius: 12px;
+        background: var(--accent);
+        color: #17130e;
+        font-size: 15px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: filter 120ms ease, transform 120ms ease;
+      }
+
+      .button:hover {
+        filter: brightness(1.06);
+      }
+
+      .button:active {
+        transform: translateY(1px);
+      }
+
+      .button.secondary {
+        background: transparent;
+        color: var(--accent);
+      }
+
+      .quick {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+        margin-bottom: 74px;
+      }
+
+      .quick-card {
+        padding: 26px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: linear-gradient(180deg, #17171a 0%, #121214 100%);
+      }
+
+      .badge {
+        display: inline-block;
+        margin-bottom: 14px;
+        padding: 4px 9px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .badge.gold {
+        border-color: rgba(217, 179, 130, 0.45);
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+
+      .quick-card h2 {
+        margin: 0 0 14px;
+        font-size: 24px;
+        line-height: 1.2;
+      }
+
+      .quick-card ol {
+        margin: 0 0 20px;
+        padding-left: 20px;
+        color: var(--muted);
+        font-size: 15px;
+      }
+
+      .quick-card li + li {
+        margin-top: 8px;
+      }
+
+      .text-link {
+        color: var(--accent);
+        font-size: 14px;
+        font-weight: 650;
+        text-decoration: none;
+      }
+
+      .text-link:hover {
+        text-decoration: underline;
+      }
+
+      .section {
+        padding: 46px 0 10px;
+        scroll-margin-top: 90px;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .kicker {
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+      }
+
+      .section h2 {
+        margin: 0;
+        font-size: clamp(30px, 4vw, 42px);
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+      }
+
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .step {
+        display: flex;
+        gap: 16px;
+        padding: 20px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--panel);
+      }
+
+      .num {
+        flex: 0 0 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .step h3 {
+        margin: 3px 0 6px;
+        font-size: 16px;
+        line-height: 1.3;
+      }
+
+      .step p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      .note {
+        margin-top: 18px;
+        padding: 18px 20px;
+        border-left: 3px solid var(--accent);
+        border-radius: 0 14px 14px 0;
+        background: rgba(217, 179, 130, 0.07);
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .note strong {
+        color: var(--text);
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .card {
+        padding: 20px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--panel);
+      }
+
+      .card h3 {
+        margin: 0 0 8px;
+        font-size: 17px;
+      }
+
+      .card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      .callout {
+        margin-top: 18px;
+        padding: 22px;
+        border: 1px solid rgba(217, 179, 130, 0.35);
+        border-radius: 16px;
+        background: var(--accent-soft);
+      }
+
+      .callout h3 {
+        margin: 0 0 8px;
+        font-size: 18px;
+      }
+
+      .callout p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+      }
+
+      details {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--panel);
+      }
+
+      summary {
+        cursor: pointer;
+        padding: 16px 18px;
+        color: var(--text);
+        font-size: 15px;
+        font-weight: 600;
+        list-style: none;
+      }
+
+      summary::-webkit-details-marker {
+        display: none;
+      }
+
+      summary::after {
+        content: "+";
+        float: right;
+        color: var(--accent);
+        font-weight: 400;
+      }
+
+      details[open] summary::after {
+        content: "-";
+      }
+
+      details p {
+        margin: 0;
+        padding: 0 18px 18px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .next {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .next .card {
+        position: relative;
+      }
+
+      .next .priority {
+        border-color: rgba(217, 179, 130, 0.42);
+      }
+
+      .next .priority::before {
+        content: "Приоритет";
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        padding: 3px 7px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .next h3 {
+        padding-right: 80px;
+      }
+
+      footer {
+        border-top: 1px solid var(--line);
+        background: #09090a;
+      }
+
+      .footer-inner {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 28px 24px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+      }
+
+      .footer-links a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+
+      .footer-links a:hover {
+        color: var(--text);
+      }
+
+      @media (max-width: 860px) {
+        .top {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 12px;
+          padding: 14px 20px;
+        }
+
+        .brand img {
+          width: 170px;
+        }
+
+        .top nav {
+          flex-wrap: wrap;
+          gap: 14px;
+        }
+
+        .hero {
+          padding-top: 54px;
+        }
+
+        .quick,
+        .steps,
+        .cards,
+        .next {
+          grid-template-columns: 1fr;
+        }
+
+        .lead {
+          font-size: 16px;
+        }
+      }
+
+      @media print {
+        .top nav,
+        .actions,
+        footer {
+          display: none;
+        }
+
+        body {
+          background: #fff;
+          color: #111;
+        }
+
+        .quick-card,
+        .step,
+        .card,
+        .note,
+        .callout,
+        details {
+          border-color: #ccc;
+          background: #fff;
+        }
+
+        .lead,
+        .step p,
+        .card p,
+        .note,
+        .callout p,
+        details p {
+          color: #444;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <a class="brand" href="/">
+        <img src="logo.png" alt="CUTLAB" />
+      </a>
+      <nav>
+        <a href="#client">Клиентам</a>
+        <a href="#master">Мастерам</a>
+        <a href="#help">Вопросы</a>
+        <a class="nav-cta" href="https://t.me/cutlabot">Открыть бота</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <p class="eyebrow">Инструкция</p>
+        <h1>Как пользоваться CUTLAB</h1>
+        <p class="lead">
+          Аренда кресла в барбершопе по часам. Клиент выбирает кресло, день и
+          время. Мастер открывает расписание и получает брони в Telegram.
+          Оплата на месте.
+        </p>
+        <div class="actions">
+          <a class="button" href="https://t.me/cutlabot">Открыть бота</a>
+          <a class="button secondary" href="https://t.me/morturion">
+            Стать мастером
+          </a>
+        </div>
+      </section>
+
+      <section class="quick">
+        <article class="quick-card">
+          <span class="badge">Клиент</span>
+          <h2>Арендовать кресло</h2>
+          <ol>
+            <li>Откройте @cutlabot и нажмите Start.</li>
+            <li>Выберите кресло, день и время.</li>
+            <li>Подтвердите бронь и оплатите на месте.</li>
+          </ol>
+          <a class="text-link" href="https://t.me/cutlabot">Открыть @cutlabot</a>
+        </article>
+
+        <article class="quick-card">
+          <span class="badge gold">Мастер</span>
+          <h2>Сдавать кресло</h2>
+          <ol>
+            <li>Напишите @morturion и получите код мастера.</li>
+            <li>Введите код в боте и укажите имя.</li>
+            <li>Добавьте кресло и отправьте клиентам ссылку.</li>
+          </ol>
+          <a class="text-link" href="https://t.me/morturion">Написать @morturion</a>
+        </article>
+      </section>
+
+      <section id="client" class="section">
+        <div class="section-head">
+          <span class="kicker">01</span>
+          <h2>Клиентам</h2>
+        </div>
+
+        <div class="steps">
+          <article class="step">
+            <span class="num">1</span>
+            <div>
+              <h3>Откройте бота</h3>
+              <p>Нажмите Start. Бот сразу покажет меню и доступные кресла.</p>
+            </div>
+          </article>
+
+          <article class="step">
+            <span class="num">2</span>
+            <div>
+              <h3>Посмотрите кресла</h3>
+              <p>
+                Публичные кресла видны сразу. Ссылку или код на кресла мастера
+                даёт сам мастер.
+              </p>
+            </div>
+          </article>
+
+          <article class="step">
+            <span class="num">3</span>
+            <div>
+              <h3>Выберите день</h3>
+              <p>
+                В карте дня <strong>·</strong> значит свободно,
+                <strong>×</strong> значит занято, <strong>-</strong> значит
+                время уже прошло.
+              </p>
+            </div>
+          </article>
+
+          <article class="step">
+            <span class="num">4</span>
+            <div>
+              <h3>Выберите время</h3>
+              <p>Укажите час начала и час окончания. Бот покажет сумму.</p>
+            </div>
+          </article>
+
+          <article class="step">
+            <span class="num">5</span>
+            <div>
+              <h3>Подтвердите</h3>
+              <p>Проверьте адрес, дату, время и сумму. Нажмите «Подтвердить».</p>
+            </div>
+          </article>
+
+          <article class="step">
+            <span class="num">6</span>
+            <div>
+              <h3>Назовите себя</h3>
+              <p>В первый раз бот спросит имя. Дальше подставит его сам.</p>
+            </div>
+          </article>
+
+          <article class="step">
+            <span class="num">7</span>
+            <div>
+              <h3>Оплатите на месте</h3>
+              <p>
+                Бот только бронирует время. Напомнит о брони за сутки и за два
+                часа.
+              </p>
+            </div>
+          </article>
+        </div>
+
+        <aside class="note">
+          <strong>Мои брони.</strong> В меню видно активные записи и историю.
+          Кнопка «Отменить» отменяет бронь. Если кресло уже началось,
+          предупредите мастера.
+        </aside>
+      </section>
+
+      <section id="master" class="section">
+        <div class="section-head">
+          <span class="kicker">02</span>
+          <h2>Мастерам</h2>
+        </div>
+
+        <div class="steps">
+          <article class="step">
+            <span class="num">1</span>
+            <div>
+              <h3>Получите код</h3>
+              <p>
+                Напишите @morturion. Код выглядит как M-123456. Он одноразовый
+                и живёт 7 дней.
+              </p>
+            </div>
+          </article>
+
+          <article class="step">
+            <span class="num">2</span>
+            <div>
+              <h3>Введите код</h3>
+              <p>Кнопка «Ввести код» или команда /code M-123456.</p>
+            </div>
+          </article>
+
+          <article class="step">
+            <span class="num">3</span>
+            <div>
+              <h3>Укажите имя</h3>
+              <p>
+                Бот спросит имя. Его увидят клиенты на карточке кресла. Позже
+                имя меняется кнопкой «Моё имя».
+              </p>
+            </div>
+          </article>
+
+          <article class="step">
+            <span class="num">4</span>
+            <div>
+              <h3>Добавьте кресло</h3>
+              <p>Укажите адрес, название зала и цену за час.</p>
+            </div>
+          </article>
+
+          <article class="step">
+            <span class="num">5</span>
+            <div>
+              <h3>Настройте часы</h3>
+              <p>
+                Каждый день настраивается отдельно. Выходной задаётся отдельной
+                кнопкой.
+              </p>
+            </div>
+          </article>
+
+          <article class="step">
+            <span class="num">6</span>
+            <div>
+              <h3>Выберите видимость</h3>
+              <p>
+                «Показать в каталоге» открывает кресло всем клиентам. «Скрыть из
+                каталога» оставляет его только для ссылки и кода.
+              </p>
+            </div>
+          </article>
+
+          <article class="step">
+            <span class="num">7</span>
+            <div>
+              <h3>Отправьте ссылку</h3>
+              <p>
+                «Ссылка на мои кресла» даёт ссылку и код вида S-AB12CD. Клиент
+                откроет ссылку или введёт код и увидит все ваши активные кресла,
+                даже скрытые.
+              </p>
+            </div>
+          </article>
+
+          <article class="step">
+            <span class="num">8</span>
+            <div>
+              <h3>Принимайте брони</h3>
+              <p>
+                В «Мои брони» видно имя, имя в Telegram и телефон клиента.
+                Кнопка «Отменить» отменяет бронь, «Не пришёл» отмечает неявку
+                после начала времени.
+              </p>
+            </div>
+          </article>
+        </div>
+
+        <aside class="note">
+          <strong>Несколько кресел.</strong> В меню «Мои кресла» видно все
+          кресла. В карточке кресла меняются цена, часы, пауза и архив.
+        </aside>
+      </section>
+
+      <section id="master-client" class="section">
+        <div class="section-head">
+          <span class="kicker">03</span>
+          <h2>Мастер тоже клиент</h2>
+        </div>
+
+        <div class="cards">
+          <article class="card">
+            <h3>Мои аренды</h3>
+            <p>Брони, где вы выступаете клиентом.</p>
+          </article>
+          <article class="card">
+            <h3>Найти кресло</h3>
+            <p>Ваши кресла и публичные кресла других мастеров.</p>
+          </article>
+          <article class="card">
+            <h3>Ввести код</h3>
+            <p>Код другого мастера, чтобы открыть его скрытые кресла.</p>
+          </article>
+        </div>
+
+        <aside class="note">
+          Своё кресло тоже бронируется. После брони мастер видит её в «Мои
+          аренды», а владелец кресла в «Мои брони».
+        </aside>
+      </section>
+
+      <section id="name" class="section">
+        <div class="section-head">
+          <span class="kicker">04</span>
+          <h2>Имя</h2>
+        </div>
+
+        <div class="callout">
+          <h3>Как вас зовут?</h3>
+          <p>
+            Мастер и администратор указывают имя, клиенты видят его на карточке
+            кресла. Клиент указывает имя для брони. Если имени нет, бот спросит
+            его при старте или при первой брони. Позже имя меняется кнопкой
+            «Моё имя».
+          </p>
+        </div>
+      </section>
+
+      <section id="help" class="section">
+        <div class="section-head">
+          <span class="kicker">05</span>
+          <h2>Если что-то не работает</h2>
+        </div>
+
+        <details>
+          <summary>Код не подходит</summary>
+          <p>
+            Проверьте, что код не использован и не просрочен. Код мастера
+            одноразовый, живёт 7 дней.
+          </p>
+        </details>
+
+        <details>
+          <summary>Ссылка не открывается</summary>
+          <p>Попросите у мастера ссылку или код ещё раз.</p>
+        </details>
+
+        <details>
+          <summary>Кресло не видно</summary>
+          <p>
+            Оно может быть скрыто. Попросите у мастера ссылку или код на его
+            кресла.
+          </p>
+        </details>
+
+        <details>
+          <summary>Бот не отвечает</summary>
+          <p>
+            Подождите пару минут и попробуйте снова. Если не помогло, напишите
+            @morturion.
+          </p>
+        </details>
+
+        <details>
+          <summary>Не приходят напоминания</summary>
+          <p>
+            Проверьте, что бот не заблокирован и уведомления в Telegram
+            включены.
+          </p>
+        </details>
+      </section>
+
+      <section id="data" class="section">
+        <div class="section-head">
+          <span class="kicker">06</span>
+          <h2>Данные и оплата</h2>
+        </div>
+
+        <div class="callout">
+          <p>
+            Бот хранит имя, имя в Telegram, телефон, если вы его указали, и
+            ваши брони. Мастер видит данные клиентов своих броней,
+            администратор видит все данные. Другие пользователи ваши данные не
+            видят. Платёжные данные бот не собирает, оплата проходит на месте.
+          </p>
+          <p>
+            Подробнее:
+            <a href="privacy.html">политика конфиденциальности</a>.
+          </p>
+        </div>
+      </section>
+
+      <section id="next" class="section">
+        <div class="section-head">
+          <span class="kicker">07</span>
+          <h2>Что может появиться дальше</h2>
+        </div>
+
+        <div class="next">
+          <article class="card priority">
+            <h3>Личный кабинет и календарь</h3>
+            <p>
+              Свои записи, повтор брони в один клик и добавление в телефонный
+              календарь.
+            </p>
+          </article>
+          <article class="card priority">
+            <h3>Онлайн-оплата и предоплата</h3>
+            <p>Небольшая предоплата уменьшает число пустых записей.</p>
+          </article>
+          <article class="card priority">
+            <h3>Список клиентов мастера</h3>
+            <p>
+              История визитов, любимые часы, заметки и отметки о неявках.
+            </p>
+          </article>
+          <article class="card">
+            <h3>Несколько мастеров в одном салоне</h3>
+            <p>Общее расписание, несколько сотрудников и общий список кресел.</p>
+          </article>
+          <article class="card">
+            <h3>Отзывы и рейтинг</h3>
+            <p>Клиент ставит оценку после визита, мастер видит обратную связь.</p>
+          </article>
+          <article class="card">
+            <h3>Лист ожидания</h3>
+            <p>
+              Если час занят, клиент встаёт в очередь и получает сообщение,
+              когда время освободилось.
+            </p>
+          </article>
+          <article class="card">
+            <h3>Фотографии и карта</h3>
+            <p>Фото кресла или салона и удобная ссылка на карту.</p>
+          </article>
+          <article class="card">
+            <h3>Промокоды и приглашения</h3>
+            <p>Скидка за приведённого клиента и простые акции.</p>
+          </article>
+          <article class="card">
+            <h3>Отчёты для мастера</h3>
+            <p>
+              Сколько часов занято, сколько броней отменено, сколько денег
+              прошло мимо.
+            </p>
+          </article>
+          <article class="card">
+            <h3>Админ-панель</h3>
+            <p>
+              Удобное управление мастерами, креслами и жалобами с компьютера.
+            </p>
+          </article>
+        </div>
+
+        <aside class="note">
+          Первые три пункта дают больше всего пользы: календарь, предоплата и
+          список клиентов.
+        </aside>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-inner">
+        <span>CUTLAB, 2026</span>
+        <div class="footer-links">
+          <a href="https://t.me/cutlabot">Открыть бота</a>
+          <a href="https://t.me/morturion">Написать @morturion</a>
+          <a href="privacy.html">Политика конфиденциальности</a>
+          <a href="/">На главную</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
