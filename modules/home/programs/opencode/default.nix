@@ -83,6 +83,7 @@ in
     "opencode/skills/debugging".source = ./skills/debugging;
     "opencode/skills/verify".source = ./skills/verify;
     "opencode/skills/effectcraft-motion".source = ./skills/effectcraft-motion;
+    "opencode/skills/craft-design".source = ./skills/craft-design;
     "opencode/skills/plan".source = ./skills/plan;
     "opencode/skills/wiki".source = ./skills/wiki;
     "opencode/skills/memory".source = ./skills/memory;
