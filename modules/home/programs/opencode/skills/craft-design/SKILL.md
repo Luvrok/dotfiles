@@ -1,22 +1,20 @@
 ---
 name: craft-design
-description: Create or revise visual artifacts with StoryTold Craft apps or Graphviz. Covers brief, tool choice, delegated design, building, and proportionate visual verification. Use for interfaces, mockups, slides, illustrations, logos, diagrams, infographics, SVGs, макеты, схемы, презентации, and other visual work made with Craft tools or dot.
+description: Create or revise visual artifacts with StoryTold Craft apps or Graphviz. Covers brief, tool choice, design, building, and proportionate visual verification. Use for interfaces, mockups, slides, illustrations, logos, diagrams, infographics, SVGs, макеты, схемы, презентации, and other visual work made with Craft tools or dot.
 ---
 
 # Craft design
 
 Make the artifact serve its purpose, not the process. Match the amount of planning and checking to the task; preserve the user's requested tool, format, and constraints.
 
-Design ownership is delegated: a separate design subagent chooses the plan, composition, visual language and level of detail. The main agent supplies the brief, facts and constraints, then integrates and verifies the result.
-
 ## Workflow
 
 1. **Brief.** Establish purpose, audience, output format/size, required content or assets, constraints, and what counts as done. Ask only about missing choices that would materially change the result; otherwise use and state sensible defaults.
 2. **Choose a tool.** Follow the user's choice. If none was given, use the table below. Offer alternatives only when the choice is genuinely ambiguous and has a meaningful trade-off.
-3. **Delegate the design.** Hand the brief to a design subagent and let it decide the content order, hierarchy, layout, visual encoding, typography, palette and level of detail. Give it the purpose, audience, required content, constraints, acceptance criteria and available tools; do not pre-decide composition or styling. Ask for the design rationale with the result. For a trivial change (typo, one value, a re-render of an existing source) the main agent may skip delegation.
-4. **Build.** The design subagent builds the artifact, or returns a concrete build plan when it lacks the app tools; the main agent then executes that plan without redesigning it. Discover the current app commands and parameters before relying on them. Work in meaningful sections and inspect intermediate results when that helps catch costly mistakes.
-5. **Visual review.** For a non-trivial visual composition, ask an independent subagent, not the designer, to review the actual render against the brief and `references/review.md`. Prefer a reviewer that can see images. Include inspect data or element ids when available. The reviewer reports concrete, actionable corrections; the design subagent applies them and renders again. Do not claim a visual review if the reviewer could not see the artifact.
-6. **Deliver.** Save or export in the requested format and location, and report any missing content, limitations, or unverified facts. If a suitable visual reviewer or render is unavailable, state that and do the best available check without calling it an independent visual pass.
+3. **Design.** Decide the content order, hierarchy, layout, visual encoding, typography, palette and level of detail before building. Fill missing choices with sensible defaults and state them. Ask only when a choice would materially change the result.
+4. **Build.** Discover the current app commands and parameters before relying on them. Work in meaningful sections and inspect intermediate results when that helps catch costly mistakes.
+5. **Visual review.** For a non-trivial visual composition, review the actual render against the brief and `references/review.md`: check the pixels, not just the geometry. A successful tool call proves only that the command ran. Fix what the review finds and render again; at most two review rounds, then report remaining findings rather than looping. If no render is available, say so and do the best available check without calling it a visual pass.
+6. **Deliver.** Save or export in the requested format and location, and report any missing content, limitations, or unverified facts.
 
 ## Principles
 
@@ -24,8 +22,7 @@ Design ownership is delegated: a separate design subagent chooses the plan, comp
 - Build hierarchy and structure before decorative styling. Use a consistent spacing, type, and colour system appropriate to the artifact rather than forcing one scale on every format.
 - Make text readable and keep labels clear of edges, shapes, and other labels. Check contrast where text and colour choices are part of the deliverable.
 - A successful tool call proves only that the command ran. Inspect or render the result before saying the artifact is ready.
-- Follow higher-priority instructions and the tool's current access limits. User-selected app choices take precedence; when tools or delegation are unavailable, say which part was not delegated. The design subagent owns design choices; the main agent may override only for a stated constraint, a factual error or an unreadable result, and records why.
-- The main agent does not silently redesign the result. If it changes the design, that is a new brief back to the design subagent, not a quiet edit.
+- Follow higher-priority instructions and the tool's current access limits. User-selected app choices take precedence. Do not silently redesign the artifact: a change of a stated design decision is a conscious revision, recorded in the report.
 
 ## Choose the app
 
@@ -47,5 +44,4 @@ Graphviz is a strong default for repeatable, data-driven diagrams because the so
 |---|---|
 | Build, inspect, render, and save with each app; Graphviz | `references/apps.md` |
 | Artifact-specific quality checks | `references/review.md` |
-| Design delegation, independent visual review and actionable feedback | `references/subagents.md` |
 | Motion on top of a still | `effectcraft-motion` skill |
