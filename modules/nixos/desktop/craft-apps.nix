@@ -91,8 +91,8 @@ in
 
   pdfcraft = craftApp {
     pname = "pdfcraft";
-    version = "0.21.1";
-    hash = "sha256-cwJ2zamt2z1I8mxgJobRj8W8Dr42CmCi9SLXDP1CjSE=";
+    version = "0.22.0";
+    hash = "sha256-dx9hsHqvjMF+c8sfk/vohSbyewqoL/MtBxDiw3X0kkg=";
   };
 
   deckcraft = craftApp {
@@ -109,8 +109,8 @@ in
 
   effectcraft = craftApp {
     pname = "effectcraft";
-    version = "0.24.1";
-    hash = "sha256-n4oWz3QUfJ4qw7ZfpvW+lqPhDq2S3fCNVE9dOZCtZNw=";
+    version = "0.25.1";
+    hash = "sha256-faFPXKggJ+LLcJ3JGAbHDOQf9DKt8n0tCjeInSG3obo=";
   };
 
   figcraft = craftApp {
