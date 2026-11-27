@@ -4,7 +4,7 @@
   # turns telegram channels and sites without rss into feeds for dispatch,
   # listens on 127.0.0.1:1200 only
   services.rsshub = {
-    enable = true;
+    enable = false;
     settings = {
       # t.me is throttled here
       PROXY_URI = "http://127.0.0.1:10808";
