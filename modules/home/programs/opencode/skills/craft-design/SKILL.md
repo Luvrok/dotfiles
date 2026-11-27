@@ -17,7 +17,7 @@ Design is decided before pixels: what the thing must do, for whom, in what forma
 6. Every number comes from a scale: spacing 4 or 8, type steps of 1.25 or 1.33, 2-3 colours plus neutrals. A one-off value is a bug unless named as one.
 7. No invented content. Missing copy gets an obvious placeholder and a line in the missing list.
 8. Evidence is a render at the size the reader sees plus numbers from inspect. Check boxes and paths against each other, not boxes alone.
-9. Nothing touches text. Think of every label as a box around the glyphs: no edge, arrowhead or shape may enter that box, and none may come closer than 8pt to it. A line that passes between letters leaves every letter whole and still destroys the label. "Almost" is a fail: the box is the rule, not the ink. The reviewer subagent looks for this on the render and must see images; a box entered is P0. `scripts/text-collisions.py` is an optional pre-check, not the verdict.
+9. Nothing touches text. Think of every label as a box around the glyphs: no edge, arrowhead or shape may enter that box, and none may come closer than 8pt to it. A line that passes between letters leaves every letter whole and still destroys the label. "Almost" is a fail: the box is the rule, not the ink. The reviewer looks for this on the render and must see images; a box entered is P0.
 10. Two renders that do not converge: change the tool or the layout engine, not the numbers.
 11. Report measurements, not adjectives, and list what changed against the previous version, facts included.
 
@@ -56,7 +56,7 @@ No local models in the first three; say "type a local one" and take what the use
 
 ## Subagents
 
-The main agent builds and decides. A subagent plans before or reviews after, never both, and never edits the artifact.
+The main agent builds and decides. A subagent plans before or reviews after, never both, and never edits the artifact. The reviewer takes its own screenshots and checks them; the builder does not certify its own render.
 
 - 2 review rounds, 5 findings per round, only P0/P1 fixed. P2 to a backlog, then deliver.
 - The reviewer checks written acceptance criteria, never "make it better".
@@ -79,5 +79,4 @@ The main agent builds and decides. A subagent plans before or reviews after, nev
 | Delegating the plan or the review, model choice, loop guardrails | `references/subagents.md` |
 | Checklist by artifact: screen, slide, diagram, illustration | `references/review.md` |
 | Calls to build, inspect, render and save in each app; dot commands | `references/apps.md` |
-| An optional pre-check of text boxes in a dot file | `scripts/text-collisions.py` |
 | Motion on top of a still | `effectcraft-motion` skill |

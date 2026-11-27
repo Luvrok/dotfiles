@@ -11,7 +11,7 @@ dot -Tpng -Gdpi=72  hosts.dot -o /tmp/check.png  # 1:1 with the viewBox
 dot -Tplain hosts.dot                      # geometry: canvas, boxes, splines
 ```
 
-Check from `-Tplain`: the canvas in inches ×72 = points, nothing sits outside. Text is the reviewer's pass on the render: it looks for an edge inside a label box, at 100% and at note width. `scripts/text-collisions.py` measures the same boxes when Graphviz is the renderer — useful as a pre-check, never as the verdict.
+Check from `-Tplain`: the canvas in inches ×72 = points, nothing sits outside. Text is the reviewer's pass on the render: it looks for an edge inside a label box, at 100% and at note width.
 
 Rules that keep a dot file legible: one idea per block, `rank=same` orders a row but only with invisible edges between the nodes, cluster labels stay short, and after two failed layouts change the layout engine or the tool, not `nodesep`.
 

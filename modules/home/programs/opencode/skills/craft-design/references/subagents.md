@@ -31,8 +31,8 @@ For the review, the model has to see the render. If the chosen one cannot, say s
 | Role | Does | Does not |
 |---|---|---|
 | Planner | structure, grid, type, colour roles, risks, acceptance checks | open the document, build, edit |
-| Reviewer | inspect, render, report findings against criteria | edit, rewrite, invent new goals |
-| Main | decide, build, apply P0/P1, reject with a reason, report | hide a rejected finding |
+| Reviewer | renders its own screenshots at 100% and at reader size, inspects, reports findings against criteria | edit, rewrite, invent new goals, reuse the builder's screenshot |
+| Main | decide, build, apply P0/P1, reject with a reason, report | certify its own render |
 
 ## Prompt contract
 
@@ -134,8 +134,8 @@ Look at: <what the user should judge themselves>
 
 ## Vision
 
-- The reviewer renders itself. A screenshot described in prose is not a review.
-- The reviewer must see the render; collisions, spacing and clipping are its findings, not the builder's. GPT-6 Luna reads renders fine, a local vision model is optional.
+- The reviewer takes the screenshots itself, at 100% and at the size the reader sees. The builder's screenshot is not evidence: it was framed by the one who made the artifact.
+- Collisions, spacing and clipping are the reviewer's findings, not the builder's. GPT-6 Luna reads renders fine, a local vision model is optional.
 - A text-only reviewer can still check geometry, contrast ratios and content against sources. Say that the pixel check was skipped; do not count it as passed.
 
 ## Failure modes

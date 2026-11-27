@@ -37,7 +37,7 @@ Measure, don't eyeball. Read bounds and fills from inspect, compute the gaps and
 
 - `viewBox` and export size set; text readable at the size it will be viewed, not only at 400%.
 - Text stays text unless outlines are required; no non-uniform scaling of text.
-- Labels >= 12px at 100%, no label over a line, no two labels touching, no edge inside a label box, no edge crossing a cluster title. Confirmed by the reviewer on the render; `scripts/text-collisions.py` is an optional pre-check.
+- Labels >= 12px at 100%, no label over a line, no two labels touching, no edge inside a label box, no edge crossing a cluster title. Confirmed by the reviewer on the render, not by the builder.
 - Arrows start and end on node borders, arrowheads visible, nothing pointing into empty space.
 - One reading direction per row: left-to-right or top-to-bottom, not both.
 - Node sizes consistent per level, stroke widths consistent per level.
