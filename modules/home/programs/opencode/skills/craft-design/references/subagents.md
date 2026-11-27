@@ -135,6 +135,7 @@ Look at: <what the user should judge themselves>
 ## Vision
 
 - The reviewer renders itself. A screenshot described in prose is not a review.
+- The reviewer must see the render; collisions, spacing and clipping are its findings, not the builder's. GPT-6 Luna reads renders fine, a local vision model is optional.
 - A text-only reviewer can still check geometry, contrast ratios and content against sources. Say that the pixel check was skipped; do not count it as passed.
 
 ## Failure modes

@@ -17,7 +17,7 @@ Design is decided before pixels: what the thing must do, for whom, in what forma
 6. Every number comes from a scale: spacing 4 or 8, type steps of 1.25 or 1.33, 2-3 colours plus neutrals. A one-off value is a bug unless named as one.
 7. No invented content. Missing copy gets an obvious placeholder and a line in the missing list.
 8. Evidence is a render at the size the reader sees plus numbers from inspect. Check boxes and paths against each other, not boxes alone.
-9. Nothing touches text. Think of every label as a box around the glyphs: no edge, arrowhead or shape may enter that box, and none may come closer than 8pt to it. A line that passes between letters leaves every letter whole and still destroys the label. "Almost" is a fail: the box is the rule, not the ink. For a `.dot` file run `scripts/text-collisions.py`; a box entered is P0, not a nitpick.
+9. Nothing touches text. Think of every label as a box around the glyphs: no edge, arrowhead or shape may enter that box, and none may come closer than 8pt to it. A line that passes between letters leaves every letter whole and still destroys the label. "Almost" is a fail: the box is the rule, not the ink. The reviewer subagent looks for this on the render and must see images; a box entered is P0. `scripts/text-collisions.py` is an optional pre-check, not the verdict.
 10. Two renders that do not converge: change the tool or the layout engine, not the numbers.
 11. Report measurements, not adjectives, and list what changed against the previous version, facts included.
 
@@ -27,7 +27,7 @@ Design is decided before pixels: what the thing must do, for whom, in what forma
 2. **Plan subagent** — mandatory, before any shape. It returns structure, grid, type and colour. Prompt in `references/subagents.md`.
 3. **App choice** — two options, one line each, and the user's answer before the first shape.
 4. **Build** — in parts, inspect after each block instead of all at the end.
-5. **Check** — `references/review.md`, numbers first, then the render at reader size. For a `.dot` file, `scripts/text-collisions.py` must report zero findings.
+5. **Check** — `references/review.md`, numbers first, then the render at reader size. Collisions are the reviewer's job, not the builder's.
 6. **Review subagent** — bounded, and its model must see the render. If it cannot, the main agent does the visual pass and says so.
 7. **Delta report** — what changed against the previous version, including facts that moved.
 
@@ -79,5 +79,5 @@ The main agent builds and decides. A subagent plans before or reviews after, nev
 | Delegating the plan or the review, model choice, loop guardrails | `references/subagents.md` |
 | Checklist by artifact: screen, slide, diagram, illustration | `references/review.md` |
 | Calls to build, inspect, render and save in each app; dot commands | `references/apps.md` |
-| Proving no edge touches a label in a dot file | `scripts/text-collisions.py` |
+| An optional pre-check of text boxes in a dot file | `scripts/text-collisions.py` |
 | Motion on top of a still | `effectcraft-motion` skill |
