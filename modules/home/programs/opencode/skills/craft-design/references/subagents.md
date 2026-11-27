@@ -1,30 +1,30 @@
 # Subagents for design
 
-A subagent is useful for exactly two things: a plan drawn without having built anything, and a review by someone who did not build it. Both are destroyed by handing it your own reasoning.
+Two jobs, two rules: the plan is written by a subagent that did not build anything, and the review is written by one that did not build it either. Both are destroyed by handing over your own reasoning.
 
-## Why it works
+## Why the planner is mandatory
 
-- Fresh context has no attachment to the first idea and no sunk cost to defend.
-- The author reads intent into the render; a reviewer only sees the render.
-- A plan from a fresh context surfaces the structural mistake before it is drawn twice.
+The builder plans what it can draw. A fresh context plans what the artifact needs, and it costs one call to find out that the structure is wrong before it is drawn twice. On a real diagram this is six redraws saved.
+
+The only exception is a visual the user called trivial in the request. Not "small", not "obvious": trivial, in their words.
+
+## Model choice
+
+Ask once per task, from the models available right now, never from memory:
+
+1. `opencode-go/gpt-6-luna` — default, cheap, fine for both plan and review.
+2. the main session model — no surprise, same taste as the build.
+3. one model that is good at design or reads images.
+
+No local models in the first three. Add "if you want a local one, type it" and use exactly what the user writes. Check the list with `tools.opencode.models`; a model that is not in the result is not available.
+
+For the review, the model has to see the render. If the chosen one cannot, say so before calling it: the review is then source-only, and the main agent does the pixel pass itself.
 
 ## What it costs
 
-- A subagent does not see the session: brief, criteria, format and ids go in the prompt verbatim.
-- Two model calls plus renders per round; reviewing a large deck can cost more than building it.
+- A subagent does not see the session: brief, criteria, sources and ids go in the prompt verbatim.
+- Two model calls plus renders per round; reviewing a long deck can cost more than building it.
 - A subagent cannot ask the user. Anything unclear comes back as an assumptions list — read it.
-
-## When to delegate
-
-| Situation | Delegate? |
-|---|---|
-| Clear brief, one screen, quick build | No. Build and self-check with `review.md`. |
-| New domain, real research needed before a layout | Plan subagent, with the research in the brief. |
-| Several screens, sections or a long deck | Plan subagent for structure; the main agent builds. |
-| Artifact goes to a person (client, boss, publish) | Review subagent. |
-| The main model cannot read images | Numeric review only, and say the visual check was skipped. |
-| Polish after an agreed plan | No. That is a diff with a target, not a review. |
-| You already think it is good | Review subagent. This is when self-review fails most. |
 
 ## Roles
 
@@ -39,7 +39,7 @@ A subagent is useful for exactly two things: a plan drawn without having built a
 Every delegation prompt carries:
 
 1. Role and one sentence of job.
-2. Brief verbatim, and the acceptance criteria verbatim.
+2. Brief verbatim, acceptance criteria verbatim, and the source list.
 3. App, format, size, the tool names it may use.
 4. Permission line: "you may inspect and render", or "plan only, do not open the document".
 5. Exact output schema.
@@ -55,6 +55,7 @@ artifact.
 
 Brief: <paste>
 Acceptance criteria: <paste>
+Sources: <fact -> note path, one per line>
 App and format: <app>, <width>x<height>
 
 Return only:
@@ -64,8 +65,10 @@ Return only:
 3. Type: 3-4 roles with size, weight, line-height.
 4. Colour: roles with hex, plus the contrast ratio of every text pair.
 5. Content: what exists, what is missing, what to cut.
-6. Risks: 2-3 ways this fails, and the check that catches each.
-7. Acceptance checks: 3-6 lines a reviewer can test.
+6. Missing or unverified facts: anything in the sources you could not confirm,
+   and what would confirm it.
+7. Risks: 2-3 ways this fails, and the check that catches each.
+8. Acceptance checks: 3-6 lines a reviewer can test.
 
 Assumptions you had to make: one line each, at the end.
 ```
@@ -80,12 +83,13 @@ Criteria, the only things that count: <paste>
 What was asked: <brief, 3 lines>
 Round: <n> of 2.
 
-Open it, render at final size, inspect geometry. For every finding:
+Open it, render at the size a reader sees, inspect geometry. For every
+finding:
 
 id | severity | criterion violated | measured deviation | location
 
 P0 wrong information, unreadable text, clipped content, broken layout.
-P1 violates a criterion and is cheap: alignment, spacing, contrast, hierarchy.
+P1 violates a criterion and is cheap: alignment, spacing, contrast, collisions.
 P2 taste, or an idea that was never asked for. Backlog, not a fix.
 
 Rules:
@@ -97,12 +101,10 @@ Rules:
 End with: VERDICT: PASS | FIX (n P0, n P1)
 ```
 
-Add to the criteria list, as needed: "nothing outside the format", "no placeholder text left", "every required text present". Vague criteria produce vague findings, which produce the loop.
-
 ## The loop
 
 ```
-build -> render -> inspect
+plan (subagent) -> brief agreed -> build -> render -> inspect
 round = 0
 while review requested and round < 2:
     round += 1
@@ -126,14 +128,14 @@ Rules that stop it:
 
 ```
 Rounds: 2. Fixed: 7. Open: 2 (P2). Rejected: 1 (accent colour was in the brief).
+Facts changed: VPS site NL -> US (kessel.md, ipinfo).
 Look at: <what the user should judge themselves>
 ```
 
 ## Vision
 
-- A visual review needs a model that reads images. A text-only model can still review geometry, contrast ratios and content — say that the pixel check was skipped.
-- Local `llama-swap/qwen-uncensored-vision` is vision-capable. The subagent tool's model is set only on the user's word, so ask.
-- The reviewer must render itself. A screenshot described in prose is not a review.
+- The reviewer renders itself. A screenshot described in prose is not a review.
+- A text-only reviewer can still check geometry, contrast ratios and content against sources. Say that the pixel check was skipped; do not count it as passed.
 
 ## Failure modes
 
@@ -144,3 +146,4 @@ Look at: <what the user should judge themselves>
 | Reviewer rewrites the design | it was given edit permission or a mockup to "improve" | read-only, schema only |
 | Plan ignores the brief | brief was summarised, not pasted | paste it verbatim |
 | Reviewer praises everything | it saw your reasoning and agrees with it | strip justification, keep criteria |
+| Facts wrong in the artifact | the brief inherited them from the old version | source list in the brief, "unverified" in the plan |
