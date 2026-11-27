@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795468588,
-        "narHash": "sha256-H5K9yWTociiAFqG3QDKUQKDuE6YSs8HNBmYdrCAHczM=",
+        "lastModified": 1795520649,
+        "narHash": "sha256-rEFSV7lxlTeivv/bvy51+AjeHTpHxPN3DqHRLfb2bA4=",
         "ref": "refs/heads/master",
-        "rev": "a28c9fc8ffae5aca7c94b44dfdaa15b06f8a06e2",
-        "revCount": 9,
+        "rev": "800b08a2b3f168e544ffd3fbdc5f8dde2036e6d7",
+        "revCount": 19,
         "type": "git",
         "url": "ssh://git@github.com/Luvrok/chair-rental-bot.git"
       },
@@ -145,10 +145,10 @@
         "rutracker-cf-proxy": "rutracker-cf-proxy"
       },
       "locked": {
-        "lastModified": 1795449889,
-        "narHash": "sha256-qSNk65zdiH09c7IlyHC78imCWA/PZdRxuNB3UConHIc=",
+        "lastModified": 1795682769,
+        "narHash": "sha256-bV/0s0oMNWWwb90LrjGKAxPkO8utQqMeZKdI3MnY+O4=",
         "ref": "refs/heads/main",
-        "rev": "8e1447932dca4657b3e9fcbb989c3e3beb78ba87",
+        "rev": "4dd3724d1b31d7e28e3b0ab2f84ef3c96f68a051",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/Luvrok/kodi"
@@ -401,11 +401,11 @@
     },
     "nixpkgs_5": {
       "locked": {
-        "lastModified": 1794042290,
-        "narHash": "sha256-ziZn2PvCJE5JEEpqTdxXwJpPB+L3YqoCpTAMCzyaP3U=",
+        "lastModified": 1795234589,
+        "narHash": "sha256-f/VVvxf5RsQgWVhUtefoca5ktVg0DA2bnkMOcmSnozo=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "f4a03c008967841f2a0b3cb7c436fc6fc31671f6",
+        "rev": "2786a2a72088ecf32aea5b3ec52099e6a7cff78f",
         "type": "github"
       },
       "original": {
@@ -577,11 +577,11 @@
     "zapret-flowseal": {
       "flake": false,
       "locked": {
-        "lastModified": 1793782619,
-        "narHash": "sha256-/MjMxKemN5qKbEMEkLzF0jTAlOv4EwnHwmrmWotbqXw=",
+        "lastModified": 1795276334,
+        "narHash": "sha256-SpXe7wZRjLR+IQvbNoA8ELCKEunDd4u4WPo0GwvP4E0=",
         "owner": "Flowseal",
         "repo": "zapret-discord-youtube",
-        "rev": "2401b7a13837139b0265632464ba563dddbf80d8",
+        "rev": "cf018db758623ed1813b9d93a6d7f3bdf01cc2b4",
         "type": "github"
       },
       "original": {
