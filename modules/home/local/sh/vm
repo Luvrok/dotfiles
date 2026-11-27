@@ -26,6 +26,7 @@ overlay=
 uefi=0
 gl=1
 clipboard=1
+ipv6=0
 sound=0
 daemon=0
 cdrom=
@@ -54,6 +55,8 @@ display:
       --spice-port N     SPICE port, default 5930 (VM_SPICE_PORT)
       --no-gl            plain virtio-vga, no virgl
       --no-clipboard     do not bridge the clipboard between host and guest
+      --ipv6             give the guest IPv6, off by default: it bypasses
+                         a VPN tun and is the classic kill-switch leak
       --sound            add an HDA sound card
   -D, --daemon           start in the background (implies -d spice)
 
@@ -204,6 +207,10 @@ while [ $# -gt 0 ]; do
 		clipboard=0
 		shift
 		;;
+	--ipv6)
+		ipv6=1
+		shift
+		;;
 	--sound)
 		sound=1
 		shift
@@ -307,6 +314,7 @@ snd=()
 [ "$sound" = 1 ] && snd=(-device ich9-intel-hda -device hda-duplex)
 
 net="user,id=net0"
+[ "$ipv6" = 1 ] || net="$net,ipv6=off"
 [ -n "$ssh_port" ] && net="$net,hostfwd=tcp:127.0.0.1:$ssh_port-:22"
 
 uefi_args=()
