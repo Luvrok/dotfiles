@@ -1,63 +1,48 @@
 # Review by artifact
 
-Measure, don't eyeball. Read bounds and fills from inspect, compute the gaps and ratios, then look at the render to confirm. A finding is a number and a criterion; anything else is taste and goes to P2.
+Review against the brief and acceptance criteria, not personal taste. Measure values when the app exposes them; use the render to check what geometry cannot prove. Scale the depth of review to the artifact and the cost of an error.
 
-## Universal, in this order
+## Common checks
 
-1. **Content** — every required text present, no placeholder or lorem left, spelling and capitalisation consistent, numbers agree with their source.
-2. **Geometry** — alignment, gaps from the scale, equal margins, no overlap, nothing outside the format, nothing clipped.
-3. **Collisions** — node × node, node × label, edge × label, label × label, cluster title × edge. A node-only check is not a collision check.
-4. **Type** — sizes from the scale, line-height, orphans, truncation, three-line titles.
-5. **Contrast** — body text 4.5:1, large text (>= 24px or 18.66px bold) 3:1, non-text UI 3:1.
-6. **Render** — final size, 100%, and the size the reader sees (note ~700-800px, slide 1920); compare with the geometry, look for clipping and fallback fonts.
-7. **States** — if it is interactive or has data: long text, empty, error, loading.
+1. **Content:** required content is present; no unintended placeholders, clipping, or unsupported factual claims.
+2. **Hierarchy:** the primary message or action is easy to find; grouping and reading order are clear.
+3. **Geometry:** alignment, spacing, margins, bounds, and overlaps fit the format.
+4. **Text and contrast:** labels are legible at intended size, not obscured by edges or shapes; check contrast when relevant. WCAG contrast targets are 4.5:1 for normal text and 3:1 for large text and meaningful UI graphics.
+5. **Render:** inspect the final artifact at its intended viewing size when rendering is available; look for clipping, font substitution, and details that disappear when scaled down.
+6. **States:** for interactive or data-driven work, check relevant long-content, empty, loading, and error states when they are in scope.
 
-## Screen (FigCraft)
+Record findings with a location, the violated criterion, and a measurement or concrete example where possible. A simple severity scheme can help prioritize: P0 blocks use or makes content wrong; P1 is a clear criteria failure; P2 is optional polish. Do not present an unperformed visual check as passed.
 
-- Every element on a column, or off it on purpose.
-- Sibling blocks share one gap value; sections separated by a larger step from the same scale.
-- One primary action, one H1, at most three levels of hierarchy.
-- Body 14-16px, line-height 1.4-1.6, measure 65-75 characters.
-- Targets >= 44px, icon-to-label gap on the 8px grid, icon stroke consistent.
-- Muted and disabled text still readable (or unmistakably disabled).
-- Text containers without a fixed height; the longest real string tested.
-- Real images, correct aspect ratio, none stretched; no grey placeholder left.
+## Screen or interface
 
-## Slide (DeckCraft)
+- Check the main task, primary action, and information hierarchy.
+- Check alignment, repeated spacing, responsive/content bounds, and target sizes against the brief and platform.
+- Test the longest realistic label and content when text wrapping matters.
+- Confirm images keep their aspect ratio and placeholders are intentional.
 
-- One idea per slide. The title states the claim, not the topic.
-- Title to body ratio at least 2:1; body >= 18-20pt in a 960x540 deck.
-- Safe margin >= 40-48pt; nothing within 20pt of the edge.
-- At most 6 bullets, at most 12 words each. A paragraph from a document is a failed slide.
-- Title position, footer and page numbers identical across slides.
-- A diagram where a diagram is faster to read than the sentence.
-- The last slide is a decision or an ask, not "thank you".
+## Slide or presentation
 
-## Diagram / SVG (VectorCraft)
+- Keep one main point per slide; titles should communicate the point when the brief allows.
+- Check text size, contrast, safe margins, consistent repeated elements, and slide-to-slide rhythm.
+- Split dense copy or data when the audience cannot read it at presentation size.
 
-- `viewBox` and export size set; text readable at the size it will be viewed, not only at 400%.
-- Text stays text unless outlines are required; no non-uniform scaling of text.
-- Labels >= 12px at 100%, no label over a line, no two labels touching, no edge inside a label box, no edge crossing a cluster title. Confirmed by the reviewer on the render, not by the builder.
-- Arrows start and end on node borders, arrowheads visible, nothing pointing into empty space.
-- One reading direction per row: left-to-right or top-to-bottom, not both.
-- Node sizes consistent per level, stroke widths consistent per level.
-- Crossings minimised; where two lines must cross, one gets a gap or bridge.
-- Legend when there are more than two colours or shapes; colours distinguishable in greyscale.
-- No shadow, blur or 3D unless it carries meaning.
-- Grep the exported SVG for `viewBox`, leftover `<text>` with a missing font, and `transform="scale(` on text.
+## Diagram, graph, or SVG
 
-## Illustration / logo
+- Check reading direction, node/edge relationships, and whether arrows start/end at the intended objects.
+- Ensure labels remain readable and clear of lines, nodes, and cluster titles.
+- Check crossings, legend needs, consistent visual encoding, and SVG viewBox/export bounds.
+- Inspect the SVG source when useful for missing text, fonts, or unintended transforms.
 
-- Silhouette test: fill it black, shrink to 16px, it still reads.
-- One idea. Details that vanish when shrunk get removed.
-- Stroke weights consistent; optical centring, not geometric.
-- Palette from the token set; no gradient unless the brief asks for one.
-- A logo works on dark and light, in one colour, with clearspace at least the height of its counter.
+## Illustration or logo
 
-## Report
+- Check silhouette and recognizability at the smallest intended size.
+- Check stroke consistency, optical balance, and contrast on intended backgrounds.
+- For a logo, verify one-colour and light/dark use when those variants are in scope.
 
-```
-id | severity | criterion | measured deviation | where
+## Findings format
+
+```text
+id | severity | criterion | evidence or measured deviation | location
 ```
 
-End with the verdict and the count. A review that lists only adjectives ("feels crowded") is not usable: ask for the gap values and the margins.
+End with a short verdict and any checks that remain unverified.

@@ -1,82 +1,48 @@
 ---
 name: craft-design
-description: Take a visual from a topic to a checked artifact, in the StoryTold Craft apps or in Graphviz. FigCraft for interfaces and mockups, VectorCraft for illustrations, logos and one-off SVG, DeckCraft for slides, PhotoCraft for images, WordCraft for documents, Graphviz for diagrams, graphs, network and flow schemas. Covers the brief and the sources, a plan written by a subagent, an explicit choice of app and model, and verification of spacing, alignment, collisions and rendering. Use for a mockup, landing page, dashboard, component, slide deck, poster, logo, diagram, flow chart, schema, network map, infographic, svg, "sdelaj dizajn", "primaj maket", "nabrosaj ekran", "sdelaj shemu", "oformi prezentaciyu", or any visual built with craft tools or dot.
+description: Create or revise visual artifacts with StoryTold Craft apps or Graphviz. Covers brief, tool choice, building, and proportionate visual verification. Use for interfaces, mockups, slides, illustrations, logos, diagrams, infographics, SVGs, макеты, схемы, презентации, and other visual work made with Craft tools or dot.
 ---
 
 # Craft design
 
-Design is decided before pixels: what the thing must do, for whom, in what format, and what makes it right. The plan comes from a subagent, the build from the main agent, and the evidence is a render plus numbers. A canvas without a brief is decoration.
+Make the artifact serve its purpose, not the process. Match the amount of planning and checking to the task; preserve the user's requested tool, format, and constraints.
 
-## Hard rules
+## Workflow
 
-1. Brief before canvas: goal, audience, medium and size, content, constraints, the check that proves it good. No brief: write five lines and show them.
-2. Plan by a subagent, always. The main agent writes the brief and the sources; the subagent decides structure, grid, type and colour; the main agent builds that plan. A visual the user did not call trivial is never planned by the one building it.
-3. The app is the user's call. Offer two options with the trade-off in one line each, and build after the answer. Never override the table below silently.
-4. Every fact has a source note. The previous version of the artifact is not a source: check the note that owns the fact, or mark it unknown. An inherited error is still your error once you ship it.
-5. Structure before style. Blocks, hierarchy and grid first; colour and type last, from a fixed token set.
-6. Every number comes from a scale: spacing 4 or 8, type steps of 1.25 or 1.33, 2-3 colours plus neutrals. A one-off value is a bug unless named as one.
-7. No invented content. Missing copy gets an obvious placeholder and a line in the missing list.
-8. Evidence is a render at the size the reader sees plus numbers from inspect. Check boxes and paths against each other, not boxes alone.
-9. Nothing touches text. Think of every label as a box around the glyphs: no edge, arrowhead or shape may enter that box, and none may come closer than 8pt to it. A line that passes between letters leaves every letter whole and still destroys the label. "Almost" is a fail: the box is the rule, not the ink. The reviewer looks for this on the render and must see images; a box entered is P0.
-10. Two renders that do not converge: change the tool or the layout engine, not the numbers.
-11. Report measurements, not adjectives, and list what changed against the previous version, facts included.
+1. **Brief.** Establish purpose, audience, output format/size, required content or assets, constraints, and what counts as done. Ask only about missing choices that would materially change the result; otherwise use and state sensible defaults.
+2. **Choose a tool.** Follow the user's choice. If none was given, use the table below. Offer alternatives only when the choice is genuinely ambiguous and has a meaningful trade-off.
+3. **Plan.** Decide the content order, hierarchy, and rough layout before building. Keep this brief for a small or familiar task. A separate planner is optional.
+4. **Build.** Discover the current app commands and parameters before relying on them. Work in meaningful sections and inspect intermediate results when that helps catch costly mistakes.
+5. **Visual review.** For a non-trivial visual composition, ask an independent subagent to review the actual render against the brief and `references/review.md`. Prefer a reviewer that can see images. Include inspect data or element ids when available. The reviewer reports concrete, actionable corrections; the main agent applies them and renders again. Do not claim a visual review if the reviewer could not see the artifact.
+6. **Deliver.** Save or export in the requested format and location, and report any missing content, limitations, or unverified facts. If a suitable visual reviewer or render is unavailable, state that and do the best available check without calling it an independent visual pass.
 
-## Process
+## Principles
 
-1. **Brief and sources** — one paragraph, the must-have content, 3-6 testable acceptance checks, and a fact list with the note each fact comes from.
-2. **Plan subagent** — mandatory, before any shape. It returns structure, grid, type and colour. Prompt in `references/subagents.md`.
-3. **App choice** — two options, one line each, and the user's answer before the first shape.
-4. **Build** — in parts, inspect after each block instead of all at the end.
-5. **Check** — `references/review.md`, numbers first, then the render at reader size. Collisions are the reviewer's job, not the builder's.
-6. **Review subagent** — bounded, and its model must see the render. If it cannot, the main agent does the visual pass and says so.
-7. **Delta report** — what changed against the previous version, including facts that moved.
+- Do not invent factual claims or requested copy. Verify facts against user-provided sources; otherwise mark them unverified or ask. Creative content can be original when the brief permits it.
+- Build hierarchy and structure before decorative styling. Use a consistent spacing, type, and colour system appropriate to the artifact rather than forcing one scale on every format.
+- Make text readable and keep labels clear of edges, shapes, and other labels. Check contrast where text and colour choices are part of the deliverable.
+- A successful tool call proves only that the command ran. Inspect or render the result before saying the artifact is ready.
+- Follow higher-priority instructions and the tool's current access limits. User-selected app choices take precedence; delegation is required for non-trivial visual review only when allowed and available.
 
 ## Choose the app
 
-| Artifact | Default | Pick otherwise when |
+| Artifact | Good default | Use another tool when |
 |---|---|---|
-| Diagram, graph, network, schema, flow | Graphviz `.dot` → svg + png | it is a one-off picture with pixel control or art → VectorCraft |
-| Screen, dashboard, landing, component, mockup | FigCraft | — |
-| Slides, pitch, report deck | DeckCraft | — |
-| Photo retouch, composite | PhotoCraft | — |
-| Text document, PDF | WordCraft | — |
-| Animation on a still | EffectCraft | see the `effectcraft-motion` skill |
+| Diagram, graph, network, schema, flow | Graphviz (`.dot`) | The result needs hand-drawn detail or precise one-off illustration: VectorCraft |
+| Screen, dashboard, landing page, component, mockup | FigCraft | The user requests another format/tool |
+| Slides or presentation | DeckCraft | The user requests another format/tool |
+| Photo retouch or composite | PhotoCraft | — |
+| Text document | WordCraft | — |
+| PDF inspection/editing | PDFCraft | — |
+| Animation | EffectCraft | Use the `effectcraft-motion` skill |
 
-Graphviz wins for anything that changes with the data: the source diffs, a host rename is one line, and the render is reproducible. The skill's own name is not an argument for a craft app.
-
-## Which model
-
-Before calling a subagent, ask once per task, from the models available right now:
-
-1. `opencode-go/gpt-6-luna` — default, cheap.
-2. the main session model.
-3. a model that is good at design or reads images.
-
-No local models in the first three; say "type a local one" and take what the user writes. Check availability with `tools.opencode.models`, never from memory.
-
-## Subagents
-
-The main agent builds and decides. A subagent plans before or reviews after, never both, and never edits the artifact. The reviewer takes its own screenshots and checks them; the builder does not certify its own render.
-
-- 2 review rounds, 5 findings per round, only P0/P1 fixed. P2 to a backlog, then deliver.
-- The reviewer checks written acceptance criteria, never "make it better".
-- Details, prompts and anti-loop rules: `references/subagents.md`.
-
-## What makes it look amateur
-
-- Gaps between siblings that differ by 1-2px; alignment that is almost a column edge.
-- Type sizes from nowhere: 17, 19, 23px beside a 16px body.
-- Contrast under 4.5:1 for body, under 3:1 for large text and icons.
-- Diagram labels over lines, arrows into empty space, mixed node sizes, cluster titles crossed by an edge.
-- An arrowhead that stops 2pt from a caption. It reads as touching, so it is touching.
-- A line through a text box: the letters stay whole, the label is still unreadable.
-- Equal padding that looks unbalanced because one side carries a heavy element.
+Graphviz is a strong default for repeatable, data-driven diagrams because the source is diffable and the render reproducible. It is not automatically best for every visual.
 
 ## Load on demand
 
 | Situation | Reference |
 |---|---|
-| Delegating the plan or the review, model choice, loop guardrails | `references/subagents.md` |
-| Checklist by artifact: screen, slide, diagram, illustration | `references/review.md` |
-| Calls to build, inspect, render and save in each app; dot commands | `references/apps.md` |
+| Build, inspect, render, and save with each app; Graphviz | `references/apps.md` |
+| Artifact-specific quality checks | `references/review.md` |
+| Independent visual review and actionable feedback | `references/subagents.md` |
 | Motion on top of a still | `effectcraft-motion` skill |
